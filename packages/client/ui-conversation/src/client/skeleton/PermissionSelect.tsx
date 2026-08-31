@@ -239,9 +239,29 @@ if (typeof customElements !== 'undefined' && customElements.get('dsh-permission-
   customElements.define('dsh-permission-select', DshPermissionSelect)
 }
 
-/** One-shot creation/update helper preserving the original function-component call shape. */
+/**
+ * Update (or create) the underlying `dsh-permission-select` in place.
+ * @param el - an existing element (from a prior call) to update, or null to create one.
+ * @param props - see {@link PermissionSelectProps}.
+ * @returns the `dsh-permission-select` element; hold it and pass it back in on the next render.
+ */
+export function renderPermissionSelect(el: DshPermissionSelect | null, props: PermissionSelectProps): DshPermissionSelect {
+  const target = el ?? document.createElement('dsh-permission-select') as DshPermissionSelect
+  target.setProps(props)
+  return target
+}
+
+/**
+ * One-shot creation/update helper preserving the original function-component
+ * call shape for a caller that has not yet been converted to hold the
+ * element itself. Prefer `renderPermissionSelect(el, props)` in any owner
+ * that re-renders more than once (holds the element across renders instead
+ * of recreating it every call — recreating it orphans its own internally
+ * held `#menu`/`#confirmModal` `dsh-menu`/`dsh-modal` elements onto
+ * `document.body` on every owner re-render, since the replaced
+ * `dsh-permission-select` node is torn down but never signals those
+ * self-mounted children to remove themselves).
+ */
 export function PermissionSelect(props: PermissionSelectProps): JSX.Element {
-  const el = document.createElement('dsh-permission-select') as DshPermissionSelect
-  el.setProps(props)
-  return el as unknown as JSX.Element
+  return renderPermissionSelect(null, props) as unknown as JSX.Element
 }

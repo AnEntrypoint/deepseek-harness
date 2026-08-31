@@ -34,7 +34,8 @@ import type { DraftAttachmentId, EditRange } from '../input/contract.ts'
 import { attachmentErrorText, imageSizeText } from '../image-labels.ts'
 import { ReferenceIcon } from '../reference/ReferenceIcon.tsx'
 import { ContextMeter } from './ContextMeter.tsx'
-import { PermissionSelect } from './PermissionSelect.tsx'
+import { renderPermissionSelect } from './PermissionSelect.tsx'
+import type { DshPermissionSelect } from './PermissionSelect.tsx'
 import { isSafariBrowser, repairSafariTextareaLayout } from './safari.ts'
 import css from './InputBar.module.css'
 
@@ -123,6 +124,16 @@ export class DshInputBar extends HTMLElement {
   #prevImageIdsLen = -1
   #prevLocked: boolean | null = null
   #prevSessionId: string | null = null
+  // Held across renders and updated via renderPermissionSelect(this.#permissionSelect, ...)
+  // rather than the bare PermissionSelect(...) one-shot helper: calling that
+  // fresh on every #render() replaces the whole dsh-permission-select custom
+  // element (a plain webjsx Node child, always torn down and recreated by
+  // applyDiff — see applyDiff.js's `newVNode instanceof Node` path), which
+  // orphans that instance's own held dsh-menu/dsh-modal children onto
+  // document.body every time (same leaked-one-shot-element class already
+  // fixed inside PermissionSelect/Menu/Modal/RiskConfirmation themselves —
+  // this was the one live call site still using the one-shot form).
+  #permissionSelect: DshPermissionSelect | null = null
   #prevDraftNonEmpty = false
   #firstAfterRender = true
 
@@ -791,7 +802,10 @@ export class DshInputBar extends HTMLElement {
     // or while the command face is absent with the session).
     const accessSelect: ReactNode = command === undefined
       ? null
-      : (PermissionSelect({ value: permissions, locked, command, t }) as unknown as VNode)
+      : (() => {
+        this.#permissionSelect = renderPermissionSelect(this.#permissionSelect, { value: permissions, locked, command, t })
+        return this.#permissionSelect as unknown as VNode
+      })()
 
     // Mirror-layer decorations: a visible backdrop with transparent textarea
     // text. Claim tokens and references retain the draft's own glyph metrics,
