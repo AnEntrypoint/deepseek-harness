@@ -2,10 +2,13 @@
  * The native picking occupant (package-internal; the `./client` surface
  * exposes only the Loader exports). Same-package tests exercise it directly
  * through this module.
+ *
+ * Converted from a React renderless hooks component to a webjsx custom
+ * element with no rendered DOM: useRef fields become private instance
+ * fields, and the mount/unmount useEffect becomes connectedCallback/
+ * disconnectedCallback. setProps replaces the re-render-on-prop-change path;
+ * the arm-once-per-open-edge logic is unchanged.
  */
-import { useEffect, useRef } from 'react'
-import type { ReactElement } from 'react'
-// Type-only: the owner contract of the directory-flow holes.
 import type { DirectoryFlowOwnerProps } from '@deepseek-ai/dsh-client-ui-workspace/client'
 
 /** Injected face: the wire call the flow drives (bound in apply's closure). */
@@ -14,52 +17,71 @@ export interface NativeFlowInjected {
   pick: () => Promise<string | null>
 }
 
+/** Full props of the flow occupant: owner conversation plus the injected pick call. */
+export type NativeDirectoryFlowProps = DirectoryFlowOwnerProps & NativeFlowInjected
+
 /**
- * Renderless flow occupant: each rising `open` edge runs exactly one pick and
- * reports exactly one outcome; the ref arms once per open so re-renders (and
- * an adoption keeping `open` true while `busy`) never launch a second
- * chooser. The owner withdrawing `open` re-arms the next request.
- * @param props - owner conversation plus the injected pick call.
- * @returns nothing — the native chooser renders on the host display.
+ * Renderless flow occupant custom element: each rising `open` edge runs
+ * exactly one pick and reports exactly one outcome; `#armed` arms once per
+ * open so repeated setProps calls (and an adoption keeping `open` true while
+ * `busy`) never launch a second chooser. The owner withdrawing `open` re-arms
+ * the next request. Renders no DOM — the native chooser opens on the host
+ * display.
  */
-export function NativeDirectoryFlow(props: DirectoryFlowOwnerProps & NativeFlowInjected): ReactElement | null {
-  const { open, pick } = props
-  const armed = useRef(false)
-  // Callbacks ride a ref so the settled pick reports through the owner's
-  // latest handlers, not the ones captured when the chooser opened.
-  const outcome = useRef(props)
-  outcome.current = props
+export class DshNativeDirectoryFlow extends HTMLElement {
+  #props: NativeDirectoryFlowProps | null = null
+  #armed = false
   // Unmount (HMR replacing the occupant) discards settlements wholesale: the
   // dead instance must neither adopt a path nor drive the owner's error
   // surface. The wire carries no per-request abort, so the host-side chooser
   // survives until answered — its answer just lands nowhere; the replacement
-  // instance re-arms under the owner's still-open request. An injected-face
-  // identity change alone (re-registration) keeps the pending settlement:
-  // the chooser on the host display is still the same dialog.
-  const alive = useRef(true)
-  useEffect(() => {
-    // StrictMode's development replay runs the cleanup once before the real
-    // lifetime: re-arm on setup or every outcome would be discarded.
-    alive.current = true
-    return () => { alive.current = false }
-  }, [])
-  useEffect(() => {
+  // instance re-arms under the owner's still-open request.
+  #alive = false
+
+  /** Set/replace props; call after creating or updating the element. */
+  setProps(props: NativeDirectoryFlowProps): void {
+    this.#props = props
+    this.#sync()
+  }
+
+  connectedCallback(): void {
+    this.#alive = true
+    this.#sync()
+  }
+
+  disconnectedCallback(): void {
+    this.#alive = false
+  }
+
+  #sync(): void {
+    const props = this.#props
+    if (props === null) return
+    const { open, pick } = props
     if (!open) {
-      armed.current = false
+      this.#armed = false
       return
     }
-    if (armed.current) return
-    armed.current = true
+    if (this.#armed) return
+    this.#armed = true
     pick().then(
       (path) => {
-        if (!alive.current) return
-        if (path === null) outcome.current.onCancel(); else outcome.current.onPicked(path)
+        if (!this.#alive) return
+        // Report through the latest props (setProps may have replaced the
+        // owner's handlers since the pick started).
+        const current = this.#props
+        if (current === null) return
+        if (path === null) current.onCancel(); else current.onPicked(path)
       },
       (reason: unknown) => {
-        if (!alive.current) return
-        outcome.current.onError(reason instanceof Error ? reason.message : String(reason))
+        if (!this.#alive) return
+        const current = this.#props
+        if (current === null) return
+        current.onError(reason instanceof Error ? reason.message : String(reason))
       },
     )
-  }, [open, pick])
-  return null
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-native-directory-flow') === undefined) {
+  customElements.define('dsh-native-directory-flow', DshNativeDirectoryFlow)
 }

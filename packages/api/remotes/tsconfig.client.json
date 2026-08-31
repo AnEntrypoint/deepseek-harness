@@ -5,10 +5,11 @@
     "outDir": "lib/types",
     "tsBuildInfoFile": "lib/tsconfig.client.tsbuildinfo"
   },
-  "files": [
-    "src/client/index.ts",
-    "src/remote-events.ts",
-    "src/types.ts"
+  "include": [
+    "src/client/index.js",
+    "src/client/types.d.ts",
+    "src/remote-events.js",
+    "src/types.d.ts"
   ],
   "references": [
     {

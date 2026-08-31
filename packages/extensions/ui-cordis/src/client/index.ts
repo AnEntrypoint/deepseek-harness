@@ -6,11 +6,15 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { InputTriggerService, InputTriggerSource } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from './events.ts'
 import { CordisActionRow } from './CordisActionRow.tsx'
-import { CordisDefineRow } from './CordisDefineRow.tsx'
-import { CordisRunRow } from './CordisRunRow.tsx'
-import { CordisPanel } from './CordisPanel.tsx'
+import './CordisDefineRow.tsx'
+import type { CordisDefineRowProps } from './CordisDefineRow.tsx'
+import './CordisRunRow.tsx'
+import type { CordisRunRowProps } from './CordisRunRow.tsx'
+import './CordisPanel.tsx'
+import type { CordisPanelProps } from './CordisPanel.tsx'
 import { createCordisInventory } from './inventory.ts'
 import { CordisRunCardRegistry } from './run-card-index.ts'
 import type { CordisDynamicPort } from './dynamic-port.ts'
@@ -109,7 +113,7 @@ export function apply(ctx: ClientContext): void {
       },
       onRefresh: () => { inventory.refresh() },
     }),
-  }, CordisPanel))
+  }, webjsxSlot<CordisPanelProps>('dsh-cordis-panel')))
 
   const cardFace = (): CordisCardFace => ({ hooks: { inventory, loaded } })
   ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({
@@ -117,7 +121,7 @@ export function apply(ctx: ClientContext): void {
     key: 'cordis_define',
     locale: NS,
     inject: cardFace,
-  }, CordisDefineRow))
+  }, webjsxSlot<CordisDefineRowProps>('dsh-cordis-define-row')))
 
   ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({
     name: 'tool.call.toolview',
@@ -131,7 +135,7 @@ export function apply(ctx: ClientContext): void {
         onObserveRunCard: (pointer) => { store.observe(pointer) },
       }
     },
-  }, CordisRunRow))
+  }, webjsxSlot<CordisRunRowProps>('dsh-cordis-run-row')))
 
   ctx.slots.inject('tool.call.toolview', function* () {
     yield ctx.slots.register({

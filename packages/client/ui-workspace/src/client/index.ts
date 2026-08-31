@@ -9,14 +9,14 @@
  * packages/client/AGENTS.md.
  */
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
-import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot, type HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { WorkspaceBrowserInjected, WorkspacePickerInjected } from './contract/slots.ts'
 import { createWorkspaceViewStore } from './stores.ts'
-import { WorkspaceBrowser } from './WorkspaceBrowser.tsx'
-import { WorkspacePicker } from './WorkspacePicker.tsx'
+import './WorkspaceBrowser.tsx'
+import './WorkspacePicker.tsx'
 import { en, zh, type WorkspaceKey } from './locales.ts'
 
 export type {
@@ -118,7 +118,14 @@ export function apply(ctx: ClientContext): void {
       inject: browserInjected,
       locale: NS,
     },
-    WorkspaceBrowser,
+    // The webjsxSlot() stub is a bare (props) => null function: it cannot
+    // structurally prove it consumes renderSlot the way RendersCheck wants
+    // (dispatch happens inside the registered custom element itself, off
+    // ui-slots' type-erased entry.component boundary — see webjsxSlot's own
+    // doc, and ui-layout/index.ts for the same escape hatch). The runtime
+    // dispatch is unaffected; only this compile-time shape check needs it.
+    // oxlint-disable-next-line typescript/no-explicit-any -- see comment above
+    webjsxSlot('dsh-workspace-browser') as any,
   ))
   ctx.slots.inject('conversation.hero.workspace', () => ctx.slots.register(
     {
@@ -127,6 +134,7 @@ export function apply(ctx: ClientContext): void {
       inject: pickerInjected,
       locale: NS,
     },
-    WorkspacePicker,
+    // oxlint-disable-next-line typescript/no-explicit-any -- see comment above
+    webjsxSlot('dsh-workspace-picker') as any,
   ))
 }

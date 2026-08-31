@@ -1,4 +1,5 @@
 /** Card-aware output body for the selected Tool call in details. */
+import type { VNode } from 'webjsx'
 import { DiffBlock, ReadBlock, SearchBlock, TerminalBlock, WebBlock } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ToolDetailsProps } from '../contract/slots.ts'
 import { diffCardModel } from './models/diff-card-model.ts'
@@ -17,18 +18,16 @@ import css from './ToolDetails.module.css'
  */
 export function ToolDetails({
   block, cwd, useHostDescription, t,
-}: Pick<ToolDetailsProps, 'block' | 'cwd' | 'useHostDescription' | 't'>) {
+}: Pick<ToolDetailsProps, 'block' | 'cwd' | 'useHostDescription' | 't'>): VNode | (VNode | null)[] | string {
   const home = useHostDescription(description => description?.home)
   const terminal = terminalCardModel(block, cwd)
   if (terminal !== null) {
-    return (
-      <>
-        {terminal.description !== undefined ? (
-          <div className={css.description}>{terminal.description}</div>
-        ) : null}
-        <TerminalBlock {...terminal.card} labels={terminalBlockLabels(t)} className={css.cardBody} />
-      </>
-    )
+    return [
+      terminal.description !== undefined ? (
+        <div class={css.description ?? ''}>{terminal.description}</div>
+      ) : null,
+      <TerminalBlock {...terminal.card} labels={terminalBlockLabels(t)} className={css.cardBody} /> as unknown as JSX.Element,
+    ]
   }
   const read = readCardModel(block, cwd, home)
   if (read !== null) return <ReadBlock {...read} className={css.read} />
@@ -36,26 +35,22 @@ export function ToolDetails({
   if (diff !== null) return <DiffBlock {...diff.card} className={css.cardBody} />
   const search = searchCardModel(block)
   if (search !== null) {
-    return (
-      <>
-        <SearchBlock {...search.card} className={css.cardBody} />
-        {search.recovery !== undefined ? <div className={css.recovery}>{search.recovery}</div> : null}
-      </>
-    )
+    return [
+      <SearchBlock {...search.card} className={css.cardBody} /> as unknown as JSX.Element,
+      search.recovery !== undefined ? <div class={css.recovery ?? ''}>{search.recovery}</div> : null,
+    ]
   }
   const web = webCardModel(block)
   if (web !== null) {
     const body = 'kind' in block ? resultText(block) : ''
-    return (
-      <>
-        <WebBlock {...web} className={css.web} />
-        {body !== '' ? <pre className={css.code}>{body}</pre> : null}
-      </>
-    )
+    return [
+      <WebBlock {...web} className={css.web} />,
+      body !== '' ? <pre class={css.code ?? ''}>{body}</pre> : null,
+    ]
   }
-  if (!('kind' in block)) return <div className={css.empty}>{t('details.running')}</div>
+  if (!('kind' in block)) return <div class={css.empty ?? ''}>{t('details.running')}</div>
   return (
-    <pre className={css.code} data-error={block.isError || undefined}>
+    <pre class={css.code ?? ''} data-error={block.isError || undefined}>
       {resultText(block)}
     </pre>
   )

@@ -9,164 +9,197 @@
  * the onboarding coordinator mounts exactly one ordered registrant while the
  * sessions-derived empty-Hero fact is active. Visible dialog chrome belongs
  * to the step, so a mounted-but-deciding step paints nothing here.
+ *
+ * Converted from a React hooks component to a webjsx custom element:
+ * open/activeId/completedOnboarding become instance fields; the Escape-key
+ * listener and initial-focus effects become connectedCallback/
+ * disconnectedCallback bookkeeping tied to the panel's own open/close
+ * transitions; re-render is an explicit applyDiff(this, vdom) call.
  */
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import clsx from 'clsx'
 import {
   IconAgentPresetOutline16, IconCloseOutline16, IconDataOutline16,
   IconPersonalizationOutline16, IconSettingsOutline16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { VNode } from 'webjsx'
 import type { SettingsRootComponentProps, SettingsSectionRow } from './shell-contract.ts'
 import css from './SettingsRoot.module.css'
 
+/** Cast a renderSlot() RenderOutput result into a webjsx-embeddable child (matches AppFrame's asChild). */
+function asChild(node: unknown): VNode {
+  return node as unknown as VNode
+}
+
 /** Nav glyph by section id; unknown ids fall back to the settings gear. */
-function navIcon(id: string) {
+function navIcon(id: string): JSX.Element {
   if (id === 'models') return <IconDataOutline16 className={css.navIcon} size={16} />
   if (id === 'agent-presets') return <IconAgentPresetOutline16 className={css.navIcon} size={16} />
   if (id === 'plugins') return <IconPersonalizationOutline16 className={css.navIcon} size={16} />
   return <IconSettingsOutline16 className={css.navIcon} size={16} />
 }
 
-type PanelProps = {
-  rows: readonly SettingsSectionRow[]
-  renderSlot: SettingsRootComponentProps['renderSlot']
-  activeId: string | undefined
-  onSelect: (id: string) => void
-  onClose: () => void
-}
+/** Settings shell root custom element, owning open/active-section/onboarding-progress state. */
+export class DshSettingsRoot extends HTMLElement {
+  #props: SettingsRootComponentProps | null = null
+  #open = false
+  #activeId: string | undefined = undefined
+  #completedOnboarding: ReadonlySet<string> = new Set()
+  #lastOnboardingActive: boolean | undefined = undefined
+  #escapeHandler: ((e: KeyboardEvent) => void) | null = null
+  #closeButtonFocused = false
 
-/**
- * The modal layer: full-viewport mask + centered panel. Close paths: the
- * header button, a mask click, and document-level Escape (mounted only while
- * open, so the listener lifetime is the panel's).
- */
-function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelProps) {
-  // Entries can unmount underneath the requested id, so the render-time
-  // projection falls back to the first row when the id is gone.
-  const active = rows.find(r => r.id === activeId)?.id ?? rows[0]?.id
-  const titleId = useId()
+  /** Set/replace props and re-render; the owning renderer calls this on every update. */
+  setProps(props: SettingsRootComponentProps): void {
+    this.#props = props
+    this.#render()
+  }
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#unbindEscape()
+  }
+
+  #close = (): void => {
+    this.#open = false
+    this.#activeId = undefined
+    this.#render()
+  }
+
+  #openSection = (id: string): void => {
+    this.#activeId = id
+    this.#open = true
+    this.#render()
+  }
+
+  #bindEscape(): void {
+    if (this.#escapeHandler !== null) return
+    this.#escapeHandler = (e) => {
+      if (e.key === 'Escape') this.#close()
     }
-    document.addEventListener('keydown', onKeyDown)
-    return () => { document.removeEventListener('keydown', onKeyDown) }
-  }, [onClose])
+    document.addEventListener('keydown', this.#escapeHandler)
+  }
 
-  // Baseline focus management: entering the dialog lands on the close button.
-  const closeButton = useRef<HTMLButtonElement | null>(null)
-  useEffect(() => { closeButton.current?.focus() }, [])
+  #unbindEscape(): void {
+    if (this.#escapeHandler === null) return
+    document.removeEventListener('keydown', this.#escapeHandler)
+    this.#escapeHandler = null
+  }
 
-  return (
-    <div className={css.overlay} role="presentation">
-      <div className={css.mask} aria-hidden="true" onClick={onClose} />
-      <div className={css.panel} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <nav className={css.nav}>
-          <div className={css.navTitle} id={titleId}>{renderSlot('settings.header', {})}</div>
-          <div className={css.navList}>
-            {rows.map(row => (
-              <button
-                key={row.id}
-                type="button"
-                className={clsx(css.navCell, row.id === active && css.active)}
-                aria-current={row.id === active ? 'true' : undefined}
-                onClick={() => { onSelect(row.id) }}
-              >
-                {navIcon(row.id)}
-                <span className={css.navLabel}>{row.label}</span>
+  #renderPanel(rows: readonly SettingsSectionRow[], renderSlot: SettingsRootComponentProps['renderSlot']): JSX.Element {
+    const active = rows.find(r => r.id === this.#activeId)?.id ?? rows[0]?.id
+    const titleId = 'dsh-settings-root-title'
+    return (
+      <div class={css.overlay ?? ''} role="presentation">
+        <div class={css.mask ?? ''} aria-hidden="true" onclick={this.#close} />
+        <div class={css.panel ?? ''} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+          <nav class={css.nav ?? ''}>
+            <div class={css.navTitle ?? ''} id={titleId}>{asChild(renderSlot('settings.header', {}))}</div>
+            <div class={css.navList ?? ''}>
+              {rows.map(row => (
+                <button
+                  type="button"
+                  class={clsx(css.navCell, row.id === active && css.active)}
+                  aria-current={row.id === active ? 'true' : null}
+                  onclick={() => { this.#activeId = row.id; this.#render() }}
+                >
+                  {navIcon(row.id)}
+                  <span class={css.navLabel ?? ''}>{row.label}</span>
+                </button>
+              ))}
+            </div>
+          </nav>
+          <div class={css.content ?? ''}>
+            <div class={css.header ?? ''}>
+              <div class={css.actions ?? ''}>{asChild(renderSlot('settings.action', {}))}</div>
+              <button data-close-button type="button" class={css.close ?? ''} onclick={this.#close}>
+                <IconCloseOutline16 size={14} />
+                <span class={css.hiddenLabel ?? ''}>{asChild(renderSlot('settings.close', {}))}</span>
               </button>
-            ))}
-          </div>
-        </nav>
-        <div className={css.content}>
-          <div className={css.header}>
-            <div className={css.actions}>{renderSlot('settings.action', {})}</div>
-            <button ref={closeButton} type="button" className={css.close} onClick={onClose}>
-              <IconCloseOutline16 size={14} />
-              <span className={css.hiddenLabel}>{renderSlot('settings.close', {})}</span>
-            </button>
-          </div>
-          <div className={css.options}>
-            {active !== undefined && renderSlot('settings.section', { close: onClose }, { only: active })}
+            </div>
+            <div class={css.options ?? ''}>
+              {active !== undefined && asChild(renderSlot('settings.section', { close: this.#close }, { only: active }))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { wide, useSections, useOnboardingSteps, useSessions, renderSlot } = props
+
+    const rows = useSections(s => s)
+    const onboardingSteps = useOnboardingSteps(s => s)
+    const onboardingActive = useSessions(state =>
+      state.phase === 'ready'
+      && (state.current === undefined || state.byId[state.current]?.blank === true))
+
+    if (onboardingActive !== this.#lastOnboardingActive) {
+      this.#lastOnboardingActive = onboardingActive
+      if (!onboardingActive) this.#completedOnboarding = new Set()
+    }
+
+    const onboardingStep = onboardingActive
+      ? onboardingSteps.find(step => !this.#completedOnboarding.has(step.id))
+      : undefined
+
+    const completeOnboardingStep = (id: string): void => {
+      if (this.#completedOnboarding.has(id)) return
+      this.#completedOnboarding = new Set([...this.#completedOnboarding, id])
+      this.#render()
+    }
+
+    const vdom = [
+      <button
+        type="button"
+        class={clsx(css.trigger, !wide && css.rail)}
+        aria-haspopup="dialog"
+        aria-expanded={String(this.#open)}
+        onclick={() => { this.#open = true; this.#render() }}
+      >
+        {asChild(renderSlot('settings.trigger', { wide }))}
+      </button>,
+      ...(this.#open ? [this.#renderPanel(rows, renderSlot)] : []),
+      ...(onboardingStep !== undefined
+        ? [asChild(renderSlot('settings.onboarding', {
+          stepId: onboardingStep.id,
+          complete: () => { completeOnboardingStep(onboardingStep.id) },
+          openSection: this.#openSection,
+        }, { only: onboardingStep.id }))]
+        : []),
+    ]
+    applyDiff(this, vdom as JSX.Element[])
+
+    if (this.#open) {
+      this.#bindEscape()
+      if (!this.#closeButtonFocused) {
+        this.#closeButtonFocused = true
+        this.querySelector<HTMLButtonElement>('[data-close-button]')?.focus()
+      }
+    } else {
+      this.#unbindEscape()
+      this.#closeButtonFocused = false
+    }
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-settings-root') === undefined) {
+  customElements.define('dsh-settings-root', DshSettingsRoot)
 }
 
 /**
  * Render the settings trigger and panel.
  * @param props - composed slot props (contract/slots.ts).
- * @returns the settings shell element tree.
+ * @returns the settings shell element.
  */
-export function SettingsRoot(props: SettingsRootComponentProps) {
-  const { wide, useSections, useOnboardingSteps, useSessions, renderSlot } = props
-  const [open, setOpen] = useState(false)
-  const [activeId, setActiveId] = useState<string | undefined>(undefined)
-  const [completedOnboarding, setCompletedOnboarding] = useState<ReadonlySet<string>>(() => new Set())
-  const close = useCallback(() => {
-    setOpen(false)
-    setActiveId(undefined)
-  }, [])
-  const openSection = useCallback((id: string) => {
-    setActiveId(id)
-    setOpen(true)
-  }, [])
-
-  // The ledger tick keeps the nav rows fresh: registrants re-register with
-  // freshly localized text on locale change, and the trigger/header/close
-  // seats re-render through their own outlets' subscriptions.
-  const rows = useSections(s => s)
-  const onboardingSteps = useOnboardingSteps(s => s)
-  const onboardingActive = useSessions(state =>
-    state.phase === 'ready'
-    && (state.current === undefined || state.byId[state.current]?.blank === true))
-  const onboardingStep = onboardingActive
-    ? onboardingSteps.find(step => !completedOnboarding.has(step.id))
-    : undefined
-
-  useEffect(() => {
-    if (onboardingActive) return
-    setCompletedOnboarding(new Set())
-  }, [onboardingActive])
-
-  const completeOnboardingStep = useCallback((id: string) => {
-    setCompletedOnboarding((previous) => {
-      if (previous.has(id)) return previous
-      return new Set([...previous, id])
-    })
-  }, [])
-
-  return (
-    <>
-      <button
-        type="button"
-        className={clsx(css.trigger, !wide && css.rail)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => { setOpen(true) }}
-      >
-        {renderSlot('settings.trigger', { wide })}
-      </button>
-      {open && (
-        <SettingsPanel
-          rows={rows}
-          renderSlot={renderSlot}
-          activeId={activeId}
-          onSelect={setActiveId}
-          onClose={close}
-        />
-      )}
-      {/* Dialog chrome and `#root` inert ownership live inside each step's
-          visible branch. A step still deciding (private facts loading)
-          renders null, so nothing paints or blocks while it decides. */}
-      {onboardingStep !== undefined && renderSlot('settings.onboarding', {
-        stepId: onboardingStep.id,
-        complete: () => { completeOnboardingStep(onboardingStep.id) },
-        openSection,
-      }, { only: onboardingStep.id })}
-    </>
-  )
+export function SettingsRoot(props: SettingsRootComponentProps): JSX.Element {
+  const el = document.createElement('dsh-settings-root') as DshSettingsRoot
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

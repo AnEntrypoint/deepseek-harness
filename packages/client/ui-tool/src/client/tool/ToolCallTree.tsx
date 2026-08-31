@@ -1,5 +1,5 @@
 /** Root/subcall Tool composition with one keyed atomic dispatch path. */
-import { memo, useMemo, type ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import type { ToolCallBlock } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ToolCallOwnerProps, ToolTreeProps } from '../contract/slots.ts'
 import { GenericToolCard } from './toolviews/GenericToolCard.tsx'
@@ -11,7 +11,7 @@ function callName(node: ToolCallBlock): string {
 }
 
 /** One atomic call dispatched through the Tool-owned keyed slot. */
-const ToolCall = memo(function ToolCall({
+function ToolCall({
   renderSlot, callId, toolName, block, openFile, selected, cwd, home, inspectCall, t, children,
 }: Pick<ToolTreeProps, 'renderSlot' | 'openFile' | 'cwd' | 'inspectCall' | 't'> & {
   callId: string
@@ -19,9 +19,9 @@ const ToolCall = memo(function ToolCall({
   block: ToolCallBlock
   selected: boolean
   home?: string | undefined
-  children?: ReactNode
-}) {
-  const owner: ToolCallOwnerProps = useMemo(() => ({
+  children?: VNode | VNode[] | string | null
+}): JSX.Element {
+  const owner: ToolCallOwnerProps = {
     callId,
     toolName,
     block,
@@ -29,10 +29,10 @@ const ToolCall = memo(function ToolCall({
     cwd,
     home,
     inspect: () => { inspectCall(callId) },
-  }), [callId, toolName, block, openFile, cwd, home, inspectCall])
+  }
   return (
     <div
-      className={css.callRow}
+      class={css.callRow ?? ''}
       data-chat-anchor-key={`call:${callId}`}
       data-chat-call-id={callId}
       data-selected={selected || undefined}
@@ -44,14 +44,14 @@ const ToolCall = memo(function ToolCall({
       {children}
     </div>
   )
-})
+}
 
-const ToolCallBranch = memo(function ToolCallBranch({
+function ToolCallBranch({
   renderSlot, block, selectedCallId, cwd, home, openFile, inspectCall, t,
 }: Pick<ToolTreeProps, 'renderSlot' | 'selectedCallId' | 'cwd' | 'openFile' | 'inspectCall' | 't'> & {
   block: ToolCallBlock
   home?: string | undefined
-}) {
+}): JSX.Element {
   return (
     <ToolCall
       renderSlot={renderSlot}
@@ -66,7 +66,7 @@ const ToolCallBranch = memo(function ToolCallBranch({
       t={t}
     >
       {block.subCalls.length > 0 ? (
-        <div className={css.subCalls} data-subcalls>
+        <div class={css.subCalls ?? ''} data-subcalls>
           {block.subCalls.map(child => (
             <ToolCallBranch
               key={child.callId}
@@ -84,7 +84,7 @@ const ToolCallBranch = memo(function ToolCallBranch({
       ) : null}
     </ToolCall>
   )
-})
+}
 
 /**
  * Render one root Tool call and its recursive children through the same
@@ -94,7 +94,7 @@ const ToolCallBranch = memo(function ToolCallBranch({
  */
 export function ToolCallTree({
   renderSlot, node, selectedCallId, cwd, openFile, inspectCall, useHostDescription, t,
-}: ToolTreeProps) {
+}: ToolTreeProps): JSX.Element {
   const home = useHostDescription(description => description?.home)
   const block = node.data.root
   return (

@@ -24,7 +24,6 @@ import langTs from '@shikijs/langs/typescript'
 import langBash from '@shikijs/langs/shellscript'
 import langJson from '@shikijs/langs/json'
 import type { HighlighterCore } from 'shiki/core'
-import type { CSSProperties } from 'react'
 
 /** A shiki grammar module's default export (a `LanguageRegistration[]`), taken
  *  from a boot grammar so no direct `@shikijs/types` dependency is needed. */
@@ -270,12 +269,13 @@ export function highlightToHtml(code: string, lang: string | undefined): string 
 /**
  * One highlighted run of a line: the text and the inline style shiki assigned
  * it. The css-variables theme colors every run through a `--shiki-*` custom
- * property, so `style.color` is always present; it is held as a style object
- * rather than a bare color so a run spreads onto a `<span style>` uniformly.
+ * property, so `style` is always a non-empty `color: ...` CSS declaration
+ * string, ready for a `<span style>` (webjsx's inline-style attribute takes a
+ * CSS string or a live `CSSStyleDeclaration`, not a React-style style object).
  */
 export interface HighlightSpan {
   text: string
-  style: CSSProperties
+  style: string
 }
 
 /**
@@ -307,5 +307,5 @@ export function highlightLines(code: string, lang: string | undefined): Highligh
   const lines = tokens.length > 1 && last !== undefined && last.length === 0
     ? tokens.slice(0, -1)
     : tokens
-  return lines.map(line => line.map(token => ({ text: token.content, style: { color: token.color } })))
+  return lines.map(line => line.map(token => ({ text: token.content, style: `color: ${token.color}` })))
 }

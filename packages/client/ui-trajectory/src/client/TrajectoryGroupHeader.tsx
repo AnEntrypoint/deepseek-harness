@@ -14,12 +14,12 @@ export interface TrajectoryGroupHeaderProps {
  * @param props - title and optional description.
  * @returns the group header element.
  */
-export function TrajectoryGroupHeader({ title, description }: TrajectoryGroupHeaderProps) {
+export function TrajectoryGroupHeader({ title, description }: TrajectoryGroupHeaderProps): JSX.Element {
   return (
-    <div className={css.root}>
-      <span className={css.title}>{title}</span>
+    <div class={css.root ?? ''}>
+      <span class={css.title ?? ''}>{title}</span>
       {description !== undefined && description !== ''
-        ? <span className={css.description}>{description}</span>
+        ? <span class={css.description ?? ''}>{description}</span>
         : null}
     </div>
   )

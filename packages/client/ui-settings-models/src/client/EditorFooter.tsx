@@ -13,7 +13,6 @@
  * @module dsh-client-ui-settings-models/client/EditorFooter
  */
 
-import type { ReactNode } from 'react'
 import type { en } from './locales.ts'
 import styles from './ModelsSection.module.css'
 
@@ -42,23 +41,23 @@ export interface EditorFooterProps {
  * @param props - the labels, commit gating, and handlers the owning card supplies.
  * @returns the cancel/commit row.
  */
-export function EditorFooter(props: EditorFooterProps): ReactNode {
+export function EditorFooter(props: EditorFooterProps): JSX.Element {
   const { t } = props
   return (
-    <div className={styles['editorActions']}>
+    <div class={styles['editorActions'] ?? ''}>
       <button
         type="button"
-        className={styles['secondaryButton']}
+        class={styles['secondaryButton'] ?? ''}
         disabled={props.busy}
-        onClick={props.onCancel}
+        onclick={props.onCancel}
       >
         {t(props.cancelLabel ?? 'cancel')}
       </button>
       <button
         type="button"
-        className={styles['primaryButton']}
+        class={styles['primaryButton'] ?? ''}
         disabled={props.submitDisabled}
-        onClick={props.onSubmit}
+        onclick={props.onSubmit}
       >
         {props.busy ? t(props.submitBusyLabel) : t(props.submitLabel)}
       </button>

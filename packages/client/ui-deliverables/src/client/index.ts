@@ -11,7 +11,7 @@ import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ChatFileMentions } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import { ProducedFiles } from './ProducedFiles.tsx'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import { en, NS, zh, type DeliverablesKey } from './locales.ts'
 import {
   deliverablesDefinition, producedFileMentions, selectProducedFiles,
@@ -24,7 +24,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export { ProducedFiles, type ProducedFilesProps } from './ProducedFiles.tsx'
+export { DshProducedFiles, fitProducedFiles, type ProducedFilesProps } from './ProducedFiles.tsx'
 export { producedForClosing } from './turn-deliverables.ts'
 
 /** Required services for the tail-slot registration and its dictionaries. */
@@ -48,7 +48,7 @@ export function apply(ctx: ClientContext): void {
         isLoopback: connection.isLoopback,
         hooks: { hostDescription: connection.hostDescription },
       }),
-    }, ProducedFiles),
+    }, webjsxSlot('dsh-produced-files')),
   )
   // The prose side of the same vocabulary: the chat view reaches this face
   // via ctx.get, so its absence — this plugin composed out — is the off state.

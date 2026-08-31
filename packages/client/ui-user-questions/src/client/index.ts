@@ -16,8 +16,9 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ComposerChainProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import type { QuestionWait } from './contract/slots.ts'
-import { QuestionComposer } from './QuestionComposer.tsx'
+import './QuestionComposer.tsx'
 import { en, zh, type QuestionKey } from './locales.ts'
 
 export { PendingQuestion } from './contract/slots.ts'
@@ -55,6 +56,6 @@ export function apply(ctx: ClientContext): void {
 
   ctx.slots.inject('conversation.composer', () => ctx.slots.register(
     { name: 'conversation.composer', select: selectQuestion, locale: NS },
-    QuestionComposer,
+    webjsxSlot('dsh-question-composer'),
   ))
 }

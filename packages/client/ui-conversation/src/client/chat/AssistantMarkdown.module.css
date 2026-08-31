@@ -17,6 +17,13 @@
   gap: 16px;
 }
 
+/* Neutral keyed wrapper for a run of image blocks (stands in for the React
+   Fragment webjsx has no equivalent of): must not affect layout, so the
+   gallery still participates in .body's flex column as if unwrapped. */
+.contents {
+  display: contents;
+}
+
 /* Wide markdown tables (the renderer's ≥4-column md-table-wide hook) span
    the whole transcript width instead of clipping at the 748px message
    column, while the table content keeps starting at its normal x (the lead

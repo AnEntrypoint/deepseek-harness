@@ -2,17 +2,25 @@
  * Untrusted assistant-Markdown renderer over the direct mdast pipeline:
  * `parse.ts` grammars, the incremental streaming parser, and `render.tsx`.
  * While a message streams, all but the trailing two blocks freeze as cached
- * React elements and only the source tail behind them re-parses per chunk,
+ * webjsx elements and only the source tail behind them re-parses per chunk,
  * so per-chunk work tracks the tail size instead of the whole reply. Frozen
  * blocks keep their source-offset keys when they cross the freeze boundary,
- * so React reconciles instead of remounting. Known deviation while
+ * so `applyDiff` reconciles instead of remounting. Known deviation while
  * streaming: a reference-style link or footnote whose definition sits on the
  * other side of the freeze boundary renders literally until the settled
  * full parse self-heals it.
+ *
+ * Converted from a React `memo` function component (its own `useRef`-held
+ * `StreamingRenderer` instance plus a `useMemo`'d children computation) to a
+ * webjsx custom element: the refs become private fields, the memo'd
+ * computation becomes a plain recompute inside #render guarded by a
+ * last-props identity check (mirroring `memo`'s prop-equality skip and the
+ * inner `useMemo`'s dependency list), and DOM update is an explicit
+ * applyDiff(this, vdom) call.
  */
 
-import { memo, useMemo, useRef } from 'react'
-import type { ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { JSXChildTypes, VNode } from 'webjsx'
 import { IncrementalMarkdownParser } from './incremental.ts'
 import { parseGfm, parseGfmWithMath } from './parse.ts'
 import {
@@ -25,12 +33,14 @@ import css from './MarkdownText.module.css'
 
 export type { MarkdownCodeLabels, MarkdownFileMentions } from './render.tsx'
 
+type RNode = JSXChildTypes
+
 /** One settled full render: parse with math, resolve references, append the footnote section. */
 function renderSettled(
   text: string,
   codeLabels: MarkdownCodeLabels | undefined,
   fileMentions: MarkdownFileMentions | undefined,
-): ReactNode[] {
+): RNode[] {
   const root = parseGfmWithMath(text)
   const targets = createReferenceTargets()
   collectReferenceTargets(root.children, targets)
@@ -60,23 +70,23 @@ class StreamingRenderer {
   private readonly parser = new IncrementalMarkdownParser(parseGfm)
   private generation = -1
   private frozenCount = 0
-  private frozenElements: ReactNode[] = []
+  private frozenElements: RNode[] = []
   private frozenTargets: ReferenceTargets = createReferenceTargets()
   private frozenFootnoteOrder: string[] = []
   private frozenFootnoteCounts = new Map<string, number>()
   private lastText: string | null = null
-  private lastRendered: ReactNode[] = []
+  private lastRendered: RNode[] = []
 
   /** @param codeLabels - Fence copy labels baked into cached elements; the owner replaces the renderer when they change. */
   constructor(private readonly codeLabels: MarkdownCodeLabels | undefined) {}
 
   /**
-   * Render the current accumulated text. Idempotent per text value, so React
-   * may re-execute the calling render freely.
+   * Render the current accumulated text. Idempotent per text value, so the
+   * caller may invoke it from a render path that re-executes freely.
    * @param text - The full accumulated markdown source.
    * @returns Frozen elements, re-rendered tail, and the footnote section.
    */
-  render(text: string): ReactNode[] {
+  render(text: string): RNode[] {
     if (text === this.lastText) return this.lastRendered
     const { frozen, tail, generation } = this.parser.update(text)
     if (generation !== this.generation) {
@@ -137,40 +147,102 @@ class StreamingRenderer {
   }
 }
 
-/**
- * Render untrusted assistant-authored Markdown as semantic React elements.
- * @param props - Markdown source text preserved by the session projection;
- * `streaming` renders fences and TeX plain (highlighting and KaTeX land on
- * the finalize swap) and parses incrementally across chunks; `codeLabels`
- * forwards localized copy-button labels to fence CodeBlocks — pass a
- * reference-stable object (memoized per locale revision), because a new
- * identity discards the streaming render cache mid-message. `fileMentions`
- * links inline-code tokens its resolver recognizes as real files; this is
- * the single streaming gate — it applies to settled renders only, because a
- * streaming message's vocabulary is not final and frozen cached elements
- * must not bake in handlers that could go stale.
- * @returns A GFM document with TeX math rendered through KaTeX; raw HTML,
- * relative links, and unsafe protocols are disabled, while absolute HTTP(S)
- * images render directly.
- */
-export const MarkdownText = memo(function MarkdownText({ text, streaming = false, codeLabels, fileMentions }: {
+export interface MarkdownTextProps {
+  /** Markdown source text preserved by the session projection. */
   text: string
+  /** `streaming` renders fences and TeX plain (highlighting and KaTeX land on
+   * the finalize swap) and parses incrementally across chunks. */
   streaming?: boolean
+  /** Forwards localized copy-button labels to fence CodeBlocks — pass a
+   * reference-stable object (memoized per locale revision), because a new
+   * identity discards the streaming render cache mid-message. */
   codeLabels?: MarkdownCodeLabels | undefined
+  /** Links inline-code tokens its resolver recognizes as real files; this is
+   * the single streaming gate — it applies to settled renders only, because a
+   * streaming message's vocabulary is not final and frozen cached elements
+   * must not bake in handlers that could go stale. */
   fileMentions?: MarkdownFileMentions | undefined
-}) {
-  const streamRef = useRef<StreamingRenderer | null>(null)
-  const streamLabelsRef = useRef<MarkdownCodeLabels | undefined>(codeLabels)
-  const children = useMemo(() => {
+}
+
+function propsEqual(a: MarkdownTextProps, b: MarkdownTextProps): boolean {
+  return a.text === b.text && (a.streaming ?? false) === (b.streaming ?? false)
+    && a.codeLabels === b.codeLabels && a.fileMentions === b.fileMentions
+}
+
+/**
+ * Render untrusted assistant-authored Markdown as semantic webjsx elements.
+ * A GFM document with TeX math rendered through KaTeX; raw HTML, relative
+ * links, and unsafe protocols are disabled, while absolute HTTP(S) images
+ * render directly.
+ */
+export class DshMarkdownText extends HTMLElement {
+  #props: MarkdownTextProps = { text: '' }
+  #stream: StreamingRenderer | null = null
+  #streamLabels: MarkdownCodeLabels | undefined
+  #lastProps: MarkdownTextProps | null = null
+  #lastChildren: RNode[] = []
+
+  setProps(props: MarkdownTextProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #computeChildren(): RNode[] {
+    const { text, streaming = false, codeLabels, fileMentions } = this.#props
     if (!streaming) {
-      streamRef.current = null
+      this.#stream = null
       return renderSettled(text, codeLabels, fileMentions)
     }
-    if (streamRef.current === null || streamLabelsRef.current !== codeLabels) {
-      streamRef.current = new StreamingRenderer(codeLabels)
-      streamLabelsRef.current = codeLabels
+    if (this.#stream === null || this.#streamLabels !== codeLabels) {
+      this.#stream = new StreamingRenderer(codeLabels)
+      this.#streamLabels = codeLabels
     }
-    return streamRef.current.render(text)
-  }, [text, streaming, codeLabels, fileMentions])
-  return <div className={css.markdown}>{children}</div>
-})
+    return this.#stream.render(text)
+  }
+
+  #render(): void {
+    // Mirrors the React version's memo (skip on identical props) plus the
+    // inner useMemo (recompute children only when a dependency changed).
+    const children = this.#lastProps !== null && propsEqual(this.#lastProps, this.#props)
+      ? this.#lastChildren
+      : this.#computeChildren()
+    this.#lastProps = this.#props
+    this.#lastChildren = children
+    const vdom: VNode = <div class={css.markdown ?? ''}>{children}</div>
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-markdown-text') === undefined) {
+  customElements.define('dsh-markdown-text', DshMarkdownText)
+}
+
+/**
+ * Create (if needed) or update a MarkdownText element in place.
+ * @param el - an existing `dsh-markdown-text` element to update, or null to create one.
+ * @param props - see {@link MarkdownTextProps}.
+ * @returns the `dsh-markdown-text` element; keep it and pass it back in to update
+ * (required for the streaming cache and settled-state memoization to persist
+ * across renders of the same message).
+ */
+export function renderMarkdownText(el: DshMarkdownText | null, props: MarkdownTextProps): DshMarkdownText {
+  const target = el ?? document.createElement('dsh-markdown-text') as DshMarkdownText
+  target.setProps(props)
+  return target
+}
+
+/**
+ * One-shot creation helper preserving the original function-component call
+ * shape. Cast to `JSX.Element` (Modal.tsx's pattern) so `<MarkdownText ... />`
+ * typechecks as a JSX component call — the returned `DshMarkdownText` is a
+ * real custom element, structurally not a webjsx `VElement`, but a caller
+ * embedding it as a JSX child (e.g. WebBlock's answer panel) relies on
+ * webjsx's DOM-node passthrough, not vdom diffing of its internals.
+ */
+export function MarkdownText(props: MarkdownTextProps): JSX.Element {
+  return renderMarkdownText(null, props) as unknown as JSX.Element
+}

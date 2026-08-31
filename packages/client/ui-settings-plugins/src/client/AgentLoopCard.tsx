@@ -17,7 +17,7 @@ export type AgentLoopCardProps =
  * @param props - locale copy, the card snapshot, and its form actions.
  * @returns the card.
  */
-export function AgentLoopCard(props: AgentLoopCardProps) {
+export function AgentLoopCard(props: AgentLoopCardProps): JSX.Element {
   const { t } = props
   const state = props.useAgentLoopCard(snapshot => snapshot)
   return (

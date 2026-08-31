@@ -8,8 +8,22 @@
  * is the header button's one action, so it raises the directory flow with no
  * menu in between; the flow and its error dialog live in WorkspacePicker
  * (same package — direct composition, no slot between them).
+ *
+ * Converted from a React hooks component tree to webjsx custom elements:
+ * every nested component that held `useState`/`useRef`/`useEffect` identity
+ * (ViewOptionsMenu, SessionTree, FlatList, SearchResults, and the top-level
+ * WorkspaceBrowser itself) becomes its own `HTMLElement` subclass with
+ * private fields replacing hook state, `setProps`/`connectedCallback`/
+ * `disconnectedCallback` replacing mount/cleanup effects, and explicit
+ * `applyDiff(this, vdom)` replacing implicit re-render. The framework's own
+ * selector hooks (`useSessions`, `useWorkspaces`, `useStore`,
+ * `useHostDescription`, `useDirectoryFlow`) are still called as plain
+ * functions inside `#render()`, exactly as ConversationRoot.tsx (already
+ * converted, ui-conversation) does — they are getSnapshot+subscribe sources
+ * bound by the framework's render machinery, not React hooks, so no manual
+ * subscribe/unsubscribe wiring is needed here.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import clsx from 'clsx'
 import {
   Button, IconCloseFill14, IconPersonalizationOutline16,
@@ -21,7 +35,24 @@ import type {
 import type { WorkspaceBrowserProps } from './contract/slots.ts'
 import type { SessionNode, SessionOrderBy } from './tree.ts'
 import { deriveFlat, deriveGroups, deriveSearchResults, UNGROUPED_KEY } from './tree.ts'
-import { ProjectRowItem, SearchResultItem, SessionNodeItem } from './rows/Rows.tsx'
+import {
+  DshProjectRowItem, DshSessionNodeItem, SearchResultItem,
+} from './rows/Rows.tsx'
+import type { ProjectRowItemProps, SessionNodeItemProps } from './rows/Rows.tsx'
+
+/** One-shot creation/update helper: `dsh-project-row-item` (Rows.tsx exports only the class). */
+function ProjectRowItem(props: ProjectRowItemProps): JSX.Element {
+  const el = document.createElement('dsh-project-row-item') as DshProjectRowItem
+  el.setProps(props)
+  return el as unknown as JSX.Element
+}
+
+/** One-shot creation/update helper: `dsh-session-node-item` (Rows.tsx exports only the class). */
+function SessionNodeItem(props: SessionNodeItemProps): JSX.Element {
+  const el = document.createElement('dsh-session-node-item') as DshSessionNodeItem
+  el.setProps(props)
+  return el as unknown as JSX.Element
+}
 import { FLAT_SESSION_ORDER_KEY } from './stores.ts'
 import { WorkspacePickFlow } from './WorkspacePicker.tsx'
 import css from './WorkspaceBrowser.module.css'
@@ -58,22 +89,38 @@ function toggled(list: readonly string[], key: string): string[] {
  * Accept the native drag at document level while a row drag is active: row
  * hover still owns the insertion marker, and releasing outside the list must
  * not be rendered as a rejected drop before dragend commits that last marker.
+ * Bind/unbind pair used from `#syncNativeDragAcceptance` (was `useEffect`).
  */
-function useNativeDragAcceptance(active: boolean): void {
-  useEffect(() => {
-    if (!active) return
-    const acceptDrag = (event: DragEvent): void => {
-      event.preventDefault()
-      if (event.dataTransfer !== null) event.dataTransfer.dropEffect = 'move'
-    }
-    const acceptDrop = (event: DragEvent): void => { event.preventDefault() }
-    document.addEventListener('dragover', acceptDrag)
-    document.addEventListener('drop', acceptDrop)
-    return () => {
-      document.removeEventListener('dragover', acceptDrag)
-      document.removeEventListener('drop', acceptDrop)
-    }
-  }, [active])
+function bindNativeDragAcceptance(): () => void {
+  const acceptDrag = (event: DragEvent): void => {
+    event.preventDefault()
+    if (event.dataTransfer !== null) event.dataTransfer.dropEffect = 'move'
+  }
+  const acceptDrop = (event: DragEvent): void => { event.preventDefault() }
+  document.addEventListener('dragover', acceptDrag)
+  document.addEventListener('drop', acceptDrop)
+  return () => {
+    document.removeEventListener('dragover', acceptDrag)
+    document.removeEventListener('drop', acceptDrop)
+  }
+}
+
+/** Owns one drag-source's native-drag-acceptance bind/unbind pair, edge-triggered on the active flag. */
+class NativeDragAcceptance {
+  #unbind: (() => void) | null = null
+  #active = false
+
+  sync(active: boolean): void {
+    if (active === this.#active) return
+    this.#active = active
+    this.#unbind?.()
+    this.#unbind = active ? bindNativeDragAcceptance() : null
+  }
+
+  teardown(): void {
+    this.#unbind?.()
+    this.#unbind = null
+  }
 }
 
 /** Reconcile a stored view order with the Workspace's current session account. */
@@ -143,53 +190,90 @@ function nextSessionOrderAccount({
   return { order, updatedAt, changed: orderChanged || timestampsChanged }
 }
 
-/** Grouping and ordering menu; own open state so it resets with the wide chrome. */
-function ViewOptionsMenu({ groupBy, orderBy, onGroupPick, onOrderPick, t }: {
+/** Own props of the {@link DshViewOptionsMenu} custom element. */
+export interface ViewOptionsMenuProps {
   groupBy: 'workspace' | 'flat'
   orderBy: SessionOrderBy
   onGroupPick: (mode: 'workspace' | 'flat') => void
   onOrderPick: (mode: SessionOrderBy) => void
   t: WorkspaceBrowserProps['t']
-}) {
-  const [open, setOpen] = useState(false)
-  return (
-    <Menu
-      open={open}
-      onClose={() => { setOpen(false) }}
-      items={[
-        { type: 'label' as const, id: 'group-by', text: t('groupBy.label') },
-        { id: 'workspace', label: t('groupBy.workspace') },
-        { id: 'flat', label: t('groupBy.flat') },
-        { type: 'separator' as const, id: 'order-by-separator' },
-        { type: 'label' as const, id: 'order-by', text: t('orderBy.label') },
-        { id: 'manual', label: t('orderBy.manual') },
-        { id: 'updated', label: t('orderBy.updated') },
-      ]}
-      selectedIds={[groupBy, orderBy]}
-      onSelect={(id) => {
-        if (id === 'workspace' || id === 'flat') onGroupPick(id)
-        else if (id === 'manual' || id === 'updated') onOrderPick(id)
-        setOpen(false)
-      }}
-      align="end"
-      dense
-      // Portal: the section header clips overflow, so an in-place list would
-      // be cut off at the header's bounds.
-      portal
-      anchor={(
-        <Tooltip label={t('viewOptions.label')} side="bottom" delayMs={500}>
-          <button
-            type="button"
-            className={clsx(css.iconButton, css.wide)}
-            aria-label={t('viewOptions.label')}
-            onClick={() => { setOpen(v => !v) }}
-          >
-            <IconPersonalizationOutline16 />
-          </button>
-        </Tooltip>
-      )}
-    />
-  )
+}
+
+/**
+ * Grouping and ordering menu custom element; own open state so it resets
+ * with the wide chrome. Converted from a React function component
+ * (useState open) — open becomes an instance field, re-render is explicit.
+ */
+export class DshViewOptionsMenu extends HTMLElement {
+  #props: ViewOptionsMenuProps | null = null
+  #open = false
+
+  setProps(props: ViewOptionsMenuProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { groupBy, orderBy, onGroupPick, onOrderPick, t } = props
+    const open = this.#open
+    const vdom = (
+      <Menu
+        open={open}
+        onClose={() => { this.#open = false; this.#render() }}
+        items={[
+          { type: 'label' as const, id: 'group-by', text: t('groupBy.label') },
+          { id: 'workspace', label: t('groupBy.workspace') },
+          { id: 'flat', label: t('groupBy.flat') },
+          { type: 'separator' as const, id: 'order-by-separator' },
+          { type: 'label' as const, id: 'order-by', text: t('orderBy.label') },
+          { id: 'manual', label: t('orderBy.manual') },
+          { id: 'updated', label: t('orderBy.updated') },
+        ]}
+        selectedIds={[groupBy, orderBy]}
+        onSelect={(id) => {
+          if (id === 'workspace' || id === 'flat') onGroupPick(id)
+          else if (id === 'manual' || id === 'updated') onOrderPick(id)
+          this.#open = false
+          this.#render()
+        }}
+        align="end"
+        dense
+        // Portal: the section header clips overflow, so an in-place list would
+        // be cut off at the header's bounds.
+        portal
+        anchor={(
+          <Tooltip label={t('viewOptions.label')} side="bottom" delayMs={500}>
+            <button
+              type="button"
+              class={clsx(css.iconButton, css.wide)}
+              aria-label={t('viewOptions.label')}
+              onclick={() => { this.#open = !this.#open; this.#render() }}
+            >
+              <IconPersonalizationOutline16 />
+            </button>
+          </Tooltip>
+        )}
+      />
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-view-options-menu') === undefined) {
+  customElements.define('dsh-view-options-menu', DshViewOptionsMenu)
+}
+
+/** One-shot creation/update helper preserving the original function-component call shape. */
+function ViewOptionsMenu(props: ViewOptionsMenuProps): JSX.Element {
+  const el = document.createElement('dsh-view-options-menu') as DshViewOptionsMenu
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }
 
 /** In-flight root-row drag: source identity plus the current insert marker. */
@@ -213,7 +297,7 @@ function workspaceGroupHalf(e: { clientY: number; currentTarget: HTMLElement }):
   return e.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
 }
 
-type SessionTreeProps = Pick<
+export type SessionTreeProps = Pick<
   WorkspaceBrowserProps,
   'useSessions' | 'startSession' | 'open' | 'forkSession'
   | 'insertWorkspaceBefore' | 'insertSessionBefore' | 't'
@@ -247,309 +331,357 @@ type SessionTreeProps = Pick<
   orderBy: SessionOrderBy
 }
 
-/** The scrolling session tree; unmounting drops the sessions subscription and expand-all state. */
-function SessionTree({
-  useSessions, startSession, open, forkSession, workspaces, archivedSessionIds,
-  onRenameRequest, onDeleteRequest, onSessionRename, onSessionArchive,
-  insertWorkspaceBefore, insertSessionBefore, orderBy,
-  groupExpansion, setGroupExpanded,
-  sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, home, t,
-}: SessionTreeProps) {
-  const list = useSessions(s => s)
-  const current = list.current
-  const [expandedSessionGroups, setExpandedSessionGroups] = useState<string[]>([])
-  // Transient drag marker state; the selected mode owns the resulting order.
-  const [drag, setDrag] = useState<DragState | null>(null)
-  const sessionDropCommitted = useRef(false)
-  const [workspaceDrag, setWorkspaceDrag] = useState<WorkspaceDragState | null>(null)
-  const workspaceDropCommitted = useRef(false)
-  const previousOrderBy = useRef(orderBy)
-  const nativeDragActive = drag !== null || workspaceDrag !== null
-  useNativeDragAcceptance(nativeDragActive)
-  const currentGroup = current === undefined
-    ? undefined
-    : (workspaces.find(w => w.sessionIds.includes(current))?.workspaceId as string | undefined)
-      ?? UNGROUPED_KEY
-  useEffect(() => {
-    if (current === undefined || currentGroup === undefined || Object.hasOwn(groupExpansion, currentGroup)) return
-    setGroupExpanded(currentGroup, true)
-  }, [current, currentGroup, setGroupExpanded, groupExpansion])
-  const expandedGroups = useMemo(
-    () => Object.entries(groupExpansion).filter(([, expanded]) => expanded).map(([key]) => key),
-    [groupExpansion],
-  )
-  const ungroupedSessionIds = useMemo(() => {
+/**
+ * The scrolling session tree custom element; disconnecting drops the native
+ * drag-acceptance listeners and expand-all state. Converted from a React
+ * function component: every `useState` becomes a private field, the
+ * `useNativeDragAcceptance`/current-group/order-reconciliation `useEffect`s
+ * become explicit sync steps at the top of `#render()` compared against
+ * previous field values, and `useMemo` derivations become plain recomputes
+ * (webjsx re-renders explicitly, so there is no per-frame cost concern to
+ * offset).
+ */
+export class DshSessionTree extends HTMLElement {
+  #props: SessionTreeProps | null = null
+  #expandedSessionGroups: string[] = []
+  #drag: DragState | null = null
+  #sessionDropCommitted = false
+  #workspaceDrag: WorkspaceDragState | null = null
+  #workspaceDropCommitted = false
+  #previousOrderBy: SessionOrderBy | null = null
+  #nativeDrag = new NativeDragAcceptance()
+  #promotedCurrentGroup: string | undefined = undefined
+
+  setProps(props: SessionTreeProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#nativeDrag.teardown()
+  }
+
+  /** Mirrors `useNativeDragAcceptance(active)`: bind/unbind on active-flag change. */
+  #syncNativeDragAcceptance(active: boolean): void {
+    this.#nativeDrag.sync(active)
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const {
+      useSessions, startSession, open, forkSession, workspaces, archivedSessionIds,
+      onRenameRequest, onDeleteRequest, onSessionRename, onSessionArchive,
+      insertWorkspaceBefore, insertSessionBefore, orderBy,
+      groupExpansion, setGroupExpanded,
+      sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, home, t,
+    } = props
+    const list = useSessions(s => s)
+    const current = list.current
+    const drag = this.#drag
+    const workspaceDrag = this.#workspaceDrag
+    const nativeDragActive = drag !== null || workspaceDrag !== null
+    this.#syncNativeDragAcceptance(nativeDragActive)
+
+    const currentGroup = current === undefined
+      ? undefined
+      : (workspaces.find(w => w.sessionIds.includes(current))?.workspaceId as string | undefined)
+        ?? UNGROUPED_KEY
+    if (current !== undefined && currentGroup !== undefined && !Object.hasOwn(groupExpansion, currentGroup)
+      && this.#promotedCurrentGroup !== currentGroup) {
+      this.#promotedCurrentGroup = currentGroup
+      setGroupExpanded(currentGroup, true)
+    }
+    if (current === undefined) this.#promotedCurrentGroup = undefined
+
+    const expandedGroups = Object.entries(groupExpansion).filter(([, expanded]) => expanded).map(([key]) => key)
     const accounted = new Set(workspaces.flatMap(workspace => workspace.sessionIds))
-    return list.ids.filter(id => list.byId[id] !== undefined && !accounted.has(id))
-  }, [list, workspaces])
-  useEffect(() => {
-    if (list.phase !== 'ready') return
-    const switchedToUpdated = previousOrderBy.current !== 'updated' && orderBy === 'updated'
-    previousOrderBy.current = orderBy
-    const accounts = [
-      ...workspaces.map(workspace => ({
-        key: workspace.workspaceId as string,
-        sessionIds: workspace.sessionIds.filter(id => list.byId[id] !== undefined),
-      })),
-      { key: UNGROUPED_KEY, sessionIds: ungroupedSessionIds },
-    ]
-    for (const { key, sessionIds } of accounts) {
-      const previousOrder = sessionOrderByAccount[key]
-      const previousUpdatedAt = sessionUpdatedAtByAccount[key] ?? {}
-      const next = nextSessionOrderAccount({
-        sessionIds,
-        previousOrder,
-        previousUpdatedAt,
-        list,
-        orderBy,
-        sortByRecency: orderBy === 'updated' && (previousOrder === undefined || switchedToUpdated),
-      })
-      if (next.changed) {
-        syncSessionOrderAccount(key, next.order.map(id => id as string), next.updatedAt)
+    const ungroupedSessionIds = list.ids.filter(id => list.byId[id] !== undefined && !accounted.has(id))
+
+    if (list.phase === 'ready') {
+      const switchedToUpdated = this.#previousOrderBy !== null
+        && this.#previousOrderBy !== 'updated' && orderBy === 'updated'
+      this.#previousOrderBy = orderBy
+      const accounts = [
+        ...workspaces.map(workspace => ({
+          key: workspace.workspaceId as string,
+          sessionIds: workspace.sessionIds.filter((id: SessionId) => list.byId[id] !== undefined),
+        })),
+        { key: UNGROUPED_KEY, sessionIds: ungroupedSessionIds },
+      ]
+      for (const { key, sessionIds } of accounts) {
+        const previousOrder = sessionOrderByAccount[key]
+        const previousUpdatedAt = sessionUpdatedAtByAccount[key] ?? {}
+        const next = nextSessionOrderAccount({
+          sessionIds,
+          previousOrder,
+          previousUpdatedAt,
+          list,
+          orderBy,
+          sortByRecency: orderBy === 'updated' && (previousOrder === undefined || switchedToUpdated),
+        })
+        if (next.changed) {
+          syncSessionOrderAccount(key, next.order.map(id => id as string), next.updatedAt)
+        }
       }
     }
-  }, [list, orderBy, sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, ungroupedSessionIds, workspaces])
-  const orderedWorkspaces = useMemo(() => {
-    return workspaces.map((workspace) => {
+
+    const orderedWorkspaces = workspaces.map((workspace) => {
       const stored = sessionOrderByAccount[workspace.workspaceId as string]
       const sessionIds = reconciledSessionOrder(workspace.sessionIds, stored)
       return { ...workspace, sessionIds }
     })
-  }, [sessionOrderByAccount, workspaces])
-  const orderedUngroupedSessionIds = useMemo(
-    () => reconciledSessionOrder(ungroupedSessionIds, sessionOrderByAccount[UNGROUPED_KEY]),
-    [sessionOrderByAccount, ungroupedSessionIds],
-  )
-  const groups = useMemo(
-    () => deriveGroups(list, orderedWorkspaces, archivedSessionIds, {
+    const orderedUngroupedSessionIds = reconciledSessionOrder(ungroupedSessionIds, sessionOrderByAccount[UNGROUPED_KEY])
+    const groups = deriveGroups(list, orderedWorkspaces, archivedSessionIds, {
       expandedGroups,
       ...(sessionOrderByAccount[UNGROUPED_KEY] === undefined
         ? {}
         : { ungroupedOrder: sessionOrderByAccount[UNGROUPED_KEY] }),
-    }),
-    [list, orderedWorkspaces, archivedSessionIds, expandedGroups, sessionOrderByAccount],
-  )
-  const now = Date.now()
-  const commitSessionDrag = (activeDrag: DragState, over: NonNullable<DragState['over']>): void => {
-    if (sessionDropCommitted.current) return
-    sessionDropCommitted.current = true
-    setDrag(null)
-    const group = groups.find(candidate => candidate.key === activeDrag.accountKey)
-    if (group === undefined) return
-    const targetIndex = group.sessions.findIndex(session => session.id === over.id)
-    if (targetIndex === -1) return
-    const anchor = over.half === 'before' ? over.id : group.sessions[targetIndex + 1]?.id
-    if (anchor === activeDrag.sessionId) return
-    const sourceIndex = group.sessions.findIndex(session => session.id === activeDrag.sessionId)
-    const anchorIndex = anchor === undefined
-      ? group.sessions.length
-      : group.sessions.findIndex(session => session.id === anchor)
-    if (sourceIndex !== -1 && (anchorIndex === sourceIndex || anchorIndex === sourceIndex + 1)) return
-    const accountSessionIds = activeDrag.accountKey === UNGROUPED_KEY
-      ? orderedUngroupedSessionIds
-      : orderedWorkspaces.find(workspace => workspace.workspaceId === activeDrag.accountKey)?.sessionIds
-    if (accountSessionIds === undefined) return
-    const nextOrder = accountSessionIds.filter(id => id !== activeDrag.sessionId)
-    const insertAt = anchor === undefined ? nextOrder.length : nextOrder.indexOf(anchor)
-    nextOrder.splice(insertAt === -1 ? nextOrder.length : insertAt, 0, activeDrag.sessionId)
-    setSessionOrder(activeDrag.accountKey, nextOrder.map(id => id as string))
-    if (orderBy === 'updated' || activeDrag.accountKey === UNGROUPED_KEY) return
-    insertSessionBefore(activeDrag.accountKey as WorkspaceId, activeDrag.sessionId, anchor).catch((reason: unknown) => {
-      console.warn('session reorder rejected:', reason)
     })
-  }
-  const commitWorkspaceDrag = (
-    activeDrag: WorkspaceDragState,
-    over: NonNullable<WorkspaceDragState['over']>,
-  ): void => {
-    if (workspaceDropCommitted.current) return
-    workspaceDropCommitted.current = true
-    setWorkspaceDrag(null)
-    const rowIndex = workspaces.findIndex(workspace => workspace.workspaceId === over.id)
-    if (rowIndex === -1) return
-    const anchor = over.half === 'before' ? over.id : workspaces[rowIndex + 1]?.workspaceId
-    if (anchor === activeDrag.workspaceId) return
-    const sourceIndex = workspaces.findIndex(workspace => workspace.workspaceId === activeDrag.workspaceId)
-    const anchorIndex = anchor === undefined
-      ? workspaces.length
-      : workspaces.findIndex(workspace => workspace.workspaceId === anchor)
-    if (sourceIndex !== -1 && (anchorIndex === sourceIndex || anchorIndex === sourceIndex + 1)) return
-    insertWorkspaceBefore(activeDrag.workspaceId, anchor).catch((reason: unknown) => {
-      console.warn('workspace reorder rejected:', reason)
-    })
-  }
-  const workspaceDropAtListStart = groups[0]?.workspaceId !== undefined
-    && workspaceDrag?.over?.id === groups[0].workspaceId
-    && workspaceDrag.over.half === 'before'
+    const now = Date.now()
 
-  return (
-    <div className={clsx(css.treeBody, css.wide)}>
-      {workspaceDropAtListStart && <span className={css.listTopDropIndicator} aria-hidden="true" />}
-      <div
-        className={clsx(css.list, workspaceDropAtListStart && css.listTopDropActive)}
-        role="tree"
-        aria-label={t('section.sessions')}
-      >
-        {groups.length === 0 && (
-          <div className={css.empty}>{t('empty.none')}</div>
-        )}
-        {groups.map((group) => {
-          const workspaceId = group.workspaceId
-          const workspaceMarker = workspaceId !== undefined && workspaceDrag?.over?.id === workspaceId
-            ? workspaceDrag.over.half
-            : null
-          const workspaceDragProps = workspaceId === undefined ? undefined : {
-            start: () => {
-              workspaceDropCommitted.current = false
-              setWorkspaceDrag({ workspaceId, over: null })
-            },
-            end: () => {
-              if (workspaceDrag?.over !== null && workspaceDrag?.over !== undefined) {
-                commitWorkspaceDrag(workspaceDrag, workspaceDrag.over)
-              } else {
-                setWorkspaceDrag(null)
-              }
-              workspaceDropCommitted.current = false
-            },
-          }
-          const hoverWorkspace = workspaceId === undefined
-            ? undefined
-            : (half: 'before' | 'after') => {
-              setWorkspaceDrag(active => active === null
-                ? active
-                : { ...active, over: { id: workspaceId, half } })
-            }
-          const dropWorkspace = workspaceId === undefined
-            ? undefined
-            : (half: 'before' | 'after') => {
-              if (workspaceDrag === null) return
-              commitWorkspaceDrag(workspaceDrag, { id: workspaceId, half })
-            }
-          return (
-          // Group section: header row + expanded top-level session rows. The
-          // inter-group breathing room is the section's own margin
-          // (WorkspaceBrowser.module.css).
-            <div
-              key={group.key}
-              className={clsx(
-                css.groupSection,
-                workspaceMarker === 'before' && css.workspaceDropBefore,
-                workspaceMarker === 'after' && css.workspaceDropAfter,
-              )}
-              onDragOver={workspaceDrag === null || hoverWorkspace === undefined
-                ? undefined
-                : (e) => {
-                  e.preventDefault()
-                  e.dataTransfer.dropEffect = 'move'
-                  hoverWorkspace(workspaceGroupHalf(e))
-                }}
-              onDrop={workspaceDrag === null || dropWorkspace === undefined
-                ? undefined
-                : (e) => {
-                  e.preventDefault()
-                  dropWorkspace(workspaceGroupHalf(e))
-                }}
-            >
-              <ProjectRowItem
-                group={group}
-                home={home}
-                t={t}
-                onToggle={() => {
-                  if (group.expanded) {
-                    setExpandedSessionGroups(keys => keys.filter(key => key !== group.key))
-                  }
-                  setGroupExpanded(group.key, !group.expanded)
-                }}
-                onCreate={() => {
-                  if (group.workspaceId !== undefined) {
-                    setGroupExpanded(group.key, true)
-                    startSession(group.workspaceId)
-                  }
-                }}
-                drag={workspaceDragProps}
-                actions={group.workspaceId === undefined
-                  ? undefined
-                  : {
-                    rename: () => {
-                    /* v8 ignore next -- narrowing guard: the actions object exists only for real-workspace groups. */
-                      if (group.workspaceId !== undefined) onRenameRequest(group.workspaceId, group.label)
-                    },
-                    delete: () => {
-                    /* v8 ignore next -- narrowing guard: the actions object exists only for real-workspace groups. */
-                      if (group.workspaceId !== undefined) onDeleteRequest(group.workspaceId, group.label)
-                    },
-                  }}
-              />
-              {(expandedSessionGroups.includes(group.key)
-                ? group.sessions
-                : group.sessions.slice(0, COLLAPSED_SESSION_LIMIT)
-              ).map((node) => {
-              // Session drag never leaves its group. Ungrouped writes only the
-              // browser-local account; real Workspaces may also write Host order.
-                const sameGroupDrag = drag !== null && drag.accountKey === group.key
-                const dragProps = {
-                  start: () => {
-                    sessionDropCommitted.current = false
-                    setDrag({ accountKey: group.key, sessionId: node.id, over: null })
-                  },
-                  active: sameGroupDrag,
-                  marker: sameGroupDrag && drag.over?.id === node.id ? drag.over.half : null,
-                  hover: (half: 'before' | 'after') => {
-                  /* v8 ignore next -- narrowing guard: Rows gates hover on `active`, which is false while the drag state is null. */
-                    setDrag(d => (d === null ? d : { ...d, over: { id: node.id, half } }))
-                  },
-                  drop: (half: 'before' | 'after') => {
-                  /* v8 ignore next -- narrowing guard: Rows gates drop on `active`, which is false while the drag state is null. */
-                    if (drag === null) return
-                    commitSessionDrag(drag, { id: node.id, half })
-                  },
-                  end: () => {
-                    if (drag?.over !== null && drag?.over !== undefined) commitSessionDrag(drag, drag.over)
-                    else setDrag(null)
-                    sessionDropCommitted.current = false
-                  },
+    const commitSessionDrag = (activeDrag: DragState, over: NonNullable<DragState['over']>): void => {
+      if (this.#sessionDropCommitted) return
+      this.#sessionDropCommitted = true
+      this.#drag = null
+      const group = groups.find(candidate => candidate.key === activeDrag.accountKey)
+      if (group === undefined) { this.#render(); return }
+      const targetIndex = group.sessions.findIndex(session => session.id === over.id)
+      if (targetIndex === -1) { this.#render(); return }
+      const anchor = over.half === 'before' ? over.id : group.sessions[targetIndex + 1]?.id
+      if (anchor === activeDrag.sessionId) { this.#render(); return }
+      const sourceIndex = group.sessions.findIndex(session => session.id === activeDrag.sessionId)
+      const anchorIndex = anchor === undefined
+        ? group.sessions.length
+        : group.sessions.findIndex(session => session.id === anchor)
+      if (sourceIndex !== -1 && (anchorIndex === sourceIndex || anchorIndex === sourceIndex + 1)) { this.#render(); return }
+      const accountSessionIds = activeDrag.accountKey === UNGROUPED_KEY
+        ? orderedUngroupedSessionIds
+        : orderedWorkspaces.find(workspace => workspace.workspaceId === activeDrag.accountKey)?.sessionIds
+      if (accountSessionIds === undefined) { this.#render(); return }
+      const nextOrder = accountSessionIds.filter((id: SessionId) => id !== activeDrag.sessionId)
+      const insertAt = anchor === undefined ? nextOrder.length : nextOrder.indexOf(anchor)
+      nextOrder.splice(insertAt === -1 ? nextOrder.length : insertAt, 0, activeDrag.sessionId)
+      setSessionOrder(activeDrag.accountKey, nextOrder.map((id: SessionId) => id as string))
+      if (orderBy !== 'updated' && activeDrag.accountKey !== UNGROUPED_KEY) {
+        insertSessionBefore(activeDrag.accountKey as WorkspaceId, activeDrag.sessionId, anchor).catch((reason: unknown) => {
+          console.warn('session reorder rejected:', reason)
+        })
+      }
+      this.#render()
+    }
+    const commitWorkspaceDrag = (
+      activeDrag: WorkspaceDragState,
+      over: NonNullable<WorkspaceDragState['over']>,
+    ): void => {
+      if (this.#workspaceDropCommitted) return
+      this.#workspaceDropCommitted = true
+      this.#workspaceDrag = null
+      const rowIndex = workspaces.findIndex(workspace => workspace.workspaceId === over.id)
+      if (rowIndex === -1) { this.#render(); return }
+      const anchor = over.half === 'before' ? over.id : workspaces[rowIndex + 1]?.workspaceId
+      if (anchor === activeDrag.workspaceId) { this.#render(); return }
+      const sourceIndex = workspaces.findIndex(workspace => workspace.workspaceId === activeDrag.workspaceId)
+      const anchorIndex = anchor === undefined
+        ? workspaces.length
+        : workspaces.findIndex(workspace => workspace.workspaceId === anchor)
+      if (sourceIndex !== -1 && (anchorIndex === sourceIndex || anchorIndex === sourceIndex + 1)) { this.#render(); return }
+      insertWorkspaceBefore(activeDrag.workspaceId, anchor).catch((reason: unknown) => {
+        console.warn('workspace reorder rejected:', reason)
+      })
+      this.#render()
+    }
+    const workspaceDropAtListStart = groups[0]?.workspaceId !== undefined
+      && workspaceDrag?.over?.id === groups[0].workspaceId
+      && workspaceDrag?.over?.half === 'before'
+
+    const vdom = (
+      <div class={clsx(css.treeBody, css.wide)}>
+        {workspaceDropAtListStart && <span class={css.listTopDropIndicator ?? ''} aria-hidden="true" />}
+        <div
+          class={clsx(css.list, workspaceDropAtListStart && css.listTopDropActive)}
+          role="tree"
+          aria-label={t('section.sessions')}
+        >
+          {groups.length === 0 && (
+            <div class={css.empty ?? ''}>{t('empty.none')}</div>
+          )}
+          {groups.map((group) => {
+            const workspaceId = group.workspaceId
+            const workspaceMarker = workspaceId !== undefined && workspaceDrag?.over?.id === workspaceId
+              ? (workspaceDrag?.over?.half ?? null)
+              : null
+            const workspaceDragProps = workspaceId === undefined ? undefined : {
+              start: () => {
+                this.#workspaceDropCommitted = false
+                this.#workspaceDrag = { workspaceId, over: null }
+                this.#render()
+              },
+              end: () => {
+                const wd = this.#workspaceDrag
+                if (wd?.over !== null && wd?.over !== undefined) {
+                  commitWorkspaceDrag(wd, wd.over)
+                } else {
+                  this.#workspaceDrag = null
+                  this.#render()
                 }
-                return (
-                  <SessionNodeItem
-                    key={node.id}
-                    node={node}
-                    currentId={current}
-                    now={now}
-                    onOpen={open}
-                    onRename={onSessionRename}
-                    onFork={forkSession}
-                    onArchive={onSessionArchive}
-                    drag={dragProps}
-                    t={t}
-                  />
-                )
-              })}
-              {group.sessions.length > COLLAPSED_SESSION_LIMIT && (
-                <button
-                  type="button"
-                  className={css.sessionOverflowButton}
-                  aria-expanded={expandedSessionGroups.includes(group.key)}
-                  onClick={() => { setExpandedSessionGroups(keys => toggled(keys, group.key)) }}
-                >
-                  {expandedSessionGroups.includes(group.key)
-                    ? t('sessions.collapse')
-                    : t('sessions.expand', { n: group.sessions.length - COLLAPSED_SESSION_LIMIT })}
-                </button>
-              )}
-            </div>
-          )
-        })}
+                this.#workspaceDropCommitted = false
+              },
+            }
+            const hoverWorkspace = workspaceId === undefined
+              ? undefined
+              : (half: 'before' | 'after') => {
+                if (this.#workspaceDrag === null) return
+                this.#workspaceDrag = { ...this.#workspaceDrag, over: { id: workspaceId, half } }
+                this.#render()
+              }
+            const dropWorkspace = workspaceId === undefined
+              ? undefined
+              : (half: 'before' | 'after') => {
+                if (this.#workspaceDrag === null) return
+                commitWorkspaceDrag(this.#workspaceDrag, { id: workspaceId, half })
+              }
+            return (
+            // Group section: header row + expanded top-level session rows. The
+            // inter-group breathing room is the section's own margin
+            // (WorkspaceBrowser.module.css).
+              <div
+                key={group.key}
+                class={clsx(
+                  css.groupSection,
+                  workspaceMarker === 'before' && css.workspaceDropBefore,
+                  workspaceMarker === 'after' && css.workspaceDropAfter,
+                )}
+                ondragover={workspaceDrag === null || hoverWorkspace === undefined
+                  ? null
+                  : (e: DragEvent) => {
+                    e.preventDefault()
+                    if (e.dataTransfer !== null) e.dataTransfer.dropEffect = 'move'
+                    hoverWorkspace(workspaceGroupHalf(e as unknown as { clientY: number; currentTarget: HTMLElement }))
+                  }}
+                ondrop={workspaceDrag === null || dropWorkspace === undefined
+                  ? null
+                  : (e: DragEvent) => {
+                    e.preventDefault()
+                    dropWorkspace(workspaceGroupHalf(e as unknown as { clientY: number; currentTarget: HTMLElement }))
+                  }}
+              >
+                {ProjectRowItem({
+                  group,
+                  home,
+                  t,
+                  onToggle: () => {
+                    if (group.expanded) {
+                      this.#expandedSessionGroups = this.#expandedSessionGroups.filter(key => key !== group.key)
+                    }
+                    setGroupExpanded(group.key, !group.expanded)
+                    this.#render()
+                  },
+                  onCreate: () => {
+                    if (group.workspaceId !== undefined) {
+                      setGroupExpanded(group.key, true)
+                      startSession(group.workspaceId)
+                      this.#render()
+                    }
+                  },
+                  drag: workspaceDragProps,
+                  actions: group.workspaceId === undefined
+                    ? undefined
+                    : {
+                      rename: () => {
+                        /* v8 ignore next -- narrowing guard: the actions object exists only for real-workspace groups. */
+                        if (group.workspaceId !== undefined) onRenameRequest(group.workspaceId, group.label)
+                      },
+                      delete: () => {
+                        /* v8 ignore next -- narrowing guard: the actions object exists only for real-workspace groups. */
+                        if (group.workspaceId !== undefined) onDeleteRequest(group.workspaceId, group.label)
+                      },
+                    },
+                })}
+                {(this.#expandedSessionGroups.includes(group.key)
+                  ? group.sessions
+                  : group.sessions.slice(0, COLLAPSED_SESSION_LIMIT)
+                ).map((node) => {
+                // Session drag never leaves its group. Ungrouped writes only the
+                // browser-local account; real Workspaces may also write Host order.
+                  const sameGroupDrag = drag !== null && drag.accountKey === group.key
+                  const dragProps = {
+                    start: () => {
+                      this.#sessionDropCommitted = false
+                      this.#drag = { accountKey: group.key, sessionId: node.id, over: null }
+                      this.#render()
+                    },
+                    active: sameGroupDrag,
+                    marker: sameGroupDrag && drag.over?.id === node.id ? drag.over.half : null,
+                    hover: (half: 'before' | 'after') => {
+                    /* v8 ignore next -- narrowing guard: Rows gates hover on `active`, which is false while the drag state is null. */
+                      if (this.#drag === null) return
+                      this.#drag = { ...this.#drag, over: { id: node.id, half } }
+                      this.#render()
+                    },
+                    drop: (half: 'before' | 'after') => {
+                    /* v8 ignore next -- narrowing guard: Rows gates drop on `active`, which is false while the drag state is null. */
+                      if (this.#drag === null) return
+                      commitSessionDrag(this.#drag, { id: node.id, half })
+                    },
+                    end: () => {
+                      const d = this.#drag
+                      if (d?.over !== null && d?.over !== undefined) commitSessionDrag(d, d.over)
+                      else { this.#drag = null; this.#render() }
+                      this.#sessionDropCommitted = false
+                    },
+                  }
+                  return SessionNodeItem({
+                    node,
+                    currentId: current,
+                    now,
+                    onOpen: open,
+                    onRename: onSessionRename,
+                    onFork: forkSession,
+                    onArchive: onSessionArchive,
+                    drag: dragProps,
+                    t,
+                  })
+                })}
+                {group.sessions.length > COLLAPSED_SESSION_LIMIT && (
+                  <button
+                    type="button"
+                    class={css.sessionOverflowButton ?? ''}
+                    aria-expanded={String(this.#expandedSessionGroups.includes(group.key))}
+                    onclick={() => { this.#expandedSessionGroups = toggled(this.#expandedSessionGroups, group.key); this.#render() }}
+                  >
+                    {this.#expandedSessionGroups.includes(group.key)
+                      ? t('sessions.collapse')
+                      : t('sessions.expand', { n: group.sessions.length - COLLAPSED_SESSION_LIMIT })}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <span class={css.fade ?? ''} />
       </div>
-      <span className={css.fade} />
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
 }
 
-/** The flat "In one list" body: every session is one draggable top-level row. */
-function FlatList({
-  useSessions, open, forkSession, onSessionRename, onSessionArchive, archivedSessionIds,
-  orderBy, sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, t,
-}: Pick<
+if (typeof customElements !== 'undefined' && customElements.get('dsh-session-tree') === undefined) {
+  customElements.define('dsh-session-tree', DshSessionTree)
+}
+
+/** One-shot creation/update helper preserving the original function-component call shape. */
+function SessionTree(props: SessionTreeProps): JSX.Element {
+  const el = document.createElement('dsh-session-tree') as DshSessionTree
+  el.setProps(props)
+  return el as unknown as JSX.Element
+}
+
+export type FlatListProps = Pick<
   SessionTreeProps,
   | 'useSessions'
   | 'open'
@@ -563,106 +695,157 @@ function FlatList({
   | 'syncSessionOrderAccount'
   | 'setSessionOrder'
   | 't'
->) {
-  const list = useSessions(s => s)
-  const baseRows = useMemo(
-    () => deriveFlat(list, archivedSessionIds),
-    [list, archivedSessionIds],
-  )
-  const sessionIds = useMemo(() => baseRows.map(row => row.id), [baseRows])
-  const previousOrderBy = useRef(orderBy)
-  useEffect(() => {
-    if (list.phase !== 'ready') return
-    const previousOrder = sessionOrderByAccount[FLAT_SESSION_ORDER_KEY]
-    const previousUpdatedAt = sessionUpdatedAtByAccount[FLAT_SESSION_ORDER_KEY] ?? {}
-    const switchedToUpdated = previousOrderBy.current !== 'updated' && orderBy === 'updated'
-    previousOrderBy.current = orderBy
-    const next = nextSessionOrderAccount({
-      sessionIds,
-      previousOrder,
-      previousUpdatedAt,
-      list,
-      orderBy,
-      sortByRecency: orderBy === 'updated' && (previousOrder === undefined || switchedToUpdated),
-    })
-    if (next.changed) {
-      syncSessionOrderAccount(FLAT_SESSION_ORDER_KEY, next.order.map(id => id as string), next.updatedAt)
+>
+
+/**
+ * The flat "In one list" body custom element: every session is one
+ * draggable top-level row. Converted from a React function component —
+ * `useState`/`useRef` become private fields, the order-reconciliation
+ * `useEffect` becomes an explicit sync step in `#render()`.
+ */
+export class DshFlatList extends HTMLElement {
+  #props: FlatListProps | null = null
+  #drag: DragState | null = null
+  #dropCommitted = false
+  #previousOrderBy: SessionOrderBy | null = null
+  #nativeDrag = new NativeDragAcceptance()
+
+  setProps(props: FlatListProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#nativeDrag.teardown()
+  }
+
+  #syncNativeDragAcceptance(active: boolean): void {
+    this.#nativeDrag.sync(active)
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const {
+      useSessions, open, forkSession, onSessionRename, onSessionArchive, archivedSessionIds,
+      orderBy, sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, t,
+    } = props
+    const list = useSessions(s => s)
+    const baseRows = deriveFlat(list, archivedSessionIds)
+    const sessionIds = baseRows.map(row => row.id)
+
+    if (list.phase === 'ready') {
+      const previousOrder = sessionOrderByAccount[FLAT_SESSION_ORDER_KEY]
+      const previousUpdatedAt = sessionUpdatedAtByAccount[FLAT_SESSION_ORDER_KEY] ?? {}
+      const switchedToUpdated = this.#previousOrderBy !== null
+        && this.#previousOrderBy !== 'updated' && orderBy === 'updated'
+      this.#previousOrderBy = orderBy
+      const next = nextSessionOrderAccount({
+        sessionIds,
+        previousOrder,
+        previousUpdatedAt,
+        list,
+        orderBy,
+        sortByRecency: orderBy === 'updated' && (previousOrder === undefined || switchedToUpdated),
+      })
+      if (next.changed) {
+        syncSessionOrderAccount(FLAT_SESSION_ORDER_KEY, next.order.map(id => id as string), next.updatedAt)
+      }
     }
-  }, [list, orderBy, sessionOrderByAccount, sessionUpdatedAtByAccount, sessionIds, syncSessionOrderAccount])
-  const rows = useMemo(() => {
+
     const byId = new Map(baseRows.map(row => [row.id, row]))
-    return reconciledSessionOrder(sessionIds, sessionOrderByAccount[FLAT_SESSION_ORDER_KEY])
+    const rows = reconciledSessionOrder(sessionIds, sessionOrderByAccount[FLAT_SESSION_ORDER_KEY])
       .flatMap((id) => {
         const row = byId.get(id)
         return row === undefined ? [] : [row]
       })
-  }, [baseRows, sessionOrderByAccount, sessionIds])
-  const [drag, setDrag] = useState<DragState | null>(null)
-  const dropCommitted = useRef(false)
-  useNativeDragAcceptance(drag !== null)
-  const commitDrag = (activeDrag: DragState, over: NonNullable<DragState['over']>): void => {
-    if (dropCommitted.current) return
-    dropCommitted.current = true
-    setDrag(null)
-    const targetIndex = rows.findIndex(row => row.id === over.id)
-    if (targetIndex === -1) return
-    const anchor = over.half === 'before' ? over.id : rows[targetIndex + 1]?.id
-    if (anchor === activeDrag.sessionId) return
-    const sourceIndex = rows.findIndex(row => row.id === activeDrag.sessionId)
-    const anchorIndex = anchor === undefined ? rows.length : rows.findIndex(row => row.id === anchor)
-    if (sourceIndex !== -1 && (anchorIndex === sourceIndex || anchorIndex === sourceIndex + 1)) return
-    const nextOrder = rows.map(row => row.id).filter(id => id !== activeDrag.sessionId)
-    const insertAt = anchor === undefined ? nextOrder.length : nextOrder.indexOf(anchor)
-    nextOrder.splice(insertAt === -1 ? nextOrder.length : insertAt, 0, activeDrag.sessionId)
-    setSessionOrder(FLAT_SESSION_ORDER_KEY, nextOrder.map(id => id as string))
-  }
-  const now = Date.now()
-  return (
-    <div className={clsx(css.treeBody, css.wide)}>
-      <div className={clsx(css.list, css.flatList)} role="tree" aria-label={t('section.sessions')}>
-        {rows.length === 0 && (
-          <div className={css.empty}>{t('empty.none')}</div>
-        )}
-        {rows.map((node) => {
-          const active = drag !== null
-          return (
-            <SessionNodeItem
-              key={node.id}
-              node={node}
-              currentId={list.current}
-              now={now}
-              onOpen={open}
-              onRename={onSessionRename}
-              onFork={forkSession}
-              onArchive={onSessionArchive}
-              flat
-              drag={{
+
+    const drag = this.#drag
+    this.#syncNativeDragAcceptance(drag !== null)
+
+    const commitDrag = (activeDrag: DragState, over: NonNullable<DragState['over']>): void => {
+      if (this.#dropCommitted) return
+      this.#dropCommitted = true
+      this.#drag = null
+      const targetIndex = rows.findIndex(row => row.id === over.id)
+      if (targetIndex === -1) { this.#render(); return }
+      const anchor = over.half === 'before' ? over.id : rows[targetIndex + 1]?.id
+      if (anchor === activeDrag.sessionId) { this.#render(); return }
+      const sourceIndex = rows.findIndex(row => row.id === activeDrag.sessionId)
+      const anchorIndex = anchor === undefined ? rows.length : rows.findIndex(row => row.id === anchor)
+      if (sourceIndex !== -1 && (anchorIndex === sourceIndex || anchorIndex === sourceIndex + 1)) { this.#render(); return }
+      const nextOrder = rows.map(row => row.id).filter(id => id !== activeDrag.sessionId)
+      const insertAt = anchor === undefined ? nextOrder.length : nextOrder.indexOf(anchor)
+      nextOrder.splice(insertAt === -1 ? nextOrder.length : insertAt, 0, activeDrag.sessionId)
+      setSessionOrder(FLAT_SESSION_ORDER_KEY, nextOrder.map(id => id as string))
+      this.#render()
+    }
+    const now = Date.now()
+
+    const vdom = (
+      <div class={clsx(css.treeBody, css.wide)}>
+        <div class={clsx(css.list, css.flatList)} role="tree" aria-label={t('section.sessions')}>
+          {rows.length === 0 && (
+            <div class={css.empty ?? ''}>{t('empty.none')}</div>
+          )}
+          {rows.map((node) => {
+            const active = drag !== null
+            return SessionNodeItem({
+              node,
+              currentId: list.current,
+              now,
+              onOpen: open,
+              onRename: onSessionRename,
+              onFork: forkSession,
+              onArchive: onSessionArchive,
+              flat: true,
+              drag: {
                 start: () => {
-                  dropCommitted.current = false
-                  setDrag({ accountKey: FLAT_SESSION_ORDER_KEY, sessionId: node.id, over: null })
+                  this.#dropCommitted = false
+                  this.#drag = { accountKey: FLAT_SESSION_ORDER_KEY, sessionId: node.id, over: null }
+                  this.#render()
                 },
                 active,
                 marker: active && drag.over?.id === node.id ? drag.over.half : null,
                 hover: (half) => {
-                  setDrag(current => current === null ? current : { ...current, over: { id: node.id, half } })
+                  if (this.#drag === null) return
+                  this.#drag = { ...this.#drag, over: { id: node.id, half } }
+                  this.#render()
                 },
                 drop: (half) => {
-                  if (drag !== null) commitDrag(drag, { id: node.id, half })
+                  if (this.#drag !== null) commitDrag(this.#drag, { id: node.id, half })
                 },
                 end: () => {
-                  if (drag?.over !== null && drag?.over !== undefined) commitDrag(drag, drag.over)
-                  else setDrag(null)
-                  dropCommitted.current = false
+                  const d = this.#drag
+                  if (d?.over !== null && d?.over !== undefined) commitDrag(d, d.over)
+                  else { this.#drag = null; this.#render() }
+                  this.#dropCommitted = false
                 },
-              }}
-              t={t}
-            />
-          )
-        })}
+              },
+              t,
+            })
+          })}
+        </div>
+        <span class={css.fade ?? ''} />
       </div>
-      <span className={css.fade} />
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-flat-list') === undefined) {
+  customElements.define('dsh-flat-list', DshFlatList)
+}
+
+/** One-shot creation/update helper preserving the original function-component call shape. */
+function FlatList(props: FlatListProps): JSX.Element {
+  const el = document.createElement('dsh-flat-list') as DshFlatList
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }
 
 interface RemoteSearchState {
@@ -672,68 +855,814 @@ interface RemoteSearchState {
   hasMore: boolean
 }
 
-/** Flat search body: local metadata matches plus the current Host result page. */
-function SearchResults({
-  useSessions,
-  open,
-  workspaces,
-  archivedSessionIds,
-  query,
-  remote,
-  resultLimit,
-  t,
-}: Pick<SessionTreeProps, 'useSessions' | 'open' | 't'> & {
+export type SearchResultsProps = Pick<SessionTreeProps, 'useSessions' | 'open' | 't'> & {
   workspaces: readonly WorkspaceView[]
   archivedSessionIds: readonly SessionNode['id'][]
   query: string
   remote: RemoteSearchState
   resultLimit: number
-}) {
-  const list = useSessions(s => s)
-  const currentRemote = remote.query === query
-    ? remote
-    : { query, status: 'loading' as const, items: [], hasMore: false }
-  const results = useMemo(
-    () => deriveSearchResults(list, workspaces, query, archivedSessionIds, currentRemote, resultLimit),
-    [list, workspaces, query, archivedSessionIds, currentRemote, resultLimit],
-  )
-  const pending = currentRemote.status === 'loading'
-  const failed = currentRemote.status === 'error'
+}
 
-  return (
-    <div className={clsx(css.treeBody, css.wide)}>
-      <div className={css.list}>
-        <div className={css.searchTree} role="tree" aria-label={t('search.results.aria')}>
-          {results.items.map(result => (
-            <SearchResultItem
-              key={result.id}
-              result={result}
-              currentId={list.current}
-              onOpen={open}
-              t={t}
-            />
-          ))}
+/**
+ * Flat search body custom element: local metadata matches plus the current
+ * Host result page. No hook holds identity across renders here beyond prop
+ * reads and a pure derivation, but it stays a custom element (rather than a
+ * stateless function) so its call sites match the sibling tree/list bodies.
+ */
+export class DshSearchResults extends HTMLElement {
+  #props: SearchResultsProps | null = null
+
+  setProps(props: SearchResultsProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { useSessions, open, workspaces, archivedSessionIds, query, remote, resultLimit, t } = props
+    const list = useSessions(s => s)
+    const currentRemote = remote.query === query
+      ? remote
+      : { query, status: 'loading' as const, items: [], hasMore: false }
+    const results = deriveSearchResults(list, workspaces, query, archivedSessionIds, currentRemote, resultLimit)
+    const pending = currentRemote.status === 'loading'
+    const failed = currentRemote.status === 'error'
+
+    const vdom = (
+      <div class={clsx(css.treeBody, css.wide)}>
+        <div class={css.list ?? ''}>
+          <div class={css.searchTree ?? ''} role="tree" aria-label={t('search.results.aria')}>
+            {results.items.map(result => (
+              <SearchResultItem
+                key={result.id}
+                result={result}
+                currentId={list.current}
+                onOpen={open}
+                t={t}
+              />
+            ))}
+          </div>
+          {pending && (
+            <div class={css.searchStatus ?? ''} role="status">{t('search.pending')}</div>
+          )}
+          {failed && (
+            <div class={css.searchWarning ?? ''} role="status">
+              {t('search.unavailable')}
+            </div>
+          )}
+          {!pending && results.items.length === 0 && (
+            <div class={css.empty ?? ''}>{t('search.noMatches')}</div>
+          )}
+          {results.hasMore && (
+            <div class={css.searchStatus ?? ''}>
+              {t('search.hasMore', { n: resultLimit })}
+            </div>
+          )}
         </div>
-        {pending && (
-          <div className={css.searchStatus} role="status">{t('search.pending')}</div>
-        )}
-        {failed && (
-          <div className={css.searchWarning} role="status">
-            {t('search.unavailable')}
-          </div>
-        )}
-        {!pending && results.items.length === 0 && (
-          <div className={css.empty}>{t('search.noMatches')}</div>
-        )}
-        {results.hasMore && (
-          <div className={css.searchStatus}>
-            {t('search.hasMore', { n: resultLimit })}
-          </div>
-        )}
+        <span class={css.fade ?? ''} />
       </div>
-      <span className={css.fade} />
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-search-results') === undefined) {
+  customElements.define('dsh-search-results', DshSearchResults)
+}
+
+/** One-shot creation/update helper preserving the original function-component call shape. */
+function SearchResults(props: SearchResultsProps): JSX.Element {
+  const el = document.createElement('dsh-search-results') as DshSearchResults
+  el.setProps(props)
+  return el as unknown as JSX.Element
+}
+
+/**
+ * The browsing region custom element (registered `dsh-workspace-browser`).
+ * Converted from the top-level `WorkspaceBrowser` React function component:
+ * every `useState` becomes a private field, every `useRef` becomes a
+ * private field holding the current DOM node (looked up after render where
+ * a callback ref was used), and every `useEffect` becomes an explicit sync
+ * step compared against previous field values, run at the top of
+ * `#render()` or from `setProps`/`connectedCallback`/`disconnectedCallback`
+ * as appropriate — mirroring Toast.tsx's/HoverCard.tsx's bind/unbind timer
+ * field patterns.
+ * @see WorkspaceBrowserProps for the field-by-field docs (unchanged from the React version).
+ */
+export class DshWorkspaceBrowser extends HTMLElement {
+  #props: WorkspaceBrowserProps | null = null
+
+  // Blank-session promotion (was a `useRef`).
+  #promotedBlank: { sessionId: SessionId; accountKey: string } | undefined = undefined
+
+  // Account-key retention sync edge-trigger (was a useEffect deps array: [workspacePhase, workspaces]).
+  #retainedAccountKeys: string | null = null
+
+  // Search (wide-only), was useState/useRef.
+  #query = ''
+  #searchExpanded = false
+  #remoteSearch: RemoteSearchState = { query: '', status: 'idle', items: [], hasMore: false }
+  #searchRoot: HTMLDivElement | null = null
+  #searchInput: HTMLInputElement | null = null
+
+  // Section-header + picker.
+  #wsPickerOpen = false
+  #wsPlusEl: HTMLButtonElement | null = null
+  #composing = false
+
+  // Rail search = expand + land in the search box.
+  #searchOnExpand = false
+  #expandFocusTimer: number | null = null
+  #expandFocusArmedFor: { wide: boolean; searchOnExpand: boolean } | null = null
+
+  // Outside-click dismissal.
+  #outsideClickBound = false
+  #onOutsideClick: ((event: MouseEvent) => void) | null = null
+
+  // Search debounce (AbortController), was useEffect keyed on normalizedQuery.
+  #searchQueryInFlight: string | null = null
+  #searchAbort: AbortController | null = null
+  #searchDebounceTimer: number | null = null
+
+  // Rename dialog (workspace).
+  #renameTarget: { workspaceId: WorkspaceId; currentTitle: string } | null = null
+  #renameDraft = ''
+  #renaming = false
+  #renameError: string | null = null
+
+  // Session rename dialog.
+  #sessionRenameTarget: { sessionId: SessionNode['id']; currentTitle: string } | null = null
+  #sessionRenameDraft = ''
+  #sessionRenaming = false
+  #sessionRenameError: string | null = null
+
+  // Delete dialog.
+  #deleteTarget: { workspaceId: WorkspaceId; title: string } | null = null
+  #deleting = false
+  #deleteCommittedId: WorkspaceId | null = null
+  #deleteError: string | null = null
+
+  // See DshConversationRoot's identical guard (ui-conversation package):
+  // this element's one-shot creation helper calls setProps() synchronously
+  // before insertion into the document; connectedCallback then fires again
+  // right after. Rendering unconditionally in both places double-renders
+  // the first mount around that detach/attach boundary, which has been
+  // observed to desync webjsx's per-element diff cache from the live DOM.
+  #renderedOnce = false
+
+  setProps(props: WorkspaceBrowserProps): void {
+    this.#props = props
+    this.#render()
+    this.#renderedOnce = true
+  }
+
+  connectedCallback(): void {
+    if (this.#renderedOnce) this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#unbindOutsideClick()
+    if (this.#expandFocusTimer !== null) { window.clearTimeout(this.#expandFocusTimer); this.#expandFocusTimer = null }
+    if (this.#searchDebounceTimer !== null) { window.clearTimeout(this.#searchDebounceTimer); this.#searchDebounceTimer = null }
+    this.#searchAbort?.abort()
+    this.#searchAbort = null
+  }
+
+  #unbindOutsideClick(): void {
+    if (this.#onOutsideClick !== null) {
+      document.removeEventListener('click', this.#onOutsideClick)
+      this.#onOutsideClick = null
+    }
+    this.#outsideClickBound = false
+  }
+
+  /** Rail search = expand + land in the search box (was a useEffect keyed on [wide, searchOnExpand]). */
+  #syncExpandFocus(wide: boolean): void {
+    const armed = wide && this.#searchOnExpand
+    const wasArmed = this.#expandFocusArmedFor !== null
+      && this.#expandFocusArmedFor.wide && this.#expandFocusArmedFor.searchOnExpand
+    if (armed === wasArmed) return
+    this.#expandFocusArmedFor = { wide, searchOnExpand: this.#searchOnExpand }
+    if (this.#expandFocusTimer !== null) { window.clearTimeout(this.#expandFocusTimer); this.#expandFocusTimer = null }
+    if (armed) {
+      this.#expandFocusTimer = window.setTimeout(() => {
+        this.#searchInput?.focus({ preventScroll: true })
+        this.#searchOnExpand = false
+        this.#expandFocusTimer = null
+        this.#render()
+      }, EXPAND_SLIDE_MS)
+    }
+  }
+
+  /** Focus the search input once expanded (non-rail path), mirrors the second focus effect. */
+  #syncSearchExpandedFocus(wide: boolean, searchExpanded: boolean): void {
+    if (!wide || !searchExpanded || this.#searchOnExpand) return
+    this.#searchInput?.focus({ preventScroll: true })
+  }
+
+  /**
+   * Outside-click dismissal stays off while the rail gesture is in flight
+   * (searchOnExpand): the rail click flips the shell wide and mounts this
+   * listener during its own dispatch, then keeps bubbling to document with
+   * the now-unmounted rail button as its target — outside searchRoot, so the
+   * listener would dismiss the search that click just opened.
+   */
+  #syncOutsideClick(wide: boolean, searchExpanded: boolean, normalizedQuery: string): void {
+    const shouldBind = wide && searchExpanded && !this.#searchOnExpand
+    if (!shouldBind) { this.#unbindOutsideClick(); return }
+    if (this.#outsideClickBound) return
+    this.#unbindOutsideClick()
+    const onClick = (event: MouseEvent): void => {
+      if (!(event.target instanceof Node) || this.#searchRoot?.contains(event.target) === true) return
+      this.#searchInput?.blur()
+      const currentQuery = sanitizeSearchQuery(this.#query).trim()
+      if (currentQuery !== '') return
+      this.#searchExpanded = false
+      this.#render()
+    }
+    this.#onOutsideClick = onClick
+    this.#outsideClickBound = true
+    document.addEventListener('click', onClick)
+    void normalizedQuery
+  }
+
+  /** Search debounce/AbortController, was a useEffect keyed on normalizedQuery. */
+  #syncSearchRequest(normalizedQuery: string, searchSessions: WorkspaceBrowserProps['searchSessions']): void {
+    if (this.#searchQueryInFlight === normalizedQuery) return
+    this.#searchQueryInFlight = normalizedQuery
+    if (this.#searchDebounceTimer !== null) { window.clearTimeout(this.#searchDebounceTimer); this.#searchDebounceTimer = null }
+    this.#searchAbort?.abort()
+    this.#searchAbort = null
+    if (normalizedQuery === '') {
+      this.#remoteSearch = { query: '', status: 'idle', items: [], hasMore: false }
+      return
+    }
+    this.#remoteSearch = { query: normalizedQuery, status: 'loading', items: [], hasMore: false }
+    const controller = new AbortController()
+    this.#searchAbort = controller
+    this.#searchDebounceTimer = window.setTimeout(() => {
+      this.#searchDebounceTimer = null
+      const props = this.#props
+      if (props === null) return
+      searchSessions(normalizedQuery, controller.signal).then((result) => {
+        if (controller.signal.aborted) return
+        this.#remoteSearch = {
+          query: normalizedQuery,
+          status: 'ready',
+          items: result.items,
+          hasMore: result.hasMore,
+        }
+        this.#render()
+      }).catch(() => {
+        if (controller.signal.aborted) return
+        this.#remoteSearch = { query: normalizedQuery, status: 'error', items: [], hasMore: false }
+        this.#render()
+      })
+    }, SEARCH_DEBOUNCE_MS)
+  }
+
+  #onSessionRename = (sessionId: SessionNode['id'], currentTitle: string): void => {
+    this.#sessionRenameTarget = { sessionId, currentTitle }
+    this.#sessionRenameDraft = currentTitle
+    this.#sessionRenameError = null
+    this.#render()
+  }
+
+  #onSessionArchive = (sessionId: SessionNode['id']): void => {
+    const props = this.#props
+    if (props === null) return
+    props.archiveSession(sessionId).catch((reason: unknown) => {
+      console.warn('session archive rejected:', reason)
+    })
+  }
+
+  #closeRename(): void {
+    if (this.#renaming) return
+    this.#renameTarget = null
+    this.#renameError = null
+    this.#render()
+  }
+
+  #confirmRename(): void {
+    const props = this.#props
+    const renameTarget = this.#renameTarget
+    if (props === null || renameTarget === null) return
+    const renameTrimmed = this.#renameDraft.trim()
+    const workspaces = props.useWorkspaces(state => state.items)
+    const renameDuplicate = renameTrimmed !== '' && renameTrimmed !== renameTarget.currentTitle
+      && workspaces.some(w => w.title === renameTrimmed)
+    const renameBlocked = this.#renaming || renameTrimmed === ''
+      || renameTrimmed === renameTarget.currentTitle || renameDuplicate
+    if (renameBlocked) return
+    this.#renaming = true
+    this.#renameError = null
+    this.#render()
+    props.renameWorkspace(renameTarget.workspaceId, renameTrimmed).then(() => {
+      this.#renaming = false
+      this.#renameTarget = null
+      this.#render()
+    }).catch((reason: unknown) => {
+      this.#renaming = false
+      this.#renameError = reason instanceof Error ? reason.message : String(reason)
+      this.#render()
+    })
+  }
+
+  #closeSessionRename(): void {
+    if (this.#sessionRenaming) return
+    this.#sessionRenameTarget = null
+    this.#sessionRenameError = null
+    this.#render()
+  }
+
+  #confirmSessionRename(): void {
+    const props = this.#props
+    const sessionRenameTarget = this.#sessionRenameTarget
+    if (props === null || sessionRenameTarget === null) return
+    const sessionRenameTrimmed = this.#sessionRenameDraft.trim()
+    const sessionRenameBlocked = this.#sessionRenaming || sessionRenameTrimmed === ''
+    if (sessionRenameBlocked) return
+    this.#sessionRenaming = true
+    this.#sessionRenameError = null
+    this.#render()
+    props.renameSession(sessionRenameTarget.sessionId, sessionRenameTrimmed).then(() => {
+      this.#sessionRenaming = false
+      this.#sessionRenameTarget = null
+      this.#render()
+    }).catch((reason: unknown) => {
+      this.#sessionRenaming = false
+      this.#sessionRenameError = reason instanceof Error ? reason.message : String(reason)
+      this.#render()
+    })
+  }
+
+  #closeDelete(): void {
+    if (this.#deleting) return
+    this.#deleteTarget = null
+    this.#deleteError = null
+    this.#render()
+  }
+
+  #confirmDelete(): void {
+    const props = this.#props
+    const deleteTarget = this.#deleteTarget
+    /* v8 ignore next -- the Modal is absent without a target and its button is disabled while deleting. */
+    if (props === null || this.#deleting || deleteTarget === null) return
+    this.#deleting = true
+    this.#deleteCommittedId = null
+    this.#deleteError = null
+    this.#render()
+    props.deleteWorkspace(deleteTarget.workspaceId).then(() => {
+      // Keep the confirmation pending until this component has rendered the
+      // committed list projection without the deleted id. Closing earlier
+      // exposes one stale frame to the next Create Workspace gesture.
+      this.#deleteCommittedId = deleteTarget.workspaceId
+      this.#render()
+    }).catch((reason: unknown) => {
+      this.#deleting = false
+      this.#deleteError = reason instanceof Error ? reason.message : String(reason)
+      this.#render()
+    })
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const {
+      wide,
+      expandSidebar,
+      useSessions,
+      useWorkspaces,
+      useStore,
+      actions,
+      startSession,
+      open,
+      forkSession,
+      insertWorkspaceBefore,
+      insertSessionBefore,
+      createWorkspace,
+      searchSessions,
+      searchResultLimit,
+      useDirectoryFlow,
+      useHostDescription,
+      renderSlot,
+      t,
+    } = props
+
+    const home = useHostDescription(description => description?.home)
+    const workspaces = useWorkspaces(state => state.items)
+    const workspacePhase = useWorkspaces(state => state.phase)
+    const archivedSessionIds = useWorkspaces(state => state.archivedSessionIds)
+    // Live occupancy of this surface's directory-flow hole (the same source the
+    // flow reads): a composition without a picking affordance can add nothing.
+    const directoryFlowAvailable = useDirectoryFlow(occupied => occupied)
+    const groupBy = useStore(s => s.groupBy)
+    const orderBy = useStore(s => s.orderBy)
+    const groupExpansion = useStore(s => s.groupExpansion)
+    const sessionOrderByAccount = useStore(s => s.sessionOrderByAccount)
+    const sessionUpdatedAtByAccount = useStore(s => s.sessionUpdatedAtByAccount)
+    const currentBlankSessionId = useSessions((state) => {
+      const current = state.current
+      return current !== undefined && state.byId[current]?.blank === true ? current : undefined
+    })
+    const currentBlankAccount = currentBlankSessionId === undefined
+      ? undefined
+      : (workspaces.find(workspace => workspace.sessionIds.includes(currentBlankSessionId))
+        ?.workspaceId as string | undefined) ?? UNGROUPED_KEY
+
+    // Blank-session promotion sync (was a useEffect).
+    if (currentBlankSessionId === undefined || currentBlankAccount === undefined) {
+      this.#promotedBlank = undefined
+    } else if (this.#promotedBlank === undefined
+      || this.#promotedBlank.sessionId !== currentBlankSessionId
+      || this.#promotedBlank.accountKey !== currentBlankAccount) {
+      this.#promotedBlank = { sessionId: currentBlankSessionId, accountKey: currentBlankAccount }
+      for (const accountKey of new Set([currentBlankAccount, FLAT_SESSION_ORDER_KEY])) {
+        const previous = sessionOrderByAccount[accountKey] ?? []
+        actions.setSessionOrder(accountKey, [
+          currentBlankSessionId,
+          ...previous.filter(id => id !== currentBlankSessionId),
+        ])
+      }
+    }
+
+    // Account-key retention sync (was a useEffect keyed on workspacePhase/workspaces).
+    // retainAccountKeys always rebuilds fresh object references (even when
+    // nothing is filtered out), so calling it unconditionally every render
+    // produced a new store snapshot on every render, which resynchronously
+    // re-rendered this subscriber — an infinite loop with no yield point,
+    // hanging the tab. Edge-triggered on the actual key set, matching the
+    // original effect's dependency array.
+    if (workspacePhase === 'ready') {
+      const accountKeys = [
+        UNGROUPED_KEY,
+        FLAT_SESSION_ORDER_KEY,
+        ...workspaces.map(workspace => workspace.workspaceId as string),
+      ]
+      const accountKeysSignature = accountKeys.join('\0')
+      if (this.#retainedAccountKeys !== accountKeysSignature) {
+        this.#retainedAccountKeys = accountKeysSignature
+        actions.retainAccountKeys(accountKeys)
+      }
+    }
+
+    const query = this.#query
+    const searchExpanded = this.#searchExpanded
+    const normalizedQuery = sanitizeSearchQuery(query).trim()
+    const remoteSearch = this.#remoteSearch
+    const wsPickerOpen = this.#wsPickerOpen
+
+    this.#syncExpandFocus(wide)
+    this.#syncSearchExpandedFocus(wide, searchExpanded)
+    this.#syncOutsideClick(wide, searchExpanded, normalizedQuery)
+    this.#syncSearchRequest(normalizedQuery, searchSessions)
+
+    // Rename dialog derived state.
+    const renameTarget = this.#renameTarget
+    const renameDraft = this.#renameDraft
+    const renaming = this.#renaming
+    const renameError = this.#renameError
+    const renameTrimmed = renameDraft.trim()
+    const renameDuplicate = renameTarget !== null && renameTrimmed !== '' && renameTrimmed !== renameTarget.currentTitle
+      && workspaces.some(w => w.title === renameTrimmed)
+    const renameBlocked = renaming || renameTrimmed === ''
+      || renameTarget === null || renameTrimmed === renameTarget.currentTitle || renameDuplicate
+
+    // Session rename dialog derived state.
+    const sessionRenameTarget = this.#sessionRenameTarget
+    const sessionRenameDraft = this.#sessionRenameDraft
+    const sessionRenaming = this.#sessionRenaming
+    const sessionRenameError = this.#sessionRenameError
+    const sessionRenameTrimmed = sessionRenameDraft.trim()
+    const sessionRenameBlocked = sessionRenaming || sessionRenameTrimmed === '' || sessionRenameTarget === null
+
+    // Delete dialog sync (was a useEffect keyed on [deleteCommittedId, workspaces]).
+    const deleteCommittedId = this.#deleteCommittedId
+    if (deleteCommittedId !== null && !workspaces.some(workspace => workspace.workspaceId === deleteCommittedId)) {
+      this.#deleting = false
+      this.#deleteCommittedId = null
+      this.#deleteTarget = null
+    }
+    const deleteTarget = this.#deleteTarget
+    const deleting = this.#deleting
+    const deleteError = this.#deleteError
+
+    const vdom = (
+      <div class={clsx(css.root, !wide && css.rail)}>
+        <div class={css.sectionHeader ?? ''}>
+          {wide && (
+            <span class={clsx(css.sectionLabel, css.wide, searchExpanded && css.sectionLabelHidden)}>
+              {groupBy === 'flat' ? t('section.sessions') : t('section.workspaces')}
+            </span>
+          )}
+          {wide && (
+            <div class={clsx(css.searchSlot, searchExpanded && css.searchSlotExpanded)}>
+              <div
+                ref={(el: Node | null) => { this.#searchRoot = el as HTMLDivElement | null }}
+                class={clsx(css.search, searchExpanded && css.searchExpanded)}
+                onclick={() => {
+                  this.#wsPickerOpen = false
+                  this.#searchExpanded = true
+                  this.#render()
+                  this.#searchInput?.focus()
+                }}
+              >
+                <Tooltip label={t('search')} side="bottom" delayMs={500} disabled={searchExpanded}>
+                  <button
+                    type="button"
+                    class={css.searchButton ?? ''}
+                    aria-label={t('search.sessions.aria')}
+                    aria-expanded={String(searchExpanded)}
+                    onclick={() => {
+                      this.#wsPickerOpen = false
+                      this.#searchExpanded = true
+                      this.#render()
+                    }}
+                  >
+                    <IconSearchOutline16 size={searchExpanded ? 11 : 14} />
+                  </button>
+                </Tooltip>
+                <input
+                  ref={(el: Node | null) => { this.#searchInput = el as HTMLInputElement | null }}
+                  class={css.searchInput ?? ''}
+                  type="text"
+                  placeholder={t('search.placeholder')}
+                  maxLength={String(SEARCH_QUERY_MAX_CODE_UNITS)}
+                  value={query}
+                  tabIndex={String(searchExpanded ? 0 : -1)}
+                  onchange={(e: Event) => { this.#query = sanitizeSearchQuery((e.target as HTMLInputElement).value); this.#render() }}
+                  onkeydown={(e: KeyboardEvent) => {
+                    if (e.key !== 'Escape') return
+                    this.#query = ''
+                    this.#searchExpanded = false
+                    this.#render()
+                  }}
+                />
+                {searchExpanded && (
+                  <button
+                    type="button"
+                    class={css.clearButton ?? ''}
+                    aria-label={t('search.clear')}
+                    onclick={(e: MouseEvent) => {
+                      e.stopPropagation()
+                      this.#query = ''
+                      this.#searchExpanded = false
+                      this.#render()
+                    }}
+                  >
+                    <IconCloseFill14 />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          <div class={clsx(css.headerActions, wide && searchExpanded && css.headerActionsHidden)}>
+            {wide && ViewOptionsMenu({
+              groupBy,
+              orderBy,
+              onGroupPick: (mode) => { actions.setGroupBy(mode) },
+              onOrderPick: (mode) => { actions.setOrderBy(mode) },
+              t,
+            })}
+            {/* Adding is the button's one action, so a composition with no
+                picking affordance has nothing to offer here: the region hides the
+                button rather than leaving a dead one in the header. */}
+            {directoryFlowAvailable && (
+              <Tooltip label={t('workspace.add')} side="bottom" delayMs={500}>
+                <button
+                  ref={(el: Node | null) => { this.#wsPlusEl = el as HTMLButtonElement | null }}
+                  type="button"
+                  class={css.iconButton ?? ''}
+                  aria-label={t('workspace.add')}
+                  onclick={() => {
+                    this.#wsPickerOpen = !this.#wsPickerOpen
+                    this.#render()
+                  }}
+                >
+                  <IconProjectAddOutline16 size={wide ? 16 : 18} />
+                </button>
+              </Tooltip>
+            )}
+          </div>
+          {/* Add flow + its error dialog (same package — direct composition). */}
+          <WorkspacePickFlow
+            t={t}
+            open={wsPickerOpen}
+            anchorRef={{ current: this.#wsPlusEl }}
+            useWorkspaces={useWorkspaces}
+            createWorkspace={createWorkspace}
+            useDirectoryFlow={useDirectoryFlow}
+            renderDirectoryFlow={owner => renderSlot('sidebar.workspaces.directoryFlow', owner) as unknown as JSX.Element}
+            addOnly
+            side="right"
+            onPick={(workspaceId) => {
+              this.#wsPickerOpen = false
+              this.#render()
+              startSession(workspaceId)
+            }}
+            onClose={() => { this.#wsPickerOpen = false; this.#render() }}
+          />
+        </div>
+
+        {/* The collapsed rail keeps search as its own 36px control. */}
+        {!wide && <div class={css.search ?? ''}>
+          <Tooltip label={t('search')}>
+            <button
+              type="button"
+              class={css.searchButton ?? ''}
+              aria-label={t('search.sessions.aria')}
+              onclick={() => {
+                this.#searchExpanded = true
+                this.#searchOnExpand = true
+                this.#render()
+                expandSidebar()
+              }}
+            >
+              <IconSearchOutline16 size={18} />
+            </button>
+          </Tooltip>
+        </div>}
+
+        {/* Always-mounted seat keeps the region's flex slot while the list
+            itself is wide-only. */}
+        <div class={css.listArea ?? ''}>
+          {wide && (normalizedQuery !== ''
+            ? SearchResults({
+              useSessions,
+              open,
+              workspaces,
+              archivedSessionIds,
+              query: normalizedQuery,
+              remote: remoteSearch,
+              resultLimit: searchResultLimit,
+              t,
+            })
+            : groupBy === 'flat'
+              ? FlatList({
+                useSessions, open, forkSession,
+                onSessionRename: this.#onSessionRename, onSessionArchive: this.#onSessionArchive,
+                archivedSessionIds,
+                orderBy,
+                sessionOrderByAccount,
+                sessionUpdatedAtByAccount,
+                syncSessionOrderAccount: actions.syncSessionOrderAccount,
+                setSessionOrder: actions.setSessionOrder,
+                t,
+              })
+              : SessionTree({
+                useSessions,
+                onSessionRename: this.#onSessionRename,
+                onSessionArchive: this.#onSessionArchive,
+                forkSession,
+                workspaces,
+                groupExpansion,
+                setGroupExpanded: actions.setGroupExpanded,
+                sessionOrderByAccount,
+                sessionUpdatedAtByAccount,
+                syncSessionOrderAccount: actions.syncSessionOrderAccount,
+                setSessionOrder: actions.setSessionOrder,
+                archivedSessionIds,
+                startSession,
+                open,
+                insertWorkspaceBefore,
+                insertSessionBefore,
+                orderBy,
+                home,
+                t,
+                onRenameRequest: (workspaceId, currentTitle) => {
+                  this.#renameTarget = { workspaceId, currentTitle }
+                  this.#renameDraft = currentTitle
+                  this.#renameError = null
+                  this.#render()
+                },
+                onDeleteRequest: (workspaceId, title) => {
+                  this.#deleteTarget = { workspaceId, title }
+                  this.#deleteError = null
+                  this.#render()
+                },
+              }))}
+        </div>
+
+        <Modal
+          open={renameTarget !== null}
+          onClose={() => { this.#closeRename() }}
+          closeLabel={t('close')}
+          title={t('rename.workspace.title')}
+          footer={[
+            <Button variant="outline" disabled={renaming} onclick={() => { this.#closeRename() }}>{t('cancel')}</Button>,
+            <Button variant="primary" disabled={renameBlocked} onclick={() => { this.#confirmRename() }}>{t('rename')}</Button>,
+          ]}
+        >
+          {[
+            <input
+              class={css.renameInput ?? ''}
+              value={renameDraft}
+              aria-label={t('field.workspaceName')}
+              autofocus
+              disabled={renaming}
+              onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
+              onchange={(e: Event) => {
+                this.#renameDraft = (e.target as HTMLInputElement).value
+                this.#renameError = null
+                this.#render()
+              }}
+              oncompositionstart={() => { this.#composing = true }}
+              oncompositionend={() => { this.#composing = false }}
+              onkeydown={(e: KeyboardEvent) => {
+                if (e.key === 'Enter' && !this.#composing) {
+                  e.preventDefault()
+                  this.#confirmRename()
+                }
+              }}
+            />,
+            ...(renameDuplicate
+              ? [<div class={css.renameError ?? ''} role="alert">{t('conflict.named', { name: renameTrimmed })}</div>]
+              : []),
+            ...(renameError !== null
+              ? [<div class={css.renameError ?? ''} role="alert">{renameError}</div>]
+              : []),
+          ]}
+        </Modal>
+
+        <Modal
+          open={sessionRenameTarget !== null}
+          onClose={() => { this.#closeSessionRename() }}
+          closeLabel={t('close')}
+          title={t('rename.session.title')}
+          footer={[
+            <Button variant="outline" disabled={sessionRenaming} onclick={() => { this.#closeSessionRename() }}>{t('cancel')}</Button>,
+            <Button variant="primary" disabled={sessionRenameBlocked} onclick={() => { this.#confirmSessionRename() }}>{t('rename')}</Button>,
+          ]}
+        >
+          {[
+            <input
+              class={css.renameInput ?? ''}
+              value={sessionRenameDraft}
+              aria-label={t('field.sessionName')}
+              autofocus
+              disabled={sessionRenaming}
+              onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
+              onchange={(e: Event) => {
+                this.#sessionRenameDraft = (e.target as HTMLInputElement).value
+                this.#sessionRenameError = null
+                this.#render()
+              }}
+              oncompositionstart={() => { this.#composing = true }}
+              oncompositionend={() => { this.#composing = false }}
+              onkeydown={(e: KeyboardEvent) => {
+                if (e.key === 'Enter' && !this.#composing) {
+                  e.preventDefault()
+                  this.#confirmSessionRename()
+                }
+              }}
+            />,
+            ...(sessionRenameError !== null
+              ? [<div class={css.renameError ?? ''} role="alert">{sessionRenameError}</div>]
+              : []),
+          ]}
+        </Modal>
+        <Modal
+          open={deleteTarget !== null}
+          onClose={() => { this.#closeDelete() }}
+          closeLabel={t('close')}
+          title={t('delete.workspace')}
+          {...deleteTarget === null
+            ? {}
+            : { description: t('delete.desc', { name: deleteTarget.title }) }}
+          footer={[
+            <Button variant="outline" disabled={deleting} onclick={() => { this.#closeDelete() }}>{t('cancel')}</Button>,
+            <Button
+              variant="outline"
+              class={css.deleteAction ?? ''}
+              disabled={deleting}
+              onclick={() => { this.#confirmDelete() }}
+            >
+              {t('delete.workspace')}
+            </Button>,
+          ]}
+        >
+          {[
+            ...(deleting
+              ? [<div class={css.deleteStatus ?? ''} role="status">{t('delete.pending')}</div>]
+              : []),
+            ...(deleteError !== null
+              ? [<div class={css.renameError ?? ''} role="alert">{deleteError}</div>]
+              : []),
+          ]}
+        </Modal>
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-workspace-browser') === undefined) {
+  customElements.define('dsh-workspace-browser', DshWorkspaceBrowser)
 }
 
 /**
@@ -741,558 +1670,8 @@ function SearchResults({
  * @param props - composed slot props (shell owner share + store + injected actions).
  * @returns the region element tree.
  */
-export function WorkspaceBrowser({
-  wide,
-  expandSidebar,
-  useSessions,
-  useWorkspaces,
-  useStore,
-  actions,
-  startSession,
-  open,
-  renameSession,
-  forkSession,
-  renameWorkspace,
-  deleteWorkspace,
-  insertWorkspaceBefore,
-  archiveSession,
-  insertSessionBefore,
-  createWorkspace,
-  searchSessions,
-  searchResultLimit,
-  useDirectoryFlow,
-  useHostDescription,
-  renderSlot,
-  t,
-}: WorkspaceBrowserProps) {
-  const home = useHostDescription(description => description?.home)
-  const workspaces = useWorkspaces(state => state.items)
-  const workspacePhase = useWorkspaces(state => state.phase)
-  const archivedSessionIds = useWorkspaces(state => state.archivedSessionIds)
-  // Live occupancy of this surface's directory-flow hole (the same source the
-  // flow reads): a composition without a picking affordance can add nothing.
-  const directoryFlowAvailable = useDirectoryFlow(occupied => occupied)
-  const groupBy = useStore(s => s.groupBy)
-  const orderBy = useStore(s => s.orderBy)
-  const groupExpansion = useStore(s => s.groupExpansion)
-  const sessionOrderByAccount = useStore(s => s.sessionOrderByAccount)
-  const sessionUpdatedAtByAccount = useStore(s => s.sessionUpdatedAtByAccount)
-  const currentBlankSessionId = useSessions((state) => {
-    const current = state.current
-    return current !== undefined && state.byId[current]?.blank === true ? current : undefined
-  })
-  const currentBlankAccount = currentBlankSessionId === undefined
-    ? undefined
-    : (workspaces.find(workspace => workspace.sessionIds.includes(currentBlankSessionId))
-      ?.workspaceId as string | undefined) ?? UNGROUPED_KEY
-  const promotedBlank = useRef<{ sessionId: SessionId; accountKey: string } | undefined>(undefined)
-  useEffect(() => {
-    if (currentBlankSessionId === undefined || currentBlankAccount === undefined) {
-      promotedBlank.current = undefined
-      return
-    }
-    if (promotedBlank.current?.sessionId === currentBlankSessionId
-      && promotedBlank.current.accountKey === currentBlankAccount) return
-    promotedBlank.current = { sessionId: currentBlankSessionId, accountKey: currentBlankAccount }
-    for (const accountKey of new Set([currentBlankAccount, FLAT_SESSION_ORDER_KEY])) {
-      const previous = sessionOrderByAccount[accountKey] ?? []
-      actions.setSessionOrder(accountKey, [
-        currentBlankSessionId,
-        ...previous.filter(id => id !== currentBlankSessionId),
-      ])
-    }
-  }, [actions.setSessionOrder, currentBlankAccount, currentBlankSessionId, sessionOrderByAccount])
-  useEffect(() => {
-    if (workspacePhase !== 'ready') return
-    actions.retainAccountKeys([
-      UNGROUPED_KEY,
-      FLAT_SESSION_ORDER_KEY,
-      ...workspaces.map(workspace => workspace.workspaceId as string),
-    ])
-  }, [actions.retainAccountKeys, workspacePhase, workspaces])
-  // The query outlives the tree and the input (both wide-only) so collapsing
-  // does not silently drop an in-progress filter.
-  const [query, setQuery] = useState('')
-  const [searchExpanded, setSearchExpanded] = useState(false)
-  const normalizedQuery = sanitizeSearchQuery(query).trim()
-  const [remoteSearch, setRemoteSearch] = useState<RemoteSearchState>({
-    query: '',
-    status: 'idle',
-    items: [],
-    hasMore: false,
-  })
-  const searchRoot = useRef<HTMLDivElement | null>(null)
-  const searchInput = useRef<HTMLInputElement | null>(null)
-  // Section-header ＋ opens the picker menu (same popover in wide and rail
-  // states; the menu anchors on this button).
-  const [wsPickerOpen, setWsPickerOpen] = useState(false)
-  const wsPlusRef = useRef<HTMLButtonElement>(null)
-  const composingRef = useRef(false)
-
-  // Rail search = expand + land in the search box: the flag arms before the
-  // expand request; once the shell flips wide the input mounts and takes focus.
-  const [searchOnExpand, setSearchOnExpand] = useState(false)
-  useEffect(() => {
-    if (wide && searchOnExpand) {
-      const timer = window.setTimeout(() => {
-        searchInput.current?.focus({ preventScroll: true })
-        setSearchOnExpand(false)
-      }, EXPAND_SLIDE_MS)
-      return () => { window.clearTimeout(timer) }
-    }
-  }, [wide, searchOnExpand])
-
-  useEffect(() => {
-    if (!wide || !searchExpanded || searchOnExpand) return
-    searchInput.current?.focus({ preventScroll: true })
-  }, [wide, searchExpanded, searchOnExpand])
-
-  // Outside-click dismissal stays off while the rail gesture is in flight
-  // (searchOnExpand): the rail click flips the shell wide and mounts this
-  // listener during its own dispatch, then keeps bubbling to document with
-  // the now-unmounted rail button as its target — outside searchRoot, so the
-  // listener would dismiss the search that click just opened.
-  useEffect(() => {
-    if (!wide || !searchExpanded || searchOnExpand) return
-    const onClick = (event: MouseEvent): void => {
-      if (!(event.target instanceof Node) || searchRoot.current?.contains(event.target) === true) return
-      searchInput.current?.blur()
-      if (normalizedQuery !== '') return
-      setSearchExpanded(false)
-    }
-    document.addEventListener('click', onClick)
-    return () => { document.removeEventListener('click', onClick) }
-  }, [normalizedQuery, wide, searchExpanded, searchOnExpand])
-
-  useEffect(() => {
-    if (normalizedQuery === '') {
-      setRemoteSearch({ query: '', status: 'idle', items: [], hasMore: false })
-      return
-    }
-    const controller = new AbortController()
-    setRemoteSearch({
-      query: normalizedQuery,
-      status: 'loading',
-      items: [],
-      hasMore: false,
-    })
-    const timer = window.setTimeout(() => {
-      searchSessions(normalizedQuery, controller.signal).then((result) => {
-        if (controller.signal.aborted) return
-        setRemoteSearch({
-          query: normalizedQuery,
-          status: 'ready',
-          items: result.items,
-          hasMore: result.hasMore,
-        })
-      }).catch(() => {
-        if (controller.signal.aborted) return
-        setRemoteSearch({
-          query: normalizedQuery,
-          status: 'error',
-          items: [],
-          hasMore: false,
-        })
-      })
-    }, SEARCH_DEBOUNCE_MS)
-    return () => {
-      window.clearTimeout(timer)
-      controller.abort()
-    }
-  }, [normalizedQuery, searchSessions])
-
-  // Rename dialog (browser-owned so it outlives row unmounts during collapse).
-  const [renameTarget, setRenameTarget] = useState<{ workspaceId: WorkspaceId; currentTitle: string } | null>(null)
-  const [renameDraft, setRenameDraft] = useState('')
-  const [renaming, setRenaming] = useState(false)
-  const [renameError, setRenameError] = useState<string | null>(null)
-  const renameTrimmed = renameDraft.trim()
-  const renameDuplicate = renameTarget !== null && renameTrimmed !== '' && renameTrimmed !== renameTarget.currentTitle
-    && workspaces.some(w => w.title === renameTrimmed)
-  const renameBlocked = renaming || renameTrimmed === ''
-    || renameTarget === null || renameTrimmed === renameTarget.currentTitle || renameDuplicate
-  const closeRename = () => {
-    if (renaming) return
-    setRenameTarget(null)
-    setRenameError(null)
-  }
-  const confirmRename = () => {
-    if (renameBlocked) return
-    setRenaming(true)
-    setRenameError(null)
-    renameWorkspace(renameTarget.workspaceId, renameTrimmed).then(() => {
-      setRenaming(false)
-      setRenameTarget(null)
-    }).catch((reason: unknown) => {
-      setRenaming(false)
-      setRenameError(reason instanceof Error ? reason.message : String(reason))
-    })
-  }
-
-  // Session rename dialog (same browser-owned pattern as workspace rename;
-  // sessions have no client-side name-conflict rule — the host normalizes).
-  // Unlike workspace rename, an unchanged title is NOT blocked: confirming
-  // the current automatic title is the gesture that pins it.
-  const [sessionRenameTarget, setSessionRenameTarget] = useState<{ sessionId: SessionNode['id']; currentTitle: string } | null>(null)
-  const [sessionRenameDraft, setSessionRenameDraft] = useState('')
-  const [sessionRenaming, setSessionRenaming] = useState(false)
-  const [sessionRenameError, setSessionRenameError] = useState<string | null>(null)
-  const sessionRenameTrimmed = sessionRenameDraft.trim()
-  const sessionRenameBlocked = sessionRenaming || sessionRenameTrimmed === '' || sessionRenameTarget === null
-  const closeSessionRename = () => {
-    if (sessionRenaming) return
-    setSessionRenameTarget(null)
-    setSessionRenameError(null)
-  }
-  const confirmSessionRename = () => {
-    if (sessionRenameBlocked) return
-    setSessionRenaming(true)
-    setSessionRenameError(null)
-    renameSession(sessionRenameTarget.sessionId, sessionRenameTrimmed).then(() => {
-      setSessionRenaming(false)
-      setSessionRenameTarget(null)
-    }).catch((reason: unknown) => {
-      setSessionRenaming(false)
-      setSessionRenameError(reason instanceof Error ? reason.message : String(reason))
-    })
-  }
-  const onSessionRename = (sessionId: SessionNode['id'], currentTitle: string) => {
-    setSessionRenameTarget({ sessionId, currentTitle })
-    setSessionRenameDraft(currentTitle)
-    setSessionRenameError(null)
-  }
-
-  // Archive is dialog-free: not destructive (the log and the accounting slot
-  // remain), so the menu action commits directly; the row disappears when the
-  // archive-set echo lands. Failures are non-fatal console diagnostics, the
-  // same posture as reorder rejections.
-  const onSessionArchive = (sessionId: SessionNode['id']) => {
-    archiveSession(sessionId).catch((reason: unknown) => {
-      console.warn('session archive rejected:', reason)
-    })
-  }
-
-  // Delete dialog is separate from the row so a successful removal can
-  // unmount that row without tearing down the in-flight confirmation state.
-  const [deleteTarget, setDeleteTarget] = useState<{ workspaceId: WorkspaceId; title: string } | null>(null)
-  const [deleting, setDeleting] = useState(false)
-  const [deleteCommittedId, setDeleteCommittedId] = useState<WorkspaceId | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-  useEffect(() => {
-    if (deleteCommittedId === null
-      || workspaces.some(workspace => workspace.workspaceId === deleteCommittedId)) return
-    setDeleting(false)
-    setDeleteCommittedId(null)
-    setDeleteTarget(null)
-  }, [deleteCommittedId, workspaces])
-  const closeDelete = () => {
-    if (deleting) return
-    setDeleteTarget(null)
-    setDeleteError(null)
-  }
-  const confirmDelete = () => {
-    /* v8 ignore next -- the Modal is absent without a target and its button is disabled while deleting. */
-    if (deleting || deleteTarget === null) return
-    setDeleting(true)
-    setDeleteCommittedId(null)
-    setDeleteError(null)
-    deleteWorkspace(deleteTarget.workspaceId).then(() => {
-      // Keep the confirmation pending until this component has rendered the
-      // committed list projection without the deleted id. Closing earlier
-      // exposes one stale React frame to the next Create Workspace gesture.
-      setDeleteCommittedId(deleteTarget.workspaceId)
-    }).catch((reason: unknown) => {
-      setDeleting(false)
-      setDeleteError(reason instanceof Error ? reason.message : String(reason))
-    })
-  }
-
-  return (
-    <div className={clsx(css.root, !wide && css.rail)}>
-      <div className={css.sectionHeader}>
-        {wide && (
-          <span className={clsx(css.sectionLabel, css.wide, searchExpanded && css.sectionLabelHidden)}>
-            {groupBy === 'flat' ? t('section.sessions') : t('section.workspaces')}
-          </span>
-        )}
-        {wide && (
-          <div className={clsx(css.searchSlot, searchExpanded && css.searchSlotExpanded)}>
-            <div
-              ref={searchRoot}
-              className={clsx(css.search, searchExpanded && css.searchExpanded)}
-              onClick={() => {
-                setWsPickerOpen(false)
-                setSearchExpanded(true)
-                searchInput.current?.focus()
-              }}
-            >
-              <Tooltip label={t('search')} side="bottom" delayMs={500} disabled={searchExpanded}>
-                <button
-                  type="button"
-                  className={css.searchButton}
-                  aria-label={t('search.sessions.aria')}
-                  aria-expanded={searchExpanded}
-                  onClick={() => {
-                    setWsPickerOpen(false)
-                    setSearchExpanded(true)
-                  }}
-                >
-                  <IconSearchOutline16 size={searchExpanded ? 11 : 14} />
-                </button>
-              </Tooltip>
-              <input
-                ref={searchInput}
-                className={css.searchInput}
-                type="text"
-                placeholder={t('search.placeholder')}
-                maxLength={SEARCH_QUERY_MAX_CODE_UNITS}
-                value={query}
-                tabIndex={searchExpanded ? 0 : -1}
-                onChange={(e) => { setQuery(sanitizeSearchQuery(e.target.value)) }}
-                onKeyDown={(e) => {
-                  if (e.key !== 'Escape') return
-                  setQuery('')
-                  setSearchExpanded(false)
-                }}
-              />
-              {searchExpanded && (
-                <button
-                  type="button"
-                  className={css.clearButton}
-                  aria-label={t('search.clear')}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setQuery('')
-                    setSearchExpanded(false)
-                  }}
-                >
-                  <IconCloseFill14 />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-        <div className={clsx(css.headerActions, wide && searchExpanded && css.headerActionsHidden)}>
-          {wide && (
-            <ViewOptionsMenu
-              groupBy={groupBy}
-              orderBy={orderBy}
-              onGroupPick={(mode) => { actions.setGroupBy(mode) }}
-              onOrderPick={(mode) => { actions.setOrderBy(mode) }}
-              t={t}
-            />
-          )}
-          {/* Adding is the button's one action, so a composition with no
-              picking affordance has nothing to offer here: the region hides the
-              button rather than leaving a dead one in the header. */}
-          {directoryFlowAvailable && (
-            <Tooltip label={t('workspace.add')} side="bottom" delayMs={500}>
-              <button
-                ref={wsPlusRef}
-                type="button"
-                className={css.iconButton}
-                aria-label={t('workspace.add')}
-                onClick={() => {
-                  setWsPickerOpen(v => !v)
-                }}
-              >
-                <IconProjectAddOutline16 size={wide ? 16 : 18} />
-              </button>
-            </Tooltip>
-          )}
-        </div>
-        {/* Add flow + its error dialog (same package — direct composition). */}
-        <WorkspacePickFlow
-          t={t}
-          open={wsPickerOpen}
-          anchorRef={wsPlusRef}
-          useWorkspaces={useWorkspaces}
-          createWorkspace={createWorkspace}
-          useDirectoryFlow={useDirectoryFlow}
-          renderDirectoryFlow={owner => renderSlot('sidebar.workspaces.directoryFlow', owner)}
-          addOnly
-          side="right"
-          onPick={(workspaceId) => {
-            setWsPickerOpen(false)
-            startSession(workspaceId)
-          }}
-          onClose={() => { setWsPickerOpen(false) }}
-        />
-      </div>
-
-      {/* The collapsed rail keeps search as its own 36px control. */}
-      {!wide && <div className={css.search}>
-        <Tooltip label={t('search')}>
-          <button
-            type="button"
-            className={css.searchButton}
-            aria-label={t('search.sessions.aria')}
-            onClick={() => {
-              setSearchExpanded(true)
-              setSearchOnExpand(true)
-              expandSidebar()
-            }}
-          >
-            <IconSearchOutline16 size={18} />
-          </button>
-        </Tooltip>
-      </div>}
-
-      {/* Always-mounted seat keeps the region's flex slot while the list
-          itself is wide-only. */}
-      <div className={css.listArea}>
-        {wide && (normalizedQuery !== ''
-          ? (
-            <SearchResults
-              useSessions={useSessions}
-              open={open}
-              workspaces={workspaces}
-              archivedSessionIds={archivedSessionIds}
-              query={normalizedQuery}
-              remote={remoteSearch}
-              resultLimit={searchResultLimit}
-              t={t}
-            />
-          )
-          : groupBy === 'flat'
-            ? (
-              <FlatList
-                useSessions={useSessions} open={open} forkSession={forkSession}
-                onSessionRename={onSessionRename} onSessionArchive={onSessionArchive}
-                archivedSessionIds={archivedSessionIds}
-                orderBy={orderBy}
-                sessionOrderByAccount={sessionOrderByAccount}
-                sessionUpdatedAtByAccount={sessionUpdatedAtByAccount}
-                syncSessionOrderAccount={actions.syncSessionOrderAccount}
-                setSessionOrder={actions.setSessionOrder}
-                t={t}
-              />
-            )
-            : (
-              <SessionTree
-                useSessions={useSessions}
-                onSessionRename={onSessionRename}
-                onSessionArchive={onSessionArchive}
-                forkSession={forkSession}
-                workspaces={workspaces}
-                groupExpansion={groupExpansion}
-                setGroupExpanded={actions.setGroupExpanded}
-                sessionOrderByAccount={sessionOrderByAccount}
-                sessionUpdatedAtByAccount={sessionUpdatedAtByAccount}
-                syncSessionOrderAccount={actions.syncSessionOrderAccount}
-                setSessionOrder={actions.setSessionOrder}
-                archivedSessionIds={archivedSessionIds}
-                startSession={startSession}
-                open={open}
-                insertWorkspaceBefore={insertWorkspaceBefore}
-                insertSessionBefore={insertSessionBefore}
-                orderBy={orderBy}
-                home={home}
-                t={t}
-                onRenameRequest={(workspaceId, currentTitle) => {
-                  setRenameTarget({ workspaceId, currentTitle })
-                  setRenameDraft(currentTitle)
-                  setRenameError(null)
-                }}
-                onDeleteRequest={(workspaceId, title) => {
-                  setDeleteTarget({ workspaceId, title })
-                  setDeleteError(null)
-                }}
-              />
-            ))}
-      </div>
-
-      <Modal
-        open={renameTarget !== null}
-        onClose={closeRename}
-        closeLabel={t('close')}
-        title={t('rename.workspace.title')}
-        footer={(
-          <>
-            <Button variant="outline" disabled={renaming} onClick={closeRename}>{t('cancel')}</Button>
-            <Button variant="primary" disabled={renameBlocked} onClick={confirmRename}>{t('rename')}</Button>
-          </>
-        )}
-      >
-        <input
-          className={css.renameInput}
-          value={renameDraft}
-          aria-label={t('field.workspaceName')}
-          autoFocus
-          disabled={renaming}
-          onFocus={(e) => { e.target.select() }}
-          onChange={(e) => { setRenameDraft(e.target.value); setRenameError(null) }}
-          onCompositionStart={() => { composingRef.current = true }}
-          onCompositionEnd={() => { composingRef.current = false }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !composingRef.current) {
-              e.preventDefault()
-              confirmRename()
-            }
-          }}
-        />
-        {renameDuplicate && (
-          <div className={css.renameError} role="alert">{t('conflict.named', { name: renameTrimmed })}</div>
-        )}
-        {renameError !== null && <div className={css.renameError} role="alert">{renameError}</div>}
-      </Modal>
-
-      <Modal
-        open={sessionRenameTarget !== null}
-        onClose={closeSessionRename}
-        closeLabel={t('close')}
-        title={t('rename.session.title')}
-        footer={(
-          <>
-            <Button variant="outline" disabled={sessionRenaming} onClick={closeSessionRename}>{t('cancel')}</Button>
-            <Button variant="primary" disabled={sessionRenameBlocked} onClick={confirmSessionRename}>{t('rename')}</Button>
-          </>
-        )}
-      >
-        <input
-          className={css.renameInput}
-          value={sessionRenameDraft}
-          aria-label={t('field.sessionName')}
-          autoFocus
-          disabled={sessionRenaming}
-          onFocus={(e) => { e.target.select() }}
-          onChange={(e) => { setSessionRenameDraft(e.target.value); setSessionRenameError(null) }}
-          onCompositionStart={() => { composingRef.current = true }}
-          onCompositionEnd={() => { composingRef.current = false }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !composingRef.current) {
-              e.preventDefault()
-              confirmSessionRename()
-            }
-          }}
-        />
-        {sessionRenameError !== null && <div className={css.renameError} role="alert">{sessionRenameError}</div>}
-      </Modal>
-      <Modal
-        open={deleteTarget !== null}
-        onClose={closeDelete}
-        closeLabel={t('close')}
-        title={t('delete.workspace')}
-        {...deleteTarget === null
-          ? {}
-          : { description: t('delete.desc', { name: deleteTarget.title }) }}
-        footer={(
-          <>
-            <Button variant="outline" disabled={deleting} onClick={closeDelete}>{t('cancel')}</Button>
-            <Button
-              variant="outline"
-              className={css.deleteAction}
-              disabled={deleting}
-              onClick={confirmDelete}
-            >
-              {t('delete.workspace')}
-            </Button>
-          </>
-        )}
-      >
-        {deleting && <div className={css.deleteStatus} role="status">{t('delete.pending')}</div>}
-        {deleteError !== null && <div className={css.renameError} role="alert">{deleteError}</div>}
-      </Modal>
-    </div>
-  )
+export function WorkspaceBrowser(props: WorkspaceBrowserProps): JSX.Element {
+  const el = document.createElement('dsh-workspace-browser') as DshWorkspaceBrowser
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

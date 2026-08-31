@@ -4,213 +4,253 @@
 // scroll/resize while open. The card is reachable: it takes pointer events,
 // and leaving the anchor only arms a grace-delayed close, so the pointer can
 // cross the 8px gap and settle on the card to read a clipped path or title.
-// The portaled card is a React child of the wrapper, so React's enter/leave
-// traversal already treats it as inside — one pair of wrapper handlers covers
-// anchor and card alike.
+//
+// Converted from a React hooks component to a webjsx custom element: open/
+// pos/copied state become instance fields, the placement/grace/copy effects
+// become connectedCallback/disconnectedCallback plus explicit timers, and
+// re-render is an explicit applyDiff(this, vdom) call (Toast.tsx's pattern).
+// The card is appended to document.body directly (createPortal's webjsx
+// equivalent) rather than being a DOM child of the wrapper, so its pointer
+// events are wired independently instead of riding React's enter/leave
+// tree traversal.
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import { createPortal } from 'react-dom'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import { writeClipboard } from './clipboard.ts'
-import { usePointerGrace } from './pointer-grace.ts'
 import css from './HoverCard.module.css'
 
-/**
- * Render an anchor with a hover-triggered preview card.
- * @param props.anchor - the hover target (rendered in place inside a wrapper span).
- * @param props.content - card content; the pointer may rest on it, so it is
- * readable and selectable, but it carries no dismissal affordance of its own.
- * @param props.openDelayMs - hover dwell before the card shows (default 500).
- * @param props.disabled - suppress opening; turning true closes an open card.
- * @param props.copyText - optional primary value copied by activation and
- * included in the card's accessible name.
- * @param props.copyLabel - accessible activation-label prefix (default "复制").
- * @param props.copiedLabel - visible success label (default "复制成功").
- * @returns anchor wrapper with the conditional portaled card.
- */
-export function HoverCard({
-  anchor, content, openDelayMs = 500, disabled = false,
-  copyText, copyLabel = '复制', copiedLabel = '复制成功',
-}: {
-  anchor: ReactNode
-  content: ReactNode
+export interface HoverCardProps {
+  anchor: VNode | string
+  content: VNode | string
   openDelayMs?: number
   disabled?: boolean
   copyText?: string | undefined
   copyLabel?: string | undefined
   copiedLabel?: string | undefined
-}) {
-  const rootRef = useRef<HTMLSpanElement>(null)
-  const cardRef = useRef<HTMLDivElement>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const copyHeightRef = useRef<number | null>(null)
-  const copyEpochRef = useRef(0)
-  const copyingRef = useRef(false)
-  const mountedRef = useRef(true)
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
-  const [copied, setCopied] = useState(false)
+}
 
-  const clearCopied = useCallback(() => {
-    if (copyTimerRef.current !== null) {
-      clearTimeout(copyTimerRef.current)
-      copyTimerRef.current = null
-    }
-    copyHeightRef.current = null
-    setCopied(false)
-  }, [])
+const DEFAULT_PROPS: HoverCardProps = { anchor: '', content: '' }
 
-  const close = useCallback(() => {
-    copyEpochRef.current += 1
-    clearCopied()
-    setOpen(false)
-  }, [clearCopied])
+/** Anchor-with-hover-triggered-preview-card custom element. */
+export class DshHoverCard extends HTMLElement {
+  #props: HoverCardProps = DEFAULT_PROPS
+  #open = false
+  #pos: { left: number; top: number } | null = null
+  #copied = false
+  #openTimer: ReturnType<typeof setTimeout> | null = null
+  #closeTimer: ReturnType<typeof setTimeout> | null = null
+  #copyTimer: ReturnType<typeof setTimeout> | null = null
+  #copyHeight: number | null = null
+  #copyEpoch = 0
+  #copying = false
+  #placeHandler: (() => void) | null = null
+  #card: HTMLDivElement | null = null
 
-  const { arm: armClose, cancel: cancelClose } = usePointerGrace(close)
-
-  const clearTimer = () => {
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
+  setProps(props: HoverCardProps): void {
+    const wasDisabled = this.#props.disabled === true
+    this.#props = props
+    if (props.disabled === true && !wasDisabled) this.#close()
+    this.#render()
   }
 
-  // Owner disabling mid-hover (menu opened, drag started) closes immediately.
-  useEffect(() => {
-    if (!disabled) return
-    clearTimer()
-    cancelClose()
-    close()
-  }, [disabled, cancelClose, close])
+  connectedCallback(): void {
+    this.#render()
+  }
 
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-      copyEpochRef.current += 1
-      clearTimer()
-      if (copyTimerRef.current !== null) {
-        clearTimeout(copyTimerRef.current)
-        copyTimerRef.current = null
-      }
-    }
-  }, [])
+  disconnectedCallback(): void {
+    this.#copyEpoch += 1
+    this.#clearOpenTimer()
+    this.#clearCloseTimer()
+    this.#clearCopyTimer()
+    this.#unbindPlacement()
+    this.#card?.remove()
+    this.#card = null
+  }
 
-  // Fixed-position from the anchor rect before paint; track the anchor while
-  // open (capture-phase scroll catches nested panes), as in Menu portal mode.
-  useLayoutEffect(() => {
-    if (!open) { setPos(null); return }
-    const place = () => {
-      const wrapper = rootRef.current
-      /* v8 ignore next -- the ref is attached before the layout effect runs and the listeners die with it. */
+  #clearOpenTimer(): void {
+    if (this.#openTimer !== null) { clearTimeout(this.#openTimer); this.#openTimer = null }
+  }
+
+  #clearCloseTimer(): void {
+    if (this.#closeTimer !== null) { clearTimeout(this.#closeTimer); this.#closeTimer = null }
+  }
+
+  #clearCopyTimer(): void {
+    if (this.#copyTimer !== null) { clearTimeout(this.#copyTimer); this.#copyTimer = null }
+  }
+
+  #clearCopied(): void {
+    this.#clearCopyTimer()
+    this.#copyHeight = null
+    this.#copied = false
+  }
+
+  #close(): void {
+    this.#copyEpoch += 1
+    this.#clearCopied()
+    this.#open = false
+    this.#unbindPlacement()
+    this.#render()
+  }
+
+  #armClose(): void {
+    this.#clearCloseTimer()
+    this.#closeTimer = setTimeout(() => {
+      this.#closeTimer = null
+      this.#close()
+    }, 200)
+  }
+
+  #cancelClose(): void {
+    this.#clearCloseTimer()
+  }
+
+  #bindPlacement(): void {
+    this.#unbindPlacement()
+    const place = (): void => {
+      const wrapper = this.querySelector<HTMLElement>('[data-hovercard-root]')
       if (wrapper === null) return
       const r = wrapper.getBoundingClientRect()
-      const h = cardRef.current?.offsetHeight ?? 0
+      const h = this.#card?.offsetHeight ?? 0
       const top = r.top + h > window.innerHeight - 8 ? window.innerHeight - h - 8 : r.top
-      setPos({ left: r.right + 8, top })
+      this.#pos = { left: r.right + 8, top }
+      this.#render()
     }
+    this.#placeHandler = place
     place()
     window.addEventListener('scroll', place, true)
     window.addEventListener('resize', place)
-    return () => {
-      window.removeEventListener('scroll', place, true)
-      window.removeEventListener('resize', place)
-    }
-  }, [open])
-
-  // The first placement ran before the card mounted (height read 0): once the
-  // card's real height is measurable, correct the bottom-edge clamp. The
-  // correction converges — a clamped top satisfies the guard, so it runs once.
-  useLayoutEffect(() => {
-    if (!open || pos === null) return
-    /* v8 ignore next -- the card is mounted whenever pos is set, so the ref is attached here. */
-    const h = cardRef.current?.offsetHeight ?? 0
-    if (pos.top + h > window.innerHeight - 8) {
-      setPos({ left: pos.left, top: window.innerHeight - h - 8 })
-    }
-  }, [open, pos])
-
-  const copy = async (text: string): Promise<void> => {
-    if (copied || copyingRef.current) return
-    copyingRef.current = true
-    const copyEpoch = copyEpochRef.current
-    const accepted = await writeClipboard(text)
-    copyingRef.current = false
-    const card = cardRef.current
-    if (!accepted || !mountedRef.current || copyEpoch !== copyEpochRef.current || card === null) return
-    const height = card.offsetHeight
-    copyHeightRef.current = height > 0 ? height : null
-    setCopied(true)
-    copyTimerRef.current = setTimeout(clearCopied, 1000)
   }
 
-  const copyable = copyText !== undefined
-  const card = open && pos !== null && (
-    <div
-      ref={cardRef}
-      className={`${css.card}${copyable ? ` ${css.copyable}` : ''}${copied ? ` ${css.feedback}` : ''}`}
-      style={{ ...pos, minHeight: copied && copyHeightRef.current !== null ? copyHeightRef.current : undefined }}
-      role={copyable ? 'button' : undefined}
-      tabIndex={copyable ? 0 : undefined}
-      aria-label={copyable ? `${copyLabel}: ${copyText}` : undefined}
-      onClick={copyable
-        ? (e) => {
-          const selection = window.getSelection()
-          if (selection !== null && !selection.isCollapsed) {
-            for (let i = 0; i < selection.rangeCount; i += 1) {
-              if (selection.getRangeAt(i).intersectsNode(e.currentTarget)) return
-            }
-          }
-          void copy(copyText)
-        }
-        : undefined}
-      onKeyDown={copyable
-        ? (e) => {
-          if (e.key !== 'Enter' && e.key !== ' ') return
-          e.preventDefault()
-          void copy(copyText)
-        }
-        : undefined}
-    >
-      {copied ? <span className={css.copied} aria-hidden="true">{copiedLabel}</span> : content}
-    </div>
-  )
+  #unbindPlacement(): void {
+    if (this.#placeHandler === null) { this.#pos = null; return }
+    window.removeEventListener('scroll', this.#placeHandler, true)
+    window.removeEventListener('resize', this.#placeHandler)
+    this.#placeHandler = null
+    this.#pos = null
+  }
 
-  return (
-    <span
-      ref={rootRef}
-      className={css.root}
-      onPointerEnter={() => {
-        if (disabled) return
-        // Coming back inside during the grace (the gap, or the card itself)
-        // keeps the current card rather than restarting the dwell.
-        cancelClose()
-        if (open) return
-        clearTimer()
-        timerRef.current = setTimeout(() => { setOpen(true) }, openDelayMs)
-      }}
-      onPointerLeave={() => {
-        clearTimer()
-        // Leaving a closed card schedules a no-op close; only arm while
-        // open, matching Menu's shape.
-        if (open) armClose()
-      }}
-      // A press inside the anchor (row click, menu trigger) dismisses the
-      // card immediately, without waiting for the owner to flip `disabled`.
-      // Capture presses reach this handler from the card too — it is a React
-      // child of the wrapper — but a press there starts a selection, so the
-      // card must stay mounted under it (and the browser's click with it).
-      onPointerDownCapture={(e) => {
-        if (cardRef.current?.contains(e.target as Node)) return
-        clearTimer()
-        cancelClose()
-        close()
-      }}
-    >
-      {anchor}
-      {open && copyable && <span className={css.status} role="status">{copied ? copiedLabel : ''}</span>}
-      {card !== false && createPortal(card, document.body)}
-    </span>
-  )
+  async #copy(text: string): Promise<void> {
+    if (this.#copied || this.#copying) return
+    this.#copying = true
+    const epoch = this.#copyEpoch
+    const accepted = await writeClipboard(text)
+    this.#copying = false
+    if (!accepted || epoch !== this.#copyEpoch || this.#card === null) return
+    const height = this.#card.offsetHeight
+    this.#copyHeight = height > 0 ? height : null
+    this.#copied = true
+    this.#render()
+    this.#copyTimer = setTimeout(() => {
+      this.#copyTimer = null
+      this.#clearCopied()
+      this.#render()
+    }, 1000)
+  }
+
+  #render(): void {
+    const { anchor, content, openDelayMs = 500, disabled = false, copyText, copyLabel = '复制', copiedLabel = '复制成功' } = this.#props
+    const copyable = copyText !== undefined
+    const showCard = this.#open && this.#pos !== null
+
+    if (!showCard) {
+      this.#card?.remove()
+      this.#card = null
+    }
+
+    const pos = this.#pos
+    const cardVNode: VNode | null = showCard && pos !== null
+      ? (
+        <div
+          class={`${css.card}${copyable ? ` ${css.copyable}` : ''}${this.#copied ? ` ${css.feedback}` : ''}`}
+          style={`left: ${pos.left}px; top: ${pos.top}px;${this.#copied && this.#copyHeight !== null ? ` min-height: ${this.#copyHeight}px;` : ''}`}
+          role={copyable ? 'button' : null}
+          tabindex={copyable ? 0 : undefined}
+          aria-label={copyable ? `${copyLabel}: ${copyText}` : undefined}
+          onclick={copyable
+            ? (e: MouseEvent) => {
+              const selection = window.getSelection()
+              if (selection !== null && !selection.isCollapsed) {
+                for (let i = 0; i < selection.rangeCount; i += 1) {
+                  if (selection.getRangeAt(i).intersectsNode(e.currentTarget as Node)) return
+                }
+              }
+              void this.#copy(copyText)
+            }
+            : null}
+          onkeydown={copyable
+            ? (e: KeyboardEvent) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return
+              e.preventDefault()
+              void this.#copy(copyText)
+            }
+            : null}
+        >
+          {this.#copied ? <span class={css.copied ?? ''} aria-hidden="true">{copiedLabel}</span> : content}
+        </div>
+      )
+      : null
+
+    if (cardVNode !== null) {
+      if (this.#card === null) {
+        this.#card = document.createElement('div')
+        document.body.appendChild(this.#card)
+      }
+      applyDiff(this.#card, cardVNode)
+    }
+
+    const vdom = (
+      <span
+        data-hovercard-root
+        class={css.root ?? ''}
+        onpointerenter={() => {
+          if (disabled) return
+          this.#cancelClose()
+          if (this.#open) return
+          this.#clearOpenTimer()
+          this.#openTimer = setTimeout(() => {
+            this.#openTimer = null
+            this.#open = true
+            this.#bindPlacement()
+            this.#render()
+          }, openDelayMs)
+        }}
+        onpointerleave={() => {
+          this.#clearOpenTimer()
+          if (this.#open) this.#armClose()
+        }}
+        onpointerdowncapture={(e: PointerEvent) => {
+          if (this.#card?.contains(e.target as Node) === true) return
+          this.#clearOpenTimer()
+          this.#cancelClose()
+          this.#close()
+        }}
+      >
+        {anchor}
+        {this.#open && copyable && <span class={css.status ?? ''} role="status">{this.#copied ? copiedLabel : ''}</span>}
+      </span>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-hover-card') === undefined) {
+  customElements.define('dsh-hover-card', DshHoverCard)
+}
+
+/**
+ * Create (if needed) or update a HoverCard element in place.
+ * @param el - an existing `dsh-hover-card` element to update, or null to create one.
+ * @param props - see {@link HoverCardProps}.
+ * @returns the `dsh-hover-card` element; keep it and pass it back in to update.
+ */
+export function renderHoverCard(el: DshHoverCard | null, props: HoverCardProps): DshHoverCard {
+  const target = el ?? document.createElement('dsh-hover-card') as DshHoverCard
+  target.setProps(props)
+  return target
+}
+
+/** One-shot creation helper preserving the original function-component call shape. */
+export function HoverCard(props: HoverCardProps): JSX.Element {
+  return renderHoverCard(null, props) as unknown as JSX.Element
 }

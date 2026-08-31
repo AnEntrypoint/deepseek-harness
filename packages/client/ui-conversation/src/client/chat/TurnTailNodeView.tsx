@@ -1,4 +1,3 @@
-import { memo } from 'react'
 import type { PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ChatNodeViewProps, TurnTailOwnerProps } from '../contract/slots.ts'
 import { MessageIconActions } from './MessageIconActions.tsx'
@@ -9,9 +8,9 @@ type TurnTailNodeViewProps = ChatNodeViewProps<'turn-tail'>
   & PropsRenderSlots<'conversation.chat.turnTail' | 'conversation.chat.assistant-actions'>
 
 /** Turn-local actions and feature tail over the Location index, independent of Assistant placement. */
-export const TurnTailNodeView = memo(function TurnTailNodeView({
+export function TurnTailNodeView({
   node, openFile, forkAt, renderSlot, renderSlotChain, t, useSession,
-}: TurnTailNodeViewProps) {
+}: TurnTailNodeViewProps): JSX.Element | null {
   const data = node.data
   const hasLaterChatNode = useSession(snapshot =>
     snapshot.chat.locations.getTurn(data.turn).at(-1) !== node.key)
@@ -22,7 +21,7 @@ export const TurnTailNodeView = memo(function TurnTailNodeView({
   const closing = data.closing
   const owner: TurnTailOwnerProps = { turn, seq: closing?.finalNode.seq ?? data.seq, openFile }
   const tail = renderSlotChain('conversation.chat.turnTail', owner)
-  if (closing === null) return tail === null ? null : <div className={css.root}>{tail}</div>
+  if (closing === null) return tail === null ? null : <div class={css.root ?? ''}>{tail}</div>
   const runMs = turn.start === undefined || turn.end === undefined
     ? undefined
     : Math.max(0, turn.end.time - turn.start.time)
@@ -33,7 +32,7 @@ export const TurnTailNodeView = memo(function TurnTailNodeView({
     ? null
     : renderSlot('conversation.chat.assistant-actions', { messageId })
   return (
-    <div className={css.root} data-turn-tail={data.turn} data-time-hover-root>
+    <div class={css.root ?? ''} data-turn-tail={data.turn} data-time-hover-root>
       {tail}
       <MessageIconActions
         text={assistantText(closing.blocks)}
@@ -45,9 +44,9 @@ export const TurnTailNodeView = memo(function TurnTailNodeView({
         onBranch={() => { forkAt(closing.finalNode.seq) }}
         branchUnavailable={data.branchUnavailable || hasLaterChatNode}
         className={css.actions}
-        extraActions={assistantActions}
+        extraActions={assistantActions as unknown as JSX.Element}
         t={t}
       />
     </div>
   )
-})
+}

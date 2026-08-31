@@ -5,12 +5,12 @@
     "outDir": "lib/types",
     "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
   },
-  "files": [
-    "src/agent-lookup.ts",
-    "src/index.ts",
-    "src/invariant.ts",
-    "src/remote-events.ts",
-    "src/types.ts"
+  "include": [
+    "src/agent-lookup.js",
+    "src/index.js",
+    "src/invariant.js",
+    "src/remote-events.js",
+    "src/types.d.ts"
   ],
   "references": [
     {

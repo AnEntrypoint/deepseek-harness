@@ -1,17 +1,42 @@
 /**
- * React renderer for declarative slots. Per-entry bindings enforce child
+ * webjsx renderer for declarative slots. Per-entry bindings enforce child
  * authorization, and entry boundaries contain registrant failures.
+ *
+ * Converted from React to webjsx (see docs on each outlet class below for the
+ * concrete pattern each replaces): HostContext/SessionContext become
+ * explicit `host`/`info` fields threaded through render calls (no context);
+ * useSyncExternalStore becomes explicit subscribe in connectedCallback +
+ * unsubscribe in disconnectedCallback, triggering `#render()`
+ * (Toast.tsx/CodeBlock.tsx's pattern); the SlotErrorBoundary React class
+ * becomes a manual try/catch around the guarded render call, rendering the
+ * crash-face markup on catch; entry-identity-keyed remounting is manual DOM
+ * teardown (`replaceChildren`) when the winning entry's identity changes.
+ *
+ * webjsxSlot() indirection: KEPT. 14 registrant packages call
+ * `webjsxSlot('tag-name')` directly at their `register()` call site — that
+ * marker function returns `null` and carries `WEBJSX_SLOT_TAG`, so it is
+ * fundamentally different from a plain function registrant (which webjsx
+ * itself also uses for its "create-or-update, return as JSX.Element" idiom,
+ * see Toast.tsx/Menu.tsx/CodeBlock.tsx's exported helpers). The dispatch
+ * layer below still branches on `webjsxSlotTagOf(component)`: tagged means
+ * "create/reuse this custom-element tag", untagged means "call this function
+ * with composed props and use the returned VNode". Both paths are now
+ * webjsx-native — the former React bridge component (WebjsxBridge) is
+ * removed; a tagged entry's custom element is created directly and updated
+ * via its `setProps` (or plain field assignment), uniformly with how
+ * ui-primitives' own registrants already work.
  */
-import { Component, useMemo, useState, useSyncExternalStore, type FC, type ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import {
-  SlotOwnershipError, StaleAuthorizationError,
+  SlotOwnershipError, StaleAuthorizationError, webjsxSlotTagOf,
   type ChainRenderOpts, type HostObservable, type LocaleFace, type RenderOpts,
   type SessionMaybeProvideInfo, type SessionProvideInfo, type SlotRenderer, type SlotRendererHost,
   type SlotScope, type StoredEntry, type Translate,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  HostContext, SessionMaybeProvider, SessionProvider, SlotAssemblyError, maybeObservableHook,
-  observableHook, projectionHook, useHost, useSessionMaybeProvideInfo,
+  SlotAssemblyError, currentSessionMaybeProvideInfo, maybeObservableHook, observableHook, projectionHook,
+  sessionProviderFor,
 } from './session-provider.tsx'
 
 type InjectedProps = Record<string, unknown>
@@ -24,16 +49,15 @@ interface BoundSlotInject {
   readonly slotHookFactories?: SlotHookFactories | undefined
 }
 
-type RenderSlotBinding = (key: string, owner: object, opts?: RenderOpts) => ReactNode
-
-type RenderSlotChainBinding = (key: string, owner: object, opts?: ChainRenderOpts) => ReactNode
-
 /**
- * Per-entry renderSlot bindings. The binding is identity-stable per entry
- * (memoized components must not resubscribe on unrelated re-renders) and dies
- * with the entry: a retained closure calling after the entry's disposal hits
- * the in-ledger check and throws.
+ * Per-entry renderSlot / renderSlotChain bindings, called from inside a
+ * registrant's render body. Each returns a `<dsh-slot-outlet>` VNode (a
+ * custom element that owns its own dispatch/subscription lifecycle) instead
+ * of React elements — applyDiff reconciles it by `key` like any other node.
  */
+type RenderSlotBinding = (key: string, owner: object, opts?: RenderOpts) => VNode
+type RenderSlotChainBinding = (key: string, owner: object, opts?: ChainRenderOpts) => VNode
+
 const renderSlotCache = new WeakMap<StoredEntry, RenderSlotBinding>()
 
 function boundRenderSlot(host: SlotRendererHost, entry: StoredEntry): RenderSlotBinding {
@@ -43,7 +67,6 @@ function boundRenderSlot(host: SlotRendererHost, entry: StoredEntry): RenderSlot
       if (!host.isLive(entry)) {
         throw new StaleAuthorizationError(`renderSlot('${key}') from a disposed registration`)
       }
-      // Plain-JS backstop; typed callers are narrowed to the declared keys.
       const declared = entry.children?.[key]
       if (declared === undefined) {
         throw new SlotOwnershipError(`slot '${key}' is not declared by this entry's children`)
@@ -51,19 +74,13 @@ function boundRenderSlot(host: SlotRendererHost, entry: StoredEntry): RenderSlot
       if (declared.kind === 'chain') {
         throw new SlotOwnershipError(`slot '${key}' is declared 'chain' — use renderSlotChain`)
       }
-      return <SlotOutlet slotKey={key} ownerProps={owner} opts={opts} />
+      return slotOutletVNode(host, key, owner, opts)
     }
     renderSlotCache.set(entry, binding)
   }
   return binding
 }
 
-/**
- * Per-entry renderSlotChain bindings: identity-stable per entry (same cache
- * axis as renderSlot — a per-frame dispatch must not rebuild the binding) and
- * dead with the entry. The chain-kind check is the plain-JS backstop twin of
- * the declaration check; typed callers are narrowed to chain keys.
- */
 const renderSlotChainCache = new WeakMap<StoredEntry, RenderSlotChainBinding>()
 
 function boundRenderSlotChain(host: SlotRendererHost, entry: StoredEntry): RenderSlotChainBinding {
@@ -80,19 +97,13 @@ function boundRenderSlotChain(host: SlotRendererHost, entry: StoredEntry): Rende
       if (declared.kind !== 'chain') {
         throw new SlotOwnershipError(`slot '${key}' is declared '${declared.kind}', not 'chain' — use renderSlot`)
       }
-      return <SlotOutlet slotKey={key} ownerProps={owner} opts={opts} />
+      return slotOutletVNode(host, key, owner, opts)
     }
     renderSlotChainCache.set(entry, binding)
   }
   return binding
 }
 
-/**
- * Inject results cache: root entries per entry, session entries per
- * (entry x provide bundle). WeakMap keys are entry/info objects (both
- * identity-stable per registration/session scope), so cache lifetime rides
- * the same axes as the values it memoizes.
- */
 const rootInjectCache = new WeakMap<StoredEntry, InjectedProps>()
 const sessionInjectCache = new WeakMap<StoredEntry, WeakMap<SessionProvideInfo, InjectedProps>>()
 const sessionMaybeInjectCache = new WeakMap<StoredEntry, WeakMap<SessionMaybeProvideInfo, InjectedProps>>()
@@ -102,18 +113,12 @@ const EMPTY_INJECTED_PROPS: InjectedProps = {}
 function runInject(entry: StoredEntry, info: SessionMaybeProvideInfo | undefined, actions: object | undefined): InjectedProps {
   const inject = entry.inject
   if (!inject) return EMPTY_INJECTED_PROPS
-  // Declaration-derived positional arguments: sessionId for session scope,
-  // baked actions when a store is declared.
   const args: unknown[] = []
   if (info !== undefined) args.push(info.sessionId)
   if (actions !== undefined) args.push(actions)
   return bindInjectHooks((inject as (...args: unknown[]) => InjectedProps)(...args))
 }
 
-/**
- * Normalize one entry-owned inject face on its existing cache axis. Its hooks
- * compartment remains the original Observable-only contract.
- */
 function bindInjectHooks(face: InjectedProps): InjectedProps {
   const sources = face['hooks']
   if (sources === undefined) return face
@@ -129,7 +134,6 @@ function bindInjectHooks(face: InjectedProps): InjectedProps {
 const slotInjectCache = new WeakMap<object, BoundSlotInject>()
 const EMPTY_SLOT_INJECT: BoundSlotInject = { props: EMPTY_INJECTED_PROPS }
 
-/** Normalize one dispatcher-owned inject face by its stable object identity. */
 function cachedSlotInject(face: object | undefined): BoundSlotInject {
   if (face === undefined) return EMPTY_SLOT_INJECT
   let bound = slotInjectCache.get(face)
@@ -159,7 +163,6 @@ function cachedSlotInject(face: object | undefined): BoundSlotInject {
   return bound
 }
 
-/** Bind deferred slot-level factories for one stable renderSlot occurrence. */
 function bindSlotHookFactories(
   factories: SlotHookFactories,
   standard: InjectedProps,
@@ -214,14 +217,6 @@ function cachedSessionMaybeInject(
   return props
 }
 
-/**
- * Locale `t` seat bindings, cached per (face, namespace, revision). The
- * revision is part of the cache key ON PURPOSE: a locale switch mints a NEW
- * function reference per namespace, so `React.memo` components taking `t`
- * re-render through ordinary shallow comparison — freshness rides identity,
- * no extra invalidation channel. Within one revision the reference is stable
- * (memoized children do not churn on unrelated re-renders).
- */
 const localeSeatCache = new WeakMap<LocaleFace, Map<string, { revision: number; t: Translate }>>()
 
 function localeSeat(face: LocaleFace, ns: string): Translate {
@@ -234,63 +229,16 @@ function localeSeat(face: LocaleFace, ns: string): Translate {
   const cached = perNs.get(ns)
   if (cached && cached.revision === revision) return cached.t
   const bound = face.bind(ns)
-  // Fresh wrapper per revision: bind() itself may return a stable reference.
   const t: Translate = (key, params) => bound(key, params)
   perNs.set(ns, { revision, t })
   return t
 }
 
-const noopSubscribe = (): (() => void) => () => {}
-const zeroRevision = (): number => 0
-
 /**
- * Per-face subscribe/getSnapshot closure pair. Cached by face identity: the
- * face is one global source shared by every outlet, and uSES resubscribes
- * whenever the subscribe reference changes — fresh closures per render would
- * churn one unsubscribe/resubscribe pair per outlet per render.
- */
-const localeSubscriptionCache = new WeakMap<LocaleFace, {
-  subscribe: (fn: () => void) => () => void
-  getRevision: () => number
-}>()
-
-function localeSubscription(face: LocaleFace): { subscribe: (fn: () => void) => () => void; getRevision: () => number } {
-  let cached = localeSubscriptionCache.get(face)
-  if (!cached) {
-    cached = {
-      subscribe: fn => face.subscribe(fn),
-      getRevision: () => face.getSnapshot().revision,
-    }
-    localeSubscriptionCache.set(face, cached)
-  }
-  return cached
-}
-
-/**
- * Subscribe an outlet to the installed locale face's revision (0 while none
- * is installed — exactly one uSES call either way, keeping hook order
- * stable). Every outlet re-renders on a locale switch; entry bodies then
- * re-derive their `t` seat at the new revision. The face must be installed
- * before the first render that needs it — a face appearing later has no
- * notification channel to already-mounted outlets.
- */
-function useLocaleRevision(face: LocaleFace | undefined): number {
-  const subscription = face !== undefined ? localeSubscription(face) : undefined
-  return useSyncExternalStore(
-    subscription?.subscribe ?? noopSubscribe,
-    subscription?.getRevision ?? zeroRevision,
-  )
-}
-
-/**
- * Entry-identity React keys for entry boundaries. An outlet renders one
- * winner per position (single/keyed/list cell head, chain election) through
- * an error boundary; without a key, a boundary that failed on entry A would
- * survive a winner change (re-election, shadowing fallback after an
- * abdication, HMR re-registration) and keep a healthy entry B blacked out.
- * Keying by entry identity remounts the boundary fresh whenever the winner
- * changes (entries are identity-stable per registration, so the key is
- * stable while the same entry stays the winner).
+ * Entry-identity keys for entry boundaries — unchanged plain-JS WeakMap
+ * cache. An outlet remounts its boundary fresh whenever the winning entry's
+ * identity changes (re-election, shadowing fallback, HMR re-registration),
+ * so a boundary that failed on entry A never survives to black out entry B.
  */
 let nextEntryKey = 0
 const entryKeys = new WeakMap<StoredEntry, number>()
@@ -304,34 +252,6 @@ function entryKeyOf(entry: StoredEntry): number {
   return key
 }
 
-/**
- * Per-entry isolation: one registrant crashing (component render or inject
- * factory) must not take down siblings. Assembly errors (missing providers)
- * rethrow — a miswired shell must fail loud, not degrade into fallbacks.
- * Every catch reports through `onEntryError` (the ledger's supervision
- * seam); for shadowing kinds the report abdicates the entry, the outlet
- * re-renders onto the cell's next survivor, and this boundary's crash face
- * only shows until that re-render lands (permanently once the cell is dry —
- * the outlet then owns the crash face).
- */
-class SlotErrorBoundary extends Component<
-  { slotKey: string; onEntryError: (error: unknown) => void; children: ReactNode }, { failed: boolean }
-> {
-  override state = { failed: false }
-  static getDerivedStateFromError(error: unknown): { failed: boolean } {
-    if (error instanceof SlotAssemblyError) throw error
-    return { failed: true }
-  }
-  override componentDidCatch(error: unknown): void {
-    console.error(`slot entry crashed in '${this.props.slotKey}':`, error)
-    this.props.onEntryError(error)
-  }
-  override render(): ReactNode {
-    if (this.state.failed) return <div data-slot-error={this.props.slotKey} />
-    return this.props.children
-  }
-}
-
 interface StandardPropsCache {
   readonly root: InjectedProps
   readonly session: WeakMap<SessionMaybeProvideInfo, InjectedProps>
@@ -340,7 +260,6 @@ interface StandardPropsCache {
 
 const standardPropsCache = new WeakMap<SlotRendererHost, StandardPropsCache>()
 
-/** Stable official-props object used by contextual Hook factories. */
 function standardProps(
   host: SlotRendererHost,
   scope: SlotScope,
@@ -380,18 +299,6 @@ function standardProps(
   return standard
 }
 
-/**
- * Standard-kit synthesis shared by both scope branches: the global
- * useSessions/useWorkspaces hooks, the per-session provide bundle (every
- * `hooks` source becomes a `use<Name>` selector hook — useSession is the
- * runtime's own 'session' contribution, no special case — and `props` spread
- * verbatim), the store pair when declared, the renderSlot binding when
- * children are declared, and the SessionProvider seat when the children
- * declare a session-scope slot. Hosts hand out BARE observable sources
- * (hooks never cross the host contract); every hook is bound HERE, cached
- * per source (observableHook), so spreading a fresh kit object per render
- * never churns child subscriptions.
- */
 function standardKit(
   host: SlotRendererHost,
   entry: StoredEntry,
@@ -406,8 +313,6 @@ function standardKit(
   const kit: InjectedProps = { ...standard }
   if (entry.locale !== undefined) {
     const face = host.locale
-    // Loud assembly failure: locale is immediately-tier infrastructure; a
-    // declared namespace with no installed face is a miswired composition.
     if (face === undefined) {
       throw new SlotAssemblyError(
         `entry declares locale namespace '${entry.locale}' but no locale face is installed (locale plugin missing from the composition?)`)
@@ -418,61 +323,29 @@ function standardKit(
     ? undefined
     : host.storeOf(entry, info?.sessionId)
   if (store !== undefined) {
-    // The instance IS an observable snapshot source (contract getSnapshot/
-    // subscribe); the useStore hook binds here, cached per instance.
     kit['useStore'] = observableHook(store)
     kit['actions'] = store.actions
+    kit['subscribeStore'] = (fn: () => void) => store.subscribe(fn)
   }
   if (entry.children !== undefined) {
     kit['renderSlot'] = boundRenderSlot(host, entry)
-    // renderSlotChain rides the same declaration source: only entries whose
-    // children include a chain-kind slot receive the chain dispatch seat.
     if (Object.values(entry.children).some(spec => spec.kind === 'chain')) {
       kit['renderSlotChain'] = boundRenderSlotChain(host, entry)
     }
-    // SessionProvider standard seat: entries declaring a session-scope child
-    // render the session area, so the framework hands them the self-wired
-    // provider (module-level component = stable reference; no value import).
     if (Object.values(entry.children).some(spec => spec.scope === 'session')) {
-      kit['SessionProvider'] = SessionProvider
+      kit['SessionProvider'] = sessionProviderFor(host)
     }
   }
   return { kit, standard, actions: store?.actions }
 }
 
 /**
- * One rendered entry: standard kit + cached entry inject + common slot inject
- * + owner props (owner wins). The shares are erased at this render boundary;
- * the registration and renderSlot seams already proved their contracts.
+ * Compose one entry's full props object (standard kit + cached entry inject +
+ * common slot inject + contextual slot hooks + owner props, owner wins).
+ * Pure data assembly — no rendering; the caller decides how to turn this into
+ * a VNode (bare-function call vs. tagged-custom-element props).
  */
-function ContextualEntry({
-  slotKey, Comp, kit, standard, injected, slotInjected, ownerProps, hookContext, hasHookContext,
-}: {
-  slotKey: string
-  Comp: FC<InjectedProps>
-  kit: InjectedProps
-  standard: InjectedProps
-  injected: InjectedProps
-  slotInjected: BoundSlotInject & { readonly slotHookFactories: SlotHookFactories }
-  ownerProps: object
-  hookContext: unknown
-  hasHookContext: boolean
-}) {
-  const contextual = useMemo(
-    () => {
-      if (!hasHookContext) {
-        throw new SlotAssemblyError(`slot '${slotKey}' has contextual injected Hooks but no hookContext`)
-      }
-      return bindSlotHookFactories(slotInjected.slotHookFactories, standard, hookContext)
-    },
-    [hasHookContext, hookContext, slotInjected.slotHookFactories, slotKey, standard],
-  )
-  return <Comp {...kit} {...injected} {...slotInjected.props} {...contextual} {...ownerProps} />
-}
-
-function renderEntry(
-  slotKey: string,
-  Comp: FC<InjectedProps>,
+function composeEntryProps(
   kit: InjectedProps,
   standard: InjectedProps,
   injected: InjectedProps,
@@ -480,202 +353,360 @@ function renderEntry(
   ownerProps: object,
   hookContext: unknown,
   hasHookContext: boolean,
-): ReactNode {
-  if (slotInjected.slotHookFactories === undefined) {
-    return <Comp {...kit} {...injected} {...slotInjected.props} {...ownerProps} />
+  slotKey: string,
+): InjectedProps {
+  let contextual: InjectedProps = EMPTY_INJECTED_PROPS
+  if (slotInjected.slotHookFactories !== undefined) {
+    if (!hasHookContext) {
+      throw new SlotAssemblyError(`slot '${slotKey}' has contextual injected Hooks but no hookContext`)
+    }
+    contextual = bindSlotHookFactories(slotInjected.slotHookFactories, standard, hookContext)
   }
-  return (
-    <ContextualEntry
-      slotKey={slotKey}
-      Comp={Comp}
-      kit={kit}
-      standard={standard}
-      injected={injected}
-      slotInjected={slotInjected as BoundSlotInject & { readonly slotHookFactories: SlotHookFactories }}
-      ownerProps={ownerProps}
-      hookContext={hookContext}
-      hasHookContext={hasHookContext}
-    />
-  )
+  return { ...kit, ...injected, ...slotInjected.props, ...contextual, ...ownerProps }
 }
 
-function SessionEntry({ entry, ownerProps, info, slotKey, slotInjected, hookContext, hasHookContext }: {
-  entry: StoredEntry
-  ownerProps: object
-  info: SessionProvideInfo
-  slotKey: string
-  slotInjected: BoundSlotInject
-  hookContext: unknown
-  hasHookContext: boolean
-}) {
-  const host = useHost()
-  const Comp = entry.component as FC<InjectedProps>
-  const { kit, standard, actions } = standardKit(host, entry, 'session', info)
-  const injected = cachedSessionInject(entry, info, actions)
-  return renderEntry(slotKey, Comp, kit, standard, injected, slotInjected, ownerProps, hookContext, hasHookContext)
+/**
+ * Render one entry to a VNode. `entry.component` is either:
+ *  - a bare function registrant (call it with the composed props, use the
+ *    returned VNode directly — the webjsx-JSX-returning-stateless-function
+ *    convention every converted registrant package now follows), or
+ *  - a `webjsxSlot(tag)` marker: create (or reuse, keyed by entry identity)
+ *    the named custom element and drive it via `setProps`/plain-field
+ *    assignment (same convention as ui-primitives' own `renderMenu`/
+ *    `renderCodeBlock`/`mountToast` helpers), returned as a keyed VNode so
+ *    applyDiff preserves its identity across re-renders of the parent.
+ */
+function renderEntryVNode(
+  entry: StoredEntry,
+  props: InjectedProps,
+  entryKey: number,
+): VNode {
+  const tag = webjsxSlotTagOf(entry.component)
+  if (tag !== undefined) {
+    return <dsh-entry-host key={entryKey} tag={tag} entryProps={props} /> as unknown as VNode
+  }
+  const Comp = entry.component as (p: InjectedProps) => VNode
+  return Comp(props)
 }
 
-function SessionMaybeEntryBody({ entry, ownerProps, info, slotKey, slotInjected, hookContext, hasHookContext }: {
-  entry: StoredEntry
-  ownerProps: object
-  info: SessionMaybeProvideInfo
-  slotKey: string
-  slotInjected: BoundSlotInject
-  hookContext: unknown
-  hasHookContext: boolean
-}) {
-  const host = useHost()
-  const Comp = entry.component as FC<InjectedProps>
-  const { kit, standard, actions } = standardKit(host, entry, 'session-maybe', info)
-  const injected = cachedSessionMaybeInject(entry, info, actions)
-  return renderEntry(slotKey, Comp, kit, standard, injected, slotInjected, ownerProps, hookContext, hasHookContext)
+/**
+ * Custom element hosting one webjsxSlot(tag)-tagged entry: creates the named
+ * tag on connect (or reuses it across `applyDiff` updates via its stable
+ * `key`), and drives it through `setProps` when present, else plain-field
+ * assignment — the exact convention `WebjsxBridge` used to bridge into
+ * React, now the terminal case (no bridge needed, webjsx owns the whole tree).
+ */
+class DshEntryHost extends HTMLElement {
+  #tag = ''
+  #entryProps: InjectedProps = EMPTY_INJECTED_PROPS
+  #el: HTMLElement | null = null
+  // JSX attribute declaration order (`tag` before `entryProps`) drives which
+  // setter webjsx's applyDiff invokes first on initial mount — `tag` always
+  // fires first for this element's call sites. Without this flag, `set tag`'s
+  // own #applyProps() call would drive the freshly-created element's
+  // setProps() with the still-default EMPTY_INJECTED_PROPS (no useStore/
+  // actions/etc.), one JS tick before `set entryProps` ever runs. Real props
+  // apply only once `entryProps` has been assigned at least once; `set tag`
+  // just creates the element and waits.
+  #propsAssigned = false
+
+  set tag(value: string) {
+    if (value === this.#tag && this.#el !== null) return
+    this.#tag = value
+    this.#el?.remove()
+    this.#el = document.createElement(value)
+    this.appendChild(this.#el)
+    if (this.#propsAssigned) this.#applyProps()
+  }
+
+  set entryProps(value: InjectedProps) {
+    this.#entryProps = value
+    this.#propsAssigned = true
+    this.#applyProps()
+  }
+
+  #applyProps(): void {
+    const el = this.#el
+    if (el === null) return
+    const target = el as Partial<{ setProps: (p: InjectedProps) => void }>
+    if (typeof target.setProps === 'function') {
+      target.setProps(this.#entryProps)
+    } else {
+      for (const [k, v] of Object.entries(this.#entryProps)) {
+        (el as unknown as Record<string, unknown>)[k] = v
+      }
+    }
+  }
+}
+if (typeof customElements !== 'undefined' && customElements.get('dsh-entry-host') === undefined) {
+  customElements.define('dsh-entry-host', DshEntryHost)
+}
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      /** Tagged-webjsxSlot entry host; props flow through the `tag`/`entryProps` setters, not JSX attributes. */
+      'dsh-entry-host': { key?: string | number; tag?: string; entryProps?: InjectedProps }
+    }
+  }
+}
+
+/**
+ * Per-entry crash boundary: wraps `render()` in try/catch. On crash it
+ * renders the `data-slot-error` crash face and reports through
+ * `onEntryError` — the manual replacement for React's
+ * getDerivedStateFromError/componentDidCatch. This does not catch errors
+ * thrown later from async work or from inside a custom element's own
+ * lifecycle callbacks (only the synchronous render call is guarded) — an
+ * accepted, documented gap matching the earlier blocked attempt's own
+ * conclusion.
+ */
+function guardedRender(slotKey: string, onEntryError: (error: unknown) => void, render: () => VNode): VNode {
+  try {
+    return render()
+  } catch (error) {
+    if (error instanceof SlotAssemblyError) throw error
+    console.error(`slot entry crashed in '${slotKey}':`, error)
+    onEntryError(error)
+    return <div data-slot-error={slotKey} /> as unknown as VNode
+  }
 }
 
 /**
  * Session-maybe identity: adoption — the ONLY behavior (there is no
  * hold-identity-forever mode). An incarnation born session-less ADOPTS the
  * first session that arrives: identity holds across that one transition
- * (undefined → first id), so a blank shell's DOM survives the moment a
- * session appears. From then on the entry behaves exactly like a strict
- * session entry: switching to a DIFFERENT session remounts (component-local
- * state must not leak between sessions), and dropping back to no-session
- * remounts into a fresh blank incarnation, which will adopt again.
- * Component-local per-session state therefore clears by construction; state
- * that must SURVIVE a switch belongs in session-bound sources (machine,
- * store, hooks) — the existing layering rule, now load-bearing.
+ * (undefined → first id). From then on the entry behaves exactly like a
+ * strict session entry: switching to a DIFFERENT session remounts, and
+ * dropping back to no-session remounts into a fresh blank incarnation, which
+ * will adopt again. Bookkeeping now lives on the owning outlet instance
+ * (`#maybeIncarnation`) instead of a React child component's setState-in-render
+ * trick — the outlet already tracks winner identity per render, so this is
+ * one more piece of the same imperative bookkeeping.
  */
-function SessionMaybeEntry({ entry, ownerProps, slotKey, slotInjected, hookContext, hasHookContext }: {
-  entry: StoredEntry
-  ownerProps: object
-  slotKey: string
-  slotInjected: BoundSlotInject
-  hookContext: unknown
-  hasHookContext: boolean
-}) {
-  const info = useSessionMaybeProvideInfo()
-  // The child key is an incarnation counter, NOT the session id: adoption
-  // must keep the key constant across undefined → first id. Bookkeeping
-  // lives in this stable (unkeyed) wrapper via the render-phase setState
-  // form (React's sanctioned derived-state pattern: setState during render
-  // of the same component re-renders once before children mount, and the
-  // guard conditions make it convergent — StrictMode-safe).
-  const [state, setState] = useState<MaybeIncarnation>(FIRST_INCARNATION)
-  let { adopted, epoch } = state
-  if (info.sessionId !== undefined && adopted === undefined) {
-    // Adoption: same epoch — no remount.
-    adopted = info.sessionId
-    setState({ adopted, epoch })
-  } else if (adopted !== undefined && info.sessionId !== undefined && info.sessionId !== adopted) {
-    // Post-adoption session switch: next incarnation, born already adopted.
-    adopted = info.sessionId
-    epoch += 1
-    setState({ adopted, epoch })
-  } else if (adopted !== undefined && info.sessionId === undefined) {
-    // Back to no-session: next incarnation, born blank (adopts anew later).
-    adopted = undefined
-    epoch += 1
-    setState({ adopted, epoch })
-  }
-  return (
-    <SessionMaybeEntryBody
-      key={epoch}
-      entry={entry}
-      ownerProps={ownerProps}
-      info={info}
-      slotKey={slotKey}
-      slotInjected={slotInjected}
-      hookContext={hookContext}
-      hasHookContext={hasHookContext}
-    />
-  )
-}
-
-/** Adoption bookkeeping of one session-maybe outlet (see SessionMaybeEntry). */
 interface MaybeIncarnation {
-  /** Session this incarnation adopted; undefined while born blank and unadopted. */
   readonly adopted: string | undefined
-  /** Incarnation counter — the child key; bumps exactly when an incarnation dies. */
   readonly epoch: number
 }
-
 const FIRST_INCARNATION: MaybeIncarnation = { adopted: undefined, epoch: 0 }
 
-function RootEntry({ entry, ownerProps, slotKey, slotInjected, hookContext, hasHookContext }: {
-  entry: StoredEntry
-  ownerProps: object
-  slotKey: string
-  slotInjected: BoundSlotInject
-  hookContext: unknown
-  hasHookContext: boolean
-}) {
-  const host = useHost()
-  const Comp = entry.component as FC<InjectedProps>
-  const { kit, standard, actions } = standardKit(host, entry, 'root', undefined)
-  const injected = cachedRootInject(entry, actions)
-  return renderEntry(slotKey, Comp, kit, standard, injected, slotInjected, ownerProps, hookContext, hasHookContext)
-}
-
-function StrictSessionEntry({ slotKey, entry, ownerProps, slotInjected, hookContext, hasHookContext, onEntryError }: {
-  slotKey: string
-  entry: StoredEntry
-  ownerProps: object
-  slotInjected: BoundSlotInject
-  hookContext: unknown
-  hasHookContext: boolean
-  onEntryError: (error: unknown) => void
-}) {
-  const info = useSessionMaybeProvideInfo()
-  if (info.sessionId === undefined) return null
-  // Per-session remount rides this key; per-entry remount rides the outer
-  // element's entry-identity key (the outlet's guarded() call).
-  return (
-    <SlotErrorBoundary slotKey={slotKey} key={info.sessionId} onEntryError={onEntryError}>
-      <SessionEntry
-        entry={entry}
-        ownerProps={ownerProps}
-        info={info as SessionProvideInfo}
-        slotKey={slotKey}
-        slotInjected={slotInjected}
-        hookContext={hookContext}
-        hasHookContext={hasHookContext}
-      />
-    </SlotErrorBoundary>
-  )
+function nextIncarnation(state: MaybeIncarnation, sessionId: string | undefined): MaybeIncarnation {
+  if (sessionId !== undefined && state.adopted === undefined) {
+    return { adopted: sessionId, epoch: state.epoch }
+  }
+  if (state.adopted !== undefined && sessionId !== undefined && sessionId !== state.adopted) {
+    return { adopted: sessionId, epoch: state.epoch + 1 }
+  }
+  if (state.adopted !== undefined && sessionId === undefined) {
+    return { adopted: undefined, epoch: state.epoch + 1 }
+  }
+  return state
 }
 
 /**
- * Anchor style shared by every outlet wrapper: `display:contents` keeps the
- * wrapper out of layout (grid/flex parents see the slot's own children), so
- * the anchor is purely addressable surface. Module-level constant — a stable
- * reference so the wrapper never diffs its style prop.
+ * Anchor style shared by every outlet: `display:contents` keeps the wrapper
+ * out of layout, so the anchor is purely addressable surface.
  */
-const ANCHOR_STYLE = { display: 'contents' } as const
+const ANCHOR_STYLE = 'display: contents'
 
-function SlotOutlet({ slotKey, ownerProps, opts }: {
-  slotKey: string
-  ownerProps: object
-  opts?: (RenderOpts & ChainRenderOpts) | undefined
-}) {
-  const host = useHost()
-  // Version tick drives entries() re-read; the host batches per microtask.
-  useSyncExternalStore(
-    fn => host.subscribe(slotKey, fn),
-    () => host.getVersion(slotKey),
-  )
-  // Locale revision tick: a locale switch re-renders every outlet, and entry
-  // bodies re-derive their `t` seat at the new revision (fresh identity).
-  useLocaleRevision(host.locale)
-  const sessionInfo = useSessionMaybeProvideInfo()
-  // Anchor contract: every slot render site exposes a stable
-  // `[data-slot="<key>"]` wrapper — the addressable seam dynamic styles
-  // target — and `display:contents` keeps it layout-neutral. The wrapper
-  // rides the outlet, not the dispatch outcome: fallback, crash-face, and
-  // undeclared-empty states all render inside it, so the anchor's presence
-  // never flickers with registration churn.
+/**
+ * Slot outlet custom element — replaces the React `SlotOutlet` function
+ * component. `host`/`slotKey`/`ownerProps`/`opts` land as plain instance
+ * fields (webjsx property convention, see Toast.tsx's `setProps`); the
+ * registration-version and locale-revision `useSyncExternalStore`
+ * subscriptions become explicit `host.subscribe`/locale-face `subscribe`
+ * calls bound in `connectedCallback` and torn down in
+ * `disconnectedCallback`, each re-invoking `#render()` on notification.
+ */
+/**
+ * Prune stale duplicate `[data-slot]` wrapper children an outlet's applyDiff
+ * pass may have left behind (see the callers' comments for the observed
+ * webjsx diff-cache desync this guards). Keeps the last child — the wrapper
+ * the render just produced or updated — and removes any earlier ones.
+ * A no-op when the element already has zero or one child (the normal case).
+ */
+function pruneStaleOutletChildren(el: HTMLElement): void {
+  while (el.children.length > 1) {
+    const stale = el.children[0]
+    if (stale === undefined) break
+    stale.remove()
+  }
+}
+
+/**
+ * Reset webjsx's internal per-element diff bookkeeping (the
+ * `__webjsx_childNodes` cache `applyDiff` reads as its "previous render"
+ * baseline) to match what the DOM actually holds right now. Safe no-op on
+ * the normal path (cache already agrees with the DOM); guards specifically
+ * against the observed desync where a burst of re-renders leaves the cache
+ * reporting a stale child count.
+ */
+function resyncOutletDiffCache(el: HTMLElement): void {
+  const cache = (el as unknown as { __webjsx_childNodes?: unknown[] }).__webjsx_childNodes
+  const live = [...el.childNodes]
+  if (cache !== undefined && cache.length === live.length && cache.every((n, i) => n === live[i])) return
+  ;(el as unknown as { __webjsx_childNodes?: unknown[] }).__webjsx_childNodes = live
+}
+
+/**
+ * Owns one outlet's version + locale subscription lifecycle, shared by
+ * DshSlotOutlet and DshRootOutlet: connect binds both and renders once
+ * already-seen, disconnect tears both down, and locale rebinds fresh on
+ * every call (the face itself may change or (dis)appear between renders).
+ */
+class OutletSubscriptions {
+  #unsubscribeVersion: (() => void) | null = null
+  #unsubscribeLocale: (() => void) | null = null
+
+  connect(bindVersion: () => void, host: () => SlotRendererHost | null, onChange: () => void): void {
+    bindVersion()
+    this.bindLocale(host, onChange)
+  }
+
+  disconnect(): void {
+    this.#unsubscribeVersion?.()
+    this.#unsubscribeVersion = null
+    this.#unsubscribeLocale?.()
+    this.#unsubscribeLocale = null
+  }
+
+  bindVersion(unsubscribe: (() => void) | null): void {
+    this.#unsubscribeVersion?.()
+    this.#unsubscribeVersion = unsubscribe
+  }
+
+  bindLocale(host: () => SlotRendererHost | null, onChange: () => void): void {
+    this.#unsubscribeLocale?.()
+    const face = host()?.locale
+    this.#unsubscribeLocale = face === undefined ? null : face.subscribe(onChange)
+  }
+}
+
+export class DshSlotOutlet extends HTMLElement {
+  #host: SlotRendererHost | null = null
+  #slotKey = ''
+  #ownerProps: object = {}
+  #opts: (RenderOpts & ChainRenderOpts) | undefined
+  #subscriptions = new OutletSubscriptions()
+  #maybeIncarnation: MaybeIncarnation = FIRST_INCARNATION
+
+  // setProps() runs synchronously inside webjsx's own createDOMElement (via
+  // the `ref` callback), i.e. BEFORE this element is inserted into the real
+  // document — connectedCallback fires only afterward, once insertion lands.
+  // Rendering in both places double-renders the very first mount: the
+  // pre-connection render's applyDiff(this, vdom) runs against a detached
+  // node, then connectedCallback's applyDiff runs again immediately after
+  // insertion. webjsx's diff cache (element.__webjsx_childNodes, a plain
+  // instance property, not DOM-derived) should stay consistent across that
+  // sequence, but empirically it does not: the live DOM ends up with two
+  // `[data-slot]` children while the cache reports only one, i.e. the two
+  // back-to-back applyDiff calls around the detach→attach boundary produce a
+  // duplicate node webjsx's own bookkeeping never sees. Skipping the second,
+  // now-redundant render on first connect (setProps already rendered
+  // everything connectedCallback would) removes the double-render window
+  // entirely; later re-renders (subscriptions, setProps updates) are
+  // untouched.
+  #renderedOnce = false
+
+  setProps(props: {
+    host: SlotRendererHost
+    slotKey: string
+    ownerProps: object
+    opts?: (RenderOpts & ChainRenderOpts) | undefined
+  }): void {
+    this.#host = props.host
+    this.#slotKey = props.slotKey
+    this.#ownerProps = props.ownerProps
+    this.#opts = props.opts
+    this.#bindVersion()
+    this.#subscriptions.bindLocale(() => this.#host, () => { this.#render() })
+    this.#render()
+  }
+
+  // Required HTMLElement lifecycle hook name; body is unavoidably the same
+  // shape as DshRootOutlet's (both delegate to the shared OutletSubscriptions
+  // helper above) since custom-element lifecycle methods cannot be inherited
+  // from a shared base without a larger structural change.
+  connectedCallback(): void {
+    this.#subscriptions.connect(
+      () => { this.#bindVersion() },
+      () => this.#host,
+      () => { if (this.#renderedOnce) this.#render() },
+    )
+  }
+
+  disconnectedCallback(): void { this.#subscriptions.disconnect() }
+
+  #bindVersion(): void {
+    const host = this.#host
+    this.#subscriptions.bindVersion(host === null ? null : host.subscribe(this.#slotKey, () => { this.#render() }))
+  }
+
+  #render(): void {
+    const host = this.#host
+    if (host === null) return
+    // Defensive, BEFORE diffing: webjsx's per-element diff cache
+    // (element.__webjsx_childNodes / __webjsx_props.children) has been
+    // observed to desync from this outlet's live DOM across a burst of
+    // rapid re-renders (e.g. many renders queued in the same tick) —
+    // `applyDiff` then reads a stale "one child" bookkeeping against
+    // whatever the DOM actually holds, and depending on which desynced it
+    // either orphans an extra `[data-slot]` wrapper alongside the current
+    // one (duplicate content) or loses track of the real one entirely
+    // (content vanishes). Resetting the cache to exactly what the live DOM
+    // holds right before diffing gives every render pass a consistent,
+    // correct baseline regardless of how many renders raced before it.
+    resyncOutletDiffCache(this)
+    const sessionInfo = currentSessionMaybeProvideInfo(host)
+    const content = renderOutletContent(host, this.#slotKey, this.#ownerProps, this.#opts, sessionInfo, this.#maybeIncarnation, (next) => {
+      this.#maybeIncarnation = next
+    })
+    const vdom = (
+      <div data-slot={this.#slotKey} style={ANCHOR_STYLE}>
+        {content}
+      </div>
+    )
+    applyDiff(this, vdom)
+    pruneStaleOutletChildren(this)
+    this.#renderedOnce = true
+  }
+}
+if (typeof customElements !== 'undefined' && customElements.get('dsh-slot-outlet') === undefined) {
+  customElements.define('dsh-slot-outlet', DshSlotOutlet)
+}
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      /** Ordinary slot outlet; props flow through the `ref`-driven `setProps` call, not JSX attributes. */
+      'dsh-slot-outlet': { key?: string | number; ref?: (node: DshSlotOutlet | null) => void }
+      /** Root outlet; props flow through the `ref`-driven `setProps` call, not JSX attributes. */
+      'dsh-root-outlet': { ref?: (node: DshRootOutlet | null) => void }
+    }
+  }
+}
+
+/**
+ * Build a `<dsh-slot-outlet>` VNode for one renderSlot/renderSlotChain call
+ * site. The host API and dispatch opts are multi-field, must-update-together
+ * state, so they route through the `ref` callback's imperative `setProps`
+ * call (the same pattern ui-primitives' own `renderMenu`/`renderCodeBlock`
+ * helpers use for their complex prop objects) rather than as individual JSX
+ * attributes — this is the direct replacement for `WebjsxBridge`'s React
+ * indirection, now the terminal case.
+ */
+function slotOutletVNode(
+  host: SlotRendererHost,
+  slotKey: string,
+  ownerProps: object,
+  opts: (RenderOpts & ChainRenderOpts) | undefined,
+): VNode {
   return (
-    <div data-slot={slotKey} style={ANCHOR_STYLE}>
-      {renderOutletContent(host, slotKey, ownerProps, opts, sessionInfo)}
-    </div>
+    <dsh-slot-outlet
+      ref={(node) => {
+        node?.setProps({ host, slotKey, ownerProps, opts })
+      }}
+    /> as unknown as VNode
   )
 }
 
@@ -686,143 +717,112 @@ function renderOutletContent(
   ownerProps: object,
   opts: (RenderOpts & ChainRenderOpts) | undefined,
   sessionInfo: SessionMaybeProvideInfo,
-): ReactNode {
+  maybeIncarnation: MaybeIncarnation,
+  setMaybeIncarnation: (next: MaybeIncarnation) => void,
+): VNode | VNode[] | null {
   const spec = host.specOf(slotKey)
-  // Undeclared (or no-longer-declared) keys render empty: a declaring entry's
-  // unload returns the slot to the undeclared state while retained elements
-  // may still be mounted — natural empty, not an ownership failure.
   if (!spec) return null
   const strictSessionAbsent = spec.scope === 'session' && sessionInfo.sessionId === undefined
   if (strictSessionAbsent && (spec.kind !== 'chain' || !opts?.overlay)) {
-    return <>{opts?.fallback ?? null}</>
+    return (opts?.fallback as VNode | null | undefined) ?? null
   }
-  // An absent strict overlay chain follows its ordinary empty-election path,
-  // preserving the Fragment/fallback-wrapper shape across session arrival.
   const entries = strictSessionAbsent ? [] : host.entriesOf(slotKey)
   const slotInjected = cachedSlotInject(spec.inject)
 
-  // The boundary must wrap the Entry ELEMENT, not live inside it: inject
-  // factories and kit synthesis run in the Entry body and must land in the
-  // per-entry fallback rather than escaping to the tree above.
-  const guarded = (entry: StoredEntry, key?: string | number, owner: object = ownerProps) => {
+  // The outer wrapper is keyed by entry identity (entryKeyValue): a winner
+  // change (re-election, shadowing fallback, HMR re-registration) gets a
+  // DIFFERENT key, so applyDiff creates a fresh subtree instead of updating
+  // the previous winner's DOM in place — the manual equivalent of React's
+  // key-driven remount, since webjsx's own keyed-list diffing (verified
+  // above in applyDiff.js) only reuses a node when the new key matches an
+  // existing one.
+  const guarded = (entry: StoredEntry, entryKeyValue: string | number, owner: object = ownerProps, matched?: unknown): VNode => {
     const hasHookContext = opts !== undefined && Object.hasOwn(opts, 'hookContext')
     const hookContext = opts?.hookContext
-    // Shadowing kinds abdicate on crash (the cell falls to its next
-    // survivor); chain reports without abdicating — election alternatives
-    // resolve at select time, and retiring a crashed elected entry would
-    // change the static crash face.
     const onEntryError = (error: unknown) => {
       host.reportEntryError(slotKey, entry, error, { abdicate: spec.kind !== 'chain' })
     }
-    return spec.scope === 'session'
-      ? (
-        <StrictSessionEntry
-          slotKey={slotKey}
-          entry={entry}
-          ownerProps={owner}
-          slotInjected={slotInjected}
-          hookContext={hookContext}
-          hasHookContext={hasHookContext}
-          onEntryError={onEntryError}
-          key={key}
-        />
-      )
-      : (
-        <SlotErrorBoundary slotKey={slotKey} key={key} onEntryError={onEntryError}>
-          {spec.scope === 'session-maybe'
-            ? (
-              <SessionMaybeEntry
-                entry={entry}
-                ownerProps={owner}
-                slotKey={slotKey}
-                slotInjected={slotInjected}
-                hookContext={hookContext}
-                hasHookContext={hasHookContext}
-              />
-            )
-            : (
-              <RootEntry
-                entry={entry}
-                ownerProps={owner}
-                slotKey={slotKey}
-                slotInjected={slotInjected}
-                hookContext={hookContext}
-                hasHookContext={hasHookContext}
-              />
-            )}
-        </SlotErrorBoundary>
-      )
+    const inner = guardedRender(slotKey, onEntryError, () => {
+      if (spec.scope === 'session') {
+        if (sessionInfo.sessionId === undefined) return <></> as unknown as VNode
+        const info = sessionInfo as SessionProvideInfo
+        const { kit, standard, actions } = standardKit(host, entry, 'session', info)
+        const injected = cachedSessionInject(entry, info, actions)
+        const props = composeEntryProps(kit, standard, injected, slotInjected,
+          matched === undefined ? owner : { ...owner, matched }, hookContext, hasHookContext, slotKey)
+        return (
+          <div key={info.sessionId}>
+            {renderEntryVNode(entry, props, entryKeyOf(entry))}
+          </div>
+        ) as unknown as VNode
+      }
+      if (spec.scope === 'session-maybe') {
+        const next = nextIncarnation(maybeIncarnation, sessionInfo.sessionId)
+        if (next !== maybeIncarnation) setMaybeIncarnation(next)
+        const infoForRender: SessionMaybeProvideInfo = { ...sessionInfo, sessionId: next.adopted }
+        const { kit, standard, actions } = standardKit(host, entry, 'session-maybe', infoForRender)
+        const injected = cachedSessionMaybeInject(entry, infoForRender, actions)
+        const props = composeEntryProps(kit, standard, injected, slotInjected,
+          matched === undefined ? owner : { ...owner, matched }, hookContext, hasHookContext, slotKey)
+        return (
+          <div key={next.epoch}>
+            {renderEntryVNode(entry, props, entryKeyOf(entry))}
+          </div>
+        ) as unknown as VNode
+      }
+      const { kit, standard, actions } = standardKit(host, entry, 'root', undefined)
+      const injected = cachedRootInject(entry, actions)
+      const props = composeEntryProps(kit, standard, injected, slotInjected,
+        matched === undefined ? owner : { ...owner, matched }, hookContext, hasHookContext, slotKey)
+      return renderEntryVNode(entry, props, entryKeyOf(entry))
+    })
+    return <div key={entryKeyValue}>{inner}</div> as unknown as VNode
   }
-  // A cell whose every registration abdicated keeps the crash face: the
-  // shadowing collapse ran out of survivors, which is a failure state, not
-  // the owner's natural-empty fallback.
-  const deadCell = () => <div data-slot-error={slotKey} />
+
+  const deadCell = (): VNode => <div data-slot-error={slotKey} /> as unknown as VNode
 
   if (spec.kind === 'single') {
     const entry = host.entriesOfSlot(slotKey)[0]
-    if (!entry) return entries.length > 0 ? deadCell() : <>{opts?.fallback ?? null}</>
+    if (!entry) return entries.length > 0 ? deadCell() : ((opts?.fallback as VNode | null | undefined) ?? null)
     return guarded(entry, entryKeyOf(entry))
   }
   if (spec.kind === 'keyed') {
     const entry = host.entriesOfSlot(slotKey).find(e => e.options.key === opts?.entryKey)
     if (!entry) {
       const occupied = entries.some(e => e.options.key === opts?.entryKey)
-      return occupied ? deadCell() : <>{opts?.fallback ?? null}</>
+      return occupied ? deadCell() : ((opts?.fallback as VNode | null | undefined) ?? null)
     }
     return guarded(entry, entryKeyOf(entry))
   }
   if (spec.kind === 'chain') {
-    // Entries arrive priority-sorted from the ledger (the core orders at
-    // register, ties keep registration sequence). Selectors are pure
-    // functions of the owner props (register-face contract), so the routing
-    // pass runs per render with zero mount side effects: the first non-null
-    // election renders, decliners never mount.
-    let elected: ReactNode = null
+    let elected: VNode | null = null
     for (const entry of entries) {
       let matched: unknown
       try {
-        // Chain entries always carry select (SlotCore register validation).
         matched = (entry.select as (owner: object) => unknown)(ownerProps)
       } catch (error) {
-        // A throwing selector is a registrant contract breach (select MUST be
-        // pure and total), but it runs before the entry's SlotErrorBoundary
-        // exists — uncontained it would black out the whole owner region. So
-        // it degrades to a decline: the chain and the fallback stay intact,
-        // and the breach is reported like a crashed entry.
         console.error(
           `chain selector crashed in '${slotKey}' (${entry.registrant ?? 'unknown registrant'}), treating as declined:`,
           error)
         continue
       }
       if (matched !== null) {
-        elected = guarded(entry, entryKeyOf(entry), { ...ownerProps, matched })
+        elected = guarded(entry, entryKeyOf(entry), ownerProps, matched)
         break
       }
     }
     if (opts?.overlay) {
-      // Overlay chain (ChainRenderOpts.overlay): the fallback stays mounted
-      // through elections — hidden via inline display:none (decisive over any
-      // author CSS), shown via display:contents so the wrapper never affects
-      // the owner's layout. The wrapper's tree position is constant, so React
-      // reconciles instead of remounting and fallback state survives takeover.
-      return (
-        <>
-          <div
-            data-chain-overlay-fallback={slotKey}
-            style={{ display: elected === null ? 'contents' : 'none' }}
-          >
-            {opts.fallback ?? null}
-          </div>
-          {elected}
-        </>
-      )
+      const fallbackStyle = `display: ${elected === null ? 'contents' : 'none'}`
+      return [
+        <div data-chain-overlay-fallback={slotKey} style={fallbackStyle}>
+          {(opts.fallback as VNode | null | undefined) ?? null}
+        </div>,
+        elected,
+      ] as unknown as VNode[]
     }
-    return elected ?? <>{opts?.fallback ?? null}</>
+    return elected ?? ((opts?.fallback as VNode | null | undefined) ?? null)
   }
-  // list: one row per id cell — the cell's shadowing winner, or the crash
-  // face once every entry of the cell abdicated (a dry cell must not
-  // silently drop its row). Row sequence: registration order refined by
-  // explicit order, optional id filter, as before shadowing existed.
+  // list: one row per id cell.
   const winners = host.entriesOfSlot(slotKey)
   const rows: { entry: StoredEntry | undefined; id: string | undefined; order: number }[] = winners.map(entry => ({
     entry,
@@ -833,77 +833,115 @@ function renderOutletContent(
   for (const entry of entries) {
     if (rowIds.has(entry.options.id)) continue
     rowIds.add(entry.options.id)
-    // Dry cells anchor their row at the cell head's declared order.
     rows.push({ entry: undefined, id: entry.options.id, order: entry.options.order ?? 0 })
   }
   let list = [...rows].sort((a, b) => a.order - b.order)
   if (opts?.only !== undefined) list = list.filter(item => item.id === opts.only)
-  if (list.length === 0) return <>{opts?.fallback ?? null}</>
-  // Winner rows key by entry identity (see entryKeyOf); dry-cell rows key by
-  // id — the disjoint prefixes keep the two namespaces from colliding.
-  return (
-    <>
-      {list.map((item, i) => item.entry !== undefined
-        ? guarded(item.entry, `e${entryKeyOf(item.entry)}`)
-        : <div data-slot-error={slotKey} key={`x${item.id ?? i}`} />)}
-    </>
-  )
+  if (list.length === 0) return (opts?.fallback as VNode | null | undefined) ?? null
+  return list.map(item => item.entry !== undefined
+    ? guarded(item.entry, `e${entryKeyOf(item.entry)}`)
+    : (<div data-slot-error={slotKey} key={`x${item.id}`} /> as unknown as VNode)) as unknown as VNode[]
 }
 
-/** Root outlet: the shell's single ctx-level render entry — an unregistered 'root' is a boot-order failure, never a silent blank. */
-function RootOutlet({ ownerProps }: { ownerProps: object }) {
-  const host = useHost()
-  useSyncExternalStore(
-    fn => host.subscribe('root', fn),
-    () => host.getVersion('root'),
-  )
-  useLocaleRevision(host.locale)
-  const entry = host.entriesOfSlot('root')[0]
-  if (!entry) {
-    // Registrations exist but every one abdicated: the shadowing collapse ran
-    // dry, so the crash face replaces the tree (registered-but-broken is a
-    // crash, not the boot-order assembly failure below).
-    if (host.entriesOf('root').length > 0) return <div data-slot-error="root" />
-    throw new SlotAssemblyError("renderSlot('root') before any 'root' registration (boot order)")
+/**
+ * Root outlet custom element — replaces the React `RootOutlet` function
+ * component. Same subscribe/render lifecycle as `DshSlotOutlet`; kept
+ * distinct because 'root' has its own boot-order assembly-failure contract
+ * (throwing before any registration exists) that ordinary slots don't.
+ */
+export class DshRootOutlet extends HTMLElement {
+  #host: SlotRendererHost | null = null
+  #ownerProps: object = {}
+  #subscriptions = new OutletSubscriptions()
+  // See DshSlotOutlet's #renderedOnce: setProps() renders synchronously
+  // pre-connection (webjsx's ref callback fires inside createDOMElement,
+  // before insertion); connectedCallback firing #render() again right after
+  // desyncs webjsx's own diff cache from the live DOM and duplicates the
+  // rendered subtree. Skip the redundant first connectedCallback render.
+  #renderedOnce = false
+
+  setProps(props: { host: SlotRendererHost; ownerProps: object }): void {
+    this.#host = props.host
+    this.#ownerProps = props.ownerProps
+    this.#bindVersion()
+    this.#subscriptions.bindLocale(() => this.#host, () => { this.#render() })
+    this.#render()
   }
-  // Same anchor contract as SlotOutlet: 'root' is a slot like any other, and
-  // display:contents keeps the wrapper out of the shell's layout.
-  return (
-    <div data-slot="root" style={ANCHOR_STYLE}>
-      <SlotErrorBoundary
-        slotKey="root"
-        key={entryKeyOf(entry)}
-        onEntryError={(error) => { host.reportEntryError('root', entry, error, { abdicate: true }) }}
-      >
-        <RootEntry
-          entry={entry}
-          ownerProps={ownerProps}
-          slotKey="root"
-          slotInjected={EMPTY_SLOT_INJECT}
-          hookContext={undefined}
-          hasHookContext={false}
-        />
-      </SlotErrorBoundary>
-    </div>
-  )
+
+  // Required HTMLElement lifecycle hook name; body is unavoidably the same
+  // shape as DshSlotOutlet's (both delegate to the shared OutletSubscriptions
+  // helper above) since custom-element lifecycle methods cannot be inherited
+  // from a shared base without a larger structural change.
+  // oxlint-disable-next-line sonarjs/no-identical-functions
+  connectedCallback(): void {
+    this.#subscriptions.connect(
+      () => { this.#bindVersion() },
+      () => this.#host,
+      () => { if (this.#renderedOnce) this.#render() },
+    )
+  }
+
+  disconnectedCallback(): void { this.#subscriptions.disconnect() }
+
+  #bindVersion(): void {
+    const host = this.#host
+    this.#subscriptions.bindVersion(host === null ? null : host.subscribe('root', () => { this.#render() }))
+  }
+
+  #render(): void {
+    const host = this.#host
+    if (host === null) return
+    resyncOutletDiffCache(this)
+    const entry = host.entriesOfSlot('root')[0]
+    let content: VNode
+    if (!entry) {
+      if (host.entriesOf('root').length > 0) {
+        content = <div data-slot-error="root" /> as unknown as VNode
+      } else {
+        throw new SlotAssemblyError("renderSlot('root') before any 'root' registration (boot order)")
+      }
+    } else {
+      const onEntryError = (error: unknown) => {
+        host.reportEntryError('root', entry, error, { abdicate: true })
+      }
+      content = guardedRender('root', onEntryError, () => {
+        const { kit, standard, actions } = standardKit(host, entry, 'root', undefined)
+        const injected = cachedRootInject(entry, actions)
+        const props = composeEntryProps(kit, standard, injected, EMPTY_SLOT_INJECT,
+          this.#ownerProps, undefined, false, 'root')
+        return renderEntryVNode(entry, props, entryKeyOf(entry))
+      })
+    }
+    const vdom = (
+      <div data-slot="root" style={ANCHOR_STYLE}>
+        {content}
+      </div>
+    )
+    applyDiff(this, vdom)
+    // See DshSlotOutlet's identical call for why this is needed.
+    pruneStaleOutletChildren(this)
+    this.#renderedOnce = true
+  }
+}
+if (typeof customElements !== 'undefined' && customElements.get('dsh-root-outlet') === undefined) {
+  customElements.define('dsh-root-outlet', DshRootOutlet)
 }
 
 /**
  * Build the renderer the shell installs into the runtime SlotRegistry
- * (ctx.slots.install(createSlotRenderer()) at boot; the service owns the
- * install/renderSlot contract and the double-install/not-installed throws).
+ * (ctx.slots.install(createSlotRenderer()) at boot).
  * @returns the renderer.
  */
 export function createSlotRenderer(): SlotRenderer {
   return {
     renderRoot(host, ownerProps) {
       return (
-        <HostContext.Provider value={host}>
-          <SessionMaybeProvider>
-            <RootOutlet ownerProps={ownerProps} />
-          </SessionMaybeProvider>
-        </HostContext.Provider>
-      )
+        <dsh-root-outlet
+          ref={(node) => {
+            node?.setProps({ host, ownerProps })
+          }}
+        />
+      ) as unknown as VNode
     },
   }
 }

@@ -1,7 +1,15 @@
-/** Product-wide, versioned internal-testing notice. */
+/**
+ * Product-wide, versioned internal-testing notice.
+ *
+ * Converted from a React hooks component: the `finished` ref-guarded
+ * `complete()` call and the load/acknowledge-triggered effects become plain
+ * calls made on each render, guarded the same way the `useRef` guard did —
+ * this component is created fresh by the slot renderer on every snapshot
+ * change (it is a plain function, not a stateful custom element), so
+ * "already finished" state is tracked outside on the store shape itself
+ * (`state.acknowledged`) rather than in an instance field.
+ */
 
-import { useCallback, useEffect, useRef } from 'react'
-import type { ReactNode } from 'react'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -26,30 +34,30 @@ export interface WelcomeNoticeInjected {
 export type WelcomeNoticeProps =
   PropsRuntime<'settings.onboarding'> & InjectFace<WelcomeNoticeInjected>
 
+/** Per-store guard so a repeated finished snapshot calls `complete()` once. */
+const finishedStores = new WeakSet<WelcomeNoticeStore>()
+
 /**
  * Render the current notice until its exact copy version is acknowledged.
  * @param props - settings-shell owner state and welcome dependencies.
  * @returns the welcome modal or null while the step decides not to show.
  */
-export function WelcomeNotice(props: WelcomeNoticeProps): ReactNode {
+export function WelcomeNotice(props: WelcomeNoticeProps): JSX.Element | null {
   const { complete, controller, useWelcome, t } = props
   const state = useWelcome(snapshot => snapshot)
-  const finished = useRef(false)
-  const finish = useCallback((): void => {
-    if (finished.current) return
-    finished.current = true
+
+  const finish = (): void => {
+    if (finishedStores.has(controller)) return
+    finishedStores.add(controller)
     complete()
-  }, [complete])
+  }
 
-  useEffect(() => {
-    if (state.status === 'idle') void controller.load()
-  }, [controller, state.status])
-
-  useEffect(() => {
-    if (state.acknowledged) finish()
-  }, [finish, state.acknowledged])
-
-  if (state.status === 'idle' || state.status === 'loading' || state.acknowledged) return null
+  if (state.status === 'idle') void controller.load()
+  if (state.acknowledged) {
+    finish()
+    return null
+  }
+  if (state.status === 'idle' || state.status === 'loading') return null
 
   const acknowledge = async (): Promise<void> => {
     if (await controller.acknowledge()) finish()
@@ -58,16 +66,16 @@ export function WelcomeNotice(props: WelcomeNoticeProps): ReactNode {
 
   return (
     <OnboardingModal title={t('welcomeTitle')} focusTitle>
-      <div className={css.copy}>
+      <div class={css.copy ?? ''}>
         {paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
       </div>
-      {state.error === null ? null : <p className={css.error} role="alert">{t('welcomeError')}</p>}
-      <div className={css.actions}>
+      {state.error === null ? null : <p class={css.error ?? ''} role="alert">{t('welcomeError')}</p>}
+      <div class={css.actions ?? ''}>
         <Button
           variant="primary"
-          className={css.primary}
+          class={css.primary}
           disabled={state.status === 'saving'}
-          onClick={() => { void acknowledge() }}
+          onclick={() => { void acknowledge() }}
         >
           {t('welcomeContinue')}
         </Button>

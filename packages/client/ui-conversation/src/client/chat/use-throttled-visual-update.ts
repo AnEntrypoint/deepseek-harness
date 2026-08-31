@@ -1,40 +1,54 @@
-/** Frame-throttled scheduling for non-essential visual alignment. */
-import { useCallback, useLayoutEffect, useRef } from 'react'
+/** Frame-throttled scheduling for non-essential visual alignment.
+ *
+ * Plain closure: create with `createThrottledVisualUpdate(update, intervalFrames)`,
+ * call the returned function to schedule the latest alignment, and call
+ * `.stop()` in `disconnectedCallback` to cancel any pending frame.
+ */
 
 const DEFAULT_INTERVAL_FRAMES = 3
 
+/** Scheduler returned by {@link createThrottledVisualUpdate}. */
+export interface ThrottledVisualUpdate {
+  /** Schedule the latest alignment; coalesces repeated calls within the interval. */
+  (): void
+  /** Cancel any pending frame. Idempotent. Call in `disconnectedCallback`. */
+  stop: () => void
+}
+
 /**
- * Return a stable scheduler that coalesces visual updates over a frame interval.
- * @param update - DOM alignment to run after the throttle interval.
+ * Create a stable scheduler that coalesces visual updates over a frame interval.
+ * @param update - DOM alignment to run after the throttle interval; read fresh
+ *   on each call so the owner can update its closed-over state without
+ *   recreating the scheduler.
  * @param intervalFrames - frames to wait before applying the latest alignment.
- * @returns a stable function that schedules the latest update.
+ * @returns a scheduler function exposing `.stop()`.
  */
-export function useThrottledVisualUpdate(
+export function createThrottledVisualUpdate(
   update: () => void,
   intervalFrames = DEFAULT_INTERVAL_FRAMES,
-): () => void {
-  const updateRef = useRef(update)
-  updateRef.current = update
-  const pendingFrameRef = useRef<number | null>(null)
+): ThrottledVisualUpdate {
+  let pendingFrame: number | null = null
 
-  useLayoutEffect(() => () => {
-    if (pendingFrameRef.current === null) return
-    cancelAnimationFrame(pendingFrameRef.current)
-    pendingFrameRef.current = null
-  }, [])
-
-  return useCallback(() => {
-    if (pendingFrameRef.current !== null) return
+  const schedule = (): void => {
+    if (pendingFrame !== null) return
     let remainingFrames = intervalFrames
     const advance = (): void => {
       remainingFrames -= 1
       if (remainingFrames > 0) {
-        pendingFrameRef.current = requestAnimationFrame(advance)
+        pendingFrame = requestAnimationFrame(advance)
         return
       }
-      pendingFrameRef.current = null
-      updateRef.current()
+      pendingFrame = null
+      update()
     }
-    pendingFrameRef.current = requestAnimationFrame(advance)
-  }, [intervalFrames])
+    pendingFrame = requestAnimationFrame(advance)
+  }
+
+  schedule.stop = (): void => {
+    if (pendingFrame === null) return
+    cancelAnimationFrame(pendingFrame)
+    pendingFrame = null
+  }
+
+  return schedule
 }

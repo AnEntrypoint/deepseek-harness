@@ -19,11 +19,19 @@
  * owned by `settings.yaml`. Profile edits land as minimal `settings.mutate`
  * path ops against the stored section — the card names only the fields it can
  * see instead of rebuilding the whole subtree from a partial descriptor.
+ *
+ * Converted from a React hooks component to a webjsx custom element: every
+ * useState becomes an instance field, the credential-describe useEffect
+ * becomes connectedCallback/disconnectedCallback (the `stale` guard becomes
+ * an epoch counter), and useMemo becomes a plain recompute cached behind a
+ * last-inputs identity check. Re-render is an explicit applyDiff(this, vdom)
+ * call (Toast.tsx's pattern).
  */
 
-import { useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import type { CredentialView, IApiClient, SettingsNamespaceView, SettingsPathOpView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { SchemaNode } from '@deepseek-ai/dsh-client-ui-settings/client'
 import {
   DeepSeekModelsEditor, modelDrafts, validateDeepSeekModels,
 } from './DeepSeekModelsEditor.tsx'
@@ -146,114 +154,111 @@ function refFor(
   return typeof named === 'string' && named.length > 0 ? named : deriveKeyRef(provider)
 }
 
-/**
- * Render one provider's editing card.
- * @param props - the addressed profile plus wire faces and copy.
- * @returns the editor card.
- */
-export function ProviderEditor(props: ProviderEditorProps): ReactNode {
-  const { namespace, schema, settingsPath, api, t } = props
-  const [draft, setDraft] = useState<Record<string, unknown>>(() => draftAt(schema, namespace, settingsPath))
-  const [keyDraft, setKeyDraft] = useState('')
-  const [keyState, setKeyState] = useState<CredentialView | undefined>(undefined)
-  const [busy, setBusy] = useState(false)
-  const [failure, setFailure] = useState<string | undefined>(undefined)
+const DEFAULT_PROPS: ProviderEditorProps = {
+  provider: '',
+  displayName: '',
+  namespace: {} as SettingsNamespaceView,
+  schema: {} as SettingsSchemaOperations,
+  settingsPath: [],
+  api: {} as Pick<IApiClient, 'settings' | 'credentials' | 'llm'>,
+  t: key => key,
+  readOnly: false,
+  onClose: () => {},
+}
+
+/** One provider's editing card, as a webjsx custom element. */
+export class DshProviderEditor extends HTMLElement {
+  #props: ProviderEditorProps = DEFAULT_PROPS
+  #draft: Record<string, unknown> = {}
+  #keyDraft = ''
+  #keyState: CredentialView | undefined = undefined
+  #busy = false
+  #failure: string | undefined = undefined
   // A settings success advances both retry baselines immediately. Keeping the
   // derived fields in the draft prevents a pushed namespace refresh from
   // turning them into deletions when the following credential write is retried.
-  const [committedOriginal, setCommittedOriginal] = useState<unknown>(
-    () => schema.getPath(namespace.user, settingsPath),
-  )
-  const [expectedRevision, setExpectedRevision] = useState(() => namespace.revision)
-  const root = useMemo(() => schema.rehydrate(namespace.schema), [namespace.schema, schema])
-  const node = useMemo(() => schema.nodeAtPath(root, settingsPath), [root, schema, settingsPath])
-  const fallback = schema.getPath(namespace.value, settingsPath)
-  const disabled = props.readOnly || busy
-  const layout = layoutOf(namespace.ns)
-  const keyRef = refFor(schema, namespace, settingsPath, props.provider)
-  // The same schema read the create card makes, so the choices offered here
-  // and there cannot drift apart: both come from the adapter's own `Config`.
-  // Only the pi-ai layout has a per-route protocol for the read to find, and
-  // it rehydrates the whole section schema, so the other layouts skip it.
-  const protocols = useMemo(
-    () => layout === 'pi-ai' ? protocolChoices(namespace, schema) : [],
-    [layout, namespace, schema],
-  )
+  #committedOriginal: unknown = undefined
+  #expectedRevision = 0
+  #credentialEpoch = 0
+  #lastNamespaceSchema: unknown = undefined
+  #root: SchemaNode | undefined = undefined
 
-  useEffect(() => {
-    let stale = false
-    setKeyState(undefined)
+  setProps(props: ProviderEditorProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    const { schema, namespace, settingsPath } = this.#props
+    this.#draft = draftAt(schema, namespace, settingsPath)
+    this.#committedOriginal = schema.getPath(namespace.user, settingsPath)
+    this.#expectedRevision = namespace.revision
+    this.#loadKeyState()
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#credentialEpoch += 1
+  }
+
+  #loadKeyState(): void {
+    const { api, schema, namespace, settingsPath, provider } = this.#props
+    const keyRef = refFor(schema, namespace, settingsPath, provider)
+    const epoch = ++this.#credentialEpoch
+    this.#keyState = undefined
     // The key state is a placeholder hint, not a precondition for editing:
     // neither a business rejection nor a transport failure may reach the
     // browser as an unhandled rejection, so the card simply renders without
     // the "already configured" hint.
     void api.credentials.describe({ refs: [keyRef] }).then(
       (response) => {
-        if (stale || !response.result.ok) return
-        setKeyState(response.result.value.credentials[keyRef])
+        if (epoch !== this.#credentialEpoch || !response.result.ok) return
+        this.#keyState = response.result.value.credentials[keyRef]
+        this.#render()
       },
       () => undefined,
     )
-    return () => { stale = true }
-  }, [api.credentials, keyRef])
+  }
 
-  const stringAt = (source: unknown, key: string): string | undefined => {
-    const value = schema.getPath(source, [key])
+  #stringAt(source: unknown, key: string): string | undefined {
+    const value = this.#props.schema.getPath(source, [key])
     return typeof value === 'string' && value.trim().length > 0 ? value : undefined
   }
-  const setField = (key: string, next: string | undefined): void => {
+
+  #setField(key: string, next: string | undefined): void {
+    const { schema } = this.#props
     // A value of nothing but whitespace is cleared, not stored: `stringAt`
     // already reports it as absent, so the field would otherwise render empty
     // while the draft still carried the spaces into `settings.yaml`, where
     // both adapters would accept that non-empty string as a real value.
     const value = next === undefined || next.trim().length === 0 ? undefined : next
-    setDraft(current => value === undefined
-      ? schema.deletePath(current, [key])
-      : schema.setPath(current, [key], value))
+    this.#draft = value === undefined
+      ? schema.deletePath(this.#draft, [key])
+      : schema.setPath(this.#draft, [key], value)
   }
 
-  // The model list is validated by the same per-row checker for both families,
-  // so a bad row is named by its position rather than by a blanket message.
-  const modelFailure = validateDeepSeekModels(schema.getPath(draft, ['models']))
-  const keyFailure = apiKeyFailure(keyDraft)
-  // What a probe or a write must carry: the typed key with paste whitespace
-  // removed. A blank field yields an empty string, which both call sites read
-  // as "no key supplied" rather than as a key — that is how a card whose
-  // provider already has a stored key is edited without re-entering it.
-  const keyValue = keyDraft.trim()
-  const credentialRequiredFailure = props.credentialRequired === true
-    && keyDraft.length > 0 && keyValue.length === 0
-    ? 'keyRequired' as const
-    : undefined
-  const shownKeyFailure = credentialRequiredFailure ?? keyFailure
-  // What the form currently shows, which is what an interrogation must ask:
-  // an edited-but-unsaved endpoint, and a key typed but not yet stored.
-  const probeApi = stringAt(draft, 'api') ?? stringAt(fallback, 'api')
-  const probeBaseURL = stringAt(draft, 'baseURL') ?? stringAt(fallback, 'baseURL')
-  const probe = {
-    settingsNs: namespace.ns,
-    // Naming the route lets an adapter that already describes it answer from
-    // its own registry — better metadata, no network call, no endpoint needed.
-    provider: props.provider,
-    ...probeBaseURL === undefined ? {} : { baseURL: probeBaseURL },
-    ...probeApi === undefined ? {} : { api: probeApi },
-    ...keyValue.length === 0 ? {} : { apiKey: keyValue },
-  }
   /**
    * The write for this card, or a failure message. Every edit travels as
    * path ops against the STORED section: the draft comes from the redacted
    * descriptor, so a wholesale replace rebuilt from it could delete fields
    * outside the card. Ops name only the fields this card can see.
    */
-  const applyOnce = async (): Promise<string | undefined> => {
+  async #applyOnce(): Promise<string | undefined> {
+    const { schema, namespace, settingsPath, api, provider, t } = this.#props
     const ns = namespace.ns
+    const layout = layoutOf(namespace.ns)
+    const keyRef = refFor(schema, namespace, settingsPath, provider)
+    const fallback = schema.getPath(namespace.value, settingsPath)
+    const keyValue = this.#keyDraft.trim()
     // A pi-ai profile names the conventional reference only when this page is
     // about to store a key. Otherwise the provider keeps its native auth path.
-    const next = layout === 'pi-ai' && stringAt(draft, 'apiKeyEnv') === undefined
-      && stringAt(fallback, 'apiKeyEnv') === undefined && keyValue.length > 0
-      ? schema.setPath(draft, ['apiKeyEnv'], keyRef)
-      : draft
-    if (props.credentialOnly !== true) {
+    const next = layout === 'pi-ai' && this.#stringAt(this.#draft, 'apiKeyEnv') === undefined
+      && this.#stringAt(fallback, 'apiKeyEnv') === undefined && keyValue.length > 0
+      ? schema.setPath(this.#draft, ['apiKeyEnv'], keyRef)
+      : this.#draft
+    const root = this.#root ?? schema.rehydrate(namespace.schema)
+    const node = schema.nodeAtPath(root, settingsPath)
+    if (this.#props.credentialOnly !== true) {
       // The same checker gates the submit button, so a card cannot reach this
       // with a bad row; it stays because the schema check below would refuse
       // the write with a message naming a path instead of the row, and because
@@ -265,65 +270,59 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       }
     }
     /* v8 ignore next -- apply is only reachable from the rendered card, which required a resolved node */
-    if (props.credentialOnly !== true && node !== undefined && settingsPath.length === 0) {
+    if (this.#props.credentialOnly !== true && node !== undefined && settingsPath.length === 0) {
       const sectionError = schema.validate(node, next)
       if (sectionError !== undefined) return sectionError
     }
     const materializesNativeProfile = layout === 'pi-ai'
       && fallback === undefined
-      && committedOriginal === undefined
+      && this.#committedOriginal === undefined
       && Object.keys(next).length === 0
-    const ops: SettingsPathOpView[] = props.credentialOnly === true
+    const ops: SettingsPathOpView[] = this.#props.credentialOnly === true
       ? []
       : materializesNativeProfile
         ? [{ op: 'set', path: [...settingsPath], value: {} }]
-        : pathOps(settingsPath, committedOriginal, next)
+        : pathOps(settingsPath, this.#committedOriginal, next)
     if (ops.length > 0) {
-      const response = await api.settings.mutate({ ns, ops, expectedRevision })
+      const response = await api.settings.mutate({ ns, ops, expectedRevision: this.#expectedRevision })
       if (!response.result.ok) {
         return response.result.error.code === 'settings-conflict'
           ? t('conflict')
           : response.result.error.message
       }
-      setCommittedOriginal(schema.getPath(response.result.value.user, settingsPath))
-      setExpectedRevision(response.result.value.revision)
-      setDraft(next)
+      this.#committedOriginal = schema.getPath(response.result.value.user, settingsPath)
+      this.#expectedRevision = response.result.value.revision
+      this.#draft = next
     }
     if (keyValue.length > 0) {
       const stored = await api.credentials.set({ ref: keyRef, value: keyValue })
       if (!stored.result.ok) return stored.result.error.message
     }
-    setKeyDraft('')
+    this.#keyDraft = ''
     return undefined
   }
 
-  const apply = async (): Promise<void> => {
-    setBusy(true)
-    setFailure(undefined)
+  async #apply(): Promise<void> {
+    this.#busy = true
+    this.#failure = undefined
+    this.#render()
     try {
-      const failure = await applyOnce()
+      const failure = await this.#applyOnce()
       if (failure !== undefined) {
-        setFailure(failure)
+        this.#failure = failure
         return
       }
-      props.onClose(true)
+      this.#props.onClose(true)
     } catch (error) {
       // A transport failure (disconnect, a request the host refuses) rejects
       // rather than answering; without this the card would stay busy forever
       // with no error shown.
-      setFailure(messageOf(error))
+      this.#failure = messageOf(error)
     } finally {
-      setBusy(false)
+      this.#busy = false
+      this.#render()
     }
   }
-
-  if (node === undefined) {
-    // A directory entry addressing a position its schema cannot resolve is a
-    // host-side inconsistency; showing it beats a blank card.
-    return <p className={styles['error']}>{`${props.provider}: unresolvable settings path`}</p>
-  }
-
-  const keyLocked = keyState?.writable === false
 
   /**
    * The catalog beneath the user layer: what the composition entry pinned, or
@@ -332,9 +331,12 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
    * is applied, so reading it would echo that override straight back the
    * moment reset drops it, leaving the rows unchanged until a reload.
    */
-  const inheritedModels = (): unknown => {
+  #inheritedModels(): unknown {
+    const { schema, namespace, settingsPath } = this.#props
     const pinned = schema.getPath(namespace.base, [...settingsPath, 'models'])
-    return pinned ?? schema.nodeAtPath(root, [...settingsPath, 'models'])?.meta.default
+    const root = this.#root ?? schema.rehydrate(namespace.schema)
+    return pinned ?? (schema.nodeAtPath(root, [...settingsPath, 'models']) as
+      { meta: { default: unknown } } | undefined)?.meta.default
   }
 
   /**
@@ -342,21 +344,45 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
    * narrowed so the per-family branches below are total: an unknown namespace
    * renders the hint instead and never reaches this body.
    */
-  const curatedFields = (family: 'deepseek' | 'pi-ai'): ReactNode => {
+  #curatedFields(family: 'deepseek' | 'pi-ai'): VNode {
+    const props = this.#props
+    const { schema, namespace, settingsPath, t } = props
+    const disabled = props.readOnly || this.#busy
+    const fallback = schema.getPath(namespace.value, settingsPath)
+    const protocols = family === 'pi-ai' ? protocolChoices(namespace, schema) : []
+    const probeApi = this.#stringAt(this.#draft, 'api') ?? this.#stringAt(fallback, 'api')
+    const keyLocked = this.#keyState?.writable === false
     // What a hand-declared route names for itself and nothing else can supply.
     // A whole-section `llm-deepseek` profile is a composition fact with no
     // per-route identity for its schema to carry, hence the family test.
     const ownsIdentity = family === 'pi-ai' && props.declared === true
-    const customModels = schema.getPath(draft, ['models'])
-    const modelsOverridden = schema.hasPath(draft, ['models'])
-    const models = modelDrafts(modelsOverridden ? customModels : inheritedModels())
+    const customModels = schema.getPath(this.#draft, ['models'])
+    const modelsOverridden = schema.hasPath(this.#draft, ['models'])
+    const models = modelDrafts(modelsOverridden ? customModels : this.#inheritedModels())
     const defaultContextWindow = schema.getPath(fallback, ['defaultContextWindow'])
     const defaultMaxTokens = schema.getPath(fallback, ['maxTokens'])
     const keyPlaceholder = keyLocked
       ? t('keyEnvLocked')
-      : keyState?.configured === true && props.credentialRequired !== true
+      : this.#keyState?.configured === true && props.credentialRequired !== true
         ? t('keyStored')
         : family === 'pi-ai' ? t('keyPlaceholderNative') : t('keyPlaceholder')
+    const keyFailure = apiKeyFailure(this.#keyDraft)
+    const keyValue = this.#keyDraft.trim()
+    const credentialRequiredFailure = props.credentialRequired === true
+      && this.#keyDraft.length > 0 && keyValue.length === 0
+      ? 'keyRequired' as const
+      : undefined
+    const shownKeyFailure = credentialRequiredFailure ?? keyFailure
+    const probeBaseURL = this.#stringAt(this.#draft, 'baseURL') ?? this.#stringAt(fallback, 'baseURL')
+    const probe = {
+      settingsNs: namespace.ns,
+      // Naming the route lets an adapter that already describes it answer from
+      // its own registry — better metadata, no network call, no endpoint needed.
+      provider: props.provider,
+      ...probeBaseURL === undefined ? {} : { baseURL: probeBaseURL },
+      ...probeApi === undefined ? {} : { api: probeApi },
+      ...keyValue.length === 0 ? {} : { apiKey: keyValue },
+    }
     /** What both family editors take: the rows, whose layer owns them, and the two writes. */
     const catalogProps = {
       models,
@@ -364,43 +390,47 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       t,
       disabled,
       onChange: (next: Record<string, unknown>[]) => {
-        setDraft(current => schema.setPath(current, ['models'], next))
+        this.#draft = schema.setPath(this.#draft, ['models'], next)
+        this.#render()
       },
-      onReset: () => { setDraft(current => schema.deletePath(current, ['models'])) },
+      onReset: () => {
+        this.#draft = schema.deletePath(this.#draft, ['models'])
+        this.#render()
+      },
     }
     return (
       <>
-        <div className={styles['field']}>
-          <span className={styles['fieldLabel']}>{t('keyInput')}</span>
+        <div class={styles['field'] ?? ''}>
+          <span class={styles['fieldLabel'] ?? ''}>{t('keyInput')}</span>
           <input
-            className={styles['input']}
+            class={styles['input'] ?? ''}
             type="password"
-            autoComplete="off"
-            value={keyDraft}
+            autocomplete="off"
+            value={this.#keyDraft}
             placeholder={keyPlaceholder}
             aria-label={t('keyInput')}
             aria-invalid={shownKeyFailure !== undefined}
             required={props.credentialRequired === true}
-            autoFocus={props.autoFocusCredential === true}
+            autofocus={props.autoFocusCredential === true}
             disabled={disabled || keyLocked}
-            onChange={(event) => { setKeyDraft(event.target.value) }}
+            onchange={(event: Event) => { this.#keyDraft = (event.target as HTMLInputElement).value; this.#render() }}
           />
-          {shownKeyFailure === undefined ? null : <p className={styles['error']}>{t(shownKeyFailure)}</p>}
+          {shownKeyFailure === undefined ? null : <p class={styles['error'] ?? ''}>{t(shownKeyFailure)}</p>}
         </div>
-        {props.credentialOnly === true ? null : <details className={styles['customized']}>
-          <summary className={styles['customizedSummary']}>{t('customized')}</summary>
-          <div className={styles['customizedBody']}>
+        {props.credentialOnly === true ? null : <details class={styles['customized'] ?? ''}>
+          <summary class={styles['customizedSummary'] ?? ''}>{t('customized')}</summary>
+          <div class={styles['customizedBody'] ?? ''}>
             {/* The name and the protocol are the create card's two remaining
                 profile fields; a route the adapter ships defaults both from
                 its catalog entry and neither belongs on its card. */}
             {ownsIdentity
               ? (
-                <div className={styles['field']}>
-                  <span className={styles['fieldLabel']}>{t('customDisplayName')}</span>
+                <div class={styles['field'] ?? ''}>
+                  <span class={styles['fieldLabel'] ?? ''}>{t('customDisplayName')}</span>
                   <input
-                    className={styles['input']}
+                    class={styles['input'] ?? ''}
                     type="text"
-                    value={stringAt(draft, 'displayName') ?? ''}
+                    value={this.#stringAt(this.#draft, 'displayName') ?? ''}
                     // What this route is called the moment the field is
                     // cleared, which is the layer beneath the one this field
                     // edits: a `cordis.yml` may pin a name for a route the
@@ -408,28 +438,30 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
                     // the answer the route id. Reading the effective value
                     // instead would echo the stored override back as the
                     // thing clearing restores.
-                    placeholder={stringAt(schema.getPath(namespace.base, settingsPath), 'displayName')
+                    placeholder={this.#stringAt(schema.getPath(namespace.base, settingsPath), 'displayName')
                       ?? props.provider}
                     aria-label={t('customDisplayName')}
                     disabled={disabled}
-                    onChange={(event) => { setField('displayName', event.target.value) }}
+                    onchange={(event: Event) => { this.#setField('displayName', (event.target as HTMLInputElement).value); this.#render() }}
                   />
                 </div>
               )
               : null}
-            <div className={styles['field']}>
-              <span className={styles['fieldLabel']}>{t('baseUrl')}</span>
+            <div class={styles['field'] ?? ''}>
+              <span class={styles['fieldLabel'] ?? ''}>{t('baseUrl')}</span>
               <input
-                className={styles['input']}
+                class={styles['input'] ?? ''}
                 type="text"
-                value={stringAt(draft, 'baseURL') ?? ''}
+                value={this.#stringAt(this.#draft, 'baseURL') ?? ''}
                 placeholder={family === 'deepseek'
                   ? DEEPSEEK_PUBLIC_BASE_URL
-                  : stringAt(fallback, 'baseURL') ?? t('baseUrlDefault')}
+                  : this.#stringAt(fallback, 'baseURL') ?? t('baseUrlDefault')}
                 aria-label={t('baseUrl')}
                 disabled={disabled}
-                onChange={(event) => {
-                  setField('baseURL', event.target.value === '' ? undefined : event.target.value)
+                onchange={(event: Event) => {
+                  const value = (event.target as HTMLInputElement).value
+                  this.#setField('baseURL', value === '' ? undefined : value)
+                  this.#render()
                 }}
               />
             </div>
@@ -437,14 +469,14 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
                 on the create card. */}
             {ownsIdentity
               ? (
-                <div className={styles['field']}>
-                  <span className={styles['fieldLabel']}>{t('customApi')}</span>
+                <div class={styles['field'] ?? ''}>
+                  <span class={styles['fieldLabel'] ?? ''}>{t('customApi')}</span>
                   <select
-                    className={`${styles['input']} ${styles['selectInput']}`}
+                    class={`${styles['input'] ?? ''} ${styles['selectInput'] ?? ''}`}
                     value={probeApi ?? ''}
                     aria-label={t('customApi')}
                     disabled={disabled}
-                    onChange={(event) => { setField('api', event.target.value) }}
+                    onchange={(event: Event) => { this.#setField('api', (event.target as HTMLSelectElement).value); this.#render() }}
                   >
                     {/* A profile naming no protocol — hand-written into
                         settings.yaml with no model to need one — selects
@@ -471,49 +503,104 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
                   defaultMaxTokens={typeof defaultMaxTokens === 'number' ? defaultMaxTokens : undefined}
                 />
               )
-              : <ModelListEditor {...catalogProps} probe={probe} probeBlocked={keyFailure} api={api} />}
+              : <ModelListEditor {...catalogProps} probe={probe} probeBlocked={keyFailure} api={props.api} />}
           </div>
         </details>}
       </>
-    )
+    ) as unknown as VNode
   }
 
-  return (
-    <div className={props.credentialOnly === true ? styles['addBlock'] : styles['editor']}>
-      {props.hideTitle === true
-        ? null
-        : (
-          <div className={styles['editorHeader']}>
-            <span className={styles['editorTitle']}>{props.displayName}</span>
-            {props.provider !== props.displayName
-              ? <span className={styles['editorRoute']}>{props.provider}</span>
-              : null}
-          </div>
-        )}
-      {layout === 'unknown'
-        ? <p className={styles['advancedHint']}>{`${t('advancedHint')} (${namespace.ns})`}</p>
-        : curatedFields(layout)}
-      {failure !== undefined ? <p className={styles['error']}>{failure}</p> : null}
-      {props.credentialOnly === true || modelFailure === undefined
-        ? null
-        : (
-          <p className={styles['advancedHint']}>
-            {`${t('model')} ${String(modelFailure.index + 1)}: ${t(modelFailure.key)}`}
-          </p>
-        )}
-      <EditorFooter
-        t={t}
-        busy={busy}
-        submitDisabled={disabled || layout === 'unknown'
-          || (props.credentialOnly !== true && modelFailure !== undefined)
-          || shownKeyFailure !== undefined
-          || (props.credentialRequired === true && keyValue.length === 0)}
-        submitLabel={props.submitLabel ?? 'apply'}
-        submitBusyLabel={props.submitBusyLabel ?? 'applying'}
-        {...props.cancelLabel === undefined ? {} : { cancelLabel: props.cancelLabel }}
-        onCancel={() => { props.onClose(false) }}
-        onSubmit={() => { void apply() }}
-      />
-    </div>
-  )
+  #render(): void {
+    const props = this.#props
+    const { schema, namespace, settingsPath, t } = props
+    if (this.#lastNamespaceSchema !== namespace.schema) {
+      this.#lastNamespaceSchema = namespace.schema
+      this.#root = schema.rehydrate(namespace.schema)
+    }
+    const root = this.#root ?? schema.rehydrate(namespace.schema)
+    const node = schema.nodeAtPath(root, settingsPath)
+    const layout = layoutOf(namespace.ns)
+    const modelFailure = validateDeepSeekModels(schema.getPath(this.#draft, ['models']))
+
+    if (node === undefined) {
+      // A directory entry addressing a position its schema cannot resolve is a
+      // host-side inconsistency; showing it beats a blank card.
+      applyDiff(this, <p class={styles['error'] ?? ''}>{`${props.provider}: unresolvable settings path`}</p>)
+      return
+    }
+
+    const disabled = props.readOnly || this.#busy
+    const keyFailure = apiKeyFailure(this.#keyDraft)
+    const keyValue = this.#keyDraft.trim()
+    const credentialRequiredFailure = props.credentialRequired === true
+      && this.#keyDraft.length > 0 && keyValue.length === 0
+      ? 'keyRequired' as const
+      : undefined
+    const shownKeyFailure = credentialRequiredFailure ?? keyFailure
+
+    const vdom = (
+      <div class={props.credentialOnly === true ? styles['addBlock'] ?? '' : styles['editor'] ?? ''}>
+        {props.hideTitle === true
+          ? null
+          : (
+            <div class={styles['editorHeader'] ?? ''}>
+              <span class={styles['editorTitle'] ?? ''}>{props.displayName}</span>
+              {props.provider !== props.displayName
+                ? <span class={styles['editorRoute'] ?? ''}>{props.provider}</span>
+                : null}
+            </div>
+          )}
+        {layout === 'unknown'
+          ? <p class={styles['advancedHint'] ?? ''}>{`${t('advancedHint')} (${namespace.ns})`}</p>
+          : this.#curatedFields(layout)}
+        {this.#failure !== undefined ? <p class={styles['error'] ?? ''}>{this.#failure}</p> : null}
+        {props.credentialOnly === true || modelFailure === undefined
+          ? null
+          : (
+            <p class={styles['advancedHint'] ?? ''}>
+              {`${t('model')} ${String(modelFailure.index + 1)}: ${t(modelFailure.key)}`}
+            </p>
+          )}
+        <EditorFooter
+          t={t}
+          busy={this.#busy}
+          submitDisabled={disabled || layout === 'unknown'
+            || (props.credentialOnly !== true && modelFailure !== undefined)
+            || shownKeyFailure !== undefined
+            || (props.credentialRequired === true && keyValue.length === 0)}
+          submitLabel={props.submitLabel ?? 'apply'}
+          submitBusyLabel={props.submitBusyLabel ?? 'applying'}
+          {...props.cancelLabel === undefined ? {} : { cancelLabel: props.cancelLabel }}
+          onCancel={() => { props.onClose(false) }}
+          onSubmit={() => { void this.#apply() }}
+        />
+      </div>
+    ) as unknown as VNode
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-provider-editor') === undefined) {
+  customElements.define('dsh-provider-editor', DshProviderEditor)
+}
+
+/**
+ * Create (if needed) or update a ProviderEditor element in place.
+ * @param el - an existing element to update, or null to create one.
+ * @param props - see {@link ProviderEditorProps}.
+ * @returns the element; keep it and pass it back in to update.
+ */
+export function renderProviderEditor(el: DshProviderEditor | null, props: ProviderEditorProps): DshProviderEditor {
+  const target = el ?? document.createElement('dsh-provider-editor') as DshProviderEditor
+  target.setProps(props)
+  return target
+}
+
+/**
+ * Render one provider's editing card.
+ * @param props - the addressed profile plus wire faces and copy.
+ * @returns the editor card, cast for JSX use (Modal.tsx's pattern).
+ */
+export function ProviderEditor(props: ProviderEditorProps): JSX.Element {
+  return renderProviderEditor(null, props) as unknown as JSX.Element
 }

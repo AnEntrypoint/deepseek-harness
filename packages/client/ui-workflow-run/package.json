@@ -50,6 +50,9 @@
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
+  "dependencies": {
+    "webjsx": "^0.0.73"
+  },
   "peerDependencies": {
     "@deepseek-ai/dsh-client-locale": "workspace:^",
     "@deepseek-ai/dsh-client-runtime": "workspace:^",
@@ -71,8 +74,6 @@
     "@deepseek-ai/dsh-session": "workspace:^",
     "@deepseek-ai/dsh-tool-workflow": "workspace:^",
     "@deepseek-ai/dsh-workflow": "workspace:^",
-    "@types/react": "~18.3.1",
-    "@deepseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "@deepseek-ai/cordis": "workspace:^"
   }
 }

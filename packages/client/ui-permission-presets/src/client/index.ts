@@ -25,8 +25,9 @@ import type { ClientContext, SessionFace } from '@deepseek-ai/dsh-client-runtime
 import type { CommandUiContract, SelectOption } from '@deepseek-ai/dsh-client-ui-commands/client'
 import type { ClientSessionContext } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 import type { PermissionSelect } from '@deepseek-ai/dsh-permission-presets/client'
-import { PermissionRow } from './PermissionRow.tsx'
-import type { PermissionRowInjected } from './PermissionRow.tsx'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+export { PermissionRow } from './PermissionRow.tsx'
+import type { PermissionRowInjected, PermissionRowProps } from './PermissionRow.tsx'
 import {
   accessEn, accessZh, en, zh,
 } from './locales.ts'
@@ -131,7 +132,7 @@ export function apply(ctx: ClientContext): void {
     order: -20,
     locale: 'settings.permission',
     inject: injected,
-  }, PermissionRow))
+  }, webjsxSlot<PermissionRowProps>('dsh-permission-row')))
 
   ctx.effect(() => command.decorate({
     name: 'permission',

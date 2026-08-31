@@ -1,8 +1,12 @@
 // Skill toolview registrant: a domain-owned row over the keyed toolview hole.
 // The compact accent row keeps loaded instructions scannable in the transcript;
 // the exact durable tool output remains available in a bounded disclosure card.
+//
+// Converted from a React function component (useState) to a webjsx custom
+// element: `#expanded` replaces useState, `#render()` calls applyDiff.
 
-import { useState, type KeyboardEvent, type ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import {
   IconChevronDownOutline14, IconInspectOutline12, IconSkillOutline16, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -14,7 +18,7 @@ import css from './SkillRow.module.css'
 type SkillRowState = 'running' | 'ok' | 'error' | 'stopped'
 
 /** Full row props: the toolview runtime share plus this package's locale seat. */
-type SkillRowProps = ToolCallViewProps & PropsLocale<'skill'>
+export type SkillRowProps = ToolCallViewProps & PropsLocale<'skill'>
 
 /** Compact, replay-stable view model for the dedicated row. */
 interface SkillRowModel {
@@ -78,7 +82,7 @@ function skillRowModel(block: ToolCallViewProps['block']): SkillRowModel {
 }
 
 /** State substitution for the collapsed leading slot. */
-function leadingFor(state: SkillRowState): ReactNode {
+function leadingFor(state: SkillRowState): VNode {
   switch (state) {
     case 'error': return <StateDot state="error" />
     case 'stopped': return <StateDot state="warning" />
@@ -87,16 +91,14 @@ function leadingFor(state: SkillRowState): ReactNode {
 }
 
 /** Leading disclosure slot: state icon at rest, chevron on hover or while open. */
-function disclosureLeading(state: SkillRowState, open: boolean, expandable: boolean): ReactNode {
+function disclosureLeading(state: SkillRowState, open: boolean, expandable: boolean): VNode | VNode[] {
   if (open) return <IconChevronDownOutline14 className={css.chevron} />
   const icon = leadingFor(state)
   if (!expandable) return icon
-  return (
-    <>
-      <span className={css.iconIdle}>{icon}</span>
-      <IconChevronDownOutline14 className={`${css.chevron} ${css.chevronHover}`} />
-    </>
-  )
+  return [
+    <span class={css.iconIdle ?? ''}>{icon}</span>,
+    <IconChevronDownOutline14 className={`${css.chevron ?? ''} ${css.chevronHover ?? ''}`} />,
+  ]
 }
 
 /** Visually hidden state copy for the colour-only lifecycle cues. */
@@ -110,62 +112,83 @@ function stateStatus(state: SkillRowState, t: SkillRowProps['t']): string | null
 }
 
 /**
- * Render one `skill` tool call as an accent summary and instructions disclosure.
- * @param props - keyed toolview payload plus the skill locale seat.
- * @returns the dedicated skill row.
+ * Skill row custom element: renders one `skill` tool call as an accent
+ * summary and instructions disclosure. Registered as `dsh-skill-row` via
+ * `webjsxSlot` at the slot's register call site (see index.ts).
  */
-export function SkillRow({ block, inspect, t }: SkillRowProps) {
-  const model = skillRowModel(block)
-  const [expanded, setExpanded] = useState(false)
-  const expandable = model.output !== null
-  const open = expanded && expandable
-  const status = stateStatus(model.state, t)
-  const summary = model.errorSummary ?? model.name
-  const toggleExpand = (): void => {
-    setExpanded(value => !value)
+export class DshSkillRow extends HTMLElement {
+  #props: SkillRowProps | null = null
+  #expanded = false
+
+  /** Set/replace props and re-render; called by the slot renderer's webjsx bridge. */
+  setProps(props: SkillRowProps): void {
+    this.#props = props
+    this.#render()
   }
-  const toggleFromKeyboard = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (!expandable || (event.key !== 'Enter' && event.key !== ' ')) return
-    event.preventDefault()
-    toggleExpand()
+
+  connectedCallback(): void {
+    this.#render()
   }
-  const disclosureProps = expandable ? {
-    role: 'button' as const,
-    tabIndex: 0,
-    'aria-expanded': open,
-    onClick: toggleExpand,
-    onKeyDown: toggleFromKeyboard,
-  } : {}
-  const leading = disclosureLeading(model.state, open, expandable)
-  return (
-    <div className={css.card} data-tool="skill" data-state={model.state}>
-      <div
-        className={css.row}
-        data-expandable={expandable || undefined}
-        {...disclosureProps}
-      >
-        <span className={css.leading}>{leading}</span>
-        {status !== null ? <span className={css.visuallyHidden}>{status}</span> : null}
-        <span className={css.title}>Skill</span>
-        <span className={css.separator} aria-hidden />
-        <span className={model.errorSummary === null ? css.summary : `${css.summary} ${css.errorSummary}`}>
-          {summary}
-        </span>
-      </div>
-      {open ? (
-        <div className={css.bodyWrap}>
-          <section className={css.instructionsCard} aria-label={t('row.instructions')}>
-            <div className={css.instructionsHeader}>{t('row.instructions')}</div>
-            <pre className={css.instructions} data-error={model.state === 'error' || undefined}>{model.output}</pre>
-          </section>
-          {inspect !== undefined ? (
-            <button type="button" className={css.inspectButton} onClick={inspect}>
-              <IconInspectOutline12 />
-              Inspect
-            </button>
-          ) : null}
+
+  #toggleExpand = (): void => {
+    this.#expanded = !this.#expanded
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { block, inspect, t } = props
+    const model = skillRowModel(block)
+    const expandable = model.output !== null
+    const open = this.#expanded && expandable
+    const status = stateStatus(model.state, t)
+    const summary = model.errorSummary ?? model.name
+    const toggleFromKeyboard = (event: KeyboardEvent): void => {
+      if (!expandable || (event.key !== 'Enter' && event.key !== ' ')) return
+      event.preventDefault()
+      this.#toggleExpand()
+    }
+    const leading = disclosureLeading(model.state, open, expandable)
+    const vdom = (
+      <div class={css.card ?? ''} data-tool="skill" data-state={model.state}>
+        <div
+          class={css.row ?? ''}
+          data-expandable={expandable ? 'true' : null}
+          role={expandable ? 'button' : null}
+          tabindex={expandable ? '0' : null}
+          aria-expanded={expandable ? String(open) : null}
+          onclick={expandable ? this.#toggleExpand : null}
+          onkeydown={expandable ? toggleFromKeyboard : null}
+        >
+          <span class={css.leading ?? ''}>{leading}</span>
+          {status !== null ? <span class={css.visuallyHidden ?? ''}>{status}</span> : null}
+          <span class={css.title ?? ''}>Skill</span>
+          <span class={css.separator ?? ''} aria-hidden="true" />
+          <span class={model.errorSummary === null ? css.summary ?? '' : `${css.summary ?? ''} ${css.errorSummary ?? ''}`}>
+            {summary}
+          </span>
         </div>
-      ) : null}
-    </div>
-  )
+        {open ? (
+          <div class={css.bodyWrap ?? ''}>
+            <section class={css.instructionsCard ?? ''} aria-label={t('row.instructions')}>
+              <div class={css.instructionsHeader ?? ''}>{t('row.instructions')}</div>
+              <pre class={css.instructions ?? ''} data-error={model.state === 'error' ? 'true' : null}>{model.output}</pre>
+            </section>
+            {inspect !== undefined ? (
+              <button type="button" class={css.inspectButton ?? ''} onclick={inspect}>
+                <IconInspectOutline12 />
+                Inspect
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-skill-row') === undefined) {
+  customElements.define('dsh-skill-row', DshSkillRow)
 }

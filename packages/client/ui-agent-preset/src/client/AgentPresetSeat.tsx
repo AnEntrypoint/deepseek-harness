@@ -12,10 +12,11 @@
  * Picking stages; the choice reaches a session when one becomes current.
  */
 
-import { useEffect, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import { IconAgentPresetOutline16, IconChevronDownOutline14, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconAgentPresetOutline16, IconChevronDownOutline14, renderMenu } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { DshMenu } from '@deepseek-ai/dsh-client-ui-primitives'
 // Type-only: pulls the ui-conversation SlotMap merge (the hero seat).
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { AgentPresetSeatState } from './seat-store.ts'
@@ -63,108 +64,160 @@ export type AgentPresetSeatProps =
   & PropsLocale<'settings.agentPreset'>
   & InjectFace<AgentPresetSeatInjected>
 
-/**
- * Render the new-session agent-preset chip.
- * @param props - composed slot props.
- * @returns the chip, or null when the deployment composes no presets.
- */
-export function AgentPresetSeat({ load, select, introduced, useAgentPresetSeat, t }: AgentPresetSeatProps) {
-  const state = useAgentPresetSeat(snapshot => snapshot)
-  const [open, setOpen] = useState(false)
+/** New-session agent-preset chip, as a custom element. */
+export class DshAgentPresetSeat extends HTMLElement {
+  #props: AgentPresetSeatProps | null = null
+  #open = false
+  #loaded = false
+  #introducing = false
+  #introTimer: ReturnType<typeof setTimeout> | null = null
+  #introArmedFor: string | undefined
+  #menu: DshMenu | null = null
 
-  useEffect(() => {
-    void load()
-  }, [load])
+  /** Set/replace props and re-render; the owning renderer calls this on every update. */
+  setProps(props: AgentPresetSeatProps): void {
+    this.#props = props
+    if (!this.#loaded) {
+      this.#loaded = true
+      void props.load()
+    }
+    this.#render()
+  }
 
-  const chosen = state.options.find(option => option.id === state.current)
-  const chosenText = chosen === undefined ? undefined : presetDisplayText(chosen, t)
-  const label = chosenText?.name ?? state.current
-  const ready = state.options.length > 0 && state.current !== ''
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#clearIntroTimer()
+  }
+
+  #clearIntroTimer(): void {
+    if (this.#introTimer !== null) { clearTimeout(this.#introTimer); this.#introTimer = null }
+  }
 
   // The introduce cue: the pick was staged from another screen (the settings
   // creator entry), so the chip announces it — the icon eases in and each
   // character of the name fades up on a stagger (CSS owns the motion; this
-  // effect only arms it and acknowledges the cue once the run is over).
-  const [introducing, setIntroducing] = useState(false)
-  useEffect(() => {
+  // method only arms it and acknowledges the cue once the run is over).
+  #maybeArmIntro(state: AgentPresetSeatState, label: string, ready: boolean): void {
+    const props = this.#props
+    if (props === null) return
+    const armKey = `${String(state.introduce)}:${label}:${String(ready)}`
+    if (armKey === this.#introArmedFor) return
+    this.#introArmedFor = armKey
     if (!state.introduce || !ready) return
     const characters = Array.from(label)
     if (characters.length === 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      introduced()
+      props.introduced()
       return
     }
-    setIntroducing(true)
-    const done = window.setTimeout(() => {
-      setIntroducing(false)
-      introduced()
+    this.#introducing = true
+    this.#clearIntroTimer()
+    this.#introTimer = setTimeout(() => {
+      this.#introTimer = null
+      this.#introducing = false
+      props.introduced()
+      this.#render()
     }, INTRO_TEXT_DELAY_MS + (characters.length - 1) * introStaggerMs(characters.length) + INTRO_CHAR_FADE_MS)
-    return () => { window.clearTimeout(done) }
-  }, [state.introduce, ready, label, introduced])
+  }
 
-  // Nothing to choose between: the deployment composes no presets and every
-  // session shares the host composition.
-  if (!ready) return null
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { select, useAgentPresetSeat, t } = props
+    const state = useAgentPresetSeat(snapshot => snapshot)
 
-  // One wrapper span: the chip is a flex row with a gap, so loose character
-  // spans would each pick up the gap between them.
-  const characters = Array.from(label)
-  const stagger = introStaggerMs(characters.length)
-  const shownLabel = introducing
-    ? (
-      <span className={css.introText}>
-        {characters.map((character, index) => (
-          <span
-            key={index}
-            className={css.introChar}
-            style={{ animationDelay: `${INTRO_TEXT_DELAY_MS + index * stagger}ms` }}
-          >
-            {character}
-          </span>
-        ))}
-      </span>
-    )
-    : label
+    const chosen = state.options.find(option => option.id === state.current)
+    const chosenText = chosen === undefined ? undefined : presetDisplayText(chosen, t)
+    const label = chosenText?.name ?? state.current
+    const ready = state.options.length > 0 && state.current !== ''
 
-  return (
-    <Menu
-      open={open}
-      onClose={() => { setOpen(false) }}
-      items={state.options.map((option) => {
+    this.#maybeArmIntro(state, label, ready)
+
+    // Nothing to choose between: the deployment composes no presets and every
+    // session shares the host composition.
+    if (!ready) {
+      applyDiff(this, <span style="display:none" />)
+      return
+    }
+
+    // One wrapper span: the chip is a flex row with a gap, so loose character
+    // spans would each pick up the gap between them.
+    const characters = Array.from(label)
+    const stagger = introStaggerMs(characters.length)
+    const shownLabel = this.#introducing
+      ? (
+        <span class={css.introText ?? ''}>
+          {characters.map((character, index) => (
+            <span
+              key={index}
+              class={css.introChar ?? ''}
+              style={`animation-delay: ${INTRO_TEXT_DELAY_MS + index * stagger}ms`}
+            >
+              {character}
+            </span>
+          ))}
+        </span>
+      )
+      : label
+
+    this.#menu = renderMenu(this.#menu, {
+      open: this.#open,
+      onClose: () => { this.#open = false; this.#render() },
+      items: state.options.map((option) => {
         const text = presetDisplayText(option, t)
         return {
           id: option.id,
           // Name and description together: the id alone never says what a
           // preset does, which is why the roster carries display copy.
           label: (
-            <span className={css.item}>
-              <span className={css.itemName}>{text.name}</span>
-              <span className={css.itemDesc}>{text.description ?? t('noDescription')}</span>
+            <span class={css.item ?? ''}>
+              <span class={css.itemName ?? ''}>{text.name}</span>
+              <span class={css.itemDesc ?? ''}>{text.description ?? t('noDescription')}</span>
             </span>
           ),
         }
-      })}
-      selectedId={state.current}
-      onSelect={(id) => {
-        setOpen(false)
+      }),
+      selectedId: state.current,
+      onSelect: (id) => {
+        this.#open = false
+        this.#render()
         void select(id)
-      }}
-      align="start"
-      portal
-      anchor={(
+      },
+      align: 'start',
+      portal: true,
+      anchor: (
         <button
           type="button"
-          className={css.seat}
+          class={css.seat ?? ''}
           aria-haspopup="menu"
-          aria-expanded={open}
+          aria-expanded={String(this.#open)}
           title={state.error ?? t('seatHint')}
           disabled={state.busy}
-          onClick={() => { setOpen(value => !value) }}
+          onclick={() => { this.#open = !this.#open; this.#render() }}
         >
-          <IconAgentPresetOutline16 className={introducing ? `${css.seatIcon} ${css.introIcon}` : css.seatIcon} />
+          <IconAgentPresetOutline16 className={this.#introducing ? `${css.seatIcon} ${css.introIcon}` : css.seatIcon} />
           {shownLabel}
           <IconChevronDownOutline14 className={css.chevron} />
         </button>
-      )}
-    />
-  )
+      ),
+    })
+    if (this.firstChild !== this.#menu) this.replaceChildren(this.#menu)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-agent-preset-seat') === undefined) {
+  customElements.define('dsh-agent-preset-seat', DshAgentPresetSeat)
+}
+
+/**
+ * Render the new-session agent-preset chip.
+ * @param props - composed slot props.
+ * @returns the chip element.
+ */
+export function AgentPresetSeat(props: AgentPresetSeatProps): JSX.Element {
+  const el = document.createElement('dsh-agent-preset-seat') as DshAgentPresetSeat
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

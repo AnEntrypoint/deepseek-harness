@@ -1,11 +1,11 @@
-import { type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { IconChevronDownOutline14 } from './icons/index.tsx'
 import css from './DisclosureRow.module.css'
 
 /** Shared 24px disclosure chrome for compact flow rows. */
 export interface DisclosureRowProps {
-  icon: ReactNode
+  icon: VNode | string | null
   title: string
   open: boolean
   expandable: boolean
@@ -16,8 +16,8 @@ export interface DisclosureRowProps {
   previewChevron?: boolean | undefined
   /** Keeps `collapsedContent` inline while open. */
   keepContentWhenOpen?: boolean | undefined
-  collapsedContent?: ReactNode
-  children?: ReactNode
+  collapsedContent?: VNode | VNode[] | string | null
+  children?: VNode | VNode[] | string | null
   className?: string | undefined
   rowClassName?: string | undefined
   leadingClassName?: string | undefined
@@ -46,56 +46,54 @@ export function DisclosureRow({
   leadingClassName,
   chevronClassName,
   titleClassName,
-}: DisclosureRowProps) {
+}: DisclosureRowProps): JSX.Element {
   const rowExpands = expandable && expandOnRowClick
-  const toggleFromLeading = (event: MouseEvent<HTMLButtonElement>) => {
+  const toggleFromLeading = (event: MouseEvent) => {
     event.stopPropagation()
     onToggle()
   }
-  const toggleFromKeyboard = (event: KeyboardEvent<HTMLDivElement>) => {
+  const toggleFromKeyboard = (event: KeyboardEvent) => {
     if (!rowExpands || (event.key !== 'Enter' && event.key !== ' ')) return
     event.preventDefault()
     onToggle()
   }
   const collapsedLeading = previewChevron
-    ? (
-      <>
-        <span className={css.iconIdle}>{icon}</span>
-        <IconChevronDownOutline14 className={clsx(chevronClassName, css.chevronHover)} />
-      </>
-    )
+    ? [
+      <span class={css.iconIdle ?? ''}>{icon}</span>,
+      <IconChevronDownOutline14 className={clsx(chevronClassName, css.chevronHover)} />,
+    ]
     : icon
   const leading = open
     ? <IconChevronDownOutline14 className={chevronClassName} />
     : collapsedLeading
 
   return (
-    <div className={clsx(css.root, className)} data-open={open || undefined}>
+    <div class={clsx(css.root, className)} data-open={open || undefined}>
       <div
-        className={clsx(css.row, rowClassName)}
+        class={clsx(css.row, rowClassName)}
         data-disclosure-row
         data-expandable={rowExpands || undefined}
-        role={rowExpands ? 'button' : undefined}
-        tabIndex={rowExpands ? 0 : undefined}
+        role={rowExpands ? 'button' : null}
+        tabindex={rowExpands ? 0 : undefined}
         aria-expanded={rowExpands ? open : undefined}
-        onClick={rowExpands ? onToggle : undefined}
-        onKeyDown={rowExpands ? toggleFromKeyboard : undefined}
+        onclick={rowExpands ? onToggle : null}
+        onkeydown={rowExpands ? toggleFromKeyboard : null}
       >
         {expandable && !rowExpands ? (
           <button
             type="button"
-            className={clsx(css.leading, leadingClassName)}
+            class={clsx(css.leading, leadingClassName)}
             aria-expanded={open}
-            onClick={toggleFromLeading}
+            onclick={toggleFromLeading}
           >
             {leading}
           </button>
         ) : (
-          <span className={clsx(css.leading, leadingClassName)}>
+          <span class={clsx(css.leading, leadingClassName)}>
             {leading}
           </span>
         )}
-        <span className={clsx(css.title, titleClassName)}>{title}</span>
+        <span class={clsx(css.title, titleClassName)}>{title}</span>
         {(keepContentWhenOpen || !open) && collapsedContent}
       </div>
       {open && children}

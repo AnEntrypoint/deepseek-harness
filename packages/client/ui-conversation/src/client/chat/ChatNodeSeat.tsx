@@ -1,4 +1,3 @@
-import { memo, useMemo } from 'react'
 import { JsonBlock } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatNodeOwnerProps, ChatViewSlotProps } from '../contract/slots.ts'
 import type { ChatNode } from '../contract/chat-nodes.ts'
@@ -16,13 +15,13 @@ type RoutedChatNodeOwner = {
 }[ChatNode['kind']]
 
 /** Subscribe and dispatch one stable Context key without observing sibling Nodes. */
-export const ChatNodeSeat = memo(function ChatNodeSeat({
+export function ChatNodeSeat({
   nodeKey, selectedCallId, cwd, openFile, inspectCall, forkAt,
   renderMessageImages, fileMentions, useSession, renderSlot, t,
-}: ChatNodeSeatProps) {
+}: ChatNodeSeatProps): JSX.Element | null {
   const node = useSession(snapshot => snapshot.chat.nodes.get(nodeKey))
   const routedNode = node as ChatNode | undefined
-  const owner = useMemo<ChatNodeOwnerProps | null>(() => node === undefined
+  const owner: ChatNodeOwnerProps | null = node === undefined
     ? null
     : {
       selectedCallId,
@@ -32,9 +31,7 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
       forkAt,
       renderMessageImages,
       fileMentions,
-    }, [
-    node, selectedCallId, cwd, openFile, inspectCall, forkAt, renderMessageImages, fileMentions,
-  ])
+    }
   if (routedNode === undefined || owner === null) return null
   // Runtime dispatch owns the correlation: every Node's discriminant is the
   // keyed-slot entry passed alongside that same Node. TypeScript does not
@@ -42,7 +39,7 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
   const routedOwner = { ...owner, node: routedNode } as RoutedChatNodeOwner
   return (
     <div
-      className={css.flowItem}
+      class={css.flowItem ?? ''}
       data-chat-anchor-key={routedNode.key}
       data-chat-flow-key={routedNode.key}
       data-chat-flow-kind={routedNode.kind}
@@ -60,4 +57,4 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
       })}
     </div>
   )
-})
+}

@@ -14,9 +14,10 @@ import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import { MessageFeedbackController } from './controller.ts'
-import { MessageFeedbackActions } from './MessageFeedbackActions.tsx'
-import type { MessageFeedbackInjected } from './slots.ts'
+export { MessageFeedbackActions } from './MessageFeedbackActions.tsx'
+import type { MessageFeedbackActionProps, MessageFeedbackInjected } from './slots.ts'
 import { en, zh } from './locales.ts'
 
 export type {
@@ -74,7 +75,7 @@ export function apply(ctx: ClientContext): void {
           clear: messageId => controller.clear(messageId),
         }
       },
-    }, MessageFeedbackActions)
+    }, webjsxSlot<MessageFeedbackActionProps>('dsh-message-feedback-actions'))
     return () => {
       dispose()
       for (const controller of controllers.values()) controller.dispose()

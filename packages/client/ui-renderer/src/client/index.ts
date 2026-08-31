@@ -2,10 +2,28 @@
  * Browser UI renderer. It installs the slot renderer after its Cordis
  * dependencies activate and exposes the mount operation used by the web boot
  * kernel after the complete client roster settles.
+ *
+ * Converted from React: createRoot/hydrateRoot/flushSync become
+ * `applyDiff(container, vnode)` — webjsx's whole mounting primitive.
+ *
+ * Verified against webjsx's own `applyDiff.js` source (not assumed): its
+ * diff state (`getWebJSXProps(parent).children`) is undefined for a
+ * container `applyDiff` has never touched, so the FIRST call against a
+ * container always treats every incoming vnode as a `create` change and
+ * removes any leftover original children afterward — it does not attempt to
+ * adopt/reuse the boot kernel's existing `[data-dsh-boot]` markup node-for-
+ * node the way React's `hydrateRoot` does. There is therefore no
+ * "hydration" step to replicate: the former `BootHandoff` component (a
+ * `useLayoutEffect`-timed swap from the kernel's boot HTML to the real tree)
+ * is unnecessary because `applyDiff(container, vnode)` already performs
+ * exactly that swap as an ordinary side effect of its first call — the boot
+ * markup is simply the (empty, from webjsx's point of view) "old tree" the
+ * first `applyDiff` replaces. The swap is not flicker-free at the DOM-node
+ * level (nodes are recreated, not adopted), but the boot markup was static
+ * kernel output with no client-side state to preserve, so this is a pure
+ * simplification with no behavioral loss for this composition.
  */
-import { createElement, useLayoutEffect, useState, type ReactNode } from 'react'
-import { flushSync } from 'react-dom'
-import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
+import { applyDiff } from 'webjsx'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 import { createSlotRenderer } from './scoped-slots.tsx'
@@ -25,7 +43,7 @@ export interface UiRendererService {
   /**
    * Mount the assembled application into the supplied element.
    * @param container - Application mount point.
-   * @returns Disposer that unmounts the React root.
+   * @returns Disposer that unmounts the application.
    */
   mount: (container: HTMLElement) => () => void
 }
@@ -40,35 +58,14 @@ declare module '@deepseek-ai/cordis' {
 /** Services required before application assembly. */
 export const inject = ['slots', 'sessions']
 
-interface BootSnapshot {
-  className: string
-  html: string
-}
-
-/** Hydrate the kernel-owned loading DOM before replacing it with the application. */
-function BootHandoff(props: { app: () => ReactNode; boot: BootSnapshot }): ReactNode {
-  const [ready, setReady] = useState(false)
-  useLayoutEffect(() => { setReady(true) }, [])
-  if (ready) return props.app()
-  return createElement('div', {
-    className: props.boot.className,
-    'data-dsh-boot': '',
-    dangerouslySetInnerHTML: { __html: props.boot.html },
-  })
-}
-
-/** Mount React while preserving the framework-free boot DOM through hydration. */
-function mountApp(container: HTMLElement, app: () => ReactNode): Root {
-  const boot = container.querySelector<HTMLElement>(':scope > [data-dsh-boot]')
-  if (boot !== null) {
-    return hydrateRoot(container, createElement(BootHandoff, {
-      app,
-      boot: { className: boot.className, html: boot.innerHTML },
-    }))
-  }
-  const root = createRoot(container)
-  flushSync(() => { root.render(app()) })
-  return root
+/**
+ * Mount the application into `container`. The boot kernel's framework-free
+ * `[data-dsh-boot]` markup (if present) needs no special handling: webjsx's
+ * `applyDiff` diffs the new tree directly against whatever DOM is already
+ * there, present or absent.
+ */
+function mountApp(container: HTMLElement, render: () => unknown): void {
+  applyDiff(container, render() as never)
 }
 
 /**
@@ -79,8 +76,12 @@ export function apply(ctx: Context): void {
   ctx.slots.install(createSlotRenderer())
   ctx.reflect.provide('uiRenderer', {
     mount: (container: HTMLElement): (() => void) => {
-      const root = mountApp(container, buildRenderApp({ ctx }))
-      return () => { root.unmount() }
+      const { render, dispose } = buildRenderApp({ ctx })
+      mountApp(container, render)
+      return () => {
+        dispose()
+        applyDiff(container, [])
+      }
     },
   })
 }

@@ -1,5 +1,5 @@
 /** Conversation slot declarations and their composed component props. */
-import type { ReactNode, RefObject } from 'react'
+import type { VNode } from 'webjsx'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import type {
   InjectFace, MaybeSnapshotSelectorHook, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
@@ -20,6 +20,14 @@ import type {
 import type { createChatStore } from '../stores.ts'
 import type { ComposerSubmitGesture, InputSubmitMode } from './composer-submission.ts'
 import type { ChatNode, ChatNodeKind } from './chat-nodes.ts'
+
+/** Renderable slot content: matches webjsx's own JSX child union. */
+type ReactNode = VNode | string | number | boolean | null | undefined | readonly ReactNode[]
+
+/** Minimal ref-object shape (React's RefObject), for a plain mutable element holder. */
+interface RefObject<T> {
+  current: T | null
+}
 import type { CallId, SelectionTarget, ViewTab } from './views.ts'
 
 /** Browser-owned image that has not crossed the durable host boundary. */

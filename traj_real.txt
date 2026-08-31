@@ -1,0 +1,36 @@
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(804,6): error TS2786: 'JsonTree' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(842,6): error TS2786: 'JsonTree' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1225,14): error TS2786: 'JsonTree' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1525,8): error TS2786: 'JsonTree' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1566,8): error TS2786: 'JsonTree' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1606,12): error TS2786: 'JsonTree' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1684,9): error TS2322: Type 'VNode | VNode[] | null' is not assignable to type 'ReactNode'.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1916,25): error TS2379: Argument of type '{ top: number; behavior: ScrollBehavior | undefined; }' is not assignable to parameter of type 'ScrollToOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1969,7): error TS6133: 'searchMatchIndexes' is declared but its value is never read.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(1977,7): error TS6133: 'collapsedAssistants' is declared but its value is never read.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2134,12): error TS2339: Property '#applyScrollFollow' does not exist on type 'DshTrajectoryTable'.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2142,36): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2200,35): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2257,21): error TS2322: Type '{ children: Element[]; tabIndex: number; "aria-rowindex": number; "aria-label": string; "aria-selected": boolean; "data-kind": TrajectoryCellKind; "data-trajectory-row-key": string; ... 14 more ...; onkeydown: (event: KeyboardEvent) => void; }' is not assignable to type 'DetailedHTMLProps<HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>'.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2315,27): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2373,32): error TS2786: 'Tooltip' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2402,34): error TS2786: 'RecordListText' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2427,35): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTable.tsx(2439,13): error TS2322: Type 'string | undefined' is not assignable to type 'CSSProperties | undefined'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(206,6): error TS2786: 'Tooltip' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(679,19): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(688,19): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(697,19): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(708,15): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(720,21): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(730,15): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(732,15): error TS2322: Type 'VNode[]' is not assignable to type 'ReactNode'.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(749,22): error TS2786: 'Tooltip' cannot be used as a JSX component.
+packages/client/ui-trajectory/src/client/TrajectoryTimeline.tsx(773,25): error TS2559: Type 'string' has no properties in common with type 'Properties<string | number, string & {}>'.
+packages/client/ui-trajectory/src/client/TrajectoryTurn.tsx(23,35): error TS2322: Type 'VNode | VNode[] | null | undefined' is not assignable to type 'ReactNode'.
+packages/client/ui-trajectory/src/client/TrajectoryView.tsx(61,10): error TS6133: 'partialStructureSignature' is declared but its value is never read.
+packages/client/ui-trajectory/src/client/TrajectoryView.tsx(123,34): error TS2339: Property 'requests' does not exist on type 'ConversationSnapshot'.
+packages/client/ui-trajectory/src/client/TrajectoryView.tsx(132,15): error TS7006: Parameter 'request' implicitly has an 'any' type.
+packages/client/ui-trajectory/src/client/TrajectoryView.tsx(133,12): error TS7006: Parameter 'request' implicitly has an 'any' type.
+packages/client/ui-trajectory/src/client/TrajectoryView.tsx(139,21): error TS7006: Parameter 'request' implicitly has an 'any' type.
+packages/client/ui-trajectory/src/client/TrajectoryView.tsx(294,47): error TS2345: Argument of type 'readonly ConversationNode[]' is not assignable to parameter of type 'readonly AssistantMessageNode[]'.

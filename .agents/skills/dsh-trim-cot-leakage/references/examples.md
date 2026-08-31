@@ -168,14 +168,6 @@ A hedge without an owner is planning residue. If no marker exists, write one (`T
 
 Replace the hedge with the actual bound and the failure behavior when it is exceeded.
 
-## Authoring-language slips
-
-**Leaked:** "The renderer runs on the client 端; see the 设计稿 for spacing. ---- 私有 ----"
-
-**Fixed:** "The renderer runs on the client side; spacing follows the Figma frame `widget-badges`."
-
-Working-language fragments and session separators are transcription residue. The Figma frame name stays: external provenance that resolves outside the repo by design.
-
 ## Keeps
 
 ### Issue references are durable on every surface

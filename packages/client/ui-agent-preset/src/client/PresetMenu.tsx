@@ -9,7 +9,8 @@
  * label marks it rather than presenting every preset as shipped and vetted.
  */
 
-import { IconChevronDownOutline14, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, renderMenu } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { DshMenu } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { AgentPresetOption } from './settings-store.ts'
 import { presetDisplayText, type AgentPresetSettingsKey } from './locales.ts'
 
@@ -38,47 +39,51 @@ export interface PresetMenuProps {
 }
 
 /**
- * Render the preset picker.
+ * Build or update the preset picker: a menu of presets over a button naming
+ * the current one. Returns a real `dsh-menu` element (self-rendering, see
+ * Menu.tsx) — the caller must attach it to the DOM directly (e.g. via
+ * `replaceWith`/`appendChild`), never diff it in as a JSX child. Pass the
+ * previously returned element back in as `el` to update it in place instead
+ * of recreating it (preserves the menu's own internal state).
+ * @param el - an existing menu element from a prior call, or null to create one.
  * @param props - the calling surface's copy, styling, and handlers.
- * @returns the menu and its trigger.
+ * @returns the menu-with-trigger element.
  */
-export function PresetMenu({
+export function renderPresetMenu(el: DshMenu | null, {
   options, selectedId, label, t, buttonClassName, chevronClassName,
   disabled, open, onOpenChange, onSelect,
-}: PresetMenuProps) {
-  return (
-    <Menu
-      open={open}
-      onClose={() => { onOpenChange(false) }}
-      items={options.map((option) => {
-        const name = presetDisplayText(option, t).name
-        return {
-          id: option.id,
-          // All preset surfaces resolve copy the same way; the id is addressing,
-          // not a label, except where no display name exists.
-          label: option.trust === 'user' ? `${name} · ${t('userTrust')}` : name,
-        }
-      })}
-      selectedId={selectedId}
-      onSelect={(id) => {
-        onOpenChange(false)
-        onSelect(id)
-      }}
-      align="end"
-      portal
-      anchor={(
-        <button
-          type="button"
-          className={buttonClassName}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          disabled={disabled}
-          onClick={() => { onOpenChange(!open) }}
-        >
-          {label}
-          <IconChevronDownOutline14 className={chevronClassName} />
-        </button>
-      )}
-    />
-  )
+}: PresetMenuProps): DshMenu {
+  return renderMenu(el, {
+    open,
+    onClose: () => { onOpenChange(false) },
+    items: options.map((option) => {
+      const name = presetDisplayText(option, t).name
+      return {
+        id: option.id,
+        // All preset surfaces resolve copy the same way; the id is addressing,
+        // not a label, except where no display name exists.
+        label: option.trust === 'user' ? `${name} · ${t('userTrust')}` : name,
+      }
+    }),
+    selectedId,
+    onSelect: (id) => {
+      onOpenChange(false)
+      onSelect(id)
+    },
+    align: 'end',
+    portal: true,
+    anchor: (
+      <button
+        type="button"
+        class={buttonClassName ?? ''}
+        aria-haspopup="menu"
+        aria-expanded={String(open)}
+        disabled={disabled}
+        onclick={() => { onOpenChange(!open) }}
+      >
+        {label}
+        <IconChevronDownOutline14 className={chevronClassName} />
+      </button>
+    ),
+  })
 }

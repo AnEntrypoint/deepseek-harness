@@ -12,9 +12,9 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import { CommandUiRuntime } from './service.ts'
 import type { PopupSelectInjected } from './PopupSelectView.tsx'
-import { PopupSelectView } from './PopupSelectView.tsx'
 import { en, zh, type CommandKey } from './locales.ts'
 
 export { CommandUiRuntime } from './service.ts'
@@ -22,6 +22,7 @@ export { CommandDirectory } from './directory.ts'
 export type { CommandDescriptor, DirectoryStatus } from './directory.ts'
 export { filterOptions, PopupSelectController } from './popup.ts'
 export type { PopupSelectDeps, PopupSpec, PopupState, TokenSegment } from './popup.ts'
+export { DshPopupSelectView } from './PopupSelectView.tsx'
 export type { PopupSelectInjected, PopupSelectViewProps } from './PopupSelectView.tsx'
 export type {
   CommandContribution, CommandDecoration, CommandUiContract, CommandUiSpec, SelectConfirmation, SelectOption,
@@ -68,6 +69,6 @@ export function apply(ctx: ClientContext): void {
         if (actx === undefined) throw new Error(`ui-commands: session "${String(sessionId)}" resolved no scope`)
         return { popup: command.popupFor(actx) }
       },
-    }, PopupSelectView))
+    }, webjsxSlot('dsh-popup-select-view')))
   })
 }

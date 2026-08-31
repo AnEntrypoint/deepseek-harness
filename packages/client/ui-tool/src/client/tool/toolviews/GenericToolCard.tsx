@@ -4,7 +4,7 @@
 // unregistered tool name lands here); registrants may also compose it as a
 // base, feeding the same owner payload through.
 
-import type { ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import {
   IconApiOutline14, IconBrowseOutline16, IconCodeOutline16, IconEditOutline16, IconSearchOutline16, IconSparkle16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -18,7 +18,7 @@ import { toolRowModel, type ToolRowVariant } from '../models/tool-call-model.ts'
 import { ToolRow } from '../components/ToolRow.tsx'
 
 /** Variant leading icons (figma table); all glyphs render at 14 inside the 16px leading box. */
-const VARIANT_ICONS: Record<ToolRowVariant, ReactNode> = {
+const VARIANT_ICONS: Record<ToolRowVariant, VNode> = {
   search: <IconSearchOutline16 size={14} />,
   read: <IconBrowseOutline16 size={14} />,
   bash: <IconApiOutline14 size={14} />,
@@ -33,7 +33,7 @@ export interface GenericToolCardProps extends ToolCallOwnerProps {
   t: ToolTreeProps['t']
 }
 
-export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, t }: GenericToolCardProps) {
+export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, t }: GenericToolCardProps): JSX.Element {
   const model = toolRowModel(toolName, block, cwd, home)
   const terminal = terminalCardModel(block, cwd)
   const read = readCardModel(block, cwd, home)
@@ -72,6 +72,6 @@ export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect,
       filePath={model.filePath}
       onOpenFile={singleFile ? openFile : undefined}
       inspect={inspect}
-    />
+    /> as unknown as JSX.Element
   )
 }

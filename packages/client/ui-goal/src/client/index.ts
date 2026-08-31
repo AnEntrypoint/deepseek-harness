@@ -17,8 +17,8 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only: the `goal` SessionProjectionMap key merge (single source, the domain's pure outlet).
 import type { GoalProjection, GoalRef } from '@deepseek-ai/dsh-goal/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import type { GoalActionResult, GoalBarActions } from './slots.ts'
-import { GoalDock } from './GoalBar.tsx'
 import { GoalCommandInputView } from './GoalCommandInputView.tsx'
 import { goalCommandInputDefinition } from './goal-command-input.ts'
 import { en, zh, type GoalKey } from './locales.ts'
@@ -96,5 +96,5 @@ export function apply(ctx: ClientContext): void {
         return await ctx.remote.goals.clear(sessionId, ref)
       },
     }),
-  }, GoalDock))
+  }, webjsxSlot('dsh-goal-dock')))
 }

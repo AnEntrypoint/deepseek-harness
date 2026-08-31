@@ -1,12 +1,21 @@
-/** Strict per-session header/body content inserted into the resident conversation layout. */
+/** Strict per-session header/body content inserted into the resident conversation layout.
+ *
+ * Converted from React hooks components to webjsx custom elements: the
+ * `useSyncExternalStore(views.subscribe, ...)` subscription becomes an
+ * explicit `views.subscribe` call in `connectedCallback` (unsubscribed in
+ * `disconnectedCallback`, ReadBlock.tsx's grammar-subscription pattern), and
+ * the mount-only draft-mirror / image-release effects become
+ * connectedCallback/disconnectedCallback bodies.
+ */
 
-import { useEffect, useSyncExternalStore } from 'react'
+import { applyDiff } from 'webjsx'
 import clsx from 'clsx'
 import type { SessionId, SessionListState, SessionSummary } from '@deepseek-ai/dsh-client-runtime/client'
 import type {
   ConversationSessionHeaderSlotProps, ConversationSessionSlotProps,
 } from '../contract/slots.ts'
 import type { ViewTab } from '../contract/views.ts'
+import type { InputState } from '../input/contract.ts'
 import css from './ConversationRoot.module.css'
 
 /** Full props composed from the strict session body contract. */
@@ -50,54 +59,73 @@ function deriveAncestry(list: SessionListState, id: SessionId): readonly Breadcr
   return chain
 }
 
-function equalBreadcrumbs(left: readonly Breadcrumb[], right: readonly Breadcrumb[]): boolean {
-  return left.length === right.length
-    && left.every((item, index) => {
-      const other = right.at(index)
-      return other !== undefined && item.id === other.id && item.displayTitle === other.displayTitle
-    })
-}
-
 /**
- * Renders Session header chrome above the resident conversation scrollport.
- * @param props - Strict Session store, view ledger, navigation, render, and locale shares.
- * @returns the hidden blank-session header or visible title and tabs.
+ * Session header chrome custom element: subscribes to the view ledger for its
+ * only reactive input beyond the standard session kit.
  */
-export function ConversationSessionHeader({
-  sessionId, useSession, useSessions, useStore, actions,
-  renderSlot, views, open, t,
-}: ConversationSessionHeaderProps) {
-  useSyncExternalStore(views.subscribe, views.version)
-  const tabs = views.list()
-  const selectedId = useStore(s => s.view)
-  const active = resolveActiveView(tabs, selectedId)
-  const ancestry = useSessions(s => deriveAncestry(s, sessionId), equalBreadcrumbs)
-  const composerPhase = useSession(s => s.composerPhase)
-  const blank = useSession(s => s.blank)
-  const hideChrome = blank && composerPhase === 'blank'
+export class DshConversationSessionHeader extends HTMLElement {
+  #props: ConversationSessionHeaderProps | null = null
+  #unsubscribeViews: (() => void) | null = null
+  #unsubscribeStore: (() => void) | null = null
 
-  return (
-    <header
-      className={clsx(css.header, hideChrome && css.headerHidden)}
-      aria-hidden={hideChrome || undefined}
-    >
-      {!hideChrome && (
-        <>
-          <div className={css.titleRow}>
-            <div className={css.titleCluster}>
-              <nav className={css.crumbs} aria-label={t('session.hierarchy')}>
+  setProps(props: ConversationSessionHeaderProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    if (this.#props !== null) {
+      this.#unsubscribeViews = this.#props.views.subscribe(() => { this.#render() })
+      // The active tab (chat store's `view` field) is written by
+      // actions.setView but `useStore` is a plain non-subscribing reader
+      // (bind.ts) — without this the tab bar never learns a click landed.
+      this.#unsubscribeStore = this.#props.subscribeStore(() => { this.#render() })
+    }
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#unsubscribeViews?.()
+    this.#unsubscribeViews = null
+    this.#unsubscribeStore?.()
+    this.#unsubscribeStore = null
+  }
+
+  #render(): void {
+    if (this.#props === null) return
+    const { sessionId, useSession, useSessions, useStore, actions, renderSlot, views, open, t } = this.#props
+    const tabs = views.list()
+    const selectedId = useStore(s => s.view)
+    const active = resolveActiveView(tabs, selectedId)
+    // Custom equality (breadcrumb id+title) dropped: #render is only invoked
+    // on an actual props/subscription change, not on every session-store
+    // tick, so the extra-render guard the comparator existed for is moot here.
+    const ancestry = useSessions(s => deriveAncestry(s, sessionId))
+    const composerPhase = useSession(s => s.composerPhase)
+    const blank = useSession(s => s.blank)
+    const hideChrome = blank && composerPhase === 'blank'
+
+    const vdom = (
+      <header
+        class={clsx(css.header, hideChrome && css.headerHidden)}
+        aria-hidden={hideChrome || undefined}
+      >
+        {!hideChrome && [
+          <div class={css.titleRow ?? ''}>
+            <div class={css.titleCluster ?? ''}>
+              <nav class={css.crumbs ?? ''} aria-label={t('session.hierarchy')}>
                 {ancestry.map((summary, index) => {
                   const last = index === ancestry.length - 1
                   const title = (
                     <button
                       type="button"
-                      className={clsx(
+                      class={clsx(
                         css.crumb,
                         summary.subagent && css.crumbSubagent,
                         last && css.crumbCurrent,
                       )}
                       disabled={last}
-                      onClick={() => { open(summary.id) }}
+                      onclick={() => { open(summary.id) }}
                     >
                       {summary.displayTitle}
                     </button>
@@ -109,8 +137,8 @@ export function ConversationSessionHeader({
                     ...last ? {} : { openTitle: () => { open(summary.id) } },
                   }
                   return (
-                    <span key={summary.id} className={css.crumbSeg}>
-                      {index > 0 && <span className={css.crumbSep}>/</span>}
+                    <span key={summary.id} class={css.crumbSeg ?? ''}>
+                      {index > 0 && <span class={css.crumbSep ?? ''}>/</span>}
                       {lineage
                         ? summary.subagent
                           ? renderSlot(
@@ -118,50 +146,150 @@ export function ConversationSessionHeader({
                             lineageOwner,
                             { fallback: title },
                           )
-                          : (
-                            <>
-                              {title}
-                              {renderSlot(
-                                'conversation.session.header.lineage',
-                                lineageOwner,
-                                { fallback: null },
-                              )}
-                            </>
-                          )
+                          : [
+                            title,
+                            renderSlot(
+                              'conversation.session.header.lineage',
+                              lineageOwner,
+                              { fallback: null },
+                            ),
+                          ]
                         : title}
                     </span>
                   )
                 })}
-                {ancestry.length === 0 && <span className={css.crumbCurrent}>{sessionId}</span>}
+                {ancestry.length === 0 && <span class={css.crumbCurrent ?? ''}>{sessionId}</span>}
               </nav>
-              <div className={css.headerActions}>
+              <div class={css.headerActions ?? ''}>
                 {renderSlot('conversation.session.header.actions', {})}
               </div>
             </div>
-            <div className={css.headerUtilities}>
+            <div class={css.headerUtilities ?? ''}>
               {renderSlot('conversation.session.header.utilities', {})}
             </div>
-          </div>
-          {tabs.length > 1 && (
-            <div className={css.tabs} role="tablist">
+          </div>,
+          tabs.length > 1 && (
+            <div class={css.tabs ?? ''} role="tablist">
               {tabs.map(viewTab => (
                 <button
                   key={viewTab.id}
                   type="button"
                   role="tab"
                   aria-selected={viewTab.id === active?.id}
-                  className={clsx(css.tab, viewTab.id === active?.id && css.tabActive)}
-                  onClick={() => { actions.setView(viewTab.id) }}
+                  class={clsx(css.tab, viewTab.id === active?.id && css.tabActive)}
+                  onclick={() => { actions.setView(viewTab.id) }}
                 >
                   {viewTab.label}
                 </button>
               ))}
             </div>
-          )}
-        </>
-      )}
-    </header>
-  )
+          ),
+        ]}
+      </header>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-conversation-session-header') === undefined) {
+  customElements.define('dsh-conversation-session-header', DshConversationSessionHeader)
+}
+
+/**
+ * Renders Session header chrome above the resident conversation scrollport.
+ * @param props - Strict Session store, view ledger, navigation, render, and locale shares.
+ * @returns the hidden blank-session header or visible title and tabs.
+ */
+export function ConversationSessionHeader(props: ConversationSessionHeaderProps): JSX.Element {
+  const el = document.createElement('dsh-conversation-session-header') as DshConversationSessionHeader
+  el.setProps(props)
+  return el as unknown as JSX.Element
+}
+
+/**
+ * Strict session body custom element: subscribes to the view ledger, seeds
+ * the draft mirror once per mount, and releases session images on unmount
+ * (the two former mount-only effects).
+ */
+export class DshConversationSession extends HTMLElement {
+  #props: ConversationSessionProps | null = null
+  #unsubscribeViews: (() => void) | null = null
+  #unsubscribeStore: (() => void) | null = null
+  #unmirror: (() => void) | null = null
+  #mirrorBoundActions: ConversationSessionProps['actions'] | null = null
+
+  setProps(props: ConversationSessionProps): void {
+    this.#props = props
+    this.#syncMirror()
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    if (this.#props !== null) {
+      this.#unsubscribeViews = this.#props.views.subscribe(() => { this.#render() })
+      // See DshConversationSessionHeader: useStore never re-renders on its
+      // own, so the active-view content needs its own direct subscription
+      // to hear actions.setView / actions.setInspect mutations.
+      this.#unsubscribeStore = this.#props.subscribeStore(() => { this.#render() })
+    }
+    this.#syncMirror()
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#unsubscribeViews?.()
+    this.#unsubscribeViews = null
+    this.#unsubscribeStore?.()
+    this.#unsubscribeStore = null
+    this.#unmirror?.()
+    this.#unmirror = null
+    if (this.#props !== null) this.#props.releaseSessionImages(this.#props.sessionId)
+  }
+
+  /** Mount-only seed + mirror bind: rebinds only when `actions` identity changes
+   * (mirrors the original effect's `[inputActions]` dep pin). */
+  #syncMirror(): void {
+    if (this.#props === null) return
+    if (this.#props.actions !== this.#mirrorBoundActions) {
+      const inputState: InputState = this.#props.useInput(s => s)
+      const storedDraft = this.#props.useStore(s => s.draft)
+      this.#unmirror?.()
+      if (inputState.draft === '' && storedDraft !== '') this.#props.inputActions.setDraft(storedDraft)
+      this.#unmirror = this.#props.bindDraftMirror(this.#props.actions.setDraft)
+      this.#mirrorBoundActions = this.#props.actions
+    }
+  }
+
+  #render(): void {
+    if (this.#props === null) return
+    const { sessionId, useSession, useStore, actions, renderSlot, views } = this.#props
+    const tabs = views.list()
+    const selectedId = useStore(s => s.view)
+    const active = resolveActiveView(tabs, selectedId)
+    const composerPhase = useSession(s => s.composerPhase)
+    const blank = useSession(s => s.blank)
+    // `?? null`: persisted snapshots from before the inspect field rehydrate without it.
+    const inspect = useStore(s => s.inspect ?? null)
+    void sessionId
+
+    if (blank && composerPhase === 'blank') {
+      applyDiff(this, <div />)
+      return
+    }
+    const vdom = (
+      <div class={css.viewArea ?? ''}>
+        {active !== undefined && renderSlot('conversation.view', {
+          inspect,
+          onInspectDone: () => { actions.setInspect(null) },
+        }, { only: active.id })}
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-conversation-session') === undefined) {
+  customElements.define('dsh-conversation-session', DshConversationSession)
 }
 
 /**
@@ -170,40 +298,8 @@ export function ConversationSessionHeader({
  * @param props - Strict Session input/store, view ledger, and render shares.
  * @returns the active view area, or null while the Session remains blank.
  */
-export function ConversationSession({
-  sessionId, useSession, useInput, inputActions, useStore, actions,
-  renderSlot, views, bindDraftMirror, releaseSessionImages,
-}: ConversationSessionProps) {
-  useSyncExternalStore(views.subscribe, views.version)
-  const tabs = views.list()
-  const selectedId = useStore(s => s.view)
-  const active = resolveActiveView(tabs, selectedId)
-  const composerPhase = useSession(s => s.composerPhase)
-  const blank = useSession(s => s.blank)
-  const inputState = useInput(s => s)
-  const storedDraft = useStore(s => s.draft)
-  // `?? null`: persisted snapshots from before the inspect field rehydrate without it.
-  const inspect = useStore(s => s.inspect ?? null)
-
-  useEffect(() => {
-    if (inputState.draft === '' && storedDraft !== '') inputActions.setDraft(storedDraft)
-    const unmirror = bindDraftMirror(actions.setDraft)
-    return () => { unmirror() }
-    // Mount-only (deps pinned to inputActions): later store writes come from
-    // the machine mirror, not this seed effect.
-  }, [inputActions])
-
-  useEffect(() => () => {
-    releaseSessionImages(sessionId)
-  }, [releaseSessionImages, sessionId])
-
-  if (blank && composerPhase === 'blank') return null
-  return (
-    <div className={css.viewArea}>
-      {active !== undefined && renderSlot('conversation.view', {
-        inspect,
-        onInspectDone: () => { actions.setInspect(null) },
-      }, { only: active.id })}
-    </div>
-  )
+export function ConversationSession(props: ConversationSessionProps): JSX.Element {
+  const el = document.createElement('dsh-conversation-session') as DshConversationSession
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

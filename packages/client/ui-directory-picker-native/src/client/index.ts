@@ -10,8 +10,9 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the SlotMap merge declaring the directory-flow holes.
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import type { NativeFlowInjected } from './flow.ts'
-import { NativeDirectoryFlow } from './flow.ts'
+import './flow.ts'
 
 
 /** Required services (cordis fiber inject): the slot registry and the wire-facing workspace service. */
@@ -32,9 +33,9 @@ export function apply(ctx: ClientContext): void {
     ctx.slots.inject('sidebar.workspaces.directoryFlow', function* () {
       yield ctx.slots.register({
         name: 'conversation.hero.workspace.directoryFlow', inject: injected,
-      }, NativeDirectoryFlow)
+      }, webjsxSlot('dsh-native-directory-flow'))
       yield ctx.slots.register({
         name: 'sidebar.workspaces.directoryFlow', inject: injected,
-      }, NativeDirectoryFlow)
+      }, webjsxSlot('dsh-native-directory-flow'))
     }))
 }

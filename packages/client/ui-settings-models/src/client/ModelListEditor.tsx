@@ -12,10 +12,14 @@
  * A provider that cannot be interrogated (an unreachable endpoint, a protocol
  * with no readable listing) is not a dead end: the failure is shown next to the
  * rows the user can still fill in by hand.
+ *
+ * Converted from a React hooks component to a webjsx custom element: every
+ * useState becomes an instance field, and re-render is an explicit
+ * applyDiff(this, vdom) call (Toast.tsx's pattern).
  */
 
-import { useState } from 'react'
-import type { ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import type { DiscoveredModelView, IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
 import { Button, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import { formatCapacity, parseCapacity } from './DeepSeekModelsEditor.tsx'
@@ -90,24 +94,24 @@ export interface ModelListEditorProps {
 }
 
 /** Disclosure chevron; rotates to point down while its row is open. */
-function IconChevron({ open }: { open: boolean }): ReactNode {
+function IconChevron({ open }: { open: boolean }): JSX.Element {
   return (
     <svg
       width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden
-      style={{ transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 120ms ease' }}
+      style={open ? 'transform: rotate(90deg); transition: transform 120ms ease' : 'transition: transform 120ms ease'}
     >
-      <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   )
 }
 
 /** Removal glyph for one model row. */
-function IconTrash(): ReactNode {
+function IconTrash(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
       <path
         d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.7 9a1 1 0 001 .9h4.6a1 1 0 001-.9L12 4M6.5 6.8v4.4M9.5 6.8v4.4"
-        stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"
+        stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"
       />
     </svg>
   )
@@ -153,45 +157,59 @@ function adopt(candidate: DiscoveredModelView): ModelDraft {
   }
 }
 
-/**
- * Render the model list with its fetch action.
- * @param props - the drafted rows, probe target, wire face, and copy.
- * @returns the model-list editor.
- */
-export function ModelListEditor(props: ModelListEditorProps): ReactNode {
-  const { models, onChange, probe, api, t, disabled } = props
-  const [busy, setBusy] = useState(false)
-  const [failure, setFailure] = useState<string | undefined>(undefined)
-  const [candidates, setCandidates] = useState<readonly DiscoveredModelView[] | undefined>(undefined)
-  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
+const DEFAULT_PROPS: ModelListEditorProps = {
+  models: [],
+  onChange: () => {},
+  probe: { settingsNs: '' },
+  api: {} as Pick<IApiClient, 'llm'>,
+  t: key => key,
+  disabled: false,
+}
+
+/** The model-list editor with its fetch action, as a custom element. */
+export class DshModelListEditor extends HTMLElement {
+  #props: ModelListEditorProps = DEFAULT_PROPS
+  #busy = false
+  #failure: string | undefined = undefined
+  #candidates: readonly DiscoveredModelView[] | undefined = undefined
+  #picked: ReadonlySet<string> = new Set()
   // Rows carry an id and a name; capacities are the exception, so they stay
   // folded until asked for rather than crowding every row with four inputs.
-  const [expanded, setExpanded] = useState<ReadonlySet<number>>(new Set())
+  #expanded: ReadonlySet<number> = new Set()
   // Capacities are edited as text, so a field's keystrokes are held here rather
   // than re-derived from the parsed count on every change — that would rewrite
   // `1000` to `1K` mid-word. Unreadable text is kept past blur so the refusal
   // names a row the user can still see, which is why this is one entry PER
   // FIELD: a single buffer would be displaced by editing any other field, and
   // the abandoned one would render its stored NaN as the literal `NaN`.
-  const [editing, setEditing] = useState<ReadonlyMap<string, string>>(new Map())
+  #editing: ReadonlyMap<string, string> = new Map()
+
+  setProps(props: ModelListEditorProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
 
   /** Buffer key for one capacity field; the row half moves when rows do. */
-  const bufferKey = (index: number, field: CapacityField): string => `${String(index)}:${field}`
+  #bufferKey(index: number, field: CapacityField): string {
+    return `${String(index)}:${field}`
+  }
 
-  const editCapacity = (index: number, field: CapacityField, text: string): void => {
-    setEditing(current => new Map(current).set(bufferKey(index, field), text))
-    patch(index, { [field]: parseCapacity(text) })
+  #editCapacity(index: number, field: CapacityField, text: string): void {
+    this.#editing = new Map(this.#editing).set(this.#bufferKey(index, field), text)
+    this.#patch(index, { [field]: parseCapacity(text) })
   }
 
   /** What a capacity field shows: the buffer while typing, else the stored count. */
-  const capacityText = (model: ModelDraft, index: number, field: CapacityField): string =>
-    editing.get(bufferKey(index, field)) ?? capacitySpelling(numberOf(model, field))
+  #capacityText(model: ModelDraft, index: number, field: CapacityField): string {
+    return this.#editing.get(this.#bufferKey(index, field)) ?? capacitySpelling(numberOf(model, field))
+  }
 
   /** Drop one row's entries and shift the rows after it down, in one pass. */
-  const reindexOnRemove = (
-    current: ReadonlyMap<string, string>,
-    index: number,
-  ): Map<string, string> => {
+  #reindexOnRemove(current: ReadonlyMap<string, string>, index: number): Map<string, string> {
     const next = new Map<string, string>()
     for (const [key, value] of current) {
       const at = Number(key.slice(0, key.indexOf(':')))
@@ -202,22 +220,17 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     return next
   }
 
-  const toggleExpanded = (index: number): void => {
-    setExpanded((current) => {
-      const next = new Set(current)
-      if (!next.delete(index)) next.add(index)
-      return next
-    })
+  #toggleExpanded(index: number): void {
+    const next = new Set(this.#expanded)
+    if (!next.delete(index)) next.add(index)
+    this.#expanded = next
   }
 
-  const patch = (index: number, next: Record<string, string | number | undefined>): void => {
-    onChange(models.map((model, at) => {
+  #patch(index: number, next: Record<string, string | number | undefined>): void {
+    this.#props.onChange(this.#props.models.map((model, at) => {
       if (at !== index) return model
       // Rebuilt rather than spread over: an emptied optional field has to leave
       // the profile, not be stored as a value its schema would reject.
-      // Spread first so a field this card does not edit survives; an emptied
-      // optional field is then dropped rather than stored as a value its
-      // schema would reject.
       const cleared = new Set(
         Object.entries(next).filter(([, value]) => value === undefined || value === '').map(([key]) => key),
       )
@@ -227,9 +240,11 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     }))
   }
 
-  const fetchModels = async (): Promise<void> => {
-    setBusy(true)
-    setFailure(undefined)
+  async #fetchModels(): Promise<void> {
+    const { probe, api, t, models } = this.#props
+    this.#busy = true
+    this.#failure = undefined
+    this.#render()
     try {
       const response = await api.llm.discoverModels({
         settingsNs: probe.settingsNs,
@@ -239,247 +254,285 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
         ...probe.apiKey === undefined ? {} : { apiKey: probe.apiKey },
       })
       if (!response.result.ok) {
-        setFailure(response.result.error.message)
+        this.#failure = response.result.error.message
         return
       }
       const found = response.result.value.models
       if (found.length === 0) {
-        setFailure(t('fetchEmpty'))
+        this.#failure = t('fetchEmpty')
         return
       }
       // Everything already configured starts unchecked, so adopting a
       // selection never silently rewrites a capacity the user corrected.
       const known = new Set(models.map(model => textOf(model, 'id')))
-      setCandidates(found)
-      setPicked(new Set(found.filter(model => !known.has(model.id)).map(model => model.id)))
+      this.#candidates = found
+      this.#picked = new Set(found.filter((model: { id: string }) => !known.has(model.id)).map((model: { id: string }) => model.id))
     } catch (error) {
       // The transport rejected rather than answering; without this the button
       // would stay busy with nothing shown.
-      setFailure(messageOf(error))
+      this.#failure = messageOf(error)
     } finally {
-      setBusy(false)
+      this.#busy = false
+      this.#render()
     }
   }
 
-  const closePicker = (): void => {
-    setCandidates(undefined)
-    setPicked(new Set())
+  #closePicker(): void {
+    this.#candidates = undefined
+    this.#picked = new Set()
   }
 
-  const adoptPicked = (): void => {
+  #adoptPicked(): void {
+    const candidates = this.#candidates
     /* v8 ignore next -- the dialog only renders with candidates loaded */
     if (candidates === undefined) return
-    const byId = new Map(models.map(model => [textOf(model, 'id'), model]))
+    const byId = new Map(this.#props.models.map(model => [textOf(model, 'id'), model]))
     for (const candidate of candidates) {
-      if (!picked.has(candidate.id)) continue
+      if (!this.#picked.has(candidate.id)) continue
       // A row the user already tuned wins over the provider's own numbers.
       // Keyed by id, so a half-typed row whose id is still empty is not a
       // match and the candidate joins as its own row — correct, since a row
       // without an id is not yet a model and the create/apply gates refuse it.
       byId.set(candidate.id, byId.get(candidate.id) ?? adopt(candidate))
     }
-    onChange([...byId.values()])
-    closePicker()
+    this.#props.onChange([...byId.values()])
+    this.#closePicker()
   }
 
-  const toggle = (id: string): void => {
-    setPicked((current) => {
-      const next = new Set(current)
-      if (!next.delete(id)) next.add(id)
-      return next
-    })
+  #toggle(id: string): void {
+    const next = new Set(this.#picked)
+    if (!next.delete(id)) next.add(id)
+    this.#picked = next
   }
 
-  const activeCandidates = candidates ?? []
-  const allCandidatesPicked = activeCandidates.length > 0
-    && activeCandidates.every(candidate => picked.has(candidate.id))
+  #render(): void {
+    const props = this.#props
+    const { models, onChange, probe, t, disabled } = props
+    const activeCandidates = this.#candidates ?? []
+    const allCandidatesPicked = activeCandidates.length > 0
+      && activeCandidates.every(candidate => this.#picked.has(candidate.id))
 
-  const toggleAllCandidates = (): void => {
-    setPicked((current) => {
-      return activeCandidates.every(candidate => current.has(candidate.id))
+    const toggleAllCandidates = (): void => {
+      this.#picked = activeCandidates.every(candidate => this.#picked.has(candidate.id))
         ? new Set()
         : new Set(activeCandidates.map(candidate => candidate.id))
-    })
-  }
+      this.#render()
+    }
 
-  // A route the adapter already describes answers without an endpoint; only a
-  // draft with neither has nothing to ask about.
-  const askable = probe.provider !== undefined || (probe.baseURL !== undefined && probe.baseURL.length > 0)
-  return (
-    <section className={styles['modelCatalog']} aria-label={t('models')}>
-      <div className={styles['modelListHead']}>
-        <div className={styles['modelCatalogHeading']}>
-          <span className={styles['modelCatalogTitle']}>{t('models')}</span>
-          {props.overridden === undefined
-            ? null
-            : (
-              <span className={styles['modelCatalogMeta']}>
-                {props.overridden ? t('modelsCustomized') : t('modelsInherited')}
-              </span>
-            )}
-        </div>
-        {props.overridden === true && props.onReset !== undefined
-          ? (
-            <button
-              type="button"
-              className={styles['linkButton']}
-              disabled={disabled}
-              onClick={props.onReset}
-            >
-              {t('resetModels')}
-            </button>
-          )
-          : null}
-        <button
-          type="button"
-          className={styles['linkButton']}
-          disabled={disabled || busy || !askable || props.probeBlocked !== undefined}
-          title={props.probeBlocked !== undefined
-            ? t(props.probeBlocked)
-            : askable ? undefined : t('fetchNeedsBaseUrl')}
-          onClick={() => { void fetchModels() }}
-        >
-          {busy ? t('fetching') : t('fetchModels')}
-        </button>
-      </div>
-      {models.length === 0 ? <p className={styles['modelEmpty']}>{t('modelsEmpty')}</p> : null}
-      {models.map((model, index) => (
-        <div key={index} className={styles['modelEntry']}>
-          <div className={styles['modelRow']}>
-            <input
-              className={styles['input']}
-              type="text"
-              value={textOf(model, 'id')}
-              placeholder={t('modelId')}
-              aria-label={`${t('modelId')} ${index + 1}`}
-              disabled={disabled}
-              onChange={(event) => { patch(index, { id: event.target.value }) }}
-            />
-            <input
-              className={styles['input']}
-              type="text"
-              value={textOf(model, 'name')}
-              placeholder={t('modelName')}
-              aria-label={`${t('modelName')} ${index + 1}`}
-              disabled={disabled}
-              onChange={(event) => { patch(index, { name: event.target.value === '' ? undefined : event.target.value }) }}
-            />
-            <button
-              type="button"
-              className={styles['iconButton']}
-              aria-label={`${t('modelAdvanced')} ${index + 1}`}
-              aria-expanded={expanded.has(index)}
-              title={t('modelAdvanced')}
-              onClick={() => { toggleExpanded(index) }}
-            >
-              <IconChevron open={expanded.has(index)} />
-            </button>
-            <button
-              type="button"
-              className={`${styles['iconButton']} ${styles['iconButtonDanger']}`}
-              aria-label={`${t('removeModel')} ${index + 1}`}
-              title={t('removeModel')}
-              disabled={disabled}
-              onClick={() => {
-                onChange(models.filter((_model, at) => at !== index))
-                // Both stores are keyed by position, so every row after this
-                // one shifts down and would otherwise inherit its neighbour's
-                // state — a different row's capacities popping open, or its
-                // half-typed text appearing in another row's field.
-                setExpanded((current) => {
-                  const next = new Set<number>()
-                  for (const at of current) {
-                    if (at < index) next.add(at)
-                    else if (at > index) next.add(at - 1)
-                  }
-                  return next
-                })
-                setEditing(current => reindexOnRemove(current, index))
-              }}
-            >
-              <IconTrash />
-            </button>
+    // A route the adapter already describes answers without an endpoint; only a
+    // draft with neither has nothing to ask about.
+    const askable = probe.provider !== undefined || (probe.baseURL !== undefined && probe.baseURL.length > 0)
+    const vdom = (
+      <section class={styles['modelCatalog'] ?? ''} aria-label={t('models')}>
+        <div class={styles['modelListHead'] ?? ''}>
+          <div class={styles['modelCatalogHeading'] ?? ''}>
+            <span class={styles['modelCatalogTitle'] ?? ''}>{t('models')}</span>
+            {props.overridden === undefined
+              ? null
+              : (
+                <span class={styles['modelCatalogMeta'] ?? ''}>
+                  {props.overridden ? t('modelsCustomized') : t('modelsInherited')}
+                </span>
+              )}
           </div>
-          {expanded.has(index)
+          {props.overridden === true && props.onReset !== undefined
             ? (
-              <div className={styles['modelAdvanced']}>
-                <label className={styles['modelField']}>
-                  <span className={styles['modelFieldLabel']}>{t('modelContextWindow')}</span>
-                  <input
-                    className={styles['input']}
-                    type="text"
-                    inputMode="numeric"
-                    value={capacityText(model, index, 'contextWindow')}
-                    placeholder={CAPACITY_HINT.contextWindow}
-                    aria-label={`${t('modelContextWindow')} ${index + 1}`}
-                    disabled={disabled}
-                    onChange={(event) => { editCapacity(index, 'contextWindow', event.target.value) }}
-                  />
-                </label>
-                <label className={styles['modelField']}>
-                  <span className={styles['modelFieldLabel']}>{t('modelMaxTokens')}</span>
-                  <input
-                    className={styles['input']}
-                    type="text"
-                    inputMode="numeric"
-                    value={capacityText(model, index, 'maxTokens')}
-                    placeholder={CAPACITY_HINT.maxTokens}
-                    aria-label={`${t('modelMaxTokens')} ${index + 1}`}
-                    disabled={disabled}
-                    onChange={(event) => { editCapacity(index, 'maxTokens', event.target.value) }}
-                  />
-                </label>
-              </div>
+              <button
+                type="button"
+                class={styles['linkButton'] ?? ''}
+                disabled={disabled}
+                onclick={props.onReset}
+              >
+                {t('resetModels')}
+              </button>
             )
             : null}
+          <button
+            type="button"
+            class={styles['linkButton'] ?? ''}
+            disabled={disabled || this.#busy || !askable || props.probeBlocked !== undefined}
+            title={props.probeBlocked !== undefined
+              ? t(props.probeBlocked)
+              : askable ? undefined : t('fetchNeedsBaseUrl')}
+            onclick={() => { void this.#fetchModels() }}
+          >
+            {this.#busy ? t('fetching') : t('fetchModels')}
+          </button>
         </div>
-      ))}
-      <button
-        type="button"
-        className={styles['addModelButton']}
-        disabled={disabled}
-        onClick={() => { onChange([...models, { id: '' }]) }}
-      >
-        {t('addModel')}
-      </button>
-      {failure !== undefined ? <p className={styles['error']}>{failure}</p> : null}
-      <Modal
-        open={candidates !== undefined}
-        onClose={closePicker}
-        title={t('fetchTitle')}
-        closeLabel={t('close')}
-        description={t('fetchDescription')}
-        className={styles['fetchDialog'] as string}
-        footer={(
-          <>
-            <Button variant="outline" onClick={closePicker}>{t('cancel')}</Button>
-            <Button variant="outline" onClick={adoptPicked}>{t('fetchAdopt')}</Button>
-          </>
-        )}
-      >
-        <div className={styles['candidateActions']}>
-          <Button variant="ghost" size="sm" onClick={toggleAllCandidates}>
-            {t(allCandidatesPicked ? 'fetchDeselectAll' : 'fetchSelectAll')}
-          </Button>
-        </div>
-        <ul className={styles['candidateList']}>
-          {(candidates ?? []).map(candidate => (
-            <li key={candidate.id} className={styles['candidate']}>
-              <label className={styles['candidateLabel']}>
-                <input
-                  type="checkbox"
-                  checked={picked.has(candidate.id)}
-                  onChange={() => { toggle(candidate.id) }}
-                />
-                {/* The id alone: it is the string adoption writes, and the
-                    capacities the endpoint reported are adopted with it and
-                    editable in the row that appears. */}
-                <span className={styles['candidateId']}>{candidate.id}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      </Modal>
-    </section>
-  )
+        {models.length === 0 ? <p class={styles['modelEmpty'] ?? ''}>{t('modelsEmpty')}</p> : null}
+        {models.map((model, index) => (
+          <div key={index} class={styles['modelEntry'] ?? ''}>
+            <div class={styles['modelRow'] ?? ''}>
+              <input
+                class={styles['input'] ?? ''}
+                type="text"
+                value={textOf(model, 'id')}
+                placeholder={t('modelId')}
+                aria-label={`${t('modelId')} ${index + 1}`}
+                disabled={disabled}
+                onchange={(event: Event) => { this.#patch(index, { id: (event.target as HTMLInputElement).value }); this.#render() }}
+              />
+              <input
+                class={styles['input'] ?? ''}
+                type="text"
+                value={textOf(model, 'name')}
+                placeholder={t('modelName')}
+                aria-label={`${t('modelName')} ${index + 1}`}
+                disabled={disabled}
+                onchange={(event: Event) => {
+                  const value = (event.target as HTMLInputElement).value
+                  this.#patch(index, { name: value === '' ? undefined : value })
+                  this.#render()
+                }}
+              />
+              <button
+                type="button"
+                class={styles['iconButton'] ?? ''}
+                aria-label={`${t('modelAdvanced')} ${index + 1}`}
+                aria-expanded={this.#expanded.has(index)}
+                title={t('modelAdvanced')}
+                onclick={() => { this.#toggleExpanded(index); this.#render() }}
+              >
+                <IconChevron open={this.#expanded.has(index)} />
+              </button>
+              <button
+                type="button"
+                class={`${styles['iconButton'] ?? ''} ${styles['iconButtonDanger'] ?? ''}`}
+                aria-label={`${t('removeModel')} ${index + 1}`}
+                title={t('removeModel')}
+                disabled={disabled}
+                onclick={() => {
+                  onChange(models.filter((_model, at) => at !== index))
+                  // Both stores are keyed by position, so every row after this
+                  // one shifts down and would otherwise inherit its neighbour's
+                  // state — a different row's capacities popping open, or its
+                  // half-typed text appearing in another row's field.
+                  const nextExpanded = new Set<number>()
+                  for (const at of this.#expanded) {
+                    if (at < index) nextExpanded.add(at)
+                    else if (at > index) nextExpanded.add(at - 1)
+                  }
+                  this.#expanded = nextExpanded
+                  this.#editing = this.#reindexOnRemove(this.#editing, index)
+                  this.#render()
+                }}
+              >
+                <IconTrash />
+              </button>
+            </div>
+            {this.#expanded.has(index)
+              ? (
+                <div class={styles['modelAdvanced'] ?? ''}>
+                  <label class={styles['modelField'] ?? ''}>
+                    <span class={styles['modelFieldLabel'] ?? ''}>{t('modelContextWindow')}</span>
+                    <input
+                      class={styles['input'] ?? ''}
+                      type="text"
+                      inputmode="numeric"
+                      value={this.#capacityText(model, index, 'contextWindow')}
+                      placeholder={CAPACITY_HINT.contextWindow}
+                      aria-label={`${t('modelContextWindow')} ${index + 1}`}
+                      disabled={disabled}
+                      onchange={(event: Event) => {
+                        this.#editCapacity(index, 'contextWindow', (event.target as HTMLInputElement).value)
+                        this.#render()
+                      }}
+                    />
+                  </label>
+                  <label class={styles['modelField'] ?? ''}>
+                    <span class={styles['modelFieldLabel'] ?? ''}>{t('modelMaxTokens')}</span>
+                    <input
+                      class={styles['input'] ?? ''}
+                      type="text"
+                      inputmode="numeric"
+                      value={this.#capacityText(model, index, 'maxTokens')}
+                      placeholder={CAPACITY_HINT.maxTokens}
+                      aria-label={`${t('modelMaxTokens')} ${index + 1}`}
+                      disabled={disabled}
+                      onchange={(event: Event) => {
+                        this.#editCapacity(index, 'maxTokens', (event.target as HTMLInputElement).value)
+                        this.#render()
+                      }}
+                    />
+                  </label>
+                </div>
+              )
+              : null}
+          </div>
+        ))}
+        <button
+          type="button"
+          class={styles['addModelButton'] ?? ''}
+          disabled={disabled}
+          onclick={() => { onChange([...models, { id: '' }]) }}
+        >
+          {t('addModel')}
+        </button>
+        {this.#failure !== undefined ? <p class={styles['error'] ?? ''}>{this.#failure}</p> : null}
+        <Modal
+          open={this.#candidates !== undefined}
+          onClose={() => { this.#closePicker(); this.#render() }}
+          title={t('fetchTitle')}
+          closeLabel={t('close')}
+          description={t('fetchDescription')}
+          className={styles['fetchDialog'] as string}
+          footer={(
+            [
+              <Button variant="outline" onclick={() => { this.#closePicker(); this.#render() }}>{t('cancel')}</Button>,
+              <Button variant="outline" onclick={() => { this.#adoptPicked(); this.#render() }}>{t('fetchAdopt')}</Button>,
+            ] as unknown as VNode
+          )}
+        >
+          <div class={styles['candidateActions'] ?? ''}>
+            <Button variant="ghost" size="sm" onclick={toggleAllCandidates}>
+              {t(allCandidatesPicked ? 'fetchDeselectAll' : 'fetchSelectAll')}
+            </Button>
+          </div>
+          <ul class={styles['candidateList'] ?? ''}>
+            {(this.#candidates ?? []).map(candidate => (
+              <li key={candidate.id} class={styles['candidate'] ?? ''}>
+                <label class={styles['candidateLabel'] ?? ''}>
+                  <input
+                    type="checkbox"
+                    checked={this.#picked.has(candidate.id)}
+                    onchange={() => { this.#toggle(candidate.id); this.#render() }}
+                  />
+                  {/* The id alone: it is the string adoption writes, and the
+                      capacities the endpoint reported are adopted with it and
+                      editable in the row that appears. */}
+                  <span class={styles['candidateId'] ?? ''}>{candidate.id}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </Modal>
+      </section>
+    ) as unknown as VNode
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-model-list-editor') === undefined) {
+  customElements.define('dsh-model-list-editor', DshModelListEditor)
+}
+
+/**
+ * Create (if needed) or update a ModelListEditor element in place.
+ * @param el - an existing element to update, or null to create one.
+ * @param props - see {@link ModelListEditorProps}.
+ * @returns the element; keep it and pass it back in to update.
+ */
+export function renderModelListEditor(el: DshModelListEditor | null, props: ModelListEditorProps): DshModelListEditor {
+  const target = el ?? document.createElement('dsh-model-list-editor') as DshModelListEditor
+  target.setProps(props)
+  return target
+}
+
+/**
+ * Render the model list with its fetch action.
+ * @param props - the drafted rows, probe target, wire face, and copy.
+ * @returns the model-list editor, cast for JSX use (Modal.tsx's pattern).
+ */
+export function ModelListEditor(props: ModelListEditorProps): JSX.Element {
+  return renderModelListEditor(null, props) as unknown as JSX.Element
 }

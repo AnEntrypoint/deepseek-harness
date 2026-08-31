@@ -21,7 +21,7 @@ export type WebSearchCardProps =
  * @param props - locale copy, the card snapshot, and its form actions.
  * @returns the card.
  */
-export function WebSearchCard(props: WebSearchCardProps) {
+export function WebSearchCard(props: WebSearchCardProps): JSX.Element {
   const { t } = props
   const state = props.useWebSearchCard(snapshot => snapshot)
   const disabled = !state.writable

@@ -2,8 +2,9 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type { SidebarRootInjected } from './contract/slots.ts'
-import { SidebarRoot } from './SidebarRoot.tsx'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import type { SidebarRootComponentProps, SidebarRootInjected } from './contract/slots.ts'
+import './SidebarRoot.tsx'
 import { en, zh, type SidebarKey } from './locales.ts'
 
 export type {
@@ -52,7 +53,7 @@ export function apply(ctx: ClientContext): void {
         'sidebar.footer.action': { kind: 'list', scope: 'root' },
       },
       inject: injectProps,
-    }, SidebarRoot),
+    }, webjsxSlot<SidebarRootComponentProps>('dsh-sidebar-root')),
     'ui-sidebar: slot registration',
   )
 }

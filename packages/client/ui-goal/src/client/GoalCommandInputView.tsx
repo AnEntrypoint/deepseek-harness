@@ -1,4 +1,3 @@
-import { memo } from 'react'
 import { MessageText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { GoalCommandInputData } from './goal-command-input.ts'
@@ -9,22 +8,22 @@ type GoalCommandInputViewProps =
   & PropsLocale<'goal'>
 
 /** Right-aligned `/goal` input bubble without ordinary message actions. */
-export const GoalCommandInputView = memo(function GoalCommandInputView({
+export function GoalCommandInputView({
   node, t,
-}: GoalCommandInputViewProps) {
+}: GoalCommandInputViewProps): JSX.Element {
   const data: GoalCommandInputData = node.data
   return (
     <div
-      className={css.row}
+      class={css.row ?? ''}
       data-command-input=""
       role="group"
       aria-label={t('commandInput.aria')}
     >
-      <div className={css.stack}>
-        <div className={css.bubble}>
+      <div class={css.stack ?? ''}>
+        <div class={css.bubble ?? ''}>
           <MessageText text={data.text} />
         </div>
       </div>
     </div>
   )
-})
+}

@@ -6,10 +6,7 @@
  * of truth with the tsdown client externals); values stay shell-static
  * imports so every bundle sees the same instance.
  */
-import * as React from 'react'
-import * as ReactJsxRuntime from 'react/jsx-runtime'
-import * as ReactDom from 'react-dom'
-import * as ReactDomClient from 'react-dom/client'
+import * as Webjsx from 'webjsx'
 import * as Cordis from '@deepseek-ai/cordis'
 import * as UiSlots from '@deepseek-ai/dsh-client-ui-slots'
 import * as UiPrimitives from '@deepseek-ai/dsh-client-ui-primitives'
@@ -24,10 +21,7 @@ export function getStaticModules(): Record<string, unknown> {
   // PLATFORM_MODULES without a static import here (or vice versa) fails to
   // compile instead of drifting into a runtime require miss.
   return {
-    'react': React,
-    'react/jsx-runtime': ReactJsxRuntime,
-    'react-dom': ReactDom,
-    'react-dom/client': ReactDomClient,
+    'webjsx': Webjsx,
     '@deepseek-ai/cordis': Cordis,
     '@deepseek-ai/dsh-client-ui-slots': UiSlots,
     '@deepseek-ai/dsh-client-ui-primitives': UiPrimitives,

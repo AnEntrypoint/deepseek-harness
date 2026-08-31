@@ -12,6 +12,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import {
   type BoundActions, type LocaleDictOf, type LocaleNamespaceMap, type Translate, type TranslateNS,
+  webjsxSlot,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: the ctx.settingsScope Context merge and the settings slot types.
@@ -26,7 +27,7 @@ import {
   en as settingsEn, zh as settingsZh, type SettingsLocaleKey,
 } from '../locales/settings.ts'
 import type { LanguageRowInjected } from './LanguageRow.tsx'
-import { LanguageRow } from './LanguageRow.tsx'
+import './LanguageRow.tsx'
 import { createLanguageRowStore } from './settings-store.ts'
 
 export type { LanguageRowComponentProps, LanguageRowInjected } from './LanguageRow.tsx'
@@ -394,10 +395,17 @@ export function apply(ctx: ClientContext): void {
   const locale = new LocaleRuntime(ctx, host)
   locale.register(COMMON_NS, { zh, en })
   locale.register(SETTINGS_NS, { zh: settingsZh, en: settingsEn })
-  ctx.provide('locale', locale)
+  // installLocale() MUST run before provide('locale', ...): provide() is what
+  // unblocks every plugin declaring `inject: ['locale']`, and several of
+  // those register entries with `locale: '<ns>'` synchronously on activation
+  // — which triggers a slots/changed notification that can re-render an
+  // already-mounted outlet reading `host.locale` before this face is
+  // installed. Installing first makes `host.locale` defined for any render
+  // that a provide()-unblocked plugin's registration can possibly trigger.
+  ctx.slots.installLocale(locale)
   // The service IS the LocaleFace (bind + getSnapshot/subscribe): install it
   // so the render machinery can synthesize the `t` standard seat.
-  ctx.slots.installLocale(locale)
+  ctx.provide('locale', locale)
 
   const store = createLanguageRowStore()
   let bound: BoundActions<typeof store> | undefined
@@ -430,5 +438,5 @@ export function apply(ctx: ClientContext): void {
     store,
     locale: SETTINGS_NS,
     inject: injected,
-  }, LanguageRow))
+  }, webjsxSlot('dsh-language-row')))
 }

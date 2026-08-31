@@ -33,12 +33,22 @@
  * draft walked to stay put when the editor closes (cancellation included):
  * the crumbs name where the walk ended, and Open's fallback target follows
  * them.
+ *
+ * Converted from a React hooks component to a webjsx custom element: every
+ * useState becomes a private field, every ref becomes a private field, every
+ * useEffect/useCallback becomes plain instance methods invoked from
+ * connectedCallback/disconnectedCallback or directly from event handlers, and
+ * re-render is an explicit applyDiff(this, vdom) call (Toast.tsx's pattern)
+ * instead of implicit re-render on setState. The nested nulls-vs-nothing
+ * scheduling logic (supersession sequence numbers, the slow-scan silence
+ * window, the draft-preview debounce) is preserved verbatim as plain fields
+ * and timers.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import clsx from 'clsx'
 import {
   Button, IconCheckOutline16, IconChevronRightOutline14, IconEditOutline16, IconFolderClose16, IconFolderOpen16,
-  IconPlusOutline16, Modal,
+  IconPlusOutline16, renderModal, type DshModal,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { DirectoryEntry, DirectoryListing } from '@deepseek-ai/dsh-client-runtime/client'
 import { DirectoryBrowseError } from '@deepseek-ai/dsh-client-runtime/client'
@@ -102,7 +112,7 @@ const DRAFT_PREVIEW_DEBOUNCE_MS = 250
  * by its own path.
  */
 function displayCrumbs(listing: DirectoryListing, homeLabel: string): DirectoryEntry[] {
-  const homeIndex = listing.crumbs.findIndex(crumb => crumb.path === listing.home)
+  const homeIndex = listing.crumbs.findIndex((crumb: DirectoryEntry) => crumb.path === listing.home)
   if (homeIndex === -1) return listing.crumbs
   const tail = listing.crumbs.slice(homeIndex + 1)
   return [{ name: homeLabel, path: listing.home, hidden: false }, ...tail]
@@ -215,36 +225,36 @@ function LevelColumn({ entries, selectedPath, busy, onPick, showHidden, filterPr
   showHidden: boolean
   filterPrefix: string | null
   pathEditing: boolean
-}) {
+}): JSX.Element {
   const visible = visibleEntries(entries, selectedPath, showHidden, filterPrefix)
   return (
-    <div className={css.column} role="list">
+    <div class={css.column ?? ''} role="list">
       {visible.map((entry) => {
         const selected = entry.path === selectedPath
         return (
           // The wrapper carries the list semantics; the row keeps its NATIVE
           // button role so assistive technology exposes an actionable control.
-          <span key={entry.path} role="listitem" className={css.rowSeat}>
+          <span role="listitem" class={css.rowSeat ?? ''}>
             <button
               type="button"
-              aria-current={selected || undefined}
-              className={clsx(css.row, selected && css.rowSelected)}
+              aria-current={selected ? 'true' : null}
+              class={clsx(css.row, selected && css.rowSelected)}
               disabled={busy}
               // While the path editor is open, keep focus in it: a focus
               // steal on mousedown would blur the editor and (in engines
               // where the blur lands before our guards) drop this click.
               // Outside editing, rows keep native focus behavior.
-              onMouseDown={pathEditing ? (event) => { event.preventDefault() } : undefined}
+              onmousedown={pathEditing ? (event: MouseEvent) => { event.preventDefault() } : null}
               // Editing-time focus parking happens after commit (the
               // DirectoryBrowser refocus effect): a right-pane pick replaces
               // this very column, so focusing the clicked node here would
               // still fall to body.
-              onClick={() => { onPick(entry) }}
+              onclick={() => { onPick(entry) }}
             >
               {selected
                 ? <IconFolderOpen16 size={16} className={css.rowIconSelected} />
                 : <IconFolderClose16 size={16} className={css.rowIcon} />}
-              <span className={css.rowName}>{entry.name}</span>
+              <span class={css.rowName ?? ''}>{entry.name}</span>
               <IconChevronRightOutline14 size={12} className={css.rowChevron} />
             </button>
           </span>
@@ -255,120 +265,141 @@ function LevelColumn({ entries, selectedPath, busy, onPick, showHidden, filterPr
 }
 
 /**
- * Render the directory-browser dialog.
- * @param props - owner-controlled browser props.
- * @returns the dialog element (null while closed, via Modal).
+ * The directory-browser dialog custom element (see module doc). setProps
+ * updates `open`/`busy`/`onOpen`/`onClose`/`t`/the browse calls without
+ * disturbing in-flight Miller-view state; the open/close edge itself is
+ * detected in #render by comparing against the previously rendered `open`.
  */
-export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen, onClose, busy, t }: DirectoryBrowserProps) {
+export class DshDirectoryBrowser extends HTMLElement {
+  #props: DirectoryBrowserProps | null = null
+  #wasOpen = false
+
   // Miller state: the listed level, the selected row in it, and the selected
   // folder's own listing (the right column; null while nothing is selected).
-  const [parent, setParent] = useState<DirectoryListing | null>(null)
-  const [selected, setSelected] = useState<DirectoryEntry | null>(null)
-  const [child, setChild] = useState<DirectoryListing | null>(null)
-  const [loading, setLoading] = useState(false)
-  // Derived from `loading` and `scanWindow` by the slow-scan effect below:
+  #parent: DirectoryListing | null = null
+  #selected: DirectoryEntry | null = null
+  #child: DirectoryListing | null = null
+  #loading = false
+  // Derived from `loading` and `scanWindow` by the slow-scan timer below:
   // true only once the current listing call has been in flight for
   // SLOW_SCAN_DELAY_MS, so fast listings never render the indicator at all.
-  const [slowScan, setSlowScan] = useState(false)
-  // Every listing call owns a fresh silence window. `loading` may stay true
-  // across a superseding row pick or across a navigation's target and parent
-  // legs, so its boolean edge cannot identify the start of each scan.
-  const [scanWindow, setScanWindow] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  #slowScan = false
+  #slowScanTimer: ReturnType<typeof window.setTimeout> | null = null
+  #error: string | null = null
   // Path-edit state: null = breadcrumb mode; a string = the draft being typed.
-  const [pathDraft, setPathDraft] = useState<string | null>(null)
+  #pathDraft: string | null = null
   // Show-hidden toggle state (pure client-side filter, reset on each open).
-  const [showHidden, setShowHidden] = useState(false)
+  #showHidden = false
   // Create-folder state: null = closed; a string = the nested dialog's draft.
-  const [folderDraft, setFolderDraft] = useState<string | null>(null)
-  const [creatingFolder, setCreatingFolder] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
-  const requestSeq = useRef(0)
+  #folderDraft: string | null = null
+  #creatingFolder = false
+  #createError: string | null = null
+  #requestSeq = 0
   // The in-flight listing's controller: superseding intent aborts the wire
   // request too — the Host stops scanning — instead of only discarding the
   // eventual result while the scan keeps consuming host resources.
-  const scanController = useRef<AbortController | null>(null)
+  #scanController: AbortController | null = null
   // Bumped on every open/close edge: settlements from a previous open (a
   // pending creation included) must never mutate a reopened dialog.
-  const openGeneration = useRef(0)
-  // Deep ancestry overflows the trail; keep its tail (the current directory
-  // and the edit zone beside it) in view whenever the chain changes.
-  const crumbTrailRef = useRef<HTMLSpanElement | null>(null)
-  // IME confirmation (Enter selecting a candidate) must not submit either
-  // text input; the same guard the workspace-name inputs carry, shared by
-  // the path editor and the folder-name input.
-  const composingRef = useRef(false)
-  // HMR/unmount invalidation: a completion from a disposed flow must not
-  // update state or issue follow-up requests from a dead component.
-  useEffect(() => () => {
-    requestSeq.current += 1
-    openGeneration.current += 1
-    scanController.current?.abort()
-  }, [])
-  const compositionGuard = {
-    onCompositionStart: () => { composingRef.current = true },
-    onCompositionEnd: () => { composingRef.current = false },
+  #openGeneration = 0
+  #composing = false
+  // What the last draft-following scan asked for and what came back.
+  #scanned: ScannedDirectory | null = null
+  // IME confirmation (Enter selecting a candidate) must not submit the
+  // navigate's own commit while a submitted navigation is bounded.
+  #previewSuspended = false
+  #draftDebounceTimer: ReturnType<typeof window.setTimeout> | null = null
+
+  // Editor-close focus parking, consumed after each render: a pick parks on
+  // the selection's row, Enter and an input-focused Escape park on the crumb
+  // edit zone that replaces the input. Pointer-out cancels never set (or
+  // clear) these — yanking focus back from wherever the user clicked would be
+  // worse than the fall.
+  #refocusPick = false
+  #refocusEditZone = false
+  #refocusPathInput = false
+
+  // Persistent dsh-modal elements (self-mounted to document.body by
+  // renderModal): held across renders and updated via setProps rather than
+  // recreated, so the dialog's own DOM subtree survives every #render() call.
+  #outerModal: DshModal | null = null
+  #createModal: DshModal | null = null
+
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: DirectoryBrowserProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    // HMR/unmount invalidation: a completion from a disposed flow must not
+    // update state or issue follow-up requests from a dead component.
+    this.#requestSeq += 1
+    this.#openGeneration += 1
+    this.#scanController?.abort()
+    this.#stopSlowScanTimer()
+    this.#stopDraftDebounce()
+    this.#outerModal?.remove()
+    this.#outerModal = null
+    this.#createModal?.remove()
+    this.#createModal = null
+  }
+
+  #stopSlowScanTimer(): void {
+    if (this.#slowScanTimer !== null) { window.clearTimeout(this.#slowScanTimer); this.#slowScanTimer = null }
+  }
+
+  #stopDraftDebounce(): void {
+    if (this.#draftDebounceTimer !== null) { window.clearTimeout(this.#draftDebounceTimer); this.#draftDebounceTimer = null }
   }
 
   /** Newer intent wins: invalidate the pending listing's settlement AND abort its wire request. */
-  const supersede = useCallback((): number => {
-    scanController.current?.abort()
-    scanController.current = null
-    return ++requestSeq.current
-  }, [])
+  #supersede(): number {
+    this.#scanController?.abort()
+    this.#scanController = null
+    this.#requestSeq += 1
+    return this.#requestSeq
+  }
 
   /** Hide any prior indicator and start a fresh silence window for one listing call. */
-  const restartSlowScanWindow = useCallback((): void => {
-    setSlowScan(false)
-    setScanWindow(value => value + 1)
-  }, [])
+  #restartSlowScanWindow(): void {
+    this.#slowScan = false
+    this.#stopSlowScanTimer()
+    this.#slowScanTimer = window.setTimeout(() => {
+      this.#slowScan = true
+      this.#render()
+    }, SLOW_SCAN_DELAY_MS)
+  }
 
   /** Launch one listing under a fresh controller so a later supersession can abort it. */
-  const launchListing = useCallback((path: string | undefined): { seq: number; scan: Promise<DirectoryListing> } => {
-    const seq = supersede()
+  #launchListing(path: string | undefined): { seq: number; scan: Promise<DirectoryListing> } {
+    const seq = this.#supersede()
     const controller = new AbortController()
-    scanController.current = controller
-    restartSlowScanWindow()
+    this.#scanController = controller
+    this.#restartSlowScanWindow()
+    const listDirectory = this.#props?.listDirectory
+    /* v8 ignore next -- narrowing guard: launchListing only runs while the element has props. */
+    if (listDirectory === undefined) return { seq, scan: Promise.reject(new Error('directory browser: not initialized')) }
     return { seq, scan: listDirectory(path, controller.signal) }
-  }, [supersede, restartSlowScanWindow, listDirectory])
+  }
 
   /**
    * Launch a follow-up listing under the CURRENT supersession seq: a newer
    * intent aborts it like the leg it continues, and it supersedes nothing.
    */
-  const continueScan = useCallback((path: string): Promise<DirectoryListing> => {
+  #continueScan(path: string): Promise<DirectoryListing> {
     const controller = new AbortController()
-    scanController.current = controller
-    restartSlowScanWindow()
+    this.#scanController = controller
+    this.#restartSlowScanWindow()
+    const listDirectory = this.#props?.listDirectory
+    /* v8 ignore next -- narrowing guard: continueScan only runs mid-landing, which requires props. */
+    if (listDirectory === undefined) return Promise.reject(new Error('directory browser: not initialized'))
     return listDirectory(path, controller.signal)
-  }, [restartSlowScanWindow, listDirectory])
-
-  /**
-   * Enter owns the view from submission until its navigation lands, so the
-   * debounce timer the same keystrokes armed must not supersede it. Cleared
-   * by the next edit (and by opening the editor); a failed submission leaves
-   * it set until the operator edits again, so the rejected path is not
-   * immediately re-scanned as a preview.
-   */
-  const previewSuspended = useRef(false)
-
-  // The panes as the draft-following scan must read them when its wait
-  // fires: current, but NOT a dependency of the wait (see the effect below).
-  const viewRef = useRef<{ parent: DirectoryListing | null; child: DirectoryListing | null }>({ parent: null, child: null })
-  useEffect(() => { viewRef.current = { parent, child } }, [parent, child])
-
-  // What the last draft-following scan asked for and what came back, so a
-  // level still answers the text that produced it after the host respelled
-  // it. Stale entries are harmless: a match needs both the directory text and
-  // that level's own path, which together already mean the same directory.
-  const scanned = useRef<ScannedDirectory | null>(null)
-
-  /**
-   * A landed preview replaced the pane a keyboard operator may have Tabbed
-   * onto, so the focus it drops is re-parked on the still-open editor (the
-   * Modal has no focus trap). Consumed by the refocus effect below.
-   */
-  const refocusPathInput = useRef(false)
+  }
 
   /**
    * Replace the whole view with a freshly scanned level. Away from the
@@ -399,60 +430,63 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
    * bounds the wait for the parent leg; `announce` surfaces a failure as the
    * dialog's alert.
    */
-  const land = useCallback((path: string | undefined, options: { closeEditor: boolean; announce: boolean }) => {
-    const { seq, scan } = launchListing(path)
-    setLoading(true)
-    if (options.announce) setError(null)
+  #land(path: string | undefined, options: { closeEditor: boolean; announce: boolean }): void {
+    const { seq, scan } = this.#launchListing(path)
+    this.#loading = true
+    if (options.announce) this.#error = null
+    this.#render()
     // What every landing does once its panes are committed, whichever shape
     // committed them.
     const settle = (): void => {
-      setLoading(false)
+      this.#loading = false
       if (options.closeEditor) {
-        setPathDraft(null)
+        this.#pathDraft = null
         return
       }
-      setError(null)
-      refocusPathInput.current = true
+      this.#error = null
+      this.#refocusPathInput = true
     }
     scan.then((target) => {
-      if (seq !== requestSeq.current) return
+      if (seq !== this.#requestSeq) return
       // The level the panes will present as current answers this exact
       // directory text, however the host respelled it (`..`, a Windows
       // forward slash): the tail filters, and the same text asks for no
       // second scan.
-      if (!options.closeEditor && path !== undefined) scanned.current = { directory: path, landed: target.path }
+      if (!options.closeEditor && path !== undefined) this.#scanned = { directory: path, landed: target.path }
       // The single-pane landing; `landed` makes it first-commit-only, while
       // the two-pane commit below may still upgrade an already-landed view.
       let landed = false
       const landSingle = (): void => {
-        if (landed || seq !== requestSeq.current) return
+        if (landed || seq !== this.#requestSeq) return
         landed = true
-        setParent(target)
-        setSelected(null)
-        setChild(null)
+        this.#parent = target
+        this.#selected = null
+        this.#child = null
         settle()
+        this.#render()
       }
       // Arity is label-independent: only the collapsed chain's depth decides.
       if (displayCrumbs(target, '').length < 2) { landSingle(); return }
       const parentCrumb = target.crumbs.at(-2)
       /* v8 ignore next -- narrowing: a two-deep display chain implies a parent crumb (root-to-target inclusive). */
       if (parentCrumb === undefined) { landSingle(); return }
-      continueScan(parentCrumb.path).then((parentLevel) => {
-        if (seq !== requestSeq.current) return
+      this.#continueScan(parentCrumb.path).then((parentLevel) => {
+        if (seq !== this.#requestSeq) return
         // Windows resolves a typed path preserving its case; anchor on the
         // parent level's actual entry so selection comparisons hold.
         const sep = separatorOf(parentLevel)
         const fold = (value: string): string => (sep === '\\' ? value.toLowerCase() : value)
-        const match = parentLevel.entries.find(entry => fold(entry.path) === fold(target.path))
+        const match = parentLevel.entries.find((entry: DirectoryEntry) => fold(entry.path) === fold(target.path))
         if (match === undefined) { landSingle(); return }
         landed = true
-        setParent(parentLevel)
-        setSelected(match)
-        setChild(target)
+        this.#parent = parentLevel
+        this.#selected = match
+        this.#child = target
         // Idempotent on a late upgrade of a timed-out landing: reopening the
         // editor or starting a newer scan supersedes this seq, so reaching
         // here means the settlement is still this landing's own.
         settle()
+        this.#render()
       }, () => {
         // The parent-leg failure (its abort included) never surfaces: the
         // target listed fine, and nobody asked to see the parent level.
@@ -463,26 +497,17 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
       // moves on first.
       if (options.closeEditor) window.setTimeout(landSingle, PARENT_LEG_WAIT_MS)
     }, (reason: unknown) => {
-      if (seq !== requestSeq.current) return
-      setLoading(false)
-      if (options.announce) setError(failureText(reason))
+      if (seq !== this.#requestSeq) return
+      this.#loading = false
+      if (options.announce) this.#error = failureText(reason)
+      this.#render()
     })
-  }, [launchListing, continueScan])
+  }
 
   /** Commit a submitted path (Enter, a crumb, the initial home listing): the editor closes, failures surface. */
-  const navigate = useCallback((path?: string) => {
-    land(path, { closeEditor: true, announce: true })
-  }, [land])
-
-  // Editor-close focus parking (consumed by the refocus effect below the
-  // miller-row ref): a pick parks on the selection's row, Enter and an
-  // input-focused Escape park on the crumb edit zone that replaces the
-  // input. Pointer-out cancels never set (or clear) these — yanking focus
-  // back from wherever the user clicked would be worse than the fall.
-  const refocusPick = useRef(false)
-  const refocusEditZone = useRef(false)
-  const pathInputRef = useRef<HTMLInputElement | null>(null)
-  const editZoneRef = useRef<HTMLButtonElement | null>(null)
+  #navigate(path?: string): void {
+    this.#land(path, { closeEditor: true, announce: true })
+  }
 
   /**
    * Select a row of the listed level and preview its children on the right.
@@ -493,34 +518,37 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
    * rule governs whole-view replacement, where nothing acknowledges the
    * click but the swap itself.
    */
-  const select = useCallback((entry: DirectoryEntry) => {
-    const { seq, scan } = launchListing(entry.path)
+  #select(entry: DirectoryEntry): void {
+    const { seq, scan } = this.#launchListing(entry.path)
     // A pick while the path editor is open adopts the (filtered) row and
     // closes the editor — the draft served its purpose. Focus re-parks on
     // the selection after commit (see the refocus effect below).
-    if (pathDraft !== null) refocusPick.current = true
-    setPathDraft(null)
-    setSelected(entry)
-    setChild(null)
-    setLoading(true)
-    setError(null)
+    if (this.#pathDraft !== null) this.#refocusPick = true
+    this.#pathDraft = null
+    this.#selected = entry
+    this.#child = null
+    this.#loading = true
+    this.#error = null
+    this.#render()
     scan.then((next) => {
-      if (seq !== requestSeq.current) return
-      setChild(next)
-      setLoading(false)
+      if (seq !== this.#requestSeq) return
+      this.#child = next
+      this.#loading = false
+      this.#render()
     }, (reason: unknown) => {
-      if (seq !== requestSeq.current) return
-      setLoading(false)
-      setError(failureText(reason))
+      if (seq !== this.#requestSeq) return
+      this.#loading = false
+      this.#error = failureText(reason)
       // An unreadable selection cannot be the committing target while the
       // breadcrumb still names the level: fall back to the single pane.
-      setSelected(null)
+      this.#selected = null
       // Clearing the selection can unmount the very row the pick parked
       // focus on (a dot-revealed hidden row re-hides); the refocus effect
       // re-parks on the edit zone only if focus actually fell to body.
-      refocusEditZone.current = true
+      this.#refocusEditZone = true
+      this.#render()
     })
-  }, [launchListing, pathDraft])
+  }
 
   /**
    * Walk the panes to the directory the draft addresses, WITHOUT closing the
@@ -529,249 +557,197 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
    * exactly as a crumb jump does, and the draft's final segment
    * prefix-filters the arrival from the next render on.
    */
-  const previewDraftLevel = useCallback((directory: string) => {
-    land(directory, { closeEditor: false, announce: false })
-  }, [land])
+  #previewDraftLevel(directory: string): void {
+    this.#land(directory, { closeEditor: false, announce: false })
+  }
 
   /** Abandon path editing (Escape or clicking away) and restore the crumb view. */
-  const cancelPathEdit = useCallback(() => {
+  #cancelPathEdit(): void {
     // Cancel also withdraws a navigation the editor already launched: its
     // late success must not jump to the cancelled path, so the pending
     // request is superseded and the view leaves the loading state.
-    supersede()
-    setLoading(false)
-    setPathDraft(null)
-    setError(null)
+    this.#supersede()
+    this.#loading = false
+    this.#pathDraft = null
+    this.#error = null
     // Editing may have superseded the selection's preview request; a
     // selection with no preview would render a half-empty two-pane view, so
     // cancel falls back to the single-pane level.
-    if (child === null) setSelected(null)
+    if (this.#child === null) this.#selected = null
     // With no level listed yet (the editor superseded the initial home
     // listing), plain cancellation would leave a permanently blank picker:
     // restart the home listing.
-    if (parent === null) navigate()
-  }, [supersede, child, parent, navigate])
+    if (this.#parent === null) { this.#navigate(); return }
+    this.#render()
+  }
 
   /** A right-column pick advances the view one level: child becomes the level. */
-  const advance = useCallback((entry: DirectoryEntry) => {
+  #advance(entry: DirectoryEntry): void {
     /* v8 ignore next -- narrowing guard: the right column only renders with a child listing. */
-    if (child === null) return
-    setParent(child)
-    select(entry)
-  }, [child, select])
+    if (this.#child === null) return
+    this.#parent = this.#child
+    this.#select(entry)
+  }
 
-  // Every open starts fresh at the Host home directory; closing invalidates
-  // any in-flight response so a late arrival cannot repopulate a closed dialog.
-  useEffect(() => {
-    openGeneration.current += 1
-    if (open) {
-      setParent(null)
-      setSelected(null)
-      setChild(null)
-      setCreatingFolder(false)
-      setShowHidden(false)
-      navigate()
-      return
-    }
-    supersede()
-    // Closing mid-scan leaves nothing to load: without this edge the
-    // slow-scan effect keeps arming while hidden and the reopened dialog
-    // would show the indicator on its first frame instead of waiting out a
-    // fresh silence window (reopen's navigate() produces no loading edge).
-    setLoading(false)
-    setError(null)
-    setPathDraft(null)
-    setFolderDraft(null)
-    setCreateError(null)
-    // A close mid-flight (failed Enter, then Cancel) may leave refocus
-    // flags armed; retire them so a later render cannot consume them.
-    refocusPick.current = false
-    refocusEditZone.current = false
-  }, [open, navigate, supersede])
-
-  /** The folder a create or Open acts on: the selection, else the listed level. */
-  const targetPath = selected?.path ?? parent?.path ?? null
-  const targetName = selected?.name
-    ?? (parent === null ? '' : (displayCrumbs(parent, t('browser.home')).at(-1)?.name ?? parent.path))
-
-  const confirmCreate = (): void => {
+  #confirmCreate(): void {
     /* v8 ignore next -- reentry fence: the nested dialog only renders with a target and disables while creating. */
-    if (targetPath === null || folderDraft === null || creatingFolder) return
+    const targetPath = this.#selected?.path ?? this.#parent?.path ?? null
+    if (targetPath === null || this.#folderDraft === null || this.#creatingFolder) return
     // Trim only rejects an all-whitespace draft; the Host gets the original
     // spelling — the backend accepts any non-blank single segment verbatim,
     // and trimming here would create (and select) a different sibling.
-    const name = folderDraft
+    const name = this.#folderDraft
     if (name.trim() === '') return
-    setCreatingFolder(true)
-    setCreateError(null)
-    const generation = openGeneration.current
+    const createDirectory = this.#props?.createDirectory
+    /* v8 ignore next -- narrowing guard: confirmCreate only runs while the element has props. */
+    if (createDirectory === undefined) return
+    this.#creatingFolder = true
+    this.#createError = null
+    this.#render()
+    const generation = this.#openGeneration
     createDirectory(targetPath, name).then((createdPath) => {
       // A settlement from a closed (possibly reopened) flow must not touch
       // the fresh dialog or issue a relist against the stale target.
-      if (generation !== openGeneration.current) return
-      setCreatingFolder(false)
-      setFolderDraft(null)
+      if (generation !== this.#openGeneration) return
+      this.#creatingFolder = false
+      this.#folderDraft = null
       // Land like a right-column pick (figma 802:57446 → 813:23278 flow): the
       // create target becomes the listed level and the new folder its selection.
-      const { seq, scan } = launchListing(targetPath)
-      setLoading(true)
+      const { seq, scan } = this.#launchListing(targetPath)
+      this.#loading = true
       // Symmetric with navigate/select: a launched scan clears the stale
       // failure text (and keeps the floating indicator's corner the only
       // occupant of the content's right edge while it shows).
-      setError(null)
+      this.#error = null
+      this.#render()
       scan.then((level) => {
         /* v8 ignore next -- same fence as navigate/select; the modal blocks superseding input */
-        if (seq !== requestSeq.current) return
-        setParent(level)
-        setLoading(false)
-        select({ name, path: createdPath, hidden: false })
+        if (seq !== this.#requestSeq) return
+        this.#parent = level
+        this.#loading = false
+        this.#select({ name, path: createdPath, hidden: false })
       }, (reason: unknown) => {
         /* v8 ignore next -- same fence as navigate/select; the modal blocks superseding input */
-        if (seq !== requestSeq.current) return
-        setLoading(false)
-        setError(failureText(reason))
+        if (seq !== this.#requestSeq) return
+        this.#loading = false
+        this.#error = failureText(reason)
+        this.#render()
       })
     }, (reason: unknown) => {
-      if (generation !== openGeneration.current) return
-      setCreatingFolder(false)
-      setCreateError(failureText(reason))
+      if (generation !== this.#openGeneration) return
+      this.#creatingFolder = false
+      this.#createError = failureText(reason)
+      this.#render()
     })
   }
 
-  // The slow-scan gate for the loading indicator: each listing call restarts
-  // the timer even when a superseding scan or a navigation's parent leg keeps
-  // `loading` continuously true. A settle inside its own window means the swap
-  // happened with nothing shown.
-  useEffect(() => {
-    if (!loading) {
-      setSlowScan(false)
+  /** Every open starts fresh at the Host home directory; closing invalidates any in-flight response. */
+  #onOpenEdge(open: boolean): void {
+    this.#openGeneration += 1
+    if (open) {
+      this.#parent = null
+      this.#selected = null
+      this.#child = null
+      this.#creatingFolder = false
+      this.#showHidden = false
+      this.#navigate()
       return
     }
-    const timer = window.setTimeout(() => { setSlowScan(true) }, SLOW_SCAN_DELAY_MS)
-    return () => { window.clearTimeout(timer) }
-  }, [loading, scanWindow])
+    this.#supersede()
+    // Closing mid-scan leaves nothing to load: without this edge the
+    // slow-scan timer keeps arming while hidden and the reopened dialog
+    // would show the indicator on its first frame instead of waiting out a
+    // fresh silence window (reopen's navigate() produces no loading edge).
+    this.#loading = false
+    this.#error = null
+    this.#pathDraft = null
+    this.#folderDraft = null
+    this.#createError = null
+    // A close mid-flight (failed Enter, then Cancel) may leave refocus
+    // flags armed; retire them so a later render cannot consume them.
+    this.#refocusPick = false
+    this.#refocusEditZone = false
+  }
 
-  // The panes follow the draft: EVERY keystroke replaces the pending timer,
-  // and the target is decided when it fires, off the panes as they stand
-  // then. Keying the wait on the draft (not on the directory part it names)
-  // is what makes a keystroke that superseded an in-flight scan re-arm one,
-  // and what lets an edit after a rejected submission release the hold the
-  // submission took. The panes are read through a ref for the converse
-  // reason: were they dependencies, the landing this commits would re-arm the
-  // wait, and a host answering with a differently spelled path would scan
-  // forever.
-  useEffect(() => {
-    if (pathDraft === null) return
-    const timer = window.setTimeout(() => {
-      if (previewSuspended.current) return
+  /** Arm the draft-preview debounce for the current pathDraft (every keystroke replaces the pending timer). */
+  #armDraftDebounce(): void {
+    this.#stopDraftDebounce()
+    if (this.#pathDraft === null) return
+    this.#draftDebounceTimer = window.setTimeout(() => {
+      if (this.#previewSuspended) return
       // The level the panes present as current: it alone may answer the
       // draft, so anything else it names is a level to walk to.
-      const current = viewRef.current.child ?? viewRef.current.parent
-      if (current === null) return
-      const { directory, tail } = readDraft(current, pathDraft, scanned.current)
+      const current = this.#child ?? this.#parent
+      if (current === null || this.#pathDraft === null) return
+      const { directory, tail } = readDraft(current, this.#pathDraft, this.#scanned)
       if (directory === null || tail !== null) return
-      previewDraftLevel(directory)
+      this.#previewDraftLevel(directory)
     }, DRAFT_PREVIEW_DEBOUNCE_MS)
-    return () => { window.clearTimeout(timer) }
-  }, [pathDraft, previewDraftLevel])
+  }
 
-  // After the hooks: a closed dialog renders nothing and evaluates no copy.
-  const crumbSource = child ?? parent
-  // The draft's tail filters the level it names, which by the pane invariant
-  // is the LAST pane — never a pane the draft has already walked away from.
-  // Narrowing that stale pane would move the view twice for one keystroke:
-  // once as it narrows, again as its landing replaces it. It holds still
-  // instead, and the filter arrives with the level it belongs to.
-  const typedPrefix = crumbSource === null || pathDraft === null
-    ? null
-    : readDraft(crumbSource, pathDraft, scanned.current).tail
-  const crumbs = crumbSource === null ? [] : displayCrumbs(crumbSource, t('browser.home'))
-  const crumbTail = crumbs.at(-1)?.path
-  useEffect(() => {
-    const trail = crumbTrailRef.current
-    if (trail !== null) trail.scrollLeft = trail.scrollWidth
-  }, [crumbTail])
-  // On viewports too narrow for both fixed panes the Miller row scrolls;
-  // whenever a child preview lands, pin it into view the way the crumb tail
-  // pins — otherwise descent is unreachable on a phone-width window.
-  const millerRowRef = useRef<HTMLDivElement | null>(null)
-  const childPath = child?.path
-  useEffect(() => {
-    const row = millerRowRef.current
-    if (row !== null && childPath !== undefined) row.scrollLeft = row.scrollWidth
-  }, [childPath])
-  // Every editor exit that would drop focus to body re-parks it after
-  // commit, so keyboard traversal stays inside the dialog (the Modal has no
-  // focus trap): a pick lands on the selection's row — aria-current in the
-  // freshly rendered left pane, which survives even a right-pane advance
-  // replacing the picked button's column — while Enter and an input-focused
-  // Escape land on the crumb edit zone that replaces the input.
-  useEffect(() => {
-    if (refocusPathInput.current) {
-      refocusPathInput.current = false
-      // Only when the swap actually dropped focus to body: focus the operator
-      // still holds (the input itself, a surviving row) stays theirs.
-      if (document.activeElement === document.body) pathInputRef.current?.focus()
-    }
-    if (pathDraft !== null) return
-    if (refocusPick.current) {
-      refocusPick.current = false
-      refocusEditZone.current = false
-      const rowHost = millerRowRef.current
-      /* v8 ignore next -- narrowing guard: the miller row is mounted whenever a pick just committed. */
-      if (rowHost === null) return
-      const row = rowHost.querySelector<HTMLButtonElement>('button[aria-current="true"]')
-      /* v8 ignore next -- narrowing guard: the pick that set the flag just rendered its aria-current row. */
-      if (row === null) return
-      row.focus()
-      return
-    }
-    if (refocusEditZone.current) {
-      refocusEditZone.current = false
-      // Re-park only when the close actually dropped focus to body; focus
-      // the user parked elsewhere (a surviving row) stays theirs.
-      if (document.activeElement !== document.body) return
-      const zone = editZoneRef.current
-      /* v8 ignore next -- narrowing guard: crumb mode renders the edit zone whenever the editor just closed. */
-      if (zone === null) return
-      zone.focus()
-    }
-  })
+  #render(): void {
+    const props = this.#props
+    if (props === null) { applyDiff(this, <span style="display:none" />); return }
+    const { open, onClose, busy, t } = props
 
-  if (!open) return null
-  const twoPane = selected !== null
-  // The nested create dialog owns the interaction while open: Modal has no
-  // focus trap, so every parent control goes inert (Shift-Tab or AT must not
-  // close, adopt, or retarget underneath the child).
-  const parentInert = busy || folderDraft !== null
-  // An uncommitted path draft makes targetPath stale relative to the header:
-  // committing actions must not act on the previous selection/listing while
-  // a different path is displayed.
-  const draftPending = pathDraft !== null
+    if (open !== this.#wasOpen) {
+      this.#wasOpen = open
+      this.#onOpenEdge(open)
+    }
 
-  return (
-    <Modal
-      open={open}
-      // Escape and mask reach every mounted Modal's document listener; while
-      // the nested create dialog is up only that topmost dialog may close
-      // (its own guard keeps an in-flight creation open), and an in-flight
-      // adoption pins the flow — dismissing it would leave the owner's
-      // createWorkspace to land after an apparent cancel.
-      onClose={() => { if (folderDraft === null && !busy) onClose() }}
-      title={t('browser.title')}
-      className={clsx(css.dialog)}
-      headless
-    >
-      {/* Path-edit cancellation is observed at the card scope, not the
-        * input: once Tab parks focus on a filtered row the input is off the
-        * event path, yet Escape must still collapse the editor (not the
-        * dialog) and a further focus move out of the card must still
-        * cancel. display:contents keeps header/content/footer as direct
-        * flex children of the Modal card. */}
+    if (!open) { applyDiff(this, <span style="display:none" />); return }
+
+    const parent = this.#parent
+    const selected = this.#selected
+    const child = this.#child
+    const loading = this.#loading
+    const slowScan = this.#slowScan
+    const error = this.#error
+    const pathDraft = this.#pathDraft
+    const showHidden = this.#showHidden
+    const folderDraft = this.#folderDraft
+    const creatingFolder = this.#creatingFolder
+    const createError = this.#createError
+    const twoPane = selected !== null
+    // The nested create dialog owns the interaction while open: Modal has no
+    // focus trap, so every parent control goes inert (Shift-Tab or AT must not
+    // close, adopt, or retarget underneath the child).
+    const parentInert = busy || folderDraft !== null
+    // An uncommitted path draft makes targetPath stale relative to the header:
+    // committing actions must not act on the previous selection/listing while
+    // a different path is displayed.
+    const draftPending = pathDraft !== null
+
+    // The panes follow the draft: every keystroke re-arms the debounce below
+    // (via #armDraftDebounce, called from the input's onchange), read here
+    // only to decide the crumb-scope class bindings and typedPrefix.
+    const crumbSource = child ?? parent
+    // The draft's tail filters the level it names, which by the pane invariant
+    // is the LAST pane — never a pane the draft has already walked away from.
+    const typedPrefix = crumbSource === null || pathDraft === null
+      ? null
+      : readDraft(crumbSource, pathDraft, this.#scanned).tail
+    const crumbs = crumbSource === null ? [] : displayCrumbs(crumbSource, t('browser.home'))
+
+    /** The folder a create or Open acts on: the selection, else the listed level. */
+    const targetPath = selected?.path ?? parent?.path ?? null
+    const targetName = selected?.name
+      ?? (parent === null ? '' : (displayCrumbs(parent, t('browser.home')).at(-1)?.name ?? parent.path))
+
+    const compositionOn = (): void => { this.#composing = true }
+    const compositionOff = (): void => { this.#composing = false }
+
+    const outerBody = (
+    /* Path-edit cancellation is observed at the card scope, not the
+          * input: once Tab parks focus on a filtered row the input is off the
+          * event path, yet Escape must still collapse the editor (not the
+          * dialog) and a further focus move out of the card must still
+          * cancel. display:contents keeps header/content/footer as direct
+          * flex children of the Modal card. */
       <div
-        className={css.editorScope}
-        onKeyDown={(event) => {
-          if (event.key !== 'Escape' || pathDraft === null) return
+        class={css.editorScope ?? ''}
+        onkeydown={(event: KeyboardEvent) => {
+          if (event.key !== 'Escape' || this.#pathDraft === null) return
           // stopPropagation keeps the card-scope Escape from the Modal's
           // document listener.
           event.stopPropagation()
@@ -779,8 +755,8 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
           // focus already parked on a row, that row survives the cancel and
           // keeps focus naturally. Assignment (not a conditional set) also
           // retires a stale flag a failed or still-upgrading Enter left.
-          refocusEditZone.current = document.activeElement === pathInputRef.current
-          cancelPathEdit()
+          this.#refocusEditZone = document.activeElement === this.querySelector('[data-path-input]')
+          this.#cancelPathEdit()
         }}
         // Focus leaving THIS dialog card while editing cancels like Escape.
         // Guarded non-cancel paths: window/tab focus loss (document no
@@ -791,121 +767,126 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
         // input while its navigation is in flight, so a submitted path is
         // never withdrawn here. Anchored to this card via closest, not any
         // [role="dialog"], so focus escaping into a sibling overlay cancels.
-        onBlur={(event) => {
-          if (pathDraft === null) return
+        onblur={(event: FocusEvent) => {
+          if (this.#pathDraft === null) return
           if (!document.hasFocus()) return
-          const card = event.currentTarget.closest('[role="dialog"]')
+          const target = event.currentTarget as HTMLElement
+          const card = target.closest('[role="dialog"]')
           /* v8 ignore next -- narrowing guard: this scope always renders inside the Modal card. */
           if (card === null) return
-          if (event.relatedTarget instanceof Node && card.contains(event.relatedTarget)) return
+          const related = event.relatedTarget
+          if (related instanceof Node && card.contains(related)) return
           // The user moved focus out of the card themselves: cancel without
           // re-parking (a lingering Enter-failure flag must not yank focus
           // back either).
-          refocusEditZone.current = false
-          cancelPathEdit()
+          this.#refocusEditZone = false
+          this.#cancelPathEdit()
         }}
       >
-        <div className={css.header}>
-          <h2 className={css.title}>{t('browser.title')}</h2>
-          <div className={css.crumbBar}>
+        <div class={css.header ?? ''}>
+          <h2 class={css.title ?? ''}>{t('browser.title')}</h2>
+          <div class={css.crumbBar ?? ''}>
             {pathDraft === null
-              ? (
-                <>
-                  <span className={css.crumbTrail} role="navigation" ref={crumbTrailRef}>
-                    {crumbs.map((crumb, index) => (
-                      <span key={crumb.path} className={css.crumbSeat}>
-                        {index > 0 && <IconChevronRightOutline14 size={12} className={css.crumbChevron} />}
-                        <button
-                          type="button"
-                          className={css.crumb}
-                          disabled={parentInert}
-                          onClick={() => { navigate(crumb.path) }}
-                        >
-                          {crumb.name}
-                        </button>
-                      </span>
-                    ))}
-                  </span>
-                  {/* The empty zone right of the crumbs is the path-edit
-                    * affordance: the whole remainder of the bar clicks into
-                    * the editor, and the pencil glyph parked at its right
-                    * edge (with the same tooltip) is what says so — an
-                    * invisible target the operator must guess at is the one
-                    * way into typing a path. */}
-                  <button
-                    type="button"
-                    className={css.crumbEditZone}
-                    aria-label={t('browser.editPath')}
-                    title={t('browser.editPath')}
-                    // Stays available with no listed level: when the home
-                    // listing itself fails, typing an absolute path is the one
-                    // remaining way forward.
-                    disabled={parentInert}
-                    ref={editZoneRef}
-                    onClick={() => {
+              ? [
+                <span class={css.crumbTrail ?? ''} role="navigation" data-crumb-trail>
+                  {crumbs.map((crumb, index) => (
+                    <span class={css.crumbSeat ?? ''}>
+                      {index > 0 && <IconChevronRightOutline14 size={12} className={css.crumbChevron} />}
+                      <button
+                        type="button"
+                        class={css.crumb ?? ''}
+                        disabled={parentInert}
+                        onclick={() => { this.#navigate(crumb.path) }}
+                      >
+                        {crumb.name}
+                      </button>
+                    </span>
+                  ))}
+                </span>,
+                /* The empty zone right of the crumbs is the path-edit
+                     * affordance: the whole remainder of the bar clicks into
+                     * the editor, and the pencil glyph parked at its right
+                     * edge (with the same tooltip) is what says so — an
+                     * invisible target the operator must guess at is the one
+                     * way into typing a path. */
+                <button
+                  type="button"
+                  class={css.crumbEditZone ?? ''}
+                  aria-label={t('browser.editPath')}
+                  title={t('browser.editPath')}
+                  // Stays available with no listed level: when the home
+                  // listing itself fails, typing an absolute path is the one
+                  // remaining way forward.
+                  disabled={parentInert}
+                  data-edit-zone
+                  onclick={() => {
                     // Opening the editor supersedes any pending listing: a
                     // settlement landing before the first keystroke would
                     // otherwise close the editor via navigate's draft reset.
-                      supersede()
-                      setLoading(false)
-                      previewSuspended.current = false
-                      // Seed with a trailing separator so typing immediately
-                      // continues into child names (and prefix-filters below).
-                      // No listed level means nothing to seed from (the editor
-                      // is the recovery path for a failed home listing).
-                      if (parent === null) {
-                        setPathDraft('')
-                        return
-                      }
-                      const base = selected?.path ?? parent.path
-                      const sep = separatorOf(parent)
-                      setPathDraft(base.endsWith(sep) ? base : `${base}${sep}`)
-                    }}
-                  >
-                    <IconEditOutline16 size={14} className={css.crumbEditGlyph} />
-                  </button>
-                </>
-              )
+                    this.#supersede()
+                    this.#loading = false
+                    this.#previewSuspended = false
+                    // Seed with a trailing separator so typing immediately
+                    // continues into child names (and prefix-filters below).
+                    // No listed level means nothing to seed from (the editor
+                    // is the recovery path for a failed home listing).
+                    if (this.#parent === null) {
+                      this.#pathDraft = ''
+                      this.#render()
+                      return
+                    }
+                    const base = this.#selected?.path ?? this.#parent.path
+                    const sep = separatorOf(this.#parent)
+                    this.#pathDraft = base.endsWith(sep) ? base : `${base}${sep}`
+                    this.#render()
+                  }}
+                >
+                  <IconEditOutline16 size={14} className={css.crumbEditGlyph} />
+                </button>,
+              ]
               : (
                 <input
-                  className={css.pathInput}
+                  class={css.pathInput ?? ''}
                   value={pathDraft}
                   aria-label={t('browser.editPath')}
-                  autoFocus
-                  ref={pathInputRef}
+                  autofocus
+                  data-path-input
                   disabled={parentInert}
-                  onChange={(event) => {
-                  // Editing the draft supersedes any in-flight navigation:
-                  // its completion must neither clear the newer text nor
-                  // repopulate the view with the older path.
-                    supersede()
-                    setLoading(false)
+                  oncompositionstart={compositionOn}
+                  oncompositionend={compositionOff}
+                  onchange={(event: Event) => {
+                    // Editing the draft supersedes any in-flight navigation:
+                    // its completion must neither clear the newer text nor
+                    // repopulate the view with the older path.
+                    this.#supersede()
+                    this.#loading = false
                     // A fresh edit releases the submission hold: the panes
                     // may follow the new text wherever it points.
-                    previewSuspended.current = false
-                    setPathDraft(event.target.value)
+                    this.#previewSuspended = false
+                    this.#pathDraft = (event.target as HTMLInputElement).value
+                    this.#armDraftDebounce()
+                    this.#render()
                   }}
-                  {...compositionGuard}
                   // Escape and focus-leave cancellation live on the card-scope
                   // wrapper above (they must work after focus Tabs onto the
                   // rows); this handler owns only submission.
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' && !composingRef.current) {
+                  onkeydown={(event: KeyboardEvent) => {
+                    if (event.key === 'Enter' && !this.#composing) {
                       event.preventDefault()
                       // Trim only detects a blank draft; the Host gets the
                       // original text — a real directory name may end in
                       // whitespace, and trimming would list its sibling.
-                      if (pathDraft.trim() !== '') {
+                      if (this.#pathDraft !== null && this.#pathDraft.trim() !== '') {
                         // Success will unmount the still-focused input; park
                         // focus on the returning crumb edit zone (a failure
                         // keeps the editor, so the flag waits until close).
-                        refocusEditZone.current = true
+                        this.#refocusEditZone = true
                         // The submitted path owns the view now: a debounce
                         // timer still pending from these keystrokes would
                         // otherwise supersede this navigation and land the
                         // draft's parent directory instead.
-                        previewSuspended.current = true
-                        navigate(pathDraft)
+                        this.#previewSuspended = true
+                        this.#navigate(this.#pathDraft)
                       }
                     }
                   }}
@@ -913,26 +894,26 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
               )}
           </div>
         </div>
-        <div className={css.content}>
-          <div className={css.millerRow} ref={millerRowRef}>
+        <div class={css.content ?? ''}>
+          <div class={css.millerRow ?? ''} data-miller-row>
             {parent !== null && (
               <LevelColumn
                 entries={parent.entries}
                 selectedPath={selected?.path ?? null}
                 busy={parentInert}
-                onPick={select}
+                onPick={(entry) => { this.#select(entry) }}
                 showHidden={showHidden}
                 filterPrefix={child === null ? typedPrefix : null}
                 pathEditing={draftPending}
               />
             )}
-            {twoPane && <span className={css.divider} />}
+            {twoPane && <span class={css.divider ?? ''} />}
             {twoPane && child !== null && (
               <LevelColumn
                 entries={child.entries}
                 selectedPath={null}
                 busy={parentInert}
-                onPick={advance}
+                onPick={(entry) => { this.#advance(entry) }}
                 showHidden={showHidden}
                 filterPrefix={typedPrefix}
                 pathEditing={draftPending}
@@ -940,103 +921,184 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
             )}
           </div>
           {loading && slowScan
-          && <div className={clsx(css.status, css.loadingFloat)} role="status">{t('browser.loading')}</div>}
+              && <div class={clsx(css.status, css.loadingFloat)} role="status">{t('browser.loading')}</div>}
           {/* The backend bounds a level at its complete-result limit; say so
-          * whenever a visible pane was cut instead of letting the tail of a
-          * huge directory go silently missing. The note describes the panes
-          * on screen, so an in-flight scan leaves it alone — hiding it while
-          * the stale view still shows the cut level would shift the columns
-          * on every navigation away from it. */}
+              * whenever a visible pane was cut instead of letting the tail of a
+              * huge directory go silently missing. The note describes the panes
+              * on screen, so an in-flight scan leaves it alone — hiding it while
+              * the stale view still shows the cut level would shift the columns
+              * on every navigation away from it. */}
           {(parent?.truncated === true || child?.truncated === true)
-          && <div className={css.status} role="status">{t('browser.truncated')}</div>}
-          {error !== null && <div className={css.error} role="alert">{error}</div>}
+              && <div class={css.status ?? ''} role="status">{t('browser.truncated')}</div>}
+          {error !== null && <div class={css.error ?? ''} role="alert">{error}</div>}
         </div>
-        <div className={css.footerBar}>
+        <div class={css.footerBar ?? ''}>
           <Button
             variant="outline"
             icon={<IconPlusOutline16 size={14} />}
             disabled={parent === null || loading || parentInert || draftPending}
-            onClick={() => {
-              setFolderDraft('')
-              setCreateError(null)
+            onclick={() => {
+              this.#folderDraft = ''
+              this.#createError = null
+              this.#render()
             }}
           >
             {t('browser.newFolder')}
           </Button>
           <button
             type="button"
-            className={clsx(css.showHiddenToggle, showHidden && css.showHiddenToggleActive)}
-            aria-pressed={showHidden}
+            class={clsx(css.showHiddenToggle, showHidden && css.showHiddenToggleActive)}
+            aria-pressed={String(showHidden)}
             disabled={parentInert}
             // The toggle composes with the path editor (dot-led prefixes and
             // this filter interleave): while editing, don't steal focus, so
             // toggling never blur-cancels a draft mid-thought. Outside editing
             // it keeps native focus behavior.
-            onMouseDown={draftPending ? (event) => { event.preventDefault() } : undefined}
-            onClick={() => { setShowHidden(prev => !prev) }}
+            onmousedown={draftPending ? (event: MouseEvent) => { event.preventDefault() } : null}
+            onclick={() => { this.#showHidden = !this.#showHidden; this.#render() }}
           >
             {t('browser.showHidden')}
             {/* Trailing check (Menu's selected vocabulary): the label never
-              * shifts when the pressed state toggles. */}
+                * shifts when the pressed state toggles. */}
             {showHidden && <IconCheckOutline16 size={14} />}
           </button>
-          <span className={css.footerGap} />
-          <Button variant="outline" className={clsx(css.footerAction)} disabled={parentInert} onClick={onClose}>{t('browser.cancel')}</Button>
+          <span class={css.footerGap ?? ''} />
+          <Button variant="outline" class={clsx(css.footerAction)} disabled={parentInert} onclick={onClose}>{t('browser.cancel')}</Button>
           <Button
             variant="primary"
-            className={clsx(css.footerAction)}
+            class={clsx(css.footerAction)}
             disabled={targetPath === null || loading || parentInert || draftPending}
             /* v8 ignore next -- narrowing guard: Open disables while no target exists. */
-            onClick={() => { if (targetPath !== null) onOpen(targetPath) }}
+            onclick={() => { if (targetPath !== null) props.onOpen(targetPath) }}
           >
             {t('browser.open')}
           </Button>
         </div>
       </div>
-      {/* Nested create dialog (figma 813:23278): names one folder inside the target. */}
-      <Modal
-        open={folderDraft !== null}
-        onClose={() => { if (!creatingFolder) setFolderDraft(null) }}
-        title={t('browser.newFolder')}
-        className={clsx(css.createDialog)}
-        headless
-      >
-        <div className={css.createBody}>
-          <h3 className={css.createTitle}>{t('browser.newFolder')}</h3>
-          <p className={css.createIn}>{t('browser.createIn', { name: targetName })}</p>
-          <input
-            className={css.createInput}
-            value={folderDraft ?? ''}
-            aria-label={t('browser.folderName')}
-            placeholder={t('browser.untitledFolder')}
-            autoFocus
-            disabled={creatingFolder}
-            onChange={(event) => { setFolderDraft(event.target.value) }}
-            {...compositionGuard}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !composingRef.current) {
-                event.preventDefault()
-                confirmCreate()
-              }
-              if (event.key === 'Escape') {
-                event.stopPropagation()
-                if (!creatingFolder) setFolderDraft(null)
-              }
-            }}
-          />
-          {createError !== null && <div className={css.error} role="alert">{createError}</div>}
-          <div className={css.createActions}>
-            <Button variant="outline" disabled={creatingFolder} onClick={() => { setFolderDraft(null) }}>{t('browser.cancel')}</Button>
-            <Button
-              variant="primary"
-              disabled={creatingFolder || folderDraft === null || folderDraft.trim() === ''}
-              onClick={confirmCreate}
-            >
-              {t('browser.create')}
-            </Button>
-          </div>
+    )
+    /* Nested create dialog (figma 813:23278): names one folder inside the target. */
+    const createBody = (
+      <div class={css.createBody ?? ''}>
+        <h3 class={css.createTitle ?? ''}>{t('browser.newFolder')}</h3>
+        <p class={css.createIn ?? ''}>{t('browser.createIn', { name: targetName })}</p>
+        <input
+          class={css.createInput ?? ''}
+          value={folderDraft ?? ''}
+          aria-label={t('browser.folderName')}
+          placeholder={t('browser.untitledFolder')}
+          autofocus
+          disabled={creatingFolder}
+          oncompositionstart={compositionOn}
+          oncompositionend={compositionOff}
+          onchange={(event: Event) => { this.#folderDraft = (event.target as HTMLInputElement).value; this.#render() }}
+          onkeydown={(event: KeyboardEvent) => {
+            if (event.key === 'Enter' && !this.#composing) {
+              event.preventDefault()
+              this.#confirmCreate()
+            }
+            if (event.key === 'Escape') {
+              event.stopPropagation()
+              if (!this.#creatingFolder) { this.#folderDraft = null; this.#render() }
+            }
+          }}
+        />
+        {createError !== null && <div class={css.error ?? ''} role="alert">{createError}</div>}
+        <div class={css.createActions ?? ''}>
+          <Button variant="outline" disabled={creatingFolder} onclick={() => { this.#folderDraft = null; this.#render() }}>{t('browser.cancel')}</Button>
+          <Button
+            variant="primary"
+            disabled={creatingFolder || folderDraft === null || folderDraft.trim() === ''}
+            onclick={() => { this.#confirmCreate() }}
+          >
+            {t('browser.create')}
+          </Button>
         </div>
-      </Modal>
-    </Modal>
-  )
+      </div>
+    )
+
+    // Both dsh-modal elements self-mount to document.body (Toast/Modal's
+    // pattern) and own their subtree; #render() never diffs into `this`
+    // directly for this component. Held refs mean the same two elements get
+    // updated in place across renders rather than recreated.
+    this.#outerModal = renderModal(this.#outerModal, {
+      open,
+      onClose: () => { if (folderDraft === null && !busy) onClose() },
+      title: t('browser.title'),
+      className: clsx(css.dialog),
+      headless: true,
+      children: outerBody,
+    })
+    this.#createModal = renderModal(this.#createModal, {
+      open: folderDraft !== null,
+      onClose: () => { if (!creatingFolder) { this.#folderDraft = null; this.#render() } },
+      title: t('browser.newFolder'),
+      className: clsx(css.createDialog),
+      headless: true,
+      children: createBody,
+    })
+    applyDiff(this, <span style="display:none" />)
+
+    const outerModal = this.#outerModal
+    // Deep ancestry overflows the trail; keep its tail (the current directory
+    // and the edit zone beside it) in view whenever the chain changes.
+    const trail = outerModal.querySelector<HTMLElement>('[data-crumb-trail]')
+    if (trail !== null) trail.scrollLeft = trail.scrollWidth
+    // On viewports too narrow for both fixed panes the Miller row scrolls;
+    // whenever a child preview lands, pin it into view the way the crumb tail
+    // pins — otherwise descent is unreachable on a phone-width window.
+    if (child !== null) {
+      const row = outerModal.querySelector<HTMLElement>('[data-miller-row]')
+      if (row !== null) row.scrollLeft = row.scrollWidth
+    }
+    // Every editor exit that would drop focus to body re-parks it after
+    // commit, so keyboard traversal stays inside the dialog (the Modal has no
+    // focus trap): a pick lands on the selection's row — aria-current in the
+    // freshly rendered left pane, which survives even a right-pane advance
+    // replacing the picked button's column — while Enter and an input-focused
+    // Escape land on the crumb edit zone that replaces the input.
+    if (this.#refocusPathInput) {
+      this.#refocusPathInput = false
+      // Only when the swap actually dropped focus to body: focus the operator
+      // still holds (the input itself, a surviving row) stays theirs.
+      if (document.activeElement === document.body) outerModal.querySelector<HTMLInputElement>('[data-path-input]')?.focus()
+    }
+    if (pathDraft === null) {
+      if (this.#refocusPick) {
+        this.#refocusPick = false
+        this.#refocusEditZone = false
+        const rowHost = outerModal.querySelector('[data-miller-row]')
+        /* v8 ignore next -- narrowing guard: the miller row is mounted whenever a pick just committed. */
+        if (rowHost !== null) {
+          const row = rowHost.querySelector<HTMLButtonElement>('button[aria-current="true"]')
+          /* v8 ignore next -- narrowing guard: the pick that set the flag just rendered its aria-current row. */
+          row?.focus()
+        }
+      } else if (this.#refocusEditZone) {
+        this.#refocusEditZone = false
+        // Re-park only when the close actually dropped focus to body; focus
+        // the user parked elsewhere (a surviving row) stays theirs.
+        if (document.activeElement === document.body) {
+          outerModal.querySelector<HTMLButtonElement>('[data-edit-zone]')?.focus()
+        }
+      }
+    }
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-directory-browser') === undefined) {
+  customElements.define('dsh-directory-browser', DshDirectoryBrowser)
+}
+
+/**
+ * Convenience wrapper preserving the original function-component call shape:
+ * creates (or reuses) the `dsh-directory-browser` element, sets props, and
+ * returns it cast to `JSX.Element` for a `<DirectoryBrowser .../>` call site
+ * (mirrors ui-primitives' `Modal`/`Toast` convenience-wrapper pattern). The
+ * element self-mounts nowhere special — the flow occupant returns it as a
+ * normal vdom child, unlike Toast/Modal's document.body attachment.
+ */
+export function DirectoryBrowser(props: DirectoryBrowserProps): JSX.Element {
+  const el = document.createElement('dsh-directory-browser') as DshDirectoryBrowser
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

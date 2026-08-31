@@ -2,9 +2,13 @@
 // (right-aligned, with clock + copy IconActions; branch lives only under
 // assistant answers), pending steering (copy only), context injection,
 // compaction marker, retry disclosure, and unknown-surface JSON rows.
+//
+// Converted from React function components (some memo-wrapped, one with
+// useState/useEffect/useMemo for the retry countdown) to plain webjsx
+// functions plus one custom element for ModelRetryItem's timer state.
 
-import { memo, useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import type {
   ModelRetryNode, TurnErrorNode, UserMessageNode,
 } from '@deepseek-ai/dsh-client-runtime/client'
@@ -41,90 +45,131 @@ function retrySeconds(milliseconds: number): number {
   return Math.max(1, Math.ceil(milliseconds / 1_000))
 }
 
-interface RetryCountdown {
-  deadline: number
-  seconds: number
-}
-
-function ModelRetryItem({ node, active, t }: {
+/** Correlated retry-chain row: a countdown custom element (private timer state). */
+export interface ModelRetryItemProps {
   node: ModelRetryNode
   active: boolean
   t: ChatViewSlotProps['t']
-}) {
-  // Anchor the host-scheduled delay to this browser's first render of the
-  // retry node. Host event time and Date.now() may belong to different clocks.
-  const deadline = useMemo(() => Date.now() + node.delayMs, [node.delayMs, node.seq])
-  const scheduledSeconds = retrySeconds(node.delayMs)
-  const maximum = node.mode === 'normal' ? node.maxRetries : '∞'
-  const [countdown, setCountdown] = useState<RetryCountdown>(() => ({
-    deadline,
-    seconds: retrySeconds(deadline - Date.now()),
-  }))
-  const remainingSeconds = countdown.deadline === deadline
-    ? countdown.seconds
-    : retrySeconds(deadline - Date.now())
+}
 
-  useEffect(() => {
-    if (!active) return
-    const updateCountdown = (): number => {
-      const next = retrySeconds(deadline - Date.now())
-      setCountdown(current => (
-        current.deadline === deadline && current.seconds === next
-          ? current
-          : { deadline, seconds: next }
-      ))
-      return next
+const DEFAULT_RETRY_PROPS: ModelRetryItemProps = {
+  node: { delayMs: 0, seq: 0, mode: 'normal', maxRetries: 0, retry: 0, retryState: 'scheduled', failure: { message: '' } } as unknown as ModelRetryNode,
+  active: false,
+  t: (key: string) => key,
+}
+
+/** Retry countdown row custom element: the deadline/interval timer becomes private state. */
+export class DshModelRetryItem extends HTMLElement {
+  #props: ModelRetryItemProps = DEFAULT_RETRY_PROPS
+  #deadline = 0
+  #deadlineKey: string | null = null
+  #timer: ReturnType<typeof setInterval> | null = null
+
+  setProps(props: ModelRetryItemProps): void {
+    const key = `${props.node.delayMs}:${props.node.seq}`
+    this.#props = props
+    if (key !== this.#deadlineKey) {
+      // Anchor the host-scheduled delay to this browser's first render of the
+      // retry node. Host event time and Date.now() may belong to different clocks.
+      this.#deadlineKey = key
+      this.#deadline = Date.now() + props.node.delayMs
     }
-    if (updateCountdown() === 1) return
-    const timer = window.setInterval(() => {
-      if (updateCountdown() === 1) window.clearInterval(timer)
-    }, 250)
-    return () => { window.clearInterval(timer) }
-  }, [active, deadline])
+    this.#syncTimer()
+    this.#render()
+  }
 
-  const label = active
-    ? t('message.retry.active')
-    : node.retryState === 'cancelled'
-      ? t('message.retry.cancelled')
-      : node.retryState === 'started'
-        ? t('message.retry.started')
-        : t('message.retry.scheduled')
-  const seconds = active ? remainingSeconds : scheduledSeconds
+  connectedCallback(): void {
+    this.#syncTimer()
+    this.#render()
+  }
 
-  return (
-    <details className={css.retryRow} data-active={active || undefined}>
-      <summary className={css.retrySummary}>
-        <span className={css.retryText} role="status">
-          {t('message.retry.status', { label, retry: node.retry, maximum, seconds })}
-        </span>
-      </summary>
-      <div className={css.retryDetails}>
-        <div>
-          <span className={css.retryDetailLabel}>{t('message.retry.delay')}</span>
-          {Math.round(node.delayMs)}ms
+  disconnectedCallback(): void {
+    this.#clearTimer()
+  }
+
+  #clearTimer(): void {
+    if (this.#timer !== null) {
+      clearInterval(this.#timer)
+      this.#timer = null
+    }
+  }
+
+  #syncTimer(): void {
+    this.#clearTimer()
+    if (!this.#props.active) return
+    const tick = (): void => {
+      const next = retrySeconds(this.#deadline - Date.now())
+      this.#render()
+      if (next === 1) this.#clearTimer()
+    }
+    if (retrySeconds(this.#deadline - Date.now()) === 1) return
+    this.#timer = setInterval(tick, 250)
+  }
+
+  #render(): void {
+    const { node, active, t } = this.#props
+    const scheduledSeconds = retrySeconds(node.delayMs)
+    const maximum = node.mode === 'normal' ? node.maxRetries : '∞'
+    const remainingSeconds = retrySeconds(this.#deadline - Date.now())
+    const label = active
+      ? t('message.retry.active')
+      : node.retryState === 'cancelled'
+        ? t('message.retry.cancelled')
+        : node.retryState === 'started'
+          ? t('message.retry.started')
+          : t('message.retry.scheduled')
+    const seconds = active ? remainingSeconds : scheduledSeconds
+
+    const vdom = (
+      <details class={css.retryRow ?? ''} data-active={active || undefined}>
+        <summary class={css.retrySummary ?? ''}>
+          <span class={css.retryText ?? ''} role="status">
+            {t('message.retry.status', { label, retry: node.retry, maximum, seconds })}
+          </span>
+        </summary>
+        <div class={css.retryDetails ?? ''}>
+          <div>
+            <span class={css.retryDetailLabel ?? ''}>{t('message.retry.delay')}</span>
+            {Math.round(node.delayMs)}ms
+          </div>
+          <div>
+            <span class={css.retryDetailLabel ?? ''}>{t('message.retry.failure')}</span>
+            {node.failure.message}
+          </div>
         </div>
-        <div>
-          <span className={css.retryDetailLabel}>{t('message.retry.failure')}</span>
-          {node.failure.message}
-        </div>
-      </div>
-    </details>
-  )
+      </details>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-model-retry-item') === undefined) {
+  customElements.define('dsh-model-retry-item', DshModelRetryItem)
+}
+
+function renderModelRetryItem(el: DshModelRetryItem | null, props: ModelRetryItemProps): DshModelRetryItem {
+  const target = el ?? document.createElement('dsh-model-retry-item') as DshModelRetryItem
+  target.setProps(props)
+  return target
+}
+
+function ModelRetryItem(props: ModelRetryItemProps): JSX.Element {
+  return renderModelRetryItem(null, props) as unknown as JSX.Element
 }
 
 /** Persistent, turn-positioned feedback for a terminal failure. */
 function TurnErrorItem({ node, t }: {
   node: TurnErrorNode
   t: ChatViewSlotProps['t']
-}) {
+}): JSX.Element {
   return (
-    <div className={css.turnErrorRow} role="status">
+    <div class={css.turnErrorRow ?? ''} role="status">
       <StateDot state="error" className={css.turnErrorDot} />
-      <div className={css.turnErrorCopy}>
-        <span className={css.turnErrorTitle}>{t('message.turnError')}</span>
-        <span className={css.turnErrorMessage}>{node.message}</span>
+      <div class={css.turnErrorCopy ?? ''}>
+        <span class={css.turnErrorTitle ?? ''}>{t('message.turnError')}</span>
+        <span class={css.turnErrorMessage ?? ''}>{node.message}</span>
       </div>
-      {node.code !== undefined && <code className={css.turnErrorCode}>{node.code}</code>}
+      {node.code !== undefined && <code class={css.turnErrorCode ?? ''}>{node.code}</code>}
     </div>
   )
 }
@@ -132,13 +177,13 @@ function TurnErrorItem({ node, t }: {
 /** Persistent, turn-positioned notice for a turn ended at the output-token cap. */
 function TurnMaxTokensItem({ t }: {
   t: ChatViewSlotProps['t']
-}) {
+}): JSX.Element {
   return (
-    <div className={css.turnErrorRow} role="status">
+    <div class={css.turnErrorRow ?? ''} role="status">
       <StateDot state="warning" className={css.turnErrorDot} />
-      <div className={css.turnErrorCopy}>
-        <span className={css.maxTokensTitle}>{t('message.maxTokens')}</span>
-        <span className={css.turnErrorMessage}>{t('message.maxTokens.hint')}</span>
+      <div class={css.turnErrorCopy ?? ''}>
+        <span class={css.maxTokensTitle ?? ''}>{t('message.maxTokens')}</span>
+        <span class={css.turnErrorMessage ?? ''}>{t('message.maxTokens.hint')}</span>
       </div>
     </div>
   )
@@ -153,7 +198,7 @@ function TurnMaxTokensItem({ t }: {
  * scan as the composer, minus the lexicon: sent tokens were validated at
  * compose time, so shape alone decorates).
  */
-function projectUserText(text: string, sessionLabels: readonly string[]): ReactNode {
+function projectUserText(text: string, sessionLabels: readonly string[]): VNode | VNode[] {
   const ranges: { start: number; end: number; label: string; kind: 'session' | 'plain' }[] = []
   for (const rawLabel of [...new Set(sessionLabels)].sort((a, b) => b.length - a.length)) {
     const label = `@${rawLabel}`
@@ -176,7 +221,7 @@ function projectUserText(text: string, sessionLabels: readonly string[]): ReactN
   }
   ranges.sort((a, b) => a.start - b.start
     || (a.kind === b.kind ? b.end - a.end : a.kind === 'session' ? -1 : 1))
-  const parts: ReactNode[] = []
+  const parts: VNode[] = []
   let cursor = 0
   for (const range of ranges) {
     if (range.start < cursor) continue
@@ -195,7 +240,7 @@ function projectUserText(text: string, sessionLabels: readonly string[]): ReactN
     parts.push(
       <span
         key={tokenStart}
-        className={css.refChip}
+        class={css.refChip ?? ''}
         data-ref-chip={referenceKind ?? 'skill'}
         title={label}
       >
@@ -209,7 +254,7 @@ function projectUserText(text: string, sessionLabels: readonly string[]): ReactN
   }
   if (parts.length === 0) return <MessageText text={text} />
   if (cursor < text.length) parts.push(<MessageText key={cursor} text={text.slice(cursor)} />)
-  return <>{parts}</>
+  return parts
 }
 
 /** Right-aligned bubble shared by user and steering rows. */
@@ -219,26 +264,26 @@ function UserStyleBubble({
   content: readonly unknown[]
   renderMessageImages: ChatNodeOwnerProps['renderMessageImages']
   /** Optional IconActions (or similar) below the bubble; receives the joined text. */
-  actions?: (text: string) => ReactNode
+  actions?: ((text: string) => VNode) | undefined
   /** Whether this is the Host-authoritative pre-admission steering projection. */
   pending?: boolean
   /** Exact session mention labels associated by the adjacent recall node. */
   referenceLabels?: readonly string[]
   t: ChatViewSlotProps['t']
-}): ReactNode {
+}): JSX.Element {
   const { text, images, rest } = contentParts(content)
   const truncated = (total: number): string => t('json.truncated', { total })
   const showBubble = text !== '' || rest.length > 0
   return (
-    <div className={css.userRow} data-pending-steering={pending || undefined} data-time-hover-root>
-      <div className={css.userStack}>
+    <div class={css.userRow ?? ''} data-pending-steering={pending || undefined} data-time-hover-root>
+      <div class={css.userStack ?? ''}>
         {renderMessageImages({ images, align: 'end' })}
-        {showBubble && <div className={css.bubble}>
+        {showBubble && <div class={css.bubble ?? ''}>
           {projectUserText(text, referenceLabels)}
           {rest.map((block, i) => <JsonBlock key={i} label={t('message.extraBlock')} payload={block} truncatedLabel={truncated} />)}
         </div>}
         {referenceLabels.length > 0 && (
-          <div className={css.referenceSummary}>
+          <div class={css.referenceSummary ?? ''}>
             {t('message.referenceSummary', { labels: referenceLabels.join(t('message.referenceSeparator')) })}
           </div>
         )}
@@ -258,7 +303,7 @@ export function PendingSteeringBubble({ content, renderMessageImages, t }: {
   content: readonly unknown[]
   renderMessageImages: ChatNodeOwnerProps['renderMessageImages']
   t: ChatViewSlotProps['t']
-}): ReactNode {
+}): JSX.Element {
   return (
     <UserStyleBubble
       content={content}
@@ -271,16 +316,16 @@ export function PendingSteeringBubble({ content, renderMessageImages, t }: {
           clock="start"
           className={css.actions}
           t={t}
-        />
+        /> as unknown as VNode
       )}
     />
   )
 }
 
 /** User and admitted-steering keyed Chat renderer. */
-export const UserMessageNodeView = memo(function UserMessageNodeView({
+export function UserMessageNodeView({
   node, renderMessageImages, t,
-}: ChatNodeViewProps<'user' | 'steering'>) {
+}: ChatNodeViewProps<'user' | 'steering'>): JSX.Element {
   const data = node.data
   return (
     <UserStyleBubble
@@ -295,14 +340,14 @@ export const UserMessageNodeView = memo(function UserMessageNodeView({
           clock="start"
           className={css.actions}
           t={t}
-        />
+        /> as unknown as VNode
       )}
     />
   )
-})
+}
 
 /** Injected-context keyed Chat renderer. */
-export const ContextMessageNodeView = memo(function ContextMessageNodeView({ node, t }: ChatNodeViewProps<'context'>) {
+export function ContextMessageNodeView({ node, t }: ChatNodeViewProps<'context'>): JSX.Element {
   const data = node.data
   return (
     <ContextInjectionRow
@@ -311,36 +356,36 @@ export const ContextMessageNodeView = memo(function ContextMessageNodeView({ nod
       provenance={data.provenance}
       form={data.form}
       t={t}
-    />
+    /> as unknown as JSX.Element
   )
-})
+}
 
 /** Automatic compaction keyed Chat renderer. */
-export const CompactionNodeView = memo(function CompactionNodeView({ node, t }: ChatNodeViewProps<'compaction'>) {
-  return <CompactionItem node={node.data} t={t} />
-})
+export function CompactionNodeView({ node, t }: ChatNodeViewProps<'compaction'>): JSX.Element {
+  return <CompactionItem node={node.data} t={t} /> as unknown as JSX.Element
+}
 
 /** Correlated retry-chain keyed Chat renderer. */
-export const RetryNodeView = memo(function RetryNodeView({ node, t }: ChatNodeViewProps<'model-retry'>) {
+export function RetryNodeView({ node, t }: ChatNodeViewProps<'model-retry'>): JSX.Element {
   const data = node.data
-  return <ModelRetryItem node={data.current} active={data.current.retryState === 'scheduled'} t={t} />
-})
+  return <ModelRetryItem node={data.current} active={data.current.retryState === 'scheduled'} t={t} /> as unknown as JSX.Element
+}
 
 /** Terminal turn-error keyed Chat renderer. */
-export const TurnErrorNodeView = memo(function TurnErrorNodeView({ node, t }: ChatNodeViewProps<'turn-error'>) {
+export function TurnErrorNodeView({ node, t }: ChatNodeViewProps<'turn-error'>): JSX.Element {
   return <TurnErrorItem node={node.data} t={t} />
-})
+}
 
 /** Max-tokens turn-end notice keyed Chat renderer. */
-export const TurnMaxTokensNodeView = memo(function TurnMaxTokensNodeView({ t }: ChatNodeViewProps<'turn-max-tokens'>) {
+export function TurnMaxTokensNodeView({ t }: ChatNodeViewProps<'turn-max-tokens'>): JSX.Element {
   return <TurnMaxTokensItem t={t} />
-})
+}
 
 /** Explicit unknown-surface keyed Chat renderer. */
-export const UnknownNodeView = memo(function UnknownNodeView({ node, t }: ChatNodeViewProps<'unknown'>) {
+export function UnknownNodeView({ node, t }: ChatNodeViewProps<'unknown'>): JSX.Element {
   const data = node.data
   return (
-    <div className={css.contextRow}>
+    <div class={css.contextRow ?? ''}>
       <JsonBlock
         label={t('message.unknownSurface', { type: data.type })}
         payload={data.data}
@@ -348,4 +393,4 @@ export const UnknownNodeView = memo(function UnknownNodeView({ node, t }: ChatNo
       />
     </div>
   )
-})
+}

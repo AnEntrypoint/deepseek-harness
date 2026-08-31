@@ -6,16 +6,26 @@
  * locally, Enter/↑↓ drive the filtered highlight (scrolled into view), Escape
  * dismisses back to the composer, and ←→ keep the search input's native
  * caret. Any pointer interaction outside the box dismisses (the click's own
- * target takes focus). Closed state renders null; the overlay slot stays
+ * target takes focus). Closed state renders nothing; the overlay slot stays
  * mounted. The card height clamps to the space above the composer.
+ *
+ * Converted from a React hooks component (useSyncExternalStore/useRef/
+ * useEffect) to a webjsx custom element: the store subscription becomes a
+ * connectedCallback subscribe + disconnectedCallback unsubscribe pair, and
+ * every derived effect (highlight scroll, outside-pointer dismiss, search
+ * focus, anchored max-height) becomes plain instance bookkeeping recomputed
+ * inside #render().
  */
-import { useEffect, useRef } from 'react'
-import { useSyncExternalStore } from 'react'
+import { applyDiff } from 'webjsx'
 import clsx from 'clsx'
-import { IconCheckOutline16, RiskConfirmation, useAnchoredMaxHeight } from '@deepseek-ai/dsh-client-ui-primitives'
+import {
+  createAnchoredMaxHeight, IconCheckOutline16, RiskConfirmation,
+} from '@deepseek-ai/dsh-client-ui-primitives'
+import type { AnchoredMaxHeightController } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { filterOptions } from './popup.ts'
 import type { PopupSelectController } from './popup.ts'
+import type { PopupState } from './popup.ts'
 import css from './PopupSelectView.module.css'
 
 /** Design cap on the card height (same MenuDropdown family as the slash menu). */
@@ -31,133 +41,173 @@ export interface PopupSelectInjected {
 export type PopupSelectViewProps = PopupSelectInjected & PropsLocale<'command'>
 
 /**
- * Render the popupSelect shell overlay entry.
- * @param props - injected face: the session's shell controller; `t` rides the standard locale seat.
- * @returns the select card while open; null while closed.
+ * Render the popupSelect shell overlay entry as a custom element.
  */
-export function PopupSelectView({ popup, t }: PopupSelectViewProps) {
-  const state = useSyncExternalStore(
-    fn => popup.state.subscribe(fn),
-    () => popup.state.getSnapshot(),
-  )
-  const cardRef = useRef<HTMLDivElement>(null)
-  const searchRef = useRef<HTMLInputElement>(null)
-  // The card is bottom-anchored above the composer; clamp the design cap to
-  // the space above it, re-measured on every store update.
-  const maxHeight = useAnchoredMaxHeight(cardRef, MAX_HEIGHT, state)
-  const active = state.open ? state.active : null
+export class DshPopupSelectView extends HTMLElement {
+  #props: PopupSelectViewProps | null = null
+  #unsubscribeStore: (() => void) | null = null
+  #cardEl: HTMLDivElement | null = null
+  #searchEl: HTMLInputElement | null = null
+  #anchored: AnchoredMaxHeightController | null = null
+  #maxHeight = MAX_HEIGHT
+  #prevActive: number | null = null
+  #focusedSearchForOpen = false
+  #onPointerDown: ((ev: PointerEvent) => void) | null = null
 
-  // The search input keeps focus while arrows move a virtual highlight, so
-  // the browser never scrolls the active row into view — do it here.
-  useEffect(() => {
-    if (active === null) return
-    cardRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' })
-  }, [active])
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: PopupSelectViewProps): void {
+    const popupChanged = this.#props?.popup !== props.popup
+    this.#props = props
+    if (popupChanged) this.#bindStore()
+    this.#render()
+  }
 
-  // Focus ownership: the search input grabs on open, and ANY outside
-  // pointer interaction dismisses —
-  // capture phase so a click landing anywhere else (textarea included)
-  // closes the shell before its own handlers run; that click's target then
-  // takes focus naturally, so no focusComposer here.
-  useEffect(() => {
-    if (!state.open || state.confirming !== null) return
-    const onPointerDown = (ev: PointerEvent): void => {
-      if (cardRef.current !== null && ev.target instanceof Node && cardRef.current.contains(ev.target)) return
-      popup.dismiss()
-    }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    return () => { document.removeEventListener('pointerdown', onPointerDown, true) }
-  }, [state.open, state.confirming, popup])
+  connectedCallback(): void {
+    this.#bindStore()
+    this.#render()
+  }
 
-  // Focus the search input after it mounts (separate effect so the ref is populated).
-  useEffect(() => {
-    if (state.open && state.confirming === null) searchRef.current?.focus()
-  }, [state.open, state.confirming])
+  disconnectedCallback(): void {
+    this.#unsubscribeStore?.()
+    this.#unsubscribeStore = null
+    this.#anchored?.stop()
+    this.#anchored = null
+    this.#unbindOutsidePointer()
+  }
 
-  if (!state.open) return null
+  #bindStore(): void {
+    this.#unsubscribeStore?.()
+    const popup = this.#props?.popup
+    if (popup === undefined) { this.#unsubscribeStore = null; return }
+    this.#unsubscribeStore = popup.state.subscribe(() => { this.#render() })
+  }
 
-  const rows = filterOptions(state.options, state.search)
-  const confirmation = state.confirming?.confirmation
-
-  const onKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>): void => {
-    // ArrowLeft/ArrowRight fall through on purpose: the search input keeps
-    // its native caret movement.
-    switch (ev.key) {
-      case 'ArrowDown':
-        ev.preventDefault()
-        popup.move(1)
-        return
-      case 'ArrowUp':
-        ev.preventDefault()
-        popup.move(-1)
-        return
-      case 'Enter':
-        ev.preventDefault()
-        void popup.select(state.active)
-        return
-      case 'Escape':
-        ev.preventDefault()
-        popup.dismiss({ focusComposer: true })
-        return
-      default:
+  #unbindOutsidePointer(): void {
+    if (this.#onPointerDown !== null) {
+      document.removeEventListener('pointerdown', this.#onPointerDown, true)
+      this.#onPointerDown = null
     }
   }
 
-  return (
-    <>
-      {state.confirming === null && (
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { popup, t } = props
+    const state: PopupState = popup.state.getSnapshot()
+
+    // Anchored max-height: (re)start the controller whenever the card
+    // element identity or state changes, mirroring the React version's
+    // effect dependency on [cardRef, MAX_HEIGHT, state].
+    this.#anchored?.stop()
+    this.#anchored = createAnchoredMaxHeight({
+      el: this.#cardEl,
+      cap: MAX_HEIGHT,
+      onChange: (value) => { this.#maxHeight = value; this.#render() },
+    })
+    this.#anchored.start()
+    this.#maxHeight = this.#anchored.value
+
+    const active = state.open ? state.active : null
+
+    // Outside-pointer dismiss: bind while open and not confirming.
+    this.#unbindOutsidePointer()
+    if (state.open && state.confirming === null) {
+      const onPointerDown = (ev: PointerEvent): void => {
+        if (this.#cardEl !== null && ev.target instanceof Node && this.#cardEl.contains(ev.target)) return
+        popup.dismiss()
+      }
+      this.#onPointerDown = onPointerDown
+      document.addEventListener('pointerdown', onPointerDown, true)
+    }
+
+    if (!state.open) {
+      applyDiff(this, [])
+      this.#prevActive = null
+      this.#focusedSearchForOpen = false
+      return
+    }
+
+    const rows = filterOptions(state.options, state.search)
+    const confirmation = state.confirming?.confirmation
+
+    const onKeyDown = (ev: KeyboardEvent): void => {
+      // ArrowLeft/ArrowRight fall through on purpose: the search input keeps
+      // its native caret movement.
+      switch (ev.key) {
+        case 'ArrowDown':
+          ev.preventDefault()
+          popup.move(1)
+          return
+        case 'ArrowUp':
+          ev.preventDefault()
+          popup.move(-1)
+          return
+        case 'Enter':
+          ev.preventDefault()
+          void popup.select(state.active)
+          return
+        case 'Escape':
+          ev.preventDefault()
+          popup.dismiss({ focusComposer: true })
+          return
+        default:
+      }
+    }
+
+    const vdom = [
+      state.confirming === null ? (
         <div
-          ref={cardRef}
-          className={css.card}
-          style={{ maxHeight }}
+          ref={(node) => { this.#cardEl = node as HTMLDivElement | null }}
+          class={css.card ?? ''}
+          style={`max-height: ${this.#maxHeight}px`}
           aria-label={t('overlay.aria', { command: String(state.command) })}
-          onKeyDown={onKeyDown}
+          onkeydown={onKeyDown}
         >
           <input
-            ref={searchRef}
-            className={css.search}
+            ref={(node) => { this.#searchEl = node as HTMLInputElement | null }}
+            class={css.search ?? ''}
             type="text"
             placeholder={t('search.placeholder')}
             aria-label={t('search.aria')}
             value={state.search}
-            readOnly={state.submitting}
-            onChange={(ev) => { popup.setSearch(ev.currentTarget.value) }}
+            readonly={state.submitting}
+            oninput={(ev: Event) => { popup.setSearch((ev.currentTarget as HTMLInputElement).value) }}
           />
           {state.error !== null && (
-            <div className={css.error} role="alert">
-              <span className={css.errorText}>{state.error}</span>
+            <div class={css.error ?? ''} role="alert">
+              <span class={css.errorText ?? ''}>{state.error}</span>
               {state.status === 'failed' && (
-                <button type="button" className={css.retry} onClick={() => { popup.retry() }}>{t('retry')}</button>
+                <button type="button" class={css.retry ?? ''} onclick={() => { popup.retry() }}>{t('retry')}</button>
               )}
             </div>
           )}
-          {state.status === 'pending' && <div className={css.status}>{t('status.loading')}</div>}
-          {state.submitting && <div className={css.status}>{t('status.applying')}</div>}
-          {state.status === 'ready' && rows.length === 0 && <div className={css.status}>{t('status.empty')}</div>}
+          {state.status === 'pending' && <div class={css.status ?? ''}>{t('status.loading')}</div>}
+          {state.submitting && <div class={css.status ?? ''}>{t('status.applying')}</div>}
+          {state.status === 'ready' && rows.length === 0 && <div class={css.status ?? ''}>{t('status.empty')}</div>}
           {state.status === 'ready' && (
-            <div role="listbox" aria-label={t('listbox.aria', { command: String(state.command) })} className={css.viewport}>
+            <div role="listbox" aria-label={t('listbox.aria', { command: String(state.command) })} class={css.viewport ?? ''}>
               {rows.map((option, index) => (
                 <div
                   key={option.id}
                   role="option"
                   aria-selected={index === state.active}
-                  className={clsx(css.row, index === state.active && css.rowActive)}
+                  class={clsx(css.row, index === state.active && css.rowActive)}
                   // mousedown would race the document capture listener; the shell
                   // owns focus anyway, so a plain click (inside the card → no
                   // dismiss) works.
-                  onClick={() => { void popup.select(index) }}
-                  onMouseEnter={() => { popup.highlight(index) }}
+                  onclick={() => { void popup.select(index) }}
+                  onmouseenter={() => { popup.highlight(index) }}
                 >
-                  <span className={css.label}>{option.label}</span>
-                  {option.detail !== undefined && <span className={css.detail}>{option.detail}</span>}
-                  {option.active === true && <span className={css.check}><IconCheckOutline16 /></span>}
+                  <span class={css.label ?? ''}>{option.label}</span>
+                  {option.detail !== undefined && <span class={css.detail ?? ''}>{option.detail}</span>}
+                  {option.active === true && <span class={css.check ?? ''}><IconCheckOutline16 /></span>}
                 </div>
               ))}
             </div>
           )}
         </div>
-      )}
-      {confirmation !== undefined && (
+      ) : null,
+      confirmation !== undefined ? (
         <RiskConfirmation
           open
           title={confirmation.title}
@@ -166,11 +216,30 @@ export function PopupSelectView({ popup, t }: PopupSelectViewProps) {
           cancelLabel={confirmation.cancelLabel}
           confirmLabel={confirmation.confirmLabel}
           acknowledged={state.acknowledged}
-          onAcknowledgedChange={(value) => { popup.acknowledge(value) }}
+          onAcknowledgedChange={(value: boolean) => { popup.acknowledge(value) }}
           onCancel={() => { popup.cancelConfirmation() }}
           onConfirm={() => { void popup.confirm() }}
         />
-      )}
-    </>
-  )
+      ) : null,
+    ].filter((node): node is Exclude<typeof node, null> => node !== null)
+    applyDiff(this, vdom)
+
+    // The search input keeps focus while arrows move a virtual highlight, so
+    // the browser never scrolls the active row into view — do it here.
+    if (active !== null && active !== this.#prevActive) {
+      this.#cardEl?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' })
+    }
+    this.#prevActive = active
+
+    // Focus the search input once per open (mirrors the React version's
+    // effect keyed on [state.open, state.confirming]).
+    if (state.confirming === null && !this.#focusedSearchForOpen) {
+      this.#searchEl?.focus()
+      this.#focusedSearchForOpen = true
+    }
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-popup-select-view') === undefined) {
+  customElements.define('dsh-popup-select-view', DshPopupSelectView)
 }

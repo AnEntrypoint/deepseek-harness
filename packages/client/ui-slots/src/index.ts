@@ -2,7 +2,7 @@
  * Slot registry pure core. Owners declare slot
  * contracts by merging into {@link SlotMap}; one `register` call contributes a
  * component AND (optionally) declares child slots, a store seat, and the
- * registrant's business face. Zero runtime dependencies (React types only).
+ * registrant's business face. Zero runtime dependencies, framework-agnostic.
  *
  * SlotMap and the standard-kit interfaces live directly in this entry module:
  * consumer `declare module` augmentation merges with declarations lexically in
@@ -13,12 +13,19 @@
  * in THIS compilation unit (so the intersection reads as `never`), but every
  * consumer merges keys in and the intersection is what keeps them string-typed.
  * The rule fires on the empty-map view, not on real redundancy. */
-import type { ReactNode } from 'react'
 import type { HostObservable } from './renderer.ts'
 import type { BoundActions, HandleOf, PropsStore, SnapshotSelectorHook, StoreDecl } from './store.ts'
 
 export * from './store.ts'
 export * from './renderer.ts'
+
+/**
+ * Opaque renderable output placeholder. ui-slots never inspects or renders
+ * this value — it threads it through as a framework-agnostic type from
+ * registrant to installed renderer (React's `ReactNode`, a webjsx `VNode`, or
+ * anything else a renderer implementation returns).
+ */
+export type RenderOutput = unknown
 
 /** Slot contract table. Owners extend via declaration merging; entries are {@link SlotEntryDef}. */
 export interface SlotMap {}
@@ -224,7 +231,7 @@ export type PropsRuntime<
 export interface RenderOpts<EntryKey extends string = string> {
   entryKey?: EntryKey
   only?: string
-  fallback?: ReactNode
+  fallback?: RenderOutput
   /** Type-erased runtime seat; PropsRenderSlots narrows or removes it per slot declaration. */
   hookContext?: unknown
 }
@@ -232,7 +239,7 @@ export interface RenderOpts<EntryKey extends string = string> {
 /** renderSlotChain dispatch options. */
 export interface ChainRenderOpts {
   /** The owner's fallback body, rendered when every entry's selector declines. */
-  fallback?: ReactNode
+  fallback?: RenderOutput
   /**
    * Keep the fallback permanently mounted: an election hides it (wrapped,
    * display:none) instead of unmounting it, and the all-decline case shows it
@@ -281,7 +288,7 @@ type RenderSlotFn<S extends keyof SlotMap & string> =
       key: K,
       owner: OwnerOf<K> & KeyPropsOf<K, NoInfer<EntryKey>>,
       opts: RenderOpts<EntryKey> & { hookContext: HookContextOf<K> },
-    ): ReactNode
+    ): RenderOutput
   }) &
   ([OrdinaryKeysOf<S>] extends [never] ? object : {
     <
@@ -291,7 +298,7 @@ type RenderSlotFn<S extends keyof SlotMap & string> =
       key: K,
       owner: OwnerOf<K> & KeyPropsOf<K, NoInfer<EntryKey>>,
       opts?: Omit<RenderOpts<EntryKey>, 'hookContext'>,
-    ): ReactNode
+    ): RenderOutput
   })
 
 /**
@@ -312,9 +319,9 @@ export type UseSession<Snap extends object = object> = SnapshotSelectorHook<Snap
 /** Props of the standard-kit SessionProvider seat (render-prop form). */
 export interface SessionAreaProps {
   /** No-session body (also covers a current id whose session cannot be resolved). */
-  empty?: (() => ReactNode) | undefined
+  empty?: (() => RenderOutput) | undefined
   /** Session body; the framework remounts it per session (key=sessionId). */
-  children: (sessionId: SessionIdOf) => ReactNode
+  children: (sessionId: SessionIdOf) => RenderOutput
 }
 
 /**
@@ -322,7 +329,7 @@ export interface SessionAreaProps {
  * session selection and is injected into entries that declare session-scoped
  * children; business code does not import it directly.
  */
-export type SessionProviderComponent = (props: SessionAreaProps) => ReactNode
+export type SessionProviderComponent = (props: SessionAreaProps) => RenderOutput
 
 /**
  * Child-slot render share: `renderSlot` statically narrowed to the entry's
@@ -354,7 +361,7 @@ export type PropsRenderSlots<S extends keyof SlotMap & string> = {
    * @param opts - fallback body for the all-null case.
    * @returns rendered node(s).
    */
-  renderSlotChain: <K extends ChainKeysOf<S>>(key: K, owner: OwnerOf<K>, opts?: ChainRenderOpts) => ReactNode
+  renderSlotChain: <K extends ChainKeysOf<S>>(key: K, owner: OwnerOf<K>, opts?: ChainRenderOpts) => RenderOutput
 }) & ('session' extends ScopeOf<S>
   // The SessionProvider seat rides the same source as renderSlot: declaring
   // a session-scope child is what makes a session area exist, so the seat
@@ -366,8 +373,68 @@ export type PropsRenderSlots<S extends keyof SlotMap & string> = {
  * Registration-position component shape: the bare call signature, so composed
  * constraints check through clean parameter contravariance (FC statics add
  * covariant noise rejecting legitimate narrowings).
+ *
+ * Dual-mode migration note: this stays a bare function type ON PURPOSE — the
+ * `register()` overloads' contravariance-based inference (`RendersCheck`,
+ * `NoInfer`) and every existing React registrant (a plain
+ * `(props) => RenderOutput`) depend on it being exactly this shape, unchanged.
+ * A webjsx registrant does NOT pass a different runtime shape at this
+ * position: it passes the return of {@link webjsxSlot}, which IS a
+ * `SlotComponent<P>` (a real callable function) that also carries a
+ * `{@link WEBJSX_SLOT_TAG}` marker property naming its custom-element tag.
+ * The dispatch side (ui-renderer's scoped-slots.tsx) reads that marker off
+ * `entry.component` to branch between the React fast path (call it directly)
+ * and the webjsx bridge path (host the named custom element instead) — a
+ * discriminated union expressed as a tagged callable rather than as a
+ * `{ kind }` object, so the 21+ existing React registrant packages compile
+ * and behave with zero changes.
  */
-export type SlotComponent<P> = (props: P) => ReactNode
+export type SlotComponent<P> = (props: P) => RenderOutput
+
+/** Property name of the tag marker {@link webjsxSlot} stamps onto its returned function. */
+export const WEBJSX_SLOT_TAG: unique symbol = Symbol('webjsxSlotTag')
+
+/** A `SlotComponent` produced by {@link webjsxSlot}: callable, carrying its custom-element tag. */
+export interface WebjsxSlotComponent<P> {
+  (props: P): RenderOutput
+  readonly [WEBJSX_SLOT_TAG]: string
+}
+
+/**
+ * Opt a NEW registrant into the webjsx dispatch path instead of React's.
+ * Returns a real `SlotComponent<P>` — register() accepts it exactly where a
+ * plain React function component goes, so the registration call sites
+ * ({@link SlotCore.register} and its typed overloads) need no branching of
+ * their own. The returned function is never actually invoked as a React
+ * component: the installed renderer recognizes the {@link WEBJSX_SLOT_TAG}
+ * marker on `entry.component` and hosts the named custom element (already
+ * `customElements.define`-registered by the webjsx package, e.g.
+ * `ui-primitives`' `dsh-toast`) inside a small React bridge instead of
+ * calling this function. The function body is therefore only a fallback for
+ * a caller that invokes it directly outside the slot machinery (returns
+ * `null`, never throws) — dispatch always goes through the tag.
+ * @param tag - the custom element's registered tag name (e.g. `'dsh-toast'`).
+ * @returns a `SlotComponent<P>` tagged for webjsx dispatch.
+ */
+export function webjsxSlot<P>(tag: string): WebjsxSlotComponent<P> {
+  const component = (() => null) as unknown as WebjsxSlotComponent<P>
+  Object.defineProperty(component, WEBJSX_SLOT_TAG, { value: tag, enumerable: true })
+  return component
+}
+
+/**
+ * Runtime discriminator: whether a stored `component` is a webjsx-dispatch
+ * registrant (see {@link webjsxSlot}) rather than an ordinary React function
+ * component. Plain-JS backstop the render side calls once per entry; typed
+ * registration already proved the value is a `SlotComponent<P>` either way.
+ * @param component - a stored entry's `component` value.
+ * @returns the custom-element tag when webjsx-tagged, else undefined.
+ */
+export function webjsxSlotTagOf(component: unknown): string | undefined {
+  if (typeof component !== 'function') return undefined
+  const tag: unknown = (component as Partial<WebjsxSlotComponent<never>>)[WEBJSX_SLOT_TAG]
+  return typeof tag === 'string' ? tag : undefined
+}
 
 /**
  * Registrant hooks compartment: bare observable sources (getSnapshot +
@@ -517,7 +584,7 @@ export type KindOptions<
  */
 type RendersCheck<C, D> =
   [keyof D & keyof SlotMap & string] extends [never] ? unknown
-    : C extends (props: infer P) => ReactNode
+    : C extends (props: infer P) => RenderOutput
       ? ('renderSlot' extends keyof P ? unknown
         : 'renderSlotChain' extends keyof P ? unknown
           : { 'children declared but the component consumes no renderSlot': keyof D & keyof SlotMap & string })

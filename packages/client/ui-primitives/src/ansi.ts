@@ -6,7 +6,6 @@
 // as literal characters.
 
 import Anser from 'anser'
-import type { CSSProperties } from 'react'
 
 /**
  * The subset of one anser JSON chunk this module reads. anser's own types
@@ -28,8 +27,8 @@ interface AnsiChunk {
 export interface AnsiSpan {
   /** The run's plain text, free of escape sequences and newlines. */
   text: string
-  /** Resolved inline style, or undefined when the run needs no wrapper. */
-  style: CSSProperties | undefined
+  /** Resolved inline style as a CSS declaration string, or undefined when the run needs no wrapper. */
+  style: string | undefined
 }
 
 /** The spans of one output line, in order. */
@@ -65,13 +64,17 @@ const TOKEN_BY_BASIC_RGB: Record<string, string> = {
  * strikethrough share `textDecoration`, so in a run declaring both, the
  * later declaration wins.
  */
-const STYLE_BY_DECORATION: Record<string, CSSProperties | undefined> = {
-  bold: { fontWeight: 700 },
-  dim: { opacity: 0.7 },
-  italic: { fontStyle: 'italic' },
-  underline: { textDecoration: 'underline' },
-  strikethrough: { textDecoration: 'line-through' },
-  hidden: { visibility: 'hidden' },
+const STYLE_BY_DECORATION: Record<string, string | undefined> = {
+  bold: 'font-weight: 700',
+  dim: 'opacity: 0.7',
+  italic: 'font-style: italic',
+  // Underline and strikethrough share text-decoration, so in a run declaring
+  // both, iterating chunk.decorations and letting the later one win (see
+  // resolveStyle below) still matches the object-merge behavior this
+  // replaces: later declarations override earlier ones for the same property.
+  underline: 'text-decoration: underline',
+  strikethrough: 'text-decoration: line-through',
+  hidden: 'visibility: hidden',
 }
 
 /** OSC strings (window title, hyperlinks), with or without their terminator. */
@@ -408,21 +411,30 @@ function sanitize(text: string): string {
  * @param chunk - the anser chunk to style.
  * @returns the run's inline style, or undefined when it carries no SGR state.
  */
-function resolveStyle(chunk: AnsiChunk): CSSProperties | undefined {
-  const style: CSSProperties = {}
+function resolveStyle(chunk: AnsiChunk): string | undefined {
+  // Ordered CSS-property-name -> value pairs so a later decoration's
+  // text-decoration overrides an earlier one, matching the prior
+  // Object.assign-onto-a-style-object merge order.
+  const declarations = new Map<string, string>()
   const background = chunk.bg === null ? undefined : `rgb(${chunk.bg})`
-  if (background !== undefined) style.backgroundColor = background
+  if (background !== undefined) declarations.set('background-color', background)
   if (chunk.fg !== null) {
     const literal = `rgb(${chunk.fg})`
     // A run that paints its own background keeps anser's literal pair so the
     // authored foreground/background contrast survives; a foreground-only run
     // maps onto a theme token, which adapts to light and dark surfaces.
-    style.color = background === undefined
+    declarations.set('color', background === undefined
       ? TOKEN_BY_BASIC_RGB[chunk.fg.replace(/\s+/g, '')] ?? literal
-      : literal
+      : literal)
   }
-  for (const decoration of chunk.decorations) Object.assign(style, STYLE_BY_DECORATION[decoration])
-  return Object.keys(style).length === 0 ? undefined : style
+  for (const decoration of chunk.decorations) {
+    const rule = STYLE_BY_DECORATION[decoration]
+    if (rule === undefined) continue
+    const [property, value] = rule.split(': ')
+    if (property !== undefined && value !== undefined) declarations.set(property, value)
+  }
+  if (declarations.size === 0) return undefined
+  return [...declarations].map(([property, value]) => `${property}: ${value}`).join('; ')
 }
 
 /**

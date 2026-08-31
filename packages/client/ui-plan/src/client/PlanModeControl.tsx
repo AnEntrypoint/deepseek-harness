@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { IconCloseFill14 } from '@deepseek-ai/dsh-client-ui-primitives'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.plan seat and
@@ -15,57 +15,94 @@ export type PlanChipProps =
  * Plan-mode status over the host-computed `plan` projection. The chip renders
  * only while the effective target is plan mode (`pending ? !active : active`
  * — a folded host value, not client optimism) and executes /plan off.
+ *
+ * Converted from a React hooks component to a webjsx custom element:
+ * leaving/error state become instance fields, the alive-tracking useEffect
+ * becomes connectedCallback/disconnectedCallback, and re-render is an
+ * explicit applyDiff(this, vdom) call (Toast.tsx's pattern).
  */
-export function PlanChip({ useProjection, locked, exitPlanMode, t }: PlanChipProps) {
-  const plan = useProjection('plan')
-  const [leaving, setLeaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const aliveRef = useRef(true)
+export class DshPlanChip extends HTMLElement {
+  #props: PlanChipProps | null = null
+  #leaving = false
+  #error: string | null = null
+  #alive = true
 
-  useEffect(() => {
-    aliveRef.current = true
-    return () => {
-      aliveRef.current = false
-    }
-  }, [])
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: PlanChipProps): void {
+    this.#props = props
+    this.#render()
+  }
 
-  if (plan === undefined) return null
-  const target = plan.pending ? !plan.active : plan.active
-  if (!target) return null
+  connectedCallback(): void {
+    this.#alive = true
+    this.#render()
+  }
 
-  const off = (): void => {
+  disconnectedCallback(): void {
+    this.#alive = false
+  }
+
+  #off(): void {
+    const props = this.#props
+    if (props === null) return
+    const { exitPlanMode } = props
     // No leaving/locked guard: both disable the button, so no click arrives.
-    setLeaving(true)
-    setError(null)
+    this.#leaving = true
+    this.#error = null
+    this.#render()
     void exitPlanMode().then((failure) => {
-      if (!aliveRef.current) return
-      setLeaving(false)
-      setError(failure)
+      if (!this.#alive) return
+      this.#leaving = false
+      this.#error = failure
+      this.#render()
     }, (reason: unknown) => {
-      if (!aliveRef.current) return
-      setLeaving(false)
-      setError(reason instanceof Error ? reason.message : String(reason))
+      if (!this.#alive) return
+      this.#leaving = false
+      this.#error = reason instanceof Error ? reason.message : String(reason)
+      this.#render()
     })
   }
 
-  return (
-    <span className={css.wrap}>
-      <button
-        type="button"
-        className={css.chip}
-        aria-label={t('chip.on.aria')}
-        title={t('chip.on.title')}
-        disabled={locked || leaving}
-        onClick={off}
-      >
-        {/* Design literal, not copy: the chip wordmark stays 'Plan' in every locale. */}
-        Plan
-        <span className={css.close} aria-hidden>
-          <IconCloseFill14 size={12} />
-        </span>
-      </button>
-      {/* Failure copy stays English (error-surface policy: not localized). */}
-      {error !== null && <span className={css.error} role="status" title={error}>failed to exit plan mode</span>}
-    </span>
-  )
+  #render(): void {
+    const props = this.#props
+    if (props === null) { applyDiff(this, []); return }
+    const { useProjection, locked, t } = props
+    const plan = useProjection('plan')
+    if (plan === undefined) { applyDiff(this, []); return }
+    const target = plan.pending ? !plan.active : plan.active
+    if (!target) { applyDiff(this, []); return }
+
+    const vdom = (
+      <span class={css.wrap ?? ''}>
+        <button
+          type="button"
+          class={css.chip ?? ''}
+          aria-label={t('chip.on.aria')}
+          title={t('chip.on.title')}
+          disabled={locked || this.#leaving}
+          onclick={() => { this.#off() }}
+        >
+          {/* Design literal, not copy: the chip wordmark stays 'Plan' in every locale. */}
+          Plan
+          <span class={css.close ?? ''} aria-hidden>
+            <IconCloseFill14 size={12} />
+          </span>
+        </button>
+        {/* Failure copy stays English (error-surface policy: not localized). */}
+        {this.#error !== null && <span class={css.error ?? ''} role="status" title={this.#error}>failed to exit plan mode</span>}
+      </span>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-plan-chip') === undefined) {
+  customElements.define('dsh-plan-chip', DshPlanChip)
+}
+
+/** One-shot creation helper preserving the original function-component call shape. */
+export function PlanChip(props: PlanChipProps): DshPlanChip {
+  const el = document.createElement('dsh-plan-chip') as DshPlanChip
+  el.setProps(props)
+  return el
 }

@@ -37,7 +37,7 @@ export function RiskConfirmation({
   onAcknowledgedChange,
   onCancel,
   onConfirm,
-}: RiskConfirmationProps) {
+}: RiskConfirmationProps): JSX.Element {
   return (
     <Modal
       open={open}
@@ -45,36 +45,34 @@ export function RiskConfirmation({
       title={title}
       className={css.confirmation ?? ''}
       contentClassName={css.confirmationContent ?? ''}
-      footer={(
-        <>
-          <Button variant="outline" className={css.modalAction} onClick={onCancel}>
-            {cancelLabel}
-          </Button>
-          <Button
-            variant="primary"
-            className={css.confirmAction}
-            disabled={disabled || !acknowledged}
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </Button>
-        </>
-      )}
+      footer={[
+        <Button variant="outline" class={css.modalAction} onclick={onCancel}>
+          {cancelLabel}
+        </Button>,
+        <Button
+          variant="primary"
+          class={css.confirmAction}
+          disabled={disabled || !acknowledged}
+          onclick={onConfirm}
+        >
+          {confirmLabel}
+        </Button>,
+      ]}
     >
-      <div className={css.warning}>
+      <div class={css.warning ?? ''}>
         <IconWarningOutline16 size={18} className={css.warningIcon} />
         <p>{description}</p>
       </div>
-      <label className={css.acknowledgement}>
+      <label class={css.acknowledgement ?? ''}>
         <input
           type="checkbox"
           checked={acknowledged}
           disabled={disabled}
-          autoFocus
-          onChange={(event) => { onAcknowledgedChange(event.currentTarget.checked) }}
+          autofocus
+          onchange={(event: Event) => { onAcknowledgedChange((event.currentTarget as HTMLInputElement).checked) }}
         />
         <span>{acknowledgeLabel}</span>
       </label>
-    </Modal>
+    </Modal> as unknown as JSX.Element
   )
 }

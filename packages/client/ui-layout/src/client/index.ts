@@ -9,8 +9,9 @@
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PanelActions } from './service.ts'
-import { AppFrame } from './AppFrame.tsx'
+import './AppFrame.tsx'
 import { createLayoutStore } from './stores.ts'
 import { LayoutController } from './service.ts'
 import { ThemePresenter } from './theme-presenter.ts'
@@ -134,7 +135,14 @@ export function apply(ctx: ClientContext): void {
         layout.attachPanels(actions)
         return {}
       },
-    }, AppFrame)
+      // The webjsxSlot() stub is a bare (props) => null function: it cannot
+      // structurally prove it consumes renderSlot the way RendersCheck wants
+      // (dispatch happens inside the registered custom element itself, off
+      // ui-slots' type-erased entry.component boundary — see webjsxSlot's own
+      // doc). The runtime dispatch is unaffected; only this compile-time
+      // shape check needs the escape hatch.
+      // oxlint-disable-next-line typescript/no-explicit-any -- see comment above
+    }, webjsxSlot('dsh-app-frame') as any)
     return () => {
       disposeRegistration()
       // provide()'s disposer settles asynchronously; teardown is synchronous fire-and-forget.

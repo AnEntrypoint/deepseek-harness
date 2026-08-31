@@ -17,7 +17,8 @@
 // independent); an error row's collapsed summary is the failure's first line in
 // the error color.
 
-import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import {
   CodeBlock, DiffBlock, DisclosureRow, IconInspectOutline12, ReadBlock, SearchBlock, StateDot, TerminalBlock, WebBlock,
@@ -38,7 +39,7 @@ export interface ToolRowProps {
   /** Wire tool name for tool-owned styling layered over the generic variant. */
   toolName?: string | undefined
   /** Leading 16px tool icon, shown while collapsed and not running/failed. */
-  icon: ReactNode
+  icon: VNode | string | null
   title: string
   summary: string
   /**
@@ -104,7 +105,7 @@ export interface ToolRowProps {
 /** Leading-slot state substitution: the tool icon yields to the terminal state
  *  semantic (error = red, interrupted = amber halo). Running keeps the icon —
  *  the row sweep (CSS on data-state) carries the in-flight signal. */
-function leadingFor(state: ToolRowState, icon: ReactNode): ReactNode {
+function leadingFor(state: ToolRowState, icon: VNode | string | null): VNode | string | null {
   switch (state) {
     case 'error': return <StateDot state="error" />
     case 'stopped': return <StateDot state="warning" />
@@ -125,183 +126,200 @@ function stateStatus(state: ToolRowState, t: TranslateNS<'conversation'>): strin
   }
 }
 
-export function ToolRow({
-  t,
-  variant,
-  toolName,
-  icon,
-  title,
-  summary,
-  summarySuffix,
-  body,
-  output,
-  errorSummary,
-  terminal,
-  diff,
-  read,
-  search,
-  web,
-  state,
-  filePath,
-  onOpenFile,
-  inspect,
-}: ToolRowProps) {
-  const [expanded, setExpanded] = useState(false)
-  const terminalBody = terminal ?? null
-  const diffBody = diff ?? null
-  const readBody = read ?? null
-  const searchBody = search ?? null
-  const webBody = web ?? null
-  const outputText = output ?? null
-  // A card replaces the text body; a call carries at most one card kind, so the
-  // card props are mutually exclusive. Any of them, or a text body/output,
-  // makes the row expandable.
-  const card = terminalBody ?? diffBody ?? readBody ?? searchBody ?? webBody
-  const expandable = body !== null || outputText !== null || card !== null
-  const open = expanded && expandable
-  // The run-state label AT needs: the StateDot and the running sweep are both
-  // aria-hidden / colour-only, so a stopped or running row is otherwise silent.
-  const status = stateStatus(state, t)
-  // An error row's collapsed summary IS the failure: the first error line in
-  // the error color outranks both the args summary and a terminal description.
-  const failureLine = state === 'error' ? errorSummary ?? null : null
-  const summaryText = failureLine ?? summary
-  // The failure line replaces the summary wholesale, so a suffix derived from
-  // the call args has nothing left to sit beside.
-  const suffix = failureLine === null ? summarySuffix ?? null : null
-  // The failure line is error prose, not the path: no open-file affordance.
-  const fileLink = filePath !== undefined && onOpenFile !== undefined && failureLine === null
-  const toggleExpand = () => {
-    setExpanded(v => !v)
+/**
+ * The single-line tool summary row, converted from a React hooks component
+ * (`expanded` was `useState`) to a webjsx custom element: `expanded` is an
+ * instance field, re-render is an explicit `#render()` calling
+ * `applyDiff(this, vdom)`.
+ */
+export class DshToolRow extends HTMLElement {
+  #props: ToolRowProps | null = null
+  #expanded = false
+
+  setProps(props: ToolRowProps): void {
+    this.#props = props
+    this.#render()
   }
-  const openFile = (event: MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation()
-    if (filePath !== undefined) onOpenFile?.(filePath)
+
+  connectedCallback(): void {
+    this.#render()
   }
-  // Keep Enter/Space on the focused path link from bubbling to the row's
-  // keydown handler, which would preventDefault() the key and toggle expand
-  // instead of activating the link — the keyboard analogue of openFile's
-  // stopPropagation. The native button still fires its own onClick from the key.
-  const fileLinkKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+
+  #toggleExpand = (): void => {
+    this.#expanded = !this.#expanded
+    this.#render()
   }
-  // The code variant's program renders through CodeBlock (shiki), so only its
-  // output joins the IN/OUT card; every other variant's input does too.
-  const cardBody = variant === 'code' ? null : body
-  // The state substitution rides the idle icon slot, so an expandable error
-  // row keeps DisclosureRow's icon→chevron hover preview (its default) instead
-  // of losing it with the icon.
-  return (
-    <div className={css.root} data-variant={variant} data-tool={toolName} data-state={state}>
-      {status !== null && <span className={css.visuallyHidden}>{status}</span>}
-      <DisclosureRow
-        rowClassName={css.row}
-        leadingClassName={css.leading}
-        titleClassName={css.title}
-        chevronClassName={css.chevron}
-        icon={leadingFor(state, icon)}
-        title={title}
-        open={open}
-        expandable={expandable}
-        expandOnRowClick
-        keepContentWhenOpen
-        onToggle={toggleExpand}
-        collapsedContent={summaryText !== '' && (
-          /* An empty summary drops the separator with it (a row that is only
-             its title shows no trailing dot). */
-          <>
-            <span className={css.sep} aria-hidden />
-            {fileLink ? (
-              <button
-                type="button"
-                className={css.fileLink}
-                onClick={openFile}
-                onKeyDown={fileLinkKeyDown}
-              >
-                {summaryText}
-              </button>
-            ) : (
-              <span
-                className={clsx(css.summary, failureLine !== null && css.errorSummary)}
-              >
-                {summaryText}
-              </span>
-            )}
-            {suffix !== null && <span className={css.summarySuffix}>{suffix}</span>}
-          </>
-        )}
-      >
-        {/* The wrapper (sibling of the header row, so clicks inside never
-            toggle it) carries the expanded body and the Inspect pill below. */}
-        <div className={css.bodyWrap}>
-          {terminalBody !== null
-            ? (
-              <TerminalBlock
-                {...terminalBody.card}
-                maxLines={Infinity}
-                labels={terminalBlockLabels(t)}
-                className={css.terminalBody}
-              />
-            )
-            : diffBody !== null
-              ? <DiffBlock {...diffBody.card} maxLines={CHAT_DIFF_MAX_LINES} className={css.diffBody} />
-              : readBody !== null
-                ? <ReadBlock {...readBody} maxLines={CHAT_READ_MAX_LINES} className={css.readBody} />
-                : searchBody !== null
-                  ? (
-                    <>
-                      <SearchBlock {...searchBody.card} maxLines={CHAT_SEARCH_MAX_LINES} className={css.searchBody} />
-                      {/* A capped search's recovery locator lives only in the result
-                          text; show it below the card so the dropped rows survive. */}
-                      {searchBody.recovery !== undefined && (
-                        <div className={css.searchRecovery}>{searchBody.recovery}</div>
-                      )}
-                    </>
-                  )
-                  : webBody !== null
-                    ? <WebBlock {...webBody} className={css.webBody} />
-                    : (
-                      <>
-                        {variant === 'code' && body !== null && (
-                          <div className={css.bodyScroll}>
-                            <CodeBlock code={body} lang="typescript" copyLabel={t('copy')} copiedLabel={t('copied')} className={css.codeBody} />
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const {
+      t, variant, toolName, icon, title, summary, summarySuffix, body, output, errorSummary,
+      terminal, diff, read, search, web, state, filePath, onOpenFile, inspect,
+    } = props
+    const terminalBody = terminal ?? null
+    const diffBody = diff ?? null
+    const readBody = read ?? null
+    const searchBody = search ?? null
+    const webBody = web ?? null
+    const outputText = output ?? null
+    // A card replaces the text body; a call carries at most one card kind, so the
+    // card props are mutually exclusive. Any of them, or a text body/output,
+    // makes the row expandable.
+    const card = terminalBody ?? diffBody ?? readBody ?? searchBody ?? webBody
+    const expandable = body !== null || outputText !== null || card !== null
+    const open = this.#expanded && expandable
+    // The run-state label AT needs: the StateDot and the running sweep are both
+    // aria-hidden / colour-only, so a stopped or running row is otherwise silent.
+    const status = stateStatus(state, t)
+    // An error row's collapsed summary IS the failure: the first error line in
+    // the error color outranks both the args summary and a terminal description.
+    const failureLine = state === 'error' ? errorSummary ?? null : null
+    const summaryText = failureLine ?? summary
+    // The failure line replaces the summary wholesale, so a suffix derived from
+    // the call args has nothing left to sit beside.
+    const suffix = failureLine === null ? summarySuffix ?? null : null
+    // The failure line is error prose, not the path: no open-file affordance.
+    const fileLink = filePath !== undefined && onOpenFile !== undefined && failureLine === null
+    const openFile = (event: MouseEvent): void => {
+      event.stopPropagation()
+      if (filePath !== undefined) onOpenFile?.(filePath)
+    }
+    // Keep Enter/Space on the focused path link from bubbling to the row's
+    // keydown handler, which would preventDefault() the key and toggle expand
+    // instead of activating the link — the keyboard analogue of openFile's
+    // stopPropagation. The native button still fires its own onClick from the key.
+    const fileLinkKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+    }
+    // The code variant's program renders through CodeBlock (shiki), so only its
+    // output joins the IN/OUT card; every other variant's input does too.
+    const cardBody = variant === 'code' ? null : body
+    // The state substitution rides the idle icon slot, so an expandable error
+    // row keeps DisclosureRow's icon→chevron hover preview (its default) instead
+    // of losing it with the icon.
+    const vdom = (
+      <div class={css.root ?? ''} data-variant={variant} data-tool={toolName} data-state={state}>
+        {status !== null && <span class={css.visuallyHidden ?? ''}>{status}</span>}
+        <DisclosureRow
+          rowClassName={css.row}
+          leadingClassName={css.leading}
+          titleClassName={css.title}
+          chevronClassName={css.chevron}
+          icon={leadingFor(state, icon)}
+          title={title}
+          open={open}
+          expandable={expandable}
+          expandOnRowClick
+          keepContentWhenOpen
+          onToggle={this.#toggleExpand}
+          collapsedContent={summaryText !== '' ? (
+            /* An empty summary drops the separator with it (a row that is only
+               its title shows no trailing dot). */
+            [
+              <span class={css.sep ?? ''} aria-hidden />,
+              fileLink ? (
+                <button
+                  type="button"
+                  class={css.fileLink ?? ''}
+                  onclick={openFile}
+                  onkeydown={fileLinkKeyDown}
+                >
+                  {summaryText}
+                </button>
+              ) : (
+                <span
+                  class={clsx(css.summary, failureLine !== null && css.errorSummary)}
+                >
+                  {summaryText}
+                </span>
+              ),
+              suffix !== null ? <span class={css.summarySuffix ?? ''}>{suffix}</span> : null,
+            ]
+          ) : null}
+        >
+          {/* The wrapper (sibling of the header row, so clicks inside never
+              toggle it) carries the expanded body and the Inspect pill below. */}
+          <div class={css.bodyWrap ?? ''}>
+            {terminalBody !== null
+              ? (
+                <TerminalBlock
+                  {...terminalBody.card}
+                  maxLines={Infinity}
+                  labels={terminalBlockLabels(t)}
+                  className={css.terminalBody}
+                /> as unknown as JSX.Element
+              )
+              : diffBody !== null
+                ? <DiffBlock {...diffBody.card} maxLines={CHAT_DIFF_MAX_LINES} className={css.diffBody} />
+                : readBody !== null
+                  ? <ReadBlock {...readBody} maxLines={CHAT_READ_MAX_LINES} className={css.readBody} />
+                  : searchBody !== null
+                    ? [
+                      <SearchBlock
+                        {...searchBody.card} maxLines={CHAT_SEARCH_MAX_LINES} className={css.searchBody}
+                      /> as unknown as JSX.Element,
+                      /* A capped search's recovery locator lives only in the result
+                          text; show it below the card so the dropped rows survive. */
+                      searchBody.recovery !== undefined
+                        ? <div class={css.searchRecovery ?? ''}>{searchBody.recovery}</div>
+                        : null,
+                    ]
+                    : webBody !== null
+                      ? <WebBlock {...webBody} className={css.webBody} />
+                      : [
+                        variant === 'code' && body !== null ? (
+                          <div class={css.bodyScroll ?? ''}>
+                            <CodeBlock code={body} lang="typescript" copyLabel={t('copy')} copiedLabel={t('copied')} className={css.codeBody} /> as unknown as JSX.Element
                           </div>
-                        )}
-                        {(cardBody !== null || outputText !== null) && (
-                          <div className={css.ioCard}>
+                        ) : null,
+                        (cardBody !== null || outputText !== null) ? (
+                          <div class={css.ioCard ?? ''}>
                             {cardBody !== null && (
-                              <div className={css.ioSection}>
-                                <span className={css.ioLabel}>IN</span>
-                                <span className={css.ioText}>{cardBody}</span>
+                              <div class={css.ioSection ?? ''}>
+                                <span class={css.ioLabel ?? ''}>IN</span>
+                                <span class={css.ioText ?? ''}>{cardBody}</span>
                               </div>
                             )}
                             {cardBody !== null && outputText !== null && (
-                              <span className={css.ioDivider} aria-hidden />
+                              <span class={css.ioDivider ?? ''} aria-hidden />
                             )}
                             {outputText !== null && (
-                              <div className={css.ioSection}>
-                                <span className={css.ioLabel}>OUT</span>
-                                <span className={css.ioText} data-error={state === 'error' || undefined}>
+                              <div class={css.ioSection ?? ''}>
+                                <span class={css.ioLabel ?? ''}>OUT</span>
+                                <span class={css.ioText ?? ''} data-error={state === 'error' || undefined}>
                                   {outputText}
                                 </span>
                               </div>
                             )}
                           </div>
-                        )}
-                      </>
-                    )}
-          {inspect !== undefined && (
-            <button
-              type="button"
-              className={css.inspectButton}
-              onClick={inspect}
-            >
-              <IconInspectOutline12 />
-              Inspect
-            </button>
-          )}
-        </div>
-      </DisclosureRow>
-    </div>
-  )
+                        ) : null,
+                      ]}
+            {inspect !== undefined && (
+              <button
+                type="button"
+                class={css.inspectButton ?? ''}
+                onclick={inspect}
+              >
+                <IconInspectOutline12 />
+                Inspect
+              </button>
+            )}
+          </div>
+        </DisclosureRow>
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-tool-row') === undefined) {
+  customElements.define('dsh-tool-row', DshToolRow)
+}
+
+/** One-shot creation helper preserving the original function-component call shape. */
+export function ToolRow(props: ToolRowProps): DshToolRow {
+  const el = document.createElement('dsh-tool-row') as DshToolRow
+  el.setProps(props)
+  return el
 }

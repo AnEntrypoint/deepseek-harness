@@ -14,9 +14,9 @@ import type { IconProps } from './icons/props.ts'
 export function FishLogo({ size = 24, className }: IconProps) {
   return (
     <svg
-      width={size}
-      height={(size * 17.04) / 23.16}
-      className={className}
+      width={String(size)}
+      height={String((size * 17.04) / 23.16)}
+      class={className ?? ''}
       viewBox="0 0 23.16 17.04"
       fill="none"
       aria-hidden="true"

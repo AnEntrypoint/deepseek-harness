@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { applyDiff } from 'webjsx'
 import type { JobView } from '@deepseek-ai/dsh-client-runtime/client'
-import { IconChevronDownOutline14, StateDot, useDismissOnOutsidePointer, type StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, StateDot, createDismissOnOutsidePointer, type StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { NS } from './locales.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -85,99 +85,158 @@ function ordered(jobs: readonly JobView[]): JobView[] {
 }
 
 /**
- * Session-header entry point for this session's background jobs. It renders
- * nothing at all until the session has at least one job, so an ordinary
- * conversation never grows a control for a capability it is not using.
- * @param props - runtime slot currency plus the namespace translator.
- * @returns the trigger and its popover list, or null when there is nothing to show.
+ * Session-header entry point for this session's background jobs custom
+ * element (see module doc). Renders nothing at all until the session has at
+ * least one job, so an ordinary conversation never grows a control for a
+ * capability it is not using.
+ *
+ * Converted from a React hooks component to a webjsx custom element: `open`/
+ * `now` become private fields, the dismiss-on-outside-pointer effect and the
+ * live-duration ticker become connectedCallback/disconnectedCallback-managed
+ * controllers/timers, and re-render is an explicit applyDiff(this, vdom) call
+ * (Toast.tsx's pattern) instead of implicit re-render on setState.
  */
-export function JobListAction({ sessionId, useSessions, t }: JobListActionProps) {
-  const jobs = useSessions(state => state.jobsBySession[sessionId]) ?? NO_TASKS
-  const [open, setOpen] = useState(false)
-  const [now, setNow] = useState(() => Date.now())
-  const rootRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
+export class DshJobListAction extends HTMLElement {
+  #props: JobListActionProps | null = null
+  #open = false
+  #now = Date.now()
+  #tickTimer: ReturnType<typeof setInterval> | null = null
+  #dismiss = createDismissOnOutsidePointer({ root: this, onDismiss: () => { this.#setOpen(false) } })
 
-  const rows = useMemo(() => ordered(jobs), [jobs])
-  const liveCount = useMemo(() => jobs.filter(isLive).length, [jobs])
-
-  useDismissOnOutsidePointer(rootRef, open, setOpen)
-
-  // The clock only runs while an open list is showing something that moves.
-  useEffect(() => {
-    if (!open || liveCount === 0) return
-    setNow(Date.now())
-    const timer = setInterval(() => { setNow(Date.now()) }, 1_000)
-    return () => { clearInterval(timer) }
-  }, [open, liveCount])
-
-  // The last job disappearing removes this control; close first so focus does
-  // not vanish from an unmounting node.
-  useEffect(() => {
-    if (jobs.length === 0 && open) setOpen(false)
-  }, [jobs.length, open])
-
-  if (jobs.length === 0) return null
-
-  const countKey = liveCount > 0
-    ? (liveCount === 1 ? 'count.live.one' : 'count.live.other')
-    : (jobs.length === 1 ? 'count.idle.one' : 'count.idle.other')
-  const countLabel = t(countKey, { count: liveCount > 0 ? liveCount : jobs.length })
-
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key !== 'Escape' || !open) return
-    event.preventDefault()
-    setOpen(false)
-    triggerRef.current?.focus()
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: JobListActionProps): void {
+    this.#props = props
+    this.#render()
   }
 
-  return (
-    <div ref={rootRef} className={css.root} onKeyDown={onKeyDown}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className={css.trigger}
-        aria-expanded={open}
-        aria-label={countLabel}
-        onClick={() => {
-          // Sample the clock in the same commit that opens the list: the
-          // mount-time value predates every job, so the first painted frame
-          // would otherwise clamp a long-running row to zero until the
-          // open effect corrects it a frame later.
-          setNow(Date.now())
-          setOpen(current => !current)
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#dismiss.stop()
+    this.#stopTick()
+  }
+
+  #setOpen(open: boolean): void {
+    if (this.#open === open) return
+    this.#open = open
+    if (open) {
+      this.#now = Date.now()
+      this.#dismiss.start()
+    } else {
+      this.#dismiss.stop()
+    }
+    this.#syncTick()
+    this.#render()
+  }
+
+  #syncTick(): void {
+    const props = this.#props
+    const jobs = props === null ? NO_TASKS : (props.useSessions(state => state.jobsBySession[props.sessionId]) ?? NO_TASKS)
+    const liveCount = jobs.filter(isLive).length
+    if (this.#open && liveCount > 0) {
+      if (this.#tickTimer === null) {
+        this.#tickTimer = setInterval(() => {
+          this.#now = Date.now()
+          this.#render()
+        }, 1_000)
+      }
+    } else {
+      this.#stopTick()
+    }
+  }
+
+  #stopTick(): void {
+    if (this.#tickTimer !== null) { clearInterval(this.#tickTimer); this.#tickTimer = null }
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) { applyDiff(this, <span style="display:none" />); return }
+    const { sessionId, useSessions, t } = props
+    const jobs = useSessions(state => state.jobsBySession[sessionId]) ?? NO_TASKS
+
+    // The last job disappearing removes this control; close first so focus
+    // does not vanish from an unmounting node.
+    if (jobs.length === 0 && this.#open) {
+      this.#open = false
+      this.#dismiss.stop()
+      this.#stopTick()
+    }
+
+    if (jobs.length === 0) { applyDiff(this, <span style="display:none" />); return }
+
+    const rows = ordered(jobs)
+    const liveCount = jobs.filter(isLive).length
+    const countKey = liveCount > 0
+      ? (liveCount === 1 ? 'count.live.one' : 'count.live.other')
+      : (jobs.length === 1 ? 'count.idle.one' : 'count.idle.other')
+    const countLabel = t(countKey, { count: liveCount > 0 ? liveCount : jobs.length })
+    const open = this.#open
+    const now = this.#now
+
+    const vdom = (
+      <div
+        class={css.root ?? ''}
+        onkeydown={(event: KeyboardEvent) => {
+          if (event.key !== 'Escape' || !open) return
+          event.preventDefault()
+          this.#setOpen(false)
+          this.querySelector<HTMLButtonElement>(`.${css.trigger ?? ''}`)?.focus()
         }}
       >
-        {liveCount > 0 ? <StateDot state="ongoing" className={css.triggerDot} /> : null}
-        <span className={css.count}>{countLabel}</span>
-        <IconChevronDownOutline14 className={open ? css.triggerOpen : undefined} />
-      </button>
-      {open
-        ? (
-          <ul className={css.menu} aria-label={t('list.aria')}>
-            {rows.map((job) => {
-              const live = isLive(job)
-              const elapsed = live ? now - job.startedAt : (job.finishedAt ?? job.startedAt) - job.startedAt
-              const duration = formatDuration(elapsed, t)
-              const status = statusLabel(job.status, t)
-              return (
-                <li key={job.id} className={live ? css.row : `${css.row} ${css.rowSettled}`}>
-                  <StateDot state={dotState(job.status)} className={css.rowDot} />
-                  <span className={css.kind}>{job.kind}</span>
-                  <span className={css.label} title={job.label}>{job.label}</span>
-                  <span className={css.status} title={job.detail ?? status}>{job.detail ?? status}</span>
-                  <span
-                    className={css.duration}
-                    title={t(live ? 'duration.title.live' : 'duration.title.done', { duration })}
-                  >
-                    {duration}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        )
-        : null}
-    </div>
-  )
+        <button
+          type="button"
+          class={css.trigger ?? ''}
+          aria-expanded={String(open)}
+          aria-label={countLabel}
+          onclick={() => {
+            // Sample the clock in the same commit that opens the list: the
+            // mount-time value predates every job, so the first painted frame
+            // would otherwise clamp a long-running row to zero until the
+            // open effect corrects it a frame later.
+            this.#now = Date.now()
+            this.#setOpen(!open)
+          }}
+        >
+          {liveCount > 0 ? <StateDot state="ongoing" className={css.triggerDot} /> : null}
+          <span class={css.count ?? ''}>{countLabel}</span>
+          <IconChevronDownOutline14 className={open ? css.triggerOpen : undefined} />
+        </button>
+        {open
+          ? (
+            <ul class={css.menu ?? ''} aria-label={t('list.aria')}>
+              {rows.map((job) => {
+                const live = isLive(job)
+                const elapsed = live ? now - job.startedAt : (job.finishedAt ?? job.startedAt) - job.startedAt
+                const duration = formatDuration(elapsed, t)
+                const status = statusLabel(job.status, t)
+                return (
+                  <li class={live ? (css.row ?? '') : `${css.row ?? ''} ${css.rowSettled ?? ''}`}>
+                    <StateDot state={dotState(job.status)} className={css.rowDot} />
+                    <span class={css.kind ?? ''}>{job.kind}</span>
+                    <span class={css.label ?? ''} title={job.label}>{job.label}</span>
+                    <span class={css.status ?? ''} title={job.detail ?? status}>{job.detail ?? status}</span>
+                    <span
+                      class={css.duration ?? ''}
+                      title={t(live ? 'duration.title.live' : 'duration.title.done', { duration })}
+                    >
+                      {duration}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          )
+          : null}
+      </div>
+    )
+    applyDiff(this, vdom)
+    this.#syncTick()
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-job-list-action') === undefined) {
+  customElements.define('dsh-job-list-action', DshJobListAction)
 }

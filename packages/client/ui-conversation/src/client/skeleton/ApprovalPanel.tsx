@@ -12,7 +12,7 @@
 // after a click and the panel leaves (the InputBar returns) on the broadcast
 // resolved frame.
 
-import { useMemo, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { RunningToolCall } from '@deepseek-ai/dsh-client-runtime/client'
 import { PendingApproval, type ApprovalComposerProps } from '../contract/slots.ts'
@@ -32,56 +32,99 @@ export function commandOf(call: RunningToolCall | undefined): string | undefined
 }
 
 /**
+ * Approval flow custom element: the one-shot answered latch keyed by the
+ * approval's own `key`. Converted from a React hooks component to a webjsx
+ * custom element — `answered` becomes an instance field, keyed remount
+ * (React's `key`) becomes recreating the element when `pending.key` changes.
+ */
+export class DshApprovalFlow extends HTMLElement {
+  #pending: PendingApproval | null = null
+  #command: string | undefined
+  #t: ApprovalComposerProps['t'] | null = null
+  #answered = false
+
+  setProps(pending: PendingApproval, command: string | undefined, t: ApprovalComposerProps['t']): void {
+    this.#pending = pending
+    this.#command = command
+    this.#t = t
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #answer(outcome: 'allowed-once' | 'rejected'): void {
+    if (this.#pending === null) return
+    this.#answered = true
+    this.#render()
+    void this.#pending.answer(outcome).catch(() => { this.#answered = false; this.#render() })
+  }
+
+  #render(): void {
+    const pending = this.#pending
+    const t = this.#t
+    if (pending === null || t === null) return
+    const command = this.#command
+    const answered = this.#answered
+    const vdom = (
+      <div class={css.root ?? ''} data-approval-key={pending.key}>
+        <div class={css.card ?? ''}>
+          <div class={css.strip ?? ''}><span class={css.dot ?? ''} />{t('approval.waiting')}</div>
+          {/* Tab stop: the region scrolls once the command passes the cap and
+              holds nothing focusable of its own, so without one a keyboard-only
+              user cannot reach the command's tail before answering. */}
+          <div class={css.body ?? ''} data-approval-scroll="" tabindex="0" role="group" aria-label={t('approval.detail.aria')}>
+            <div class={css.headline ?? ''}>{pending.reason ?? t('approval.escalation', { toolName: pending.toolName })}</div>
+            {command !== undefined && <div class={css.command ?? ''}>{command}</div>}
+          </div>
+          <div class={css.actionRow ?? ''}>
+            <Button variant="outline" class={css.reject} disabled={answered} onclick={() => { this.#answer('rejected') }}>
+              {t('approval.reject')}
+            </Button>
+            <Button variant="primary" disabled={answered} onclick={() => { this.#answer('allowed-once') }}>
+              {t('approval.allowOnce')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-approval-flow') === undefined) {
+  customElements.define('dsh-approval-flow', DshApprovalFlow)
+}
+
+/** Registry of the mounted flow element per approval key, so remount happens only when the key changes. */
+const approvalFlowByKey = new Map<string, DshApprovalFlow>()
+
+/**
  * Composer takeover boundary: mints the domain face on the carrier's stable
  * identity and remounts the flow per request key, so the one-shot answered
  * latch never leaks to the next pending approval.
  * @param props - the selector-matched pending approval carrier plus the framework standard kit.
  * @returns The approval prompt for this request.
  */
-export function ApprovalPanel(props: ApprovalComposerProps) {
-  const approval = useMemo(() => new PendingApproval(props.matched), [props.matched])
+export function ApprovalPanel(props: ApprovalComposerProps): JSX.Element {
+  const approval = new PendingApproval(props.matched)
   const command = props.useSession((snapshot) => {
     if (approval.callId === undefined) return undefined
     const root = rootToolCall(snapshot, approval.callId)
     if (root === undefined) return undefined
     return root.callId === approval.callId && !('kind' in root) ? commandOf(root) : undefined
   })
-  return <ApprovalFlow key={approval.key} pending={approval} t={props.t} {...command === undefined ? {} : { command }} />
-}
-
-function ApprovalFlow({ pending, command, t }: {
-  pending: PendingApproval
-  command?: string
-  t: ApprovalComposerProps['t']
-}) {
-  // Local one-shot latch: the panel leaves only when the resolved frame
-  // lands; until then the buttons must not re-fire. An answer failure
-  // (rejected receipt / transport) re-arms them for retry.
-  const [answered, setAnswered] = useState(false)
-  const answer = (outcome: 'allowed-once' | 'rejected'): void => {
-    setAnswered(true)
-    void pending.answer(outcome).catch(() => { setAnswered(false) })
+  // Keyed remount: a stale entry for a different key is dropped so the
+  // one-shot answered latch never leaks to the next pending approval.
+  for (const key of approvalFlowByKey.keys()) {
+    if (key !== approval.key) approvalFlowByKey.delete(key)
   }
-  return (
-    <div className={css.root} data-approval-key={pending.key}>
-      <div className={css.card}>
-        <div className={css.strip}><span className={css.dot} />{t('approval.waiting')}</div>
-        {/* Tab stop: the region scrolls once the command passes the cap and
-            holds nothing focusable of its own, so without one a keyboard-only
-            user cannot reach the command's tail before answering. */}
-        <div className={css.body} data-approval-scroll="" tabIndex={0} role="group" aria-label={t('approval.detail.aria')}>
-          <div className={css.headline}>{pending.reason ?? t('approval.escalation', { toolName: pending.toolName })}</div>
-          {command !== undefined && <div className={css.command}>{command}</div>}
-        </div>
-        <div className={css.actionRow}>
-          <Button variant="outline" className={css.reject} disabled={answered} onClick={() => { answer('rejected') }}>
-            {t('approval.reject')}
-          </Button>
-          <Button variant="primary" disabled={answered} onClick={() => { answer('allowed-once') }}>
-            {t('approval.allowOnce')}
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
+  let el = approvalFlowByKey.get(approval.key)
+  if (el === undefined) {
+    el = document.createElement('dsh-approval-flow') as DshApprovalFlow
+    approvalFlowByKey.set(approval.key, el)
+  }
+  el.setProps(approval, command, props.t)
+  return el as unknown as JSX.Element
 }

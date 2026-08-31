@@ -47,21 +47,21 @@ export function TrajectoryToolbar({
   searchQuery,
   onSearchQueryChange,
   t,
-}: TrajectoryToolbarProps) {
+}: TrajectoryToolbarProps): JSX.Element {
   return (
-    <div className={css.root} role="toolbar" aria-label={t('toolbar.aria')}>
-      <div className={css.inner}>
-        <div className={css.actions}>
+    <div class={css.root ?? ''} role="toolbar" aria-label={t('toolbar.aria')}>
+      <div class={css.inner ?? ''}>
+        <div class={css.actions ?? ''}>
           <button
             type="button"
-            className={css.toggle}
+            class={css.toggle ?? ''}
             aria-label={t('toolbar.useActualDuration')}
             aria-pressed={actualDuration}
             title={actualDuration ? t('toolbar.useEqualWidth') : t('toolbar.useActualDuration')}
-            onClick={() => { onActualDurationChange(!actualDuration) }}
+            onclick={() => { onActualDurationChange(!actualDuration) }}
           >
             <svg
-              className={css.toggleIcon}
+              class={css.toggleIcon ?? ''}
               viewBox="0 0 16 16"
               fill="none"
               aria-hidden="true"
@@ -73,53 +73,53 @@ export function TrajectoryToolbar({
           </button>
           <button
             type="button"
-            className={css.control}
+            class={css.control ?? ''}
             role="switch"
             aria-checked={actualTime}
             hidden
-            onClick={() => { onActualTimeChange(!actualTime) }}
+            onclick={() => { onActualTimeChange(!actualTime) }}
           >
             <span>{t('toolbar.actualTime')}</span>
-            <span className={css.controlTrack} data-on={actualTime || undefined} aria-hidden="true">
-              <span className={css.controlThumb} />
+            <span class={css.controlTrack ?? ''} data-on={actualTime || undefined} aria-hidden="true">
+              <span class={css.controlThumb ?? ''} />
             </span>
           </button>
           <button
             type="button"
-            className={css.action}
+            class={css.action ?? ''}
             aria-label={allTurnsCollapsed ? t('toolbar.expandTurns') : t('toolbar.collapseTurns')}
             aria-pressed={allTurnsCollapsed}
             title={allTurnsCollapsed ? t('toolbar.expandTurns') : t('toolbar.collapseTurns')}
-            onClick={onToggleAllTurns}
+            onclick={onToggleAllTurns}
           >
-            <span className={css.actionIcon} aria-hidden="true">
+            <span class={css.actionIcon ?? ''} aria-hidden="true">
               {allTurnsCollapsed ? '⊞' : '⊟'}
             </span>
             {t('toolbar.turns')}
           </button>
           <button
             type="button"
-            className={css.action}
+            class={css.action ?? ''}
             aria-label={allAssistantsCollapsed ? t('toolbar.expandCalls') : t('toolbar.collapseCalls')}
             aria-pressed={allAssistantsCollapsed}
             title={allAssistantsCollapsed ? t('toolbar.expandCalls') : t('toolbar.collapseCalls')}
-            onClick={onToggleAllAssistants}
+            onclick={onToggleAllAssistants}
           >
-            <span className={css.actionIcon} aria-hidden="true">
+            <span class={css.actionIcon ?? ''} aria-hidden="true">
               {allAssistantsCollapsed ? '⊞' : '⊟'}
             </span>
             {t('toolbar.calls')}
           </button>
         </div>
-        <div className={css.search}>
-          <IconSearchOutline16 size={11} className={css.searchIcon} />
+        <div class={css.search ?? ''}>
+          <IconSearchOutline16 size={11} className={css.searchIcon ?? ''} />
           <input
             type="search"
-            className={css.searchInput}
+            class={css.searchInput ?? ''}
             aria-label={t('toolbar.search')}
             placeholder={t('toolbar.searchPlaceholder')}
             value={searchQuery}
-            onChange={(event) => { onSearchQueryChange(event.currentTarget.value) }}
+            oninput={(event: Event) => { onSearchQueryChange((event.currentTarget as HTMLInputElement).value) }}
           />
         </div>
       </div>

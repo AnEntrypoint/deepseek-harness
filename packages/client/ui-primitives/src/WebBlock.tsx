@@ -114,11 +114,11 @@ function linkLabel(url: string, title: string | undefined): string {
  * @param props.className - class for the anchor or the plain span.
  * @returns the anchor or span element.
  */
-function SafeLink({ url, label, className }: { url: string; label: string; className?: string | undefined }) {
+function SafeLink({ url, label, className }: { url: string; label: string; className?: string | undefined }): JSX.Element {
   const href = safeHref(url)
-  if (href === undefined) return <span className={className}>{label}</span>
+  if (href === undefined) return <span class={className ?? ''}>{label}</span>
   return (
-    <a className={className} href={href} target="_blank" rel="noopener noreferrer">
+    <a class={className ?? ''} href={href} target="_blank" rel="noopener noreferrer">
       {label}
     </a>
   )
@@ -133,15 +133,15 @@ function SafeLink({ url, label, className }: { url: string; label: string; class
  * @param props.ordinal - the source's 1-based position in the full list.
  * @returns the source list item.
  */
-function SourceItem({ source, ordinal }: { source: WebSourceView; ordinal: number }) {
+function SourceItem({ source, ordinal }: { source: WebSourceView; ordinal: number }): JSX.Element {
   return (
-    <li className={css.source} value={ordinal}>
+    <li class={css.source ?? ''} value={ordinal}>
       <SafeLink url={source.url} label={linkLabel(source.url, source.title)} className={css.sourceLink} />
       {source.snippet !== undefined && source.snippet !== '' && (
-        <div className={css.snippet}>{source.snippet}</div>
+        <div class={css.snippet ?? ''}>{source.snippet}</div>
       )}
       {source.publishedAt !== undefined && source.publishedAt !== '' && (
-        <div className={css.published}>{source.publishedAt}</div>
+        <div class={css.published ?? ''}>{source.publishedAt}</div>
       )}
     </li>
   )
@@ -153,24 +153,24 @@ function SourceItem({ source, ordinal }: { source: WebSourceView; ordinal: numbe
  * @param props - see {@link WebSearchBlockProps}.
  * @returns the search card element.
  */
-function WebSearchBlock({ answer, sources, truncated, className }: WebSearchBlockProps) {
+function WebSearchBlock({ answer, sources, truncated, className }: WebSearchBlockProps): JSX.Element {
   // A provider may legitimately return no answer and no sources; the chat WebRow
   // does not show the raw result content, so without this the user would see an
   // empty card. Mirror the backend's `No results found.` render text.
   const empty = (answer === undefined || answer === '') && sources.length === 0
   return (
-    <div className={clsx(css.block, className)} data-web="search">
+    <div class={clsx(css.block, className)} data-web="search">
       {answer !== undefined && answer !== '' && (
-        <div className={css.answer}><MarkdownText text={answer} /></div>
+        <div class={css.answer ?? ''}><MarkdownText text={answer} /></div>
       )}
       {empty ? (
-        <div className={css.empty}>未找到结果</div>
+        <div class={css.empty ?? ''}>未找到结果</div>
       ) : (
-        <ol className={css.sources}>
+        <ol class={css.sources ?? ''}>
           {sources.map((source, index) => <SourceItem key={index} source={source} ordinal={index + 1} />)}
         </ol>
       )}
-      {truncated && <div className={css.truncated}>来源列表已截断</div>}
+      {truncated && <div class={css.truncated ?? ''}>来源列表已截断</div>}
     </div>
   )
 }
@@ -180,13 +180,13 @@ function WebSearchBlock({ answer, sources, truncated, className }: WebSearchBloc
  * @param props - see {@link WebFetchBlockProps}.
  * @returns the fetch card element.
  */
-function WebFetchBlock({ url, statusCode, truncated, className }: WebFetchBlockProps) {
+function WebFetchBlock({ url, statusCode, truncated, className }: WebFetchBlockProps): JSX.Element {
   return (
-    <div className={clsx(css.block, css.fetch, className)} data-web="fetch">
+    <div class={clsx(css.block, css.fetch, className)} data-web="fetch">
       <SafeLink url={url} label={url} className={css.fetchUrl} />
-      <div className={css.fetchMeta}>
-        <span className={css.status}>HTTP {statusCode}</span>
-        {truncated && <span className={css.truncated}>内容已截断</span>}
+      <div class={css.fetchMeta ?? ''}>
+        <span class={css.status ?? ''}>HTTP {statusCode}</span>
+        {truncated && <span class={css.truncated ?? ''}>内容已截断</span>}
       </div>
     </div>
   )

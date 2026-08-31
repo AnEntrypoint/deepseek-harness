@@ -1,6 +1,5 @@
 /** Shared trajectory record data and formatting contracts. */
 
-import type { HTMLAttributes } from 'react'
 import type { ConversationPromptSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
 
 /** Closed set of trajectory record kinds. */
@@ -34,7 +33,9 @@ export interface TrajectorySourceBlock {
 }
 
 /** Data and optional presentation attributes for one trajectory record. */
-export interface TrajectoryCellProps extends HTMLAttributes<HTMLDivElement> {
+export interface TrajectoryCellProps extends Record<string, unknown> {
+  /** CSS class applied to the root element. */
+  className?: string
   /** 1-based record index shown as `#N`. */
   index: number
   /** Projection-stable identity when no single source event owns the record lifecycle. */

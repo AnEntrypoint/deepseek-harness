@@ -1,5 +1,16 @@
-/** Internal React bindings for the renderer host and active session provide bundle. */
-import { createContext, useContext, type ReactNode } from 'react'
+/**
+ * Renderer host / session provide-bundle plumbing. Converted from React
+ * Context (createContext/useContext) to plain values threaded explicitly
+ * through scoped-slots.tsx's render calls — webjsx has no context mechanism,
+ * so every former `useHost()`/`useSessionMaybeProvideInfo()` call site now
+ * receives its `host`/`info` as an ordinary function parameter instead.
+ * `observableHook` stays as a per-source-cached SNAPSHOT READER (no
+ * subscription of its own): a registrant custom element that needs to
+ * re-render on source changes subscribes to `source.subscribe` itself in its
+ * own `connectedCallback` (the Toast.tsx/CodeBlock.tsx pattern) — this module
+ * only binds the read side once per source so repeated calls share one
+ * cached reader instead of re-wrapping the source every render.
+ */
 import type {
   HostObservable, MaybeSnapshotSelectorHook, SessionMaybeProvideInfo, SessionProvideInfo,
   SlotRendererHost, SnapshotSelectorHook,
@@ -7,53 +18,19 @@ import type {
 import { bindSnapshotSelector } from './bind.ts'
 
 /**
- * A missing-provider assembly error: the shell wired the tree wrong. The slot
- * error boundary rethrows this class so misassembly stays fail-loud while
- * registrant errors (inject factories, entry components) are contained
- * per entry.
+ * A missing-provider assembly error: the shell wired the tree wrong. The
+ * per-entry crash boundary rethrows this class so misassembly stays
+ * fail-loud while registrant errors (inject factories, entry components) are
+ * contained per entry.
  */
 export class SlotAssemblyError extends Error {}
 
-/** In-package renderer host context. */
-export const HostContext = createContext<SlotRendererHost | null>(null)
-
 /**
- * Read the installed renderer host; throws outside the rendered root tree
- * (framework components must not render detached from the renderer).
- * @returns the host API.
- */
-export function useHost(): SlotRendererHost {
-  const host = useContext(HostContext)
-  if (!host) throw new SlotAssemblyError('slot machinery rendered outside the installed renderer tree')
-  return host
-}
-
-const BindingContext = createContext<SessionMaybeProvideInfo | null>(null)
-
-/** Read the current-session-optional bundle supplied at the root. */
-export function useSessionMaybeProvideInfo(): SessionMaybeProvideInfo {
-  const info = useContext(BindingContext)
-  if (!info) throw new SlotAssemblyError('session-aware slot rendered outside the root binding provider')
-  return info
-}
-
-/**
- * Read the enclosing session provide bundle; throws outside a SessionProvider
- * subtree (session slots must not render without a session).
- * @returns the enclosing bundle.
- */
-export function useSessionProvideInfo(): SessionProvideInfo {
-  const info = useSessionMaybeProvideInfo()
-  if (info.sessionId === undefined) throw new SlotAssemblyError('strict session slot rendered without a session')
-  return info as SessionProvideInfo
-}
-
-/**
- * Identity-stable selector hook per host observable. uSES resubscribes when
- * the subscribe reference changes, so the bound hook must be created once per
- * source — cached here by source identity (sources are host-owned singletons).
+ * Identity-stable selector reader per host observable, cached by source
+ * identity (sources are host-owned singletons) so repeated binds across
+ * renders share one reader instance rather than re-wrapping.
  * @param source - host-provided observable.
- * @returns the cached selector hook.
+ * @returns the cached selector reader.
  */
 export function observableHook<T>(source: HostObservable<T>): SnapshotSelectorHook<T> {
   let hook = hookCache.get(source)
@@ -70,28 +47,24 @@ const absentSource: HostObservable<undefined> = {
   subscribe: () => () => {},
 }
 
-/** Bind a source that disappears with the current session to an optional selector hook. */
+/** Bind a source that disappears with the current session to an optional selector reader. */
 export function maybeObservableHook<T>(source: HostObservable<T> | undefined): MaybeSnapshotSelectorHook<T> {
   if (source !== undefined) return observableHook(source)
   return useAbsentSnapshot
 }
 
 function useAbsentSnapshot<S>(_selector: (snapshot: never) => S, _equal?: (a: S, b: S) => boolean): S | undefined {
-  // The uSES subscription must still run (hook-order stability); the absent
-  // source always snapshots undefined, returned explicitly.
   observableHook(absentSource)(() => undefined)
   return undefined
 }
 
 /**
- * The useProjection framework seat (docs/subsystems/session-projection.md), one bound
- * function per provide bundle (cached by info identity — components may hold
- * it across renders). Key-addressed: the key resolves a per-session value
- * face off the projection store; the bound selector hook comes from the same
- * per-source cache as every other kit hook, so exactly one uSES subscription
- * runs per call and the subscribe reference stays stable per key. A key no
- * baseline or frame has carried (or a no-session bundle) reads `undefined` —
- * capability absence — keeping the hook order constant.
+ * The useProjection framework seat (docs/subsystems/session-projection.md),
+ * one bound function per provide bundle (cached by info identity). Key-
+ * addressed: the key resolves a per-session value face off the projection
+ * store; the bound selector reader comes from the same per-source cache as
+ * every other kit reader. A key no baseline or frame has carried (or a
+ * no-session bundle) reads `undefined` — capability absence.
  */
 export function projectionHook(info: SessionMaybeProvideInfo): (
   key: string, selector?: (value: unknown) => unknown, eq?: (a: unknown, b: unknown) => boolean,
@@ -99,13 +72,7 @@ export function projectionHook(info: SessionMaybeProvideInfo): (
   let hook = projectionHookCache.get(info)
   if (hook === undefined) {
     hook = (key, selector, eq) => {
-      // The no-session (faceless) branch binds the shared absent source so
-      // the caller's selector still runs over `undefined` (absence flows
-      // through the selector) and the uSES call count stays constant.
       const useValue = observableHook(info.projections?.faceOf(key) ?? absentSource)
-      // Whole values are finished wire payloads (reference changes only when
-      // a frame or baseline lands), so the identity selector needs no
-      // equality function.
       return useValue(selector ?? (value => value), eq)
     }
     projectionHookCache.set(info, hook)
@@ -117,44 +84,61 @@ const projectionHookCache = new WeakMap<SessionMaybeProvideInfo, (
 ) => unknown>()
 
 /**
- * Root-level binding provider. It follows current selection without a key;
- * per-entry identity is the outlet's adoption bookkeeping (SessionMaybeEntry):
- * a blank-born incarnation adopts the first session without remounting, and
- * every later transition (switch or loss) remounts like a strict entry.
+ * Read the current-session-optional bundle directly off the host — the
+ * former `useSessionMaybeProvideInfo()` context read is now a plain
+ * synchronous snapshot read at whatever render call site needs it.
+ * @param host - the renderer host.
+ * @returns the current bundle.
  */
-export function SessionMaybeProvider({ children }: { children: ReactNode }) {
-  const host = useHost()
-  const info = observableHook(host.sessions.provideInfo)(s => s)
-  return (
-    <BindingContext.Provider value={info}>
-      {children}
-    </BindingContext.Provider>
-  )
+export function currentSessionMaybeProvideInfo(host: SlotRendererHost): SessionMaybeProvideInfo {
+  return observableHook(host.sessions.provideInfo)(s => s)
+}
+
+/**
+ * Read the current strict session bundle; throws when no session is current
+ * (strict session slots must not render without one — same contract the
+ * React `useSessionProvideInfo` hook enforced).
+ * @param host - the renderer host.
+ * @returns the current strict bundle.
+ */
+export function currentSessionProvideInfo(host: SlotRendererHost): SessionProvideInfo {
+  const info = currentSessionMaybeProvideInfo(host)
+  if (info.sessionId === undefined) throw new SlotAssemblyError('strict session slot rendered without a session')
+  return info as SessionProvideInfo
 }
 
 /** SessionProvider API: render-prop body plus the no-session branch. */
 export interface SessionProviderProps {
   /** No-session body (also covers a current id whose session cannot be resolved). */
-  empty?: (() => ReactNode) | undefined
-  /** Session body; remounted per session via key={sessionId}. */
-  children: (sessionId: string) => ReactNode
+  empty?: (() => unknown) | undefined
+  /** Session body; called fresh per session id. */
+  children: (sessionId: string) => unknown
 }
 
 /**
- * Framework-wired session area: subscribes to the host's current provide
- * source and remounts the body under `key={sessionId}` so a session switch
- * rebuilds the session subtree. This dependency-inverted layer uses plain
- * string ids; `PropsRuntime` applies the branded type at the component
- * boundary.
+ * Framework-wired session area component factory: reads the host's current
+ * provide source and hands the body function to `children(sessionId)`. Bound
+ * per host (a stable reference per renderer instance, matching the old
+ * module-level React component's stable-identity contract) so registrants
+ * still receive a plain single-argument `SessionProvider` component on their
+ * composed props — `standardKit` in scoped-slots.tsx calls this once per
+ * host and caches nothing further, since the returned closure is cheap and
+ * host identity is itself stable for the renderer's lifetime.
+ * @param host - the renderer host.
+ * @returns the bound SessionProvider component.
  */
-export function SessionProvider({ empty, children }: SessionProviderProps) {
-  const host = useHost()
-  const info = observableHook(host.sessions.provideInfo)(s => s)
-  const id = info.sessionId
-  if (id === undefined) return <>{empty?.() ?? null}</>
-  return (
-    <BindingContext.Provider value={info} key={id}>
-      {children(id)}
-    </BindingContext.Provider>
-  )
+const sessionProviderCache = new WeakMap<SlotRendererHost, (props: SessionProviderProps) => unknown>()
+
+export function sessionProviderFor(host: SlotRendererHost): (props: SessionProviderProps) => unknown {
+  let bound = sessionProviderCache.get(host)
+  if (bound === undefined) {
+    bound = (props) => {
+      const info = currentSessionMaybeProvideInfo(host)
+      const id = info.sessionId
+      if (id === undefined) return props.empty?.() ?? null
+      return props.children(id)
+    }
+    sessionProviderCache.set(host, bound)
+  }
+  return bound
 }

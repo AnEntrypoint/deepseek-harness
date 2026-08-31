@@ -1,24 +1,24 @@
 /**
- * uSES bridge: turns any bare observable snapshot source into a typed
- * selector hook. Client-side-rendered only, so no server snapshot is wired.
- * This is the ONE hook constructor in the client stack — engines and hosts
- * traffic in bare sources; binding happens on the React side.
+ * Selector binding: turns any bare observable snapshot source into a typed
+ * selector reader. Since there is no React Context / useSyncExternalStore in
+ * webjsx, `bindSnapshotSelector` returns a plain selector reader — always a
+ * fresh synchronous `source.getSnapshot()` read passed through `sel` — rather
+ * than a subscribing Hook. Callers that need change notification subscribe to
+ * `source.subscribe` directly (the outlet/custom-element's own
+ * connectedCallback pattern, see Toast.tsx/CodeBlock.tsx) rather than through
+ * this binding; `eq` is accepted for call-site compatibility with the prior
+ * uSES-shaped signature but unused (no memoized comparison happens here —
+ * every call re-reads and re-selects fresh).
  */
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector.js'
 import type { HostObservable, SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 
 /**
- * Bind a bare observable source to a typed uSES selector hook.
- * subscribe/getSnapshot are captured once per source into stable closures
- * (also re-binds `this` for method-based sources), so components never
- * resubscribe across renders. Equality defaults to Object.is.
+ * Bind a bare observable source to a typed selector reader.
  * @param w - snapshot source (engine store, Session object, store instance).
- * @returns the selector hook.
+ * @returns the selector reader.
  */
 export function bindSnapshotSelector<T>(w: HostObservable<T>): SnapshotSelectorHook<T> {
-  const subscribe = (fn: () => void) => w.subscribe(fn)
-  const getSnapshot = () => w.getSnapshot()
-  return function useSelector<S>(sel: (s: T) => S, eq?: (a: S, b: S) => boolean): S {
-    return useSyncExternalStoreWithSelector(subscribe, getSnapshot, undefined, sel, eq)
+  return function useSelector<S>(sel: (s: T) => S, _eq?: (a: S, b: S) => boolean): S {
+    return sel(w.getSnapshot())
   }
 }

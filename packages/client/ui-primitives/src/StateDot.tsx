@@ -25,28 +25,27 @@ export function StateDot({ state, size = 10, className }: {
   state: StateDotState
   size?: number | undefined
   className?: string | undefined
-}) {
+}): JSX.Element {
   if (state === 'ongoing') {
     return (
       <svg
-        className={clsx(css.matrix, className)}
+        class={clsx(css.matrix, className)}
         data-state="ongoing"
-        width={size}
-        height={size}
+        width={String(size)}
+        height={String(size)}
         viewBox="0 0 10 10"
-        shapeRendering="crispEdges"
+        shape-rendering="crispEdges"
         aria-hidden="true"
       >
         {MATRIX_CELLS.map(([x, y], index) => (
           <rect
-            key={`${x}-${y}`}
-            className={css.cell}
-            x={x}
-            y={y}
+            class={css.cell ?? ''}
+            x={String(x)}
+            y={String(y)}
             width="2"
             height="2"
             /* Negative delay phases the chase so every cell animates from mount. */
-            style={{ animationDelay: `${(index - MATRIX_CELLS.length) * 125}ms` }}
+            style={`animation-delay: ${(index - MATRIX_CELLS.length) * 125}ms`}
           />
         ))}
       </svg>
@@ -54,9 +53,9 @@ export function StateDot({ state, size = 10, className }: {
   }
   return (
     <span
-      className={clsx(css.dot, className)}
+      class={clsx(css.dot, className)}
       data-state={state}
-      style={{ width: size, height: size }}
+      style={`width: ${size}px; height: ${size}px`}
       aria-hidden="true"
     />
   )

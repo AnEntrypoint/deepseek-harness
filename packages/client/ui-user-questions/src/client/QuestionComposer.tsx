@@ -1,4 +1,9 @@
-import { useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
+// Converted from a React hooks component to a webjsx custom element. State
+// that was useState/useRef becomes instance fields; explicit applyDiff(this,
+// vdom) replaces implicit re-render on setState.
+
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import {
   Button, IconCheckOutline14, IconChevronDownOutline14, IconChevronLeftOutline14,
@@ -9,7 +14,7 @@ import {
   PendingQuestion, planReviewOf,
   type QuestionAnswer, type QuestionComposerProps,
 } from './contract/slots.ts'
-import { PlanReviewPanel } from './PlanReviewPanel.tsx'
+import { DshPlanReviewPanel } from './PlanReviewPanel.tsx'
 import css from './QuestionComposer.module.css'
 
 interface DraftAnswer {
@@ -39,10 +44,10 @@ export function parseRecommendedLabel(label: string): { label: string; recommend
 }
 
 /** Return whether a text-field key event belongs to an active IME composition. */
-function isComposing(event: KeyboardEvent<HTMLTextAreaElement>): boolean {
+function isComposing(event: KeyboardEvent): boolean {
   // keyCode 229 is the legacy IME-composition signal engines emit without isComposing.
   // oxlint-disable-next-line typescript/no-deprecated
-  return event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229
+  return event.isComposing || event.keyCode === 229
 }
 
 /** The free-text answer field shared by both question shapes. */
@@ -58,11 +63,11 @@ interface AnswerFieldProps {
   /** Whether this field takes focus on mount. */
   autoFocus?: boolean
   /** Called when the field takes focus. */
-  onFocus?: () => void
+  onFocus?: (() => void) | null
   /** Called with each edit of the draft. */
-  onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void
+  onChange: (event: Event) => void
   /** Called with each key press, before the browser's own handling. */
-  onKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void
+  onKeyDown: (event: KeyboardEvent) => void
 }
 
 /**
@@ -81,20 +86,20 @@ interface AnswerFieldProps {
  * @param props - field shape, draft text, and the field's event handlers.
  * @returns The mirrored auto-growing field.
  */
-function AnswerField(props: AnswerFieldProps) {
+function AnswerField(props: AnswerFieldProps): JSX.Element {
   return (
-    <div className={clsx(css.field, props.variant === 'inline' ? css.customInline : css.customBlock)}>
-      <div aria-hidden className={css.fieldMirror}>{`${props.value}\n`}</div>
+    <div class={clsx(css.field, props.variant === 'inline' ? css.customInline : css.customBlock)}>
+      <div aria-hidden class={css.fieldMirror ?? ''}>{`${props.value}\n`}</div>
       <textarea
         autoFocus={props.autoFocus}
-        className={css.fieldInput}
+        class={css.fieldInput ?? ''}
         value={props.value}
         disabled={props.disabled}
         rows={1}
         placeholder={props.placeholder}
-        onFocus={props.onFocus}
-        onChange={props.onChange}
-        onKeyDown={props.onKeyDown}
+        onfocus={props.onFocus ?? null}
+        onchange={props.onChange}
+        onkeydown={props.onKeyDown}
       />
     </div>
   )
@@ -110,57 +115,119 @@ function AnswerField(props: AnswerFieldProps) {
  * The routing lives here, at the one entry that owns the composer seat, so
  * neither shape can claim a request the other is already rendering.
  *
- * @param props - the selector-matched pending question carrier plus the framework standard kit.
- * @returns The question flow, or the intent's own surface, for this request.
+ * Converted to a webjsx custom element: the domain-face mint (previously
+ * useMemo) rides the carrier's stable identity via a cached field, and the
+ * routing decision re-renders the child custom element (either the generic
+ * question flow or the plan-review panel) via setProps.
  */
-export function QuestionComposer(props: QuestionComposerProps) {
-  // Domain-face mint rides the carrier's stable identity (never minted in a
-  // select/render dispatch — per-dispatch minting would churn memo identity).
-  const question = useMemo(() => new PendingQuestion(props.matched), [props.matched])
-  const review = useMemo(() => planReviewOf(question.questions), [question])
-  return review === undefined
-    ? <QuestionFlow key={question.key} pending={question} t={props.t} />
-    : <PlanReviewPanel key={question.key} pending={question} review={review} t={props.t} />
+export class DshQuestionComposer extends HTMLElement {
+  #props: QuestionComposerProps | null = null
+  #question: PendingQuestion | null = null
+  #carrier: QuestionComposerProps['matched'] | null = null
+
+  setProps(props: QuestionComposerProps): void {
+    this.#props = props
+    if (this.#carrier !== props.matched) {
+      this.#carrier = props.matched
+      this.#question = new PendingQuestion(props.matched)
+    }
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    const question = this.#question
+    if (props === null || question === null) return
+    const review = planReviewOf(question.questions)
+    // The two shapes are custom elements this package itself registers, not
+    // ordinary intrinsic HTML tags — created directly rather than through JSX
+    // (webjsx's IntrinsicElements table covers built-in DOM tags only) and
+    // reused across re-renders so setProps drives their own applyDiff.
+    if (review === undefined) {
+      let el = this.#childHost
+      if (!(el instanceof DshQuestionFlow)) {
+        el = document.createElement('dsh-question-flow') as DshQuestionFlow
+        this.#childHost = el
+        this.replaceChildren(el)
+      }
+      el.setProps({ pending: question, t: props.t })
+    } else {
+      let el = this.#childHost
+      if (!(el instanceof DshPlanReviewPanel)) {
+        el = document.createElement('dsh-plan-review-panel') as DshPlanReviewPanel
+        this.#childHost = el
+        this.replaceChildren(el)
+      }
+      el.setProps({ pending: question, review, t: props.t })
+    }
+  }
+
+  #childHost: DshQuestionFlow | DshPlanReviewPanel | null = null
 }
 
-function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<QuestionComposerProps, 't'>) {
-  const questions = pending.questions
-  const [index, setIndex] = useState(0)
-  const [drafts, setDrafts] = useState<DraftAnswer[]>(() => questions.map(() => ({
-    selected: [], custom: '', skipped: false,
-  })))
-  const [busy, setBusy] = useState<'answer' | 'cancel' | null>(null)
-  const [error, setError] = useState<Feedback | null>(null)
-  // Collapsed to the header strip so the conversation above stays readable
-  // while the user decides; the drafts survive because the state lives here.
-  const [minimized, setMinimized] = useState(false)
-  // The free-form textarea autofocuses on first presentation; re-expanding a
-  // collapsed question must not steal focus from the expand toggle back into
-  // the input, so focus is granted once per question index.
-  const focusedQuestions = useRef(new Set<number>())
-  // index stays in bounds (every setIndex site clamps) and drafts mirrors questions 1:1.
-  // oxlint-disable-next-line typescript/no-non-null-assertion
-  const question = questions[index]!
-  // oxlint-disable-next-line typescript/no-non-null-assertion
-  const draft = drafts[index]!
-  const hasOptions = (question.options?.length ?? 0) > 0
+if (typeof customElements !== 'undefined' && customElements.get('dsh-question-composer') === undefined) {
+  customElements.define('dsh-question-composer', DshQuestionComposer)
+}
 
-  const cancelFlow = (): void => {
-    setBusy('cancel')
-    setError(null)
+/** Own props of the generic question-flow custom element. */
+export type QuestionFlowProps = { pending: PendingQuestion } & Pick<QuestionComposerProps, 't'>
+
+/**
+ * The generic question flow custom element: pager, numbered options, skip and
+ * custom-answer affordances over a request's whole question batch. Converted
+ * from a React hooks component — every useState becomes an instance field,
+ * useRef(Set) becomes a plain instance field, and re-render is explicit.
+ */
+export class DshQuestionFlow extends HTMLElement {
+  #props: QuestionFlowProps | null = null
+  #index = 0
+  #drafts: DraftAnswer[] = []
+  #busy: 'answer' | 'cancel' | null = null
+  #error: Feedback | null = null
+  #minimized = false
+  #focusedQuestions = new Set<number>()
+
+  setProps(props: QuestionFlowProps): void {
+    const pendingChanged = this.#props === null || this.#props.pending !== props.pending
+    this.#props = props
+    if (pendingChanged) {
+      this.#index = 0
+      this.#drafts = props.pending.questions.map(() => ({ selected: [], custom: '', skipped: false }))
+      this.#busy = null
+      this.#error = null
+      this.#minimized = false
+      this.#focusedQuestions = new Set()
+    }
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #cancelFlow(pending: PendingQuestion): void {
+    this.#busy = 'cancel'
+    this.#error = null
+    this.#render()
     void pending.cancel().catch((cause: unknown) => {
-      setBusy(null)
-      setError({ text: cause instanceof Error ? cause.message : String(cause) })
+      this.#busy = null
+      this.#error = { text: cause instanceof Error ? cause.message : String(cause) }
+      this.#render()
     })
   }
 
-  const updateDraft = (update: (current: DraftAnswer) => DraftAnswer): void => {
-    setDrafts(current => current.map((item, itemIndex) => itemIndex === index ? update(item) : item))
-    setError(null)
+  #updateDraft(update: (current: DraftAnswer) => DraftAnswer): void {
+    // oxlint-disable-next-line typescript/no-non-null-assertion
+    this.#drafts = this.#drafts.map((item, itemIndex) => itemIndex === this.#index ? update(item) : item)
+    this.#error = null
   }
 
-  const choose = (label: string): void => {
-    updateDraft((current) => {
+  #choose(label: string, question: QuestionFlowProps['pending']['questions'][number], questionsLength: number): void {
+    this.#updateDraft((current) => {
       if (question.multiSelect === true) {
         const selected = current.selected.includes(label)
           ? current.selected.filter(item => item !== label)
@@ -169,21 +236,29 @@ function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<Questi
       }
       return { selected: [label], custom: '', skipped: false }
     })
-    if (question.multiSelect !== true && index < questions.length - 1) {
-      setIndex(current => current + 1)
+    if (question.multiSelect !== true && this.#index < questionsLength - 1) {
+      this.#index += 1
     }
+    this.#render()
   }
 
-  const answered = (item: DraftAnswer): boolean =>
-    item.selected.length > 0 || item.custom.trim() !== ''
+  #answered(item: DraftAnswer): boolean {
+    return item.selected.length > 0 || item.custom.trim() !== ''
+  }
 
-  const completed = (item: DraftAnswer): boolean => answered(item) || item.skipped
+  #completed(item: DraftAnswer): boolean {
+    return this.#answered(item) || item.skipped
+  }
 
-  const submitDrafts = (values: DraftAnswer[]): void => {
-    const missing = values.findIndex(item => !completed(item))
+  #submitDrafts(values: DraftAnswer[]): void {
+    const props = this.#props
+    if (props === null) return
+    const questions = props.pending.questions
+    const missing = values.findIndex(item => !this.#completed(item))
     if (missing >= 0) {
-      setIndex(missing)
-      setError({ key: 'error.incomplete' })
+      this.#index = missing
+      this.#error = { key: 'error.incomplete' }
+      this.#render()
       return
     }
     const answer: QuestionAnswer = {
@@ -198,154 +273,183 @@ function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<Questi
         }
       }),
     }
-    setBusy('answer')
-    setError(null)
-    void pending.answer(answer).catch((cause: unknown) => {
-      setBusy(null)
-      setError({ text: cause instanceof Error ? cause.message : String(cause) })
+    this.#busy = 'answer'
+    this.#error = null
+    this.#render()
+    void props.pending.answer(answer).catch((cause: unknown) => {
+      this.#busy = null
+      this.#error = { text: cause instanceof Error ? cause.message : String(cause) }
+      this.#render()
     })
   }
 
-  const continueFlow = (): void => {
-    if (!answered(draft)) {
-      setError({ key: 'error.unanswered' })
+  #continueFlow(): void {
+    const props = this.#props
+    if (props === null) return
+    const questions = props.pending.questions
+    // oxlint-disable-next-line typescript/no-non-null-assertion
+    const draft = this.#drafts[this.#index]!
+    if (!this.#answered(draft)) {
+      this.#error = { key: 'error.unanswered' }
+      this.#render()
       return
     }
-    if (index < questions.length - 1) {
-      setIndex(current => current + 1)
-      setError(null)
+    if (this.#index < questions.length - 1) {
+      this.#index += 1
+      this.#error = null
+      this.#render()
       return
     }
-    submitDrafts(drafts)
+    this.#submitDrafts(this.#drafts)
   }
 
-  // Shared by the inline custom field and the optionless one: a multi-select
-  // draft retains checked labels, while a single-select custom answer replaces
-  // its selection. Enter continues the flow, Shift+Enter breaks a line.
-  const draftCustom = (event: ChangeEvent<HTMLTextAreaElement>): void => {
-    const value = event.target.value
-    updateDraft(current => ({
-      ...current,
-      selected: question.multiSelect === true ? current.selected : [],
-      custom: value,
-      skipped: false,
-    }))
-  }
-
-  const continueFromCustom = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
-    if (event.key !== 'Enter' || event.shiftKey || isComposing(event)) return
-    event.preventDefault()
-    continueFlow()
-  }
-
-  const skipQuestion = (): void => {
-    const nextDrafts = drafts.map((item, itemIndex) => itemIndex === index
+  #skipQuestion(): void {
+    const props = this.#props
+    if (props === null) return
+    const questions = props.pending.questions
+    const nextDrafts = this.#drafts.map((item, itemIndex) => itemIndex === this.#index
       ? { selected: [], custom: '', skipped: true }
       : item)
-    setDrafts(nextDrafts)
-    setError(null)
-    if (index < questions.length - 1) {
-      setIndex(current => current + 1)
+    this.#drafts = nextDrafts
+    this.#error = null
+    if (this.#index < questions.length - 1) {
+      this.#index += 1
+      this.#render()
       return
     }
-    submitDrafts(nextDrafts)
+    this.#submitDrafts(nextDrafts)
   }
 
-  return (
-    <div className={css.frame} data-question-key={pending.key}>
-      <section
-        className={clsx(css.card, minimized && css.cardMinimized)}
-        aria-labelledby={`question-${pending.key}-${String(index)}`}
-      >
-        <header className={css.header}>
-          <div className={css.headingBlock}>
-            {question.header !== undefined && <div className={css.eyebrow}>{question.header}</div>}
-            <h2 className={css.title} id={`question-${pending.key}-${String(index)}`}>
-              {question.question}
-            </h2>
-          </div>
-          <div className={css.headerActions}>
-            <button
-              type="button" className={css.iconButton}
-              aria-label={t(minimized ? 'nav.maximize' : 'nav.minimize')}
-              title={t(minimized ? 'nav.maximize' : 'nav.minimize')}
-              aria-expanded={!minimized}
-              disabled={busy !== null}
-              onClick={() => { setMinimized(current => !current) }}
-            >
-              {minimized ? <IconChevronUpOutline14 /> : <IconChevronDownOutline14 />}
-            </button>
-            <button
-              type="button" className={css.iconButton} aria-label={t('nav.cancel')}
-              title={t('nav.cancel')}
-              disabled={busy !== null} onClick={cancelFlow}
-            >
-              <IconCloseOutline16 />
-            </button>
-          </div>
-        </header>
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { pending, t } = props
+    const questions = pending.questions
+    const index = this.#index
+    const drafts = this.#drafts
+    const busy = this.#busy
+    const error = this.#error
+    const minimized = this.#minimized
+    // index stays in bounds (every index write clamps) and drafts mirrors questions 1:1.
+    // oxlint-disable-next-line typescript/no-non-null-assertion
+    const question = questions[index]!
+    // oxlint-disable-next-line typescript/no-non-null-assertion
+    const draft = drafts[index]!
+    const hasOptions = (question.options?.length ?? 0) > 0
 
-        {!minimized && (
-          <>
-            <div className={css.body} data-question-scroll>
-              {question.detail !== undefined && (
-                <div className={css.detail}><MarkdownText text={question.detail} /></div>
+    const draftCustom = (event: Event): void => {
+      const value = (event.target as HTMLTextAreaElement).value
+      this.#updateDraft(current => ({
+        ...current,
+        selected: question.multiSelect === true ? current.selected : [],
+        custom: value,
+        skipped: false,
+      }))
+      this.#render()
+    }
+
+    const continueFromCustom = (event: KeyboardEvent): void => {
+      if (event.key !== 'Enter' || event.shiftKey || isComposing(event)) return
+      event.preventDefault()
+      this.#continueFlow()
+    }
+
+    const optionButtons: VNode[] = (question.options ?? []).map((option, optionIndex) => {
+      const selected = draft.selected.includes(option.label)
+      const display = parseRecommendedLabel(option.label)
+      return (
+        <button
+          type="button" key={`${option.label}-${String(optionIndex)}`}
+          class={clsx(css.option, selected && question.multiSelect !== true && css.optionSelected)}
+          role={question.multiSelect === true ? 'checkbox' : 'radio'}
+          aria-checked={String(selected)}
+          aria-label={display.label}
+          disabled={busy !== null}
+          onclick={() => { this.#choose(option.label, question, questions.length) }}
+          onkeydown={(event: KeyboardEvent) => {
+            if (event.key !== 'Enter' || !drafts.every(item => this.#completed(item))) return
+            event.preventDefault()
+            this.#submitDrafts(drafts)
+          }}
+        >
+          {question.multiSelect === true
+            ? (
+              <span class={clsx(css.checkbox, selected && css.checkboxChecked)} aria-hidden="true">
+                {selected && <IconCheckOutline14 size={12} />}
+              </span>
+            )
+            : <span class={css.number ?? ''}>{optionIndex + 1}</span>}
+          <span class={css.optionCopy ?? ''}>
+            <span class={css.optionLine ?? ''}>
+              <span class={css.optionLabel ?? ''}>{display.label}</span>
+              {display.recommended && (
+                <span class={css.badge ?? ''}>{t('option.recommended')}</span>
               )}
-              <div className={css.options} role={question.multiSelect === true ? 'group' : 'radiogroup'}>
-                {(question.options ?? []).map((option, optionIndex) => {
-                  const selected = draft.selected.includes(option.label)
-                  const display = parseRecommendedLabel(option.label)
-                  return (
-                    <button
-                      type="button" key={`${option.label}-${String(optionIndex)}`}
-                      className={clsx(css.option, selected && question.multiSelect !== true && css.optionSelected)}
-                      role={question.multiSelect === true ? 'checkbox' : 'radio'}
-                      aria-checked={selected}
-                      aria-label={display.label}
-                      disabled={busy !== null}
-                      onClick={() => { choose(option.label) }}
-                      onKeyDown={(event) => {
-                        if (event.key !== 'Enter' || !drafts.every(completed)) return
-                        event.preventDefault()
-                        submitDrafts(drafts)
-                      }}
-                    >
-                      {question.multiSelect === true
-                        ? (
-                          <span className={clsx(css.checkbox, selected && css.checkboxChecked)} aria-hidden="true">
-                            {selected && <IconCheckOutline14 size={12} />}
-                          </span>
-                        )
-                        : <span className={css.number}>{optionIndex + 1}</span>}
-                      <span className={css.optionCopy}>
-                        <span className={css.optionLine}>
-                          <span className={css.optionLabel}>{display.label}</span>
-                          {display.recommended && (
-                            <span className={css.badge}>{t('option.recommended')}</span>
-                          )}
-                          {option.description !== undefined && (
-                            <span className={css.description}>{option.description}</span>
-                          )}
-                        </span>
-                      </span>
-                    </button>
-                  )
-                })}
+              {option.description !== undefined && (
+                <span class={css.description ?? ''}>{option.description}</span>
+              )}
+            </span>
+          </span>
+        </button>
+      )
+    })
+
+    const vdom = (
+      <div class={css.frame ?? ''} data-question-key={pending.key}>
+        <section
+          class={clsx(css.card, minimized && css.cardMinimized)}
+          aria-labelledby={`question-${pending.key}-${String(index)}`}
+        >
+          <header class={css.header ?? ''}>
+            <div class={css.headingBlock ?? ''}>
+              {question.header !== undefined && <div class={css.eyebrow ?? ''}>{question.header}</div>}
+              <h2 class={css.title ?? ''} id={`question-${pending.key}-${String(index)}`}>
+                {question.question}
+              </h2>
+            </div>
+            <div class={css.headerActions ?? ''}>
+              <button
+                type="button" class={css.iconButton ?? ''}
+                aria-label={t(minimized ? 'nav.maximize' : 'nav.minimize')}
+                title={t(minimized ? 'nav.maximize' : 'nav.minimize')}
+                aria-expanded={String(!minimized)}
+                disabled={busy !== null}
+                onclick={() => { this.#minimized = !this.#minimized; this.#render() }}
+              >
+                {minimized ? <IconChevronUpOutline14 /> : <IconChevronDownOutline14 />}
+              </button>
+              <button
+                type="button" class={css.iconButton ?? ''} aria-label={t('nav.cancel')}
+                title={t('nav.cancel')}
+                disabled={busy !== null} onclick={() => { this.#cancelFlow(pending) }}
+              >
+                <IconCloseOutline16 />
+              </button>
+            </div>
+          </header>
+
+          {!minimized && [
+            <div class={css.body ?? ''} data-question-scroll>
+              {question.detail !== undefined && (
+                <div class={css.detail ?? ''}><MarkdownText text={question.detail} /></div>
+              )}
+              <div class={css.options ?? ''} role={question.multiSelect === true ? 'group' : 'radiogroup'}>
+                {optionButtons}
 
                 {hasOptions
                   ? (
-                    <div className={clsx(css.customRow, draft.custom !== '' && css.customRowActive)}>
+                    <div class={clsx(css.customRow, draft.custom !== '' && css.customRowActive)}>
                       {question.multiSelect === true
                         ? (
                           <span
-                            className={clsx(css.checkbox, draft.custom !== '' && css.checkboxChecked)}
+                            class={clsx(css.checkbox, draft.custom !== '' && css.checkboxChecked)}
                             aria-hidden="true"
                           >
                             {draft.custom !== '' && <IconCheckOutline14 size={12} />}
                           </span>
                         )
                         : (
-                          <span className={css.number} aria-hidden="true">
+                          <span class={css.number ?? ''} aria-hidden="true">
                             <IconEditOutline16 size={12} />
                           </span>
                         )}
@@ -361,57 +465,62 @@ function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<Questi
                   )
                   : (
                     <AnswerField
-                      autoFocus={!focusedQuestions.current.has(index)}
+                      autoFocus={!this.#focusedQuestions.has(index)}
                       variant="block"
                       value={draft.custom}
                       disabled={busy !== null}
                       placeholder={t('custom.placeholder')}
-                      onFocus={() => { focusedQuestions.current.add(index) }}
+                      onFocus={() => { this.#focusedQuestions.add(index) }}
                       onChange={draftCustom}
                       onKeyDown={continueFromCustom}
                     />
                   )}
               </div>
-            </div>
+            </div>,
 
-            <footer className={css.footer}>
-              <div className={css.pager}>
+            <footer class={css.footer ?? ''}>
+              <div class={css.pager ?? ''}>
                 <button
-                  type="button" className={css.iconButton} aria-label={t('nav.prev')}
+                  type="button" class={css.iconButton ?? ''} aria-label={t('nav.prev')}
                   disabled={index === 0 || busy !== null}
-                  onClick={() => { setIndex(index - 1); setError(null) }}
+                  onclick={() => { this.#index -= 1; this.#error = null; this.#render() }}
                 >
                   <IconChevronLeftOutline14 />
                 </button>
-                <span className={css.progress}>{index + 1} / {questions.length}</span>
+                <span class={css.progress ?? ''}>{index + 1} / {questions.length}</span>
                 <button
-                  type="button" className={css.iconButton} aria-label={t('nav.next')}
+                  type="button" class={css.iconButton ?? ''} aria-label={t('nav.next')}
                   disabled={index === questions.length - 1 || busy !== null}
-                  onClick={() => { setIndex(index + 1); setError(null) }}
+                  onclick={() => { this.#index += 1; this.#error = null; this.#render() }}
                 >
                   <IconChevronRightOutline14 />
                 </button>
               </div>
-              <div className={css.feedback} role="status">
+              <div class={css.feedback ?? ''} role="status">
                 {error === null ? null : 'key' in error ? t(error.key) : error.text}
               </div>
-              <div className={css.footerActions}>
-                <Button variant="outline" disabled={busy !== null} onClick={skipQuestion}>
+              <div class={css.footerActions ?? ''}>
+                <Button variant="outline" disabled={busy !== null} onclick={() => { this.#skipQuestion() }}>
                   {t('action.skip')}
                 </Button>
                 <Button
                   variant="primary"
-                  disabled={busy !== null || !answered(draft)} onClick={continueFlow}
+                  disabled={busy !== null || !this.#answered(draft)} onclick={() => { this.#continueFlow() }}
                 >
                   {busy === 'answer'
                     ? t('submitting')
                     : index === questions.length - 1 ? t('submit') : t('action.next')}
                 </Button>
               </div>
-            </footer>
-          </>
-        )}
-      </section>
-    </div>
-  )
+            </footer>,
+          ]}
+        </section>
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-question-flow') === undefined) {
+  customElements.define('dsh-question-flow', DshQuestionFlow)
 }

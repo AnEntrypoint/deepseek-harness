@@ -12,8 +12,14 @@
 // Render economics: order changes only when rows enter, leave or move. Each
 // ChatNodeSeat subscribes to one Node key, so Assistant deltas and Tool
 // lifecycle updates replace only their own row without remounting it.
+//
+// Converted from a React hooks component to a webjsx custom element: every
+// useRef becomes a private field, useState becomes a private field plus
+// #render(), and the layout/scroll/resize effects become bind/unbind methods
+// driven from connectedCallback/disconnectedCallback (Toast.tsx's pattern).
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import type { ConversationTimelineSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
 import { Button, IconChevronDownOutline14, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps, RenderMessageImages } from '../contract/slots.ts'
@@ -115,380 +121,61 @@ function runningTurnStartTime(timeline: ConversationTimelineSnapshot): number | 
   return latest
 }
 
-/** Turn-level model activity label retained across first-token, tool, and streaming phases. */
-function TurnStatus({ startTime, t }: {
-  /** The running turn's logged `turn/start` time; null falls back to mount
-   *  time when that boundary is outside the window. */
-  startTime: number | null
-  /** The owning view's locale seat. */
-  t: ChatViewSlotProps['t']
-}) {
-  const [mountedAt] = useState(() => Date.now())
-  // Anchored to turn/start so a mid-turn reload keeps the real
-  // elapsed time and the final footer's Ran-for label matches this clock.
-  const anchor = startTime ?? mountedAt
-  const [elapsedMs, setElapsedMs] = useState(() => Math.max(0, Date.now() - anchor))
-  useEffect(() => {
-    const tick = (): void => {
-      setElapsedMs(Math.max(0, Date.now() - anchor))
-    }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => { clearInterval(id) }
-  }, [anchor])
-  // Short turns keep the plain label; the clock only appears once the turn
-  // has clearly been running for a while.
-  const showClock = elapsedMs >= 15_000
-  return (
-    <div className={css.turnStatus} role="status" aria-live="polite">
-      Deep diving...
-      {showClock && (
-        <span className={css.turnStatusClock} aria-hidden>
-          {formatRunDuration(elapsedMs, t)}
-        </span>
-      )}
-    </div>
-  )
-}
+/** Turn-level model activity label custom element: retains elapsed time across
+ * first-token, tool, and streaming phases via an internal ticking clock. */
+class DshTurnStatus extends HTMLElement {
+  #startTime: number | null = null
+  #t: ChatViewSlotProps['t'] = (key: string) => key
+  #mountedAt = Date.now()
+  #elapsedMs = 0
+  #tickId: ReturnType<typeof setInterval> | null = null
 
-/**
- * The chat view slot entry: pure component over the composed props; each
- * ordered business Node crosses the keyed renderer seat.
- */
-export function ChatView({
-  useSession, useSessions, useStore, renderSlot, sessionId, openFile, loadOlder, loadImage, inspectCall, chatScroll, forkAt,
-  fileMentions, t,
-}: ChatViewSlotProps) {
-  const order = useSession(s => s.chat.order)
-  const nodeStore = useSession(s => s.chat.nodes)
-  const timeline = useSession(s => s.chat.timeline)
-  const inbox = useSession(s => s.queue)
-  // Workspace root off the session list row: path summaries display relative to it.
-  const cwd = useSessions(s => s.byId[sessionId]?.cwd)
-  const running = useSession(s => s.running)
-  const openState = useSession(s => s.openState)
-  const openError = useSession(s => s.openError)
-  const hasMore = useSession(s => s.hasMore)
-  const loadingOlder = useSession(s => s.loadingOlder)
-  const selectedCallId = useStore(s => s.selection?.callId)
-  const [fileOpenError, setFileOpenError] = useState<{ path: string; message: string } | null>(null)
-  const [fileOpenBusy, setFileOpenBusy] = useState(false)
-  // Close/retry must ignore a settlement that started before the latest
-  // gesture; otherwise a cancelled in-flight refusal reopens the dialog.
-  const fileOpenRequest = useRef(0)
-
-  const requestOpenFile = useCallback((path: string) => {
-    const id = ++fileOpenRequest.current
-    setFileOpenBusy(true)
-    void openFile(path).then(
-      () => {
-        if (id !== fileOpenRequest.current) return
-        setFileOpenError(null)
-        setFileOpenBusy(false)
-      },
-      (error: unknown) => {
-        if (id !== fileOpenRequest.current) return
-        setFileOpenError({
-          path,
-          message: openFailureMessage(
-            error,
-            t(isFolderOpenPath(path) ? 'fileOpen.folderUnknown' : 'fileOpen.unknown'),
-          ),
-        })
-        setFileOpenBusy(false)
-      },
-    )
-  }, [openFile, t])
-
-  const closeFileOpenError = useCallback(() => {
-    fileOpenRequest.current += 1
-    setFileOpenError(null)
-    setFileOpenBusy(false)
-  }, [])
-
-  const pendingSteering = useMemo(
-    () => inbox.filter(item => item.placement === 'steering'),
-    [inbox],
-  )
-  const renderMessageImages = useCallback<RenderMessageImages>(
-    owner => renderSlot('conversation.message.images', { ...owner, loadImage }),
-    [loadImage, renderSlot],
-  )
-  const runningTurnStart = useMemo(() => runningTurnStartTime(timeline), [timeline])
-
-  const listRef = useRef<HTMLDivElement | null>(null)
-  const columnRef = useRef<HTMLDivElement | null>(null)
-  const atBottomRef = useRef(true)
-  const [atBottom, setAtBottom] = useState(true)
-  /** Last position delivered or written on the main thread. */
-  const observedTopRef = useRef(0)
-  /** Paging anchor: semantic row/position at click, updated by reader scrolls
-   * while the request is pending and restored after the prepend lands. */
-  const anchorRef = useRef<PagingAnchor | null>(null)
-  const firstSeqRef = useRef<number | null>(null)
-  const openedRef = useRef(false)
-  const lastKeyRef = useRef<string | null>(null)
-  const lastSteeringIdRef = useRef<string | null>(null)
-  /** Flow tip signature — follow-scroll only when this moves, never on a
-   *  scroll-driven at-bottom chrome re-render (which would snap inertial
-   *  scrolls the rest of the way to the floor). */
-  const followSigRef = useRef<string | null>(null)
-
-  const firstKey = order[0]
-  const firstSeq = firstKey === undefined ? null : nodeStore.get(firstKey)?.anchorSeq ?? null
-  const lastKey = order.at(-1) ?? null
-  const lastNode = lastKey === null ? undefined : nodeStore.get(lastKey)
-  const lastSteeringId = pendingSteering[pendingSteering.length - 1]?.id ?? null
-  const followSig = `${openState}:${firstSeq}:${lastKey}:${order.length}:${running ? 1 : 0}:${lastSteeringId ?? ''}`
-
-  const toBottom = (el: HTMLElement): void => {
-    anchorRef.current = null
-    el.scrollTop = el.scrollHeight
-    observedTopRef.current = el.scrollTop
-    atBottomRef.current = true
-    setAtBottom(true)
-    chatScroll.save(null)
+  setProps(startTime: number | null, t: ChatViewSlotProps['t']): void {
+    this.#startTime = startTime
+    this.#t = t
+    this.#tick()
   }
 
-  useLayoutEffect(() => {
-    const local = listRef.current
-    /* v8 ignore next -- ref-null guard: React attaches the ref before layout effects run. */
-    if (local === null) return
-    const el = scrollerOf(local)
-    // Open completed: jump to the bottom once — unless a scroll position
-    // survives from a previous mount (view-tab switch away and back), which
-    // is restored instead of snapping the reader back to the floor.
-    if (openState === 'open' && !openedRef.current) {
-      openedRef.current = true
-      const saved = chatScroll.read()
-      if (saved === null) {
-        toBottom(el)
-      } else {
-        el.scrollTop = saved.scrollTop
-        const row = anchorElement(local, saved.anchorKey)
-        if (row !== null) el.scrollTop += flowTop(row, el) - saved.anchorTop
-        observedTopRef.current = el.scrollTop
-        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_THRESHOLD + 1
-        atBottomRef.current = isAtBottom
-        setAtBottom(isAtBottom)
-        const normalized = isAtBottom ? null : scrollPosition(local, el)
-        if (isAtBottom) chatScroll.save(null)
-        else if (normalized !== null) chatScroll.save(normalized)
-      }
-      firstSeqRef.current = firstSeq
-      lastKeyRef.current = lastKey
-      lastSteeringIdRef.current = lastSteeringId
-      followSigRef.current = followSig
-      return
-    }
-    // Prepend (head seq decreased): preserve the same settled row at the
-    // position established by the reader's latest scroll. This excludes
-    // unrelated tail/composer growth while the request was in flight.
-    if (anchorRef.current !== null && firstSeq !== null && firstSeqRef.current !== null && firstSeq < firstSeqRef.current) {
-      const anchor = anchorRef.current
-      anchorRef.current = null
-      const row = anchorElement(local, anchor.key)
-      if (row !== null) el.scrollTop += flowTop(row, el) - anchor.top
-      observedTopRef.current = el.scrollTop
-      firstSeqRef.current = firstSeq
-      /* v8 ignore next -- ?? arm: a prepend adds nodes, so the flow list here is never empty. */
-      lastKeyRef.current = lastKey
-      lastSteeringIdRef.current = lastSteeringId
-      followSigRef.current = followSig
-      return
-    }
-    firstSeqRef.current = firstSeq
-    // Own words must be visible: a new trailing user node force-scrolls
-    // (send lives in the composer, so arrival is detected here, not armed there).
-    const appendedUser = lastKey !== lastKeyRef.current && lastNode?.kind === 'user'
-    const appendedSteering = lastSteeringId !== null && lastSteeringId !== lastSteeringIdRef.current
-    const tipMoved = followSigRef.current !== followSig
-    lastKeyRef.current = lastKey
-    lastSteeringIdRef.current = lastSteeringId
-    followSigRef.current = followSig
-    // Follow new flow content while pinned; do NOT re-pin on every render
-    // merely because atBottomRef is true (scroll threshold → setState → snap).
-    if (appendedUser || appendedSteering || (tipMoved && atBottomRef.current)) toBottom(el)
-  })
-
-  const onScrollRef = useRef(() => {})
-  onScrollRef.current = () => {
-    const local = listRef.current
-    /* v8 ignore next -- ref-null guard: the handler only fires while mounted. */
-    if (local === null) return
-    const el = scrollerOf(local)
-    // Only reader input may make raw scroll geometry change follow ownership:
-    // a delivered position that deviates from the observed-top ledger (every
-    // programmatic write records itself there synchronously). This covers
-    // wheel, touch, scrollbar, and keyboard alike without naming devices.
-    // Browser shrink-clamps land exactly on the floor min and delayed
-    // programmatic deliveries land on the ledger itself, so both preserve
-    // the current ownership state.
-    const floor = Math.max(0, el.scrollHeight - el.clientHeight)
-    const movedByReader = Math.abs(el.scrollTop - Math.min(observedTopRef.current, floor)) > 0.5
-    const isAtBottom = movedByReader
-      ? floor - el.scrollTop <= FOLLOW_THRESHOLD + 1
-      : atBottomRef.current
-    if (!movedByReader && isAtBottom) {
-      toBottom(el)
-      return
-    }
-    atBottomRef.current = isAtBottom
-    setAtBottom(isAtBottom)
-    const position = isAtBottom ? null : scrollPosition(local, el)
-    if (isAtBottom) {
-      anchorRef.current = null
-    } else if (anchorRef.current !== null && position !== null) {
-      anchorRef.current = { key: position.anchorKey, top: position.anchorTop }
-    }
-    // Continuous save (unmount happens after ref detach, so saving there is
-    // too late); pinned-to-bottom clears so a remount keeps following.
-    if (isAtBottom) chatScroll.save(null)
-    else if (position !== null) chatScroll.save(position)
-    observedTopRef.current = el.scrollTop
+  connectedCallback(): void {
+    this.#mountedAt = Date.now()
+    this.#tick()
+    this.#tickId = setInterval(() => { this.#tick() }, 1000)
   }
 
-  // Bind the scroll listener on the resolved scrollport once per mount;
-  // reader-input attribution rides the observed-top ledger, not per-device
-  // input listeners.
-  useEffect(() => {
-    const local = listRef.current
-    /* v8 ignore next -- ref-null guard: effect runs after the list node commits. */
-    if (local === null) return
-    const el = scrollerOf(local)
-    const onScroll = (): void => { onScrollRef.current() }
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-    }
-  }, [])
-
-  // The ref starts null and is assigned every render, so the placeholder
-  // initializer a function initial value would need never exists.
-  const followRef = useRef<(() => void) | null>(null)
-  followRef.current = () => {
-    const local = listRef.current
-    if (local !== null && atBottomRef.current) {
-      const el = scrollerOf(local)
-      el.scrollTop = el.scrollHeight
-      observedTopRef.current = el.scrollTop
-      chatScroll.save(null)
-    }
-  }
-  // Streaming, tool disclosures, and other flow changes resize the column;
-  // the sticky composer resizes outside it. This observer owns ChatView's
-  // dynamic-height follow decisions and writes only while the reader is pinned.
-  useEffect(() => {
-    const column = columnRef.current
-    const local = listRef.current
-    if (column === null || local === null || typeof ResizeObserver === 'undefined') return
-    const scrollport = scrollerOf(local)
-    const composer = scrollport.querySelector<HTMLElement>('[data-composer-seat]')
-    const observer = new ResizeObserver(() => { followRef.current?.() })
-    observer.observe(column)
-    if (composer !== null) observer.observe(composer)
-    return () => { observer.disconnect() }
-  }, [])
-
-  // A failed/empty page leaves the head unchanged. Once the request leaves
-  // its busy state there is no future prepend for the saved anchor to own.
-  useEffect(() => {
-    if (!loadingOlder) anchorRef.current = null
-  }, [loadingOlder])
-
-  const loadOlderAnchored = (): void => {
-    const local = listRef.current
-    /* v8 ignore next -- ref-null guard: the paging button renders inside the list tree. */
-    if (local !== null) {
-      const el = scrollerOf(local)
-      const row = pagingAnchor(local, el)
-      if (row !== null && row.dataset.chatAnchorKey !== undefined) {
-        anchorRef.current = {
-          key: row.dataset.chatAnchorKey,
-          top: flowTop(row, el),
-        }
-      }
-    }
-    loadOlder()
+  disconnectedCallback(): void {
+    if (this.#tickId !== null) { clearInterval(this.#tickId); this.#tickId = null }
   }
 
-  return (
-    <div className={css.root}>
-      <div ref={listRef} className={css.scroll}>
-        <div ref={columnRef} className={css.column} data-chat-flow="">
-          {openState === 'loading' && <div className={css.hint}>{t('chat.loadingHistory')}</div>}
-          {openState === 'error' && openError !== null && (
-            <div className={css.openError}>
-              {t('chat.loadError', { message: openError.message, code: openError.code })}
-            </div>
-          )}
-          {hasMore && (
-            <div className={css.older}>
-              <button type="button" disabled={loadingOlder} onClick={loadOlderAnchored}>
-                {loadingOlder ? t('loading') : t('chat.loadOlder')}
-              </button>
-            </div>
-          )}
-          {order.map(nodeKey => (
-            <ChatNodeSeat
-              key={nodeKey}
-              nodeKey={nodeKey}
-              useSession={useSession}
-              selectedCallId={selectedCallId}
-              cwd={cwd}
-              openFile={requestOpenFile}
-              inspectCall={inspectCall}
-              forkAt={forkAt}
-              renderMessageImages={renderMessageImages}
-              fileMentions={fileMentions}
-              renderSlot={renderSlot}
-              t={t}
-            />
-          ))}
-          {/* No pending placeholders: questions (ui-user-questions) and approvals
-              (ApprovalPanel) both take over the composer, so a flow card would
-              double-render the same wait. */}
-          {/* Turn-level loading signal: rides the whole running turn (first-token
-              wait, tool execution, streaming) so it never flickers per step. */}
-          {running && <TurnStatus startTime={runningTurnStart} t={t} />}
-          {pendingSteering.map(item => (
-            <PendingSteeringBubble
-              key={item.id}
-              content={item.content}
-              renderMessageImages={renderMessageImages}
-              t={t}
-            />
-          ))}
-        </div>
-        {!atBottom && (
-          <div className={css.toBottomSlot}>
-            <button
-              type="button"
-              className={css.toBottom}
-              aria-label={t('chat.toBottom')}
-              onClick={() => {
-                const local = listRef.current
-                /* v8 ignore next -- ref-null guard: the button only renders alongside the mounted list. */
-                if (local !== null) toBottom(scrollerOf(local))
-              }}
-            >
-              <IconChevronDownOutline14 />
-            </button>
-          </div>
+  #tick(): void {
+    const anchor = this.#startTime ?? this.#mountedAt
+    this.#elapsedMs = Math.max(0, Date.now() - anchor)
+    this.#render()
+  }
+
+  #render(): void {
+    const showClock = this.#elapsedMs >= 15_000
+    const vdom = (
+      <div class={css.turnStatus ?? ''} role="status" aria-live="polite">
+        Deep diving...
+        {showClock && (
+          <span class={css.turnStatusClock ?? ''} aria-hidden>
+            {formatRunDuration(this.#elapsedMs, this.#t)}
+          </span>
         )}
       </div>
-      {fileOpenError !== null && (
-        <FileOpenErrorDialog
-          path={fileOpenError.path}
-          message={fileOpenError.message}
-          busy={fileOpenBusy}
-          onClose={closeFileOpenError}
-          onRetry={() => { requestOpenFile(fileOpenError.path) }}
-          t={t}
-        />
-      )}
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-turn-status') === undefined) {
+  customElements.define('dsh-turn-status', DshTurnStatus)
+}
+
+function TurnStatus({ startTime, t }: { startTime: number | null; t: ChatViewSlotProps['t'] }): JSX.Element {
+  const el = document.createElement('dsh-turn-status') as DshTurnStatus
+  el.setProps(startTime, t)
+  return el as unknown as JSX.Element
 }
 
 /** In-page Host open-path refusal: the wire reason plus a retry of the same path. */
@@ -501,7 +188,7 @@ function FileOpenErrorDialog({
   onClose: () => void
   onRetry: () => void
   t: ChatViewSlotProps['t']
-}) {
+}): JSX.Element {
   return (
     <Modal
       open
@@ -509,12 +196,379 @@ function FileOpenErrorDialog({
       closeLabel={t('close')}
       title={t(isFolderOpenPath(path) ? 'fileOpen.folderTitle' : 'fileOpen.title')}
       description={message}
-      footer={(
-        <>
-          <Button variant="outline" className={css.modalAction} onClick={onClose}>{t('cancel')}</Button>
-          <Button variant="primary" className={css.modalAction} disabled={busy} onClick={onRetry}>{t('retry')}</Button>
-        </>
-      )}
-    />
+      footer={[
+        <Button variant="outline" class={css.modalAction ?? ''} onclick={onClose}>{t('cancel')}</Button>,
+        <Button variant="primary" class={css.modalAction ?? ''} disabled={busy} onclick={onRetry}>{t('retry')}</Button>,
+      ]}
+    /> as unknown as JSX.Element
   )
+}
+
+/**
+ * The chat view slot entry custom element: pure component over the composed
+ * props; each ordered business Node crosses the keyed renderer seat.
+ */
+export class DshChatView extends HTMLElement {
+  #props: ChatViewSlotProps | null = null
+
+  #fileOpenError: { path: string; message: string } | null = null
+  #fileOpenBusy = false
+  #fileOpenRequest = 0
+  #atBottom = true
+  #atBottomRef = true
+  #observedTop = 0
+  #anchor: PagingAnchor | null = null
+  #firstSeq: number | null = null
+  #opened = false
+  #lastKey: string | null = null
+  #lastSteeringId: string | null = null
+  #followSig: string | null = null
+
+  #listEl: HTMLDivElement | null = null
+  #columnEl: HTMLDivElement | null = null
+  #scrollHandler: (() => void) | null = null
+  #resizeObserver: ResizeObserver | null = null
+  #boundScrollport: HTMLElement | null = null
+
+  setProps(props: ChatViewSlotProps): void {
+    this.#props = props
+    this.#render()
+    // Post-render layout pass (React's useLayoutEffect equivalent): runs
+    // synchronously after the DOM has the new rows so anchor/prepend
+    // measurement sees the final layout.
+    this.#afterRender()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+    this.#afterRender()
+  }
+
+  disconnectedCallback(): void {
+    this.#unbindScroll()
+    this.#resizeObserver?.disconnect()
+    this.#resizeObserver = null
+  }
+
+  #toBottom(el: HTMLElement): void {
+    this.#anchor = null
+    el.scrollTop = el.scrollHeight
+    this.#observedTop = el.scrollTop
+    this.#atBottomRef = true
+    this.#atBottom = true
+    this.#props?.chatScroll.save(null)
+  }
+
+  #afterRender(): void {
+    const props = this.#props
+    if (props === null) return
+    const { chatScroll, sessionId: _sessionId } = props
+    const local = this.#listEl
+    if (local === null) return
+    const el = scrollerOf(local)
+
+    this.#bindScroll(el)
+    this.#bindResize()
+
+    const order = props.useSession(s => s.chat.order)
+    const nodeStore = props.useSession(s => s.chat.nodes)
+    const running = props.useSession(s => s.running)
+    const openState = props.useSession(s => s.openState)
+    const inbox = props.useSession(s => s.queue)
+    const pendingSteering = inbox.filter(item => item.placement === 'steering')
+
+    const firstKey = order[0]
+    const firstSeq = firstKey === undefined ? null : nodeStore.get(firstKey)?.anchorSeq ?? null
+    const lastKey = order.at(-1) ?? null
+    const lastNode = lastKey === null ? undefined : nodeStore.get(lastKey)
+    const lastSteeringId = pendingSteering[pendingSteering.length - 1]?.id ?? null
+    const followSig = `${openState}:${firstSeq}:${lastKey}:${order.length}:${running ? 1 : 0}:${lastSteeringId ?? ''}`
+
+    if (openState === 'open' && !this.#opened) {
+      this.#opened = true
+      const saved = chatScroll.read()
+      if (saved === null) {
+        this.#toBottom(el)
+      } else {
+        el.scrollTop = saved.scrollTop
+        const row = anchorElement(local, saved.anchorKey)
+        if (row !== null) el.scrollTop += flowTop(row, el) - saved.anchorTop
+        this.#observedTop = el.scrollTop
+        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_THRESHOLD + 1
+        this.#atBottomRef = isAtBottom
+        this.#atBottom = isAtBottom
+        const normalized = isAtBottom ? null : scrollPosition(local, el)
+        if (isAtBottom) chatScroll.save(null)
+        else if (normalized !== null) chatScroll.save(normalized)
+      }
+      this.#firstSeq = firstSeq
+      this.#lastKey = lastKey
+      this.#lastSteeringId = lastSteeringId
+      this.#followSig = followSig
+      this.#render()
+      return
+    }
+
+    if (this.#anchor !== null && firstSeq !== null && this.#firstSeq !== null && firstSeq < this.#firstSeq) {
+      const anchor = this.#anchor
+      this.#anchor = null
+      const row = anchorElement(local, anchor.key)
+      if (row !== null) el.scrollTop += flowTop(row, el) - anchor.top
+      this.#observedTop = el.scrollTop
+      this.#firstSeq = firstSeq
+      this.#lastKey = lastKey
+      this.#lastSteeringId = lastSteeringId
+      this.#followSig = followSig
+      return
+    }
+
+    this.#firstSeq = firstSeq
+    const appendedUser = lastKey !== this.#lastKey && lastNode?.kind === 'user'
+    const appendedSteering = lastSteeringId !== null && lastSteeringId !== this.#lastSteeringId
+    const tipMoved = this.#followSig !== followSig
+    this.#lastKey = lastKey
+    this.#lastSteeringId = lastSteeringId
+    this.#followSig = followSig
+    if (appendedUser || appendedSteering || (tipMoved && this.#atBottomRef)) this.#toBottom(el)
+  }
+
+  #bindScroll(el: HTMLElement): void {
+    if (this.#boundScrollport === el) return
+    this.#unbindScroll()
+    const onScroll = (): void => { this.#onScroll() }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    this.#scrollHandler = onScroll
+    this.#boundScrollport = el
+  }
+
+  #unbindScroll(): void {
+    if (this.#scrollHandler !== null && this.#boundScrollport !== null) {
+      this.#boundScrollport.removeEventListener('scroll', this.#scrollHandler)
+    }
+    this.#scrollHandler = null
+    this.#boundScrollport = null
+  }
+
+  #bindResize(): void {
+    if (this.#resizeObserver !== null) return
+    const column = this.#columnEl
+    const local = this.#listEl
+    if (column === null || local === null || typeof ResizeObserver === 'undefined') return
+    const scrollport = scrollerOf(local)
+    const composer = scrollport.querySelector<HTMLElement>('[data-composer-seat]')
+    const observer = new ResizeObserver(() => { this.#follow() })
+    observer.observe(column)
+    if (composer !== null) observer.observe(composer)
+    this.#resizeObserver = observer
+  }
+
+  #follow(): void {
+    const local = this.#listEl
+    if (local !== null && this.#atBottomRef) {
+      const el = scrollerOf(local)
+      el.scrollTop = el.scrollHeight
+      this.#observedTop = el.scrollTop
+      this.#props?.chatScroll.save(null)
+    }
+  }
+
+  #onScroll(): void {
+    const local = this.#listEl
+    if (local === null) return
+    const el = scrollerOf(local)
+    const floor = Math.max(0, el.scrollHeight - el.clientHeight)
+    const movedByReader = Math.abs(el.scrollTop - Math.min(this.#observedTop, floor)) > 0.5
+    const isAtBottom = movedByReader
+      ? floor - el.scrollTop <= FOLLOW_THRESHOLD + 1
+      : this.#atBottomRef
+    if (!movedByReader && isAtBottom) {
+      this.#toBottom(el)
+      this.#render()
+      return
+    }
+    this.#atBottomRef = isAtBottom
+    this.#atBottom = isAtBottom
+    const position = isAtBottom ? null : scrollPosition(local, el)
+    if (isAtBottom) {
+      this.#anchor = null
+    } else if (position !== null) {
+      this.#anchor = { key: position.anchorKey, top: position.anchorTop }
+    }
+    if (isAtBottom) this.#props?.chatScroll.save(null)
+    else if (position !== null) this.#props?.chatScroll.save(position)
+    this.#observedTop = el.scrollTop
+    this.#render()
+  }
+
+  #requestOpenFile(path: string): void {
+    const props = this.#props
+    if (props === null) return
+    const id = ++this.#fileOpenRequest
+    this.#fileOpenBusy = true
+    this.#render()
+    void props.openFile(path).then(
+      () => {
+        if (id !== this.#fileOpenRequest) return
+        this.#fileOpenError = null
+        this.#fileOpenBusy = false
+        this.#render()
+      },
+      (error: unknown) => {
+        if (id !== this.#fileOpenRequest) return
+        this.#fileOpenError = {
+          path,
+          message: openFailureMessage(
+            error,
+            props.t(isFolderOpenPath(path) ? 'fileOpen.folderUnknown' : 'fileOpen.unknown'),
+          ),
+        }
+        this.#fileOpenBusy = false
+        this.#render()
+      },
+    )
+  }
+
+  #closeFileOpenError(): void {
+    this.#fileOpenRequest += 1
+    this.#fileOpenError = null
+    this.#fileOpenBusy = false
+    this.#render()
+  }
+
+  #loadOlderAnchored(): void {
+    const props = this.#props
+    if (props === null) return
+    const local = this.#listEl
+    if (local !== null) {
+      const el = scrollerOf(local)
+      const row = pagingAnchor(local, el)
+      if (row !== null && row.dataset.chatAnchorKey !== undefined) {
+        this.#anchor = { key: row.dataset.chatAnchorKey, top: flowTop(row, el) }
+      }
+    }
+    props.loadOlder()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const {
+      useSession, useSessions, useStore, renderSlot, sessionId, inspectCall, chatScroll: _chatScroll, forkAt,
+      fileMentions, t,
+    } = props
+
+    const order = useSession(s => s.chat.order)
+    const timeline = useSession(s => s.chat.timeline)
+    const inbox = useSession(s => s.queue)
+    const cwd = useSessions(s => s.byId[sessionId]?.cwd)
+    const running = useSession(s => s.running)
+    const openState = useSession(s => s.openState)
+    const openError = useSession(s => s.openError)
+    const hasMore = useSession(s => s.hasMore)
+    const loadingOlder = useSession(s => s.loadingOlder)
+    const selectedCallId = useStore(s => s.selection?.callId)
+    const pendingSteering = inbox.filter(item => item.placement === 'steering')
+    const renderMessageImages: RenderMessageImages = owner => renderSlot('conversation.message.images', { ...owner, loadImage: props.loadImage })
+    const runningTurnStart = runningTurnStartTime(timeline)
+
+    const vdom = (
+      <div class={css.root ?? ''}>
+        <div
+          ref={(el: Element | null) => { this.#listEl = el as HTMLDivElement | null }}
+          class={css.scroll ?? ''}
+        >
+          <div
+            ref={(el: Element | null) => { this.#columnEl = el as HTMLDivElement | null }}
+            class={css.column ?? ''}
+            data-chat-flow=""
+          >
+            {openState === 'loading' && <div class={css.hint ?? ''}>{t('chat.loadingHistory')}</div>}
+            {openState === 'error' && openError !== null && (
+              <div class={css.openError ?? ''}>
+                {t('chat.loadError', { message: openError.message, code: openError.code })}
+              </div>
+            )}
+            {hasMore && (
+              <div class={css.older ?? ''}>
+                <button type="button" disabled={loadingOlder} onclick={() => { this.#loadOlderAnchored() }}>
+                  {loadingOlder ? t('loading') : t('chat.loadOlder')}
+                </button>
+              </div>
+            )}
+            {order.map(nodeKey => (
+              <ChatNodeSeat
+                key={nodeKey}
+                nodeKey={nodeKey}
+                useSession={useSession}
+                selectedCallId={selectedCallId}
+                cwd={cwd}
+                openFile={(path: string) => { this.#requestOpenFile(path) }}
+                inspectCall={inspectCall}
+                forkAt={forkAt}
+                renderMessageImages={renderMessageImages}
+                fileMentions={fileMentions}
+                renderSlot={renderSlot}
+                t={t}
+              />
+            ))}
+            {/* No pending placeholders: questions (ui-user-questions) and approvals
+                (ApprovalPanel) both take over the composer, so a flow card would
+                double-render the same wait. */}
+            {/* Turn-level loading signal: rides the whole running turn (first-token
+                wait, tool execution, streaming) so it never flickers per step. */}
+            {running && (TurnStatus({ startTime: runningTurnStart, t }) as unknown as VNode)}
+            {pendingSteering.map(item => (
+              <PendingSteeringBubble
+                key={item.id}
+                content={item.content}
+                renderMessageImages={renderMessageImages}
+                t={t}
+              />
+            ))}
+          </div>
+          {!this.#atBottom && (
+            <div class={css.toBottomSlot ?? ''}>
+              <button
+                type="button"
+                class={css.toBottom ?? ''}
+                aria-label={t('chat.toBottom')}
+                onclick={() => {
+                  const local = this.#listEl
+                  if (local !== null) { this.#toBottom(scrollerOf(local)); this.#render() }
+                }}
+              >
+                <IconChevronDownOutline14 />
+              </button>
+            </div>
+          )}
+        </div>
+        {this.#fileOpenError !== null && (FileOpenErrorDialog({
+          path: this.#fileOpenError.path,
+          message: this.#fileOpenError.message,
+          busy: this.#fileOpenBusy,
+          onClose: () => { this.#closeFileOpenError() },
+          onRetry: () => {
+            const error = this.#fileOpenError
+            if (error !== null) this.#requestOpenFile(error.path)
+          },
+          t,
+        }) as unknown as VNode)}
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-chat-view') === undefined) {
+  customElements.define('dsh-chat-view', DshChatView)
+}
+
+/**
+ * The chat view slot entry: pure component over the composed props; each
+ * ordered business Node crosses the keyed renderer seat.
+ */
+export function ChatView(props: ChatViewSlotProps): JSX.Element {
+  const el = document.createElement('dsh-chat-view') as DshChatView
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

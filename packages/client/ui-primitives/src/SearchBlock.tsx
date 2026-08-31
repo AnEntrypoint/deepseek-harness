@@ -7,11 +7,18 @@
 // slices head/tail over, and neither soft-wraps: a long match line or path
 // scrolls horizontally instead of folding. Geometry mirrors CodeBlock and
 // TerminalBlock so a search card reads as one family with them.
+//
+// Converted from a React hooks component to a webjsx custom element:
+// expanded/collapsed become instance fields, and copy feedback now uses the
+// createCopyFeedback factory (replacing the old useCopyFeedback hook) driven
+// from connectedCallback/disconnectedCallback. Re-render is an explicit
+// applyDiff(this, vdom) call (Toast.tsx's pattern).
 
-import { useCallback, useState, type ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { headTailCap } from './head-tail-cap.ts'
-import { useCopyFeedback } from './use-copy-feedback.ts'
+import { createCopyFeedback, type CopyFeedbackController } from './use-copy-feedback.ts'
 import css from './SearchBlock.module.css'
 
 /**
@@ -83,13 +90,6 @@ type SearchRow =
   | { type: 'match'; lineNumber: number; line: string; key: string; fileIndex: number }
   | { type: 'path'; path: string }
 
-/**
- * The plain-text form the copy control writes: the whole structured result
- * regardless of the height cap or which groups are collapsed, so the clipboard
- * carries the result rather than what the card happens to be showing.
- * @param props - the card's props.
- * @returns the copyable text, or the empty string for an empty result.
- */
 function copyText(props: SearchBlockProps): string {
   if (props.kind === 'paths') return props.paths.join('\n')
   return props.files
@@ -97,31 +97,12 @@ function copyText(props: SearchBlockProps): string {
     .join('\n\n')
 }
 
-/**
- * Number of retained results the card holds: the matched-line count across all
- * files for a matches card, the path count for a paths card. This is the count
- * the banner summary reports against `total` when the result was capped.
- * @param props - the card's props.
- * @returns the retained result count.
- */
 function shownCount(props: SearchBlockProps): number {
   return props.kind === 'paths'
     ? props.paths.length
     : props.files.reduce((sum, file) => sum + file.matches.length, 0)
 }
 
-/**
- * The banner summary. When the search was capped it reads `显示 X / 共 N …` so
- * the retained count and the pre-cap total sit in one clause (mirroring the read
- * card's `显示 X / Y 行`); when it was not capped it is a plain count of what the
- * card holds. The unit — `处匹配 · K 个文件` for grep, `个路径` for glob — trails
- * the count either way.
- * @param props - the card's props.
- * @param shown - the retained result count from {@link shownCount}.
- * @param truncated - whether the search was capped.
- * @param total - the pre-cap total the truncation clause reports.
- * @returns the summary text.
- */
 function summaryText(props: SearchBlockProps, shown: number, truncated: boolean, total: number): string {
   const count = truncated ? `显示 ${shown} / 共 ${total}` : `${shown}`
   return props.kind === 'paths'
@@ -129,13 +110,6 @@ function summaryText(props: SearchBlockProps, shown: number, truncated: boolean,
     : `${count} 处匹配 · ${props.files.length} 个文件`
 }
 
-/**
- * Flatten a card's shape into its render rows, dropping a collapsed file
- * group's match rows.
- * @param props - the card's props.
- * @param collapsed - the set of collapsed file-group indices (matches only).
- * @returns the flattened rows in output order.
- */
 function toRows(props: SearchBlockProps, collapsed: ReadonlySet<number>): SearchRow[] {
   if (props.kind === 'paths') return props.paths.map((path): SearchRow => ({ type: 'path', path }))
   const rows: SearchRow[] = []
@@ -150,13 +124,6 @@ function toRows(props: SearchBlockProps, collapsed: ReadonlySet<number>): Search
   return rows
 }
 
-/**
- * A stable React key for a flattened render row: the group-scoped match key, a
- * file-index-scoped header key, or the path itself. Rows of different types
- * never collide, since each key carries its type prefix or the group index.
- * @param row - the flattened row.
- * @returns the key.
- */
 function rowKey(row: SearchRow): string {
   switch (row.type) {
     case 'match': return `match:${row.key}`
@@ -165,60 +132,44 @@ function rowKey(row: SearchRow): string {
   }
 }
 
-/**
- * Render a completed search as a grouped-matches or flat-path card.
- * @param props - see {@link SearchBlockProps}.
- * @returns the search block element.
- */
-export function SearchBlock(props: SearchBlockProps) {
-  const { truncated, total, maxLines = DEFAULT_SEARCH_MAX_LINES, className } = props
-  const [expanded, setExpanded] = useState(false)
-  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(() => new Set())
+const DEFAULT_PROPS: SearchBlockProps = { kind: 'paths', truncated: false, total: 0, paths: [] }
 
-  // `props` is a fresh object each render, so memoizing on it never hits; the
-  // flatten is cheap, so it runs inline keyed on the collapse set instead.
-  const rows = toRows(props, collapsed)
-  const shown = shownCount(props)
-  const empty = rows.length === 0
-  const { copied, onCopy } = useCopyFeedback(copyText(props))
+/** Completed grep/glob search surface, as a custom element. */
+export class DshSearchBlock extends HTMLElement {
+  #props: SearchBlockProps = DEFAULT_PROPS
+  #expanded = false
+  #collapsed: ReadonlySet<number> = new Set()
+  #copyFeedback: CopyFeedbackController | null = null
 
-  const onToggle = useCallback(() => { setExpanded(value => !value) }, [])
+  setProps(props: SearchBlockProps): void {
+    this.#props = props
+    this.#render()
+  }
 
-  const toggleFile = useCallback((index: number) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      if (next.has(index)) next.delete(index)
-      else next.add(index)
-      return next
-    })
-  }, [])
+  connectedCallback(): void {
+    this.#copyFeedback = createCopyFeedback(() => copyText(this.#props), () => { this.#render() })
+    this.#render()
+  }
 
-  const { hidden, capped, headLines, tailLines } = headTailCap(rows.length, maxLines, expanded)
-  const head = capped ? rows.slice(0, headLines) : rows
-  const naturalTail = capped ? rows.slice(rows.length - tailLines) : []
-  // When the tail slice begins inside a file's matches, its own header sits
-  // above the cut and is not shown, so those rows could not be attributed to a
-  // file. Restore the owning header at the top of the tail — unless the head
-  // slice already carries it (a single large file), where it would duplicate.
-  const tailLead = naturalTail[0]
-  const tailHeader = tailLead?.type === 'match'
-    && !head.some(row => row.type === 'file' && row.index === tailLead.fileIndex)
-    ? rows.find((row): row is Extract<SearchRow, { type: 'file' }> =>
-      row.type === 'file' && row.index === tailLead.fileIndex)
-    : undefined
-  // The restored header is itself a row. Left extra it would push the card to
-  // maxLines + 1 and overstate `hidden` by one, so it consumes a tail slot: drop
-  // the tail's first row (the match whose header this is) for it. Visible rows
-  // hold at maxLines and `hidden` stays exact; the dropped match joins the
-  // hidden middle.
-  const tail = tailHeader === undefined ? naturalTail : naturalTail.slice(1)
+  disconnectedCallback(): void {
+    this.#copyFeedback?.stop()
+    this.#copyFeedback = null
+  }
 
-  const renderRow = (row: SearchRow): ReactNode => {
-    if (row.type === 'path') return <div className={css.line}>{row.path}</div>
+  #toggleFile(index: number): void {
+    const next = new Set(this.#collapsed)
+    if (next.has(index)) next.delete(index)
+    else next.add(index)
+    this.#collapsed = next
+    this.#render()
+  }
+
+  #renderRow(row: SearchRow): VNode {
+    if (row.type === 'path') return <div class={css.line ?? ''}>{row.path}</div>
     if (row.type === 'match') {
       return (
-        <div className={css.line}>
-          <span className={css.lineNumber}>{row.lineNumber}: </span>
+        <div class={css.line ?? ''}>
+          <span class={css.lineNumber ?? ''}>{row.lineNumber}: </span>
           {row.line}
         </div>
       )
@@ -226,52 +177,94 @@ export function SearchBlock(props: SearchBlockProps) {
     return (
       <button
         type="button"
-        className={css.fileHeader}
+        class={css.fileHeader ?? ''}
         aria-expanded={!row.collapsed}
-        onClick={() => { toggleFile(row.index) }}
+        onclick={() => { this.#toggleFile(row.index) }}
       >
-        <span className={css.filePath}>{row.path}</span>
-        <span className={css.fileCount}>{row.count}</span>
+        <span class={css.filePath ?? ''}>{row.path}</span>
+        <span class={css.fileCount ?? ''}>{row.count}</span>
       </button>
     )
   }
 
-  return (
-    <div className={clsx(css.block, className)} data-search={props.kind}>
-      <div className={css.header}>
-        <span className={css.summary}>{summaryText(props, shown, truncated, total)}</span>
-        {!empty && (
-          <button type="button" className={css.copyButton} onClick={onCopy}>
-            {copied ? '复制成功' : '复制'}
-          </button>
-        )}
+  #render(): void {
+    const props = this.#props
+    const { truncated, total, maxLines = DEFAULT_SEARCH_MAX_LINES, className } = props
+    const rows = toRows(props, this.#collapsed)
+    const shown = shownCount(props)
+    const empty = rows.length === 0
+    const copied = this.#copyFeedback?.copied ?? false
+
+    const { hidden, capped, headLines, tailLines } = headTailCap(rows.length, maxLines, this.#expanded)
+    const head = capped ? rows.slice(0, headLines) : rows
+    const naturalTail = capped ? rows.slice(rows.length - tailLines) : []
+    const tailLead = naturalTail[0]
+    const tailHeader = tailLead?.type === 'match'
+      && !head.some(row => row.type === 'file' && row.index === tailLead.fileIndex)
+      ? rows.find((row): row is Extract<SearchRow, { type: 'file' }> =>
+        row.type === 'file' && row.index === tailLead.fileIndex)
+      : undefined
+    const tail = tailHeader === undefined ? naturalTail : naturalTail.slice(1)
+
+    const vdom = (
+      <div class={clsx(css.block, className)} data-search={props.kind}>
+        <div class={css.header ?? ''}>
+          <span class={css.summary ?? ''}>{summaryText(props, shown, truncated, total)}</span>
+          {!empty && (
+            <button type="button" class={css.copyButton ?? ''} onclick={() => this.#copyFeedback?.onCopy()}>
+              {copied ? '复制成功' : '复制'}
+            </button>
+          )}
+        </div>
+        {empty
+          ? <div class={css.empty ?? ''}>无结果</div>
+          : (
+            <div class={css.body ?? ''}>
+              {head.map(row => (
+                <div key={rowKey(row)}>{this.#renderRow(row)}</div>
+              ))}
+              {hidden > 0 && (
+                <button
+                  type="button"
+                  class={css.expand ?? ''}
+                  aria-expanded={this.#expanded}
+                  aria-label={this.#expanded ? '收起结果' : `展开其余 ${hidden} 行结果`}
+                  onclick={() => { this.#expanded = !this.#expanded; this.#render() }}
+                >
+                  {this.#expanded ? '收起' : `… 其余 ${hidden} 行`}
+                </button>
+              )}
+              {tailHeader !== undefined && (
+                <div key={`tailHeader:${rowKey(tailHeader)}`}>{this.#renderRow(tailHeader)}</div>
+              )}
+              {tail.map(row => (
+                <div key={rowKey(row)}>{this.#renderRow(row)}</div>
+              ))}
+            </div>
+          )}
       </div>
-      {empty
-        ? <div className={css.empty}>无结果</div>
-        : (
-          <div className={css.body}>
-            {head.map(row => (
-              <div key={rowKey(row)}>{renderRow(row)}</div>
-            ))}
-            {hidden > 0 && (
-              <button
-                type="button"
-                className={css.expand}
-                aria-expanded={expanded}
-                aria-label={expanded ? '收起结果' : `展开其余 ${hidden} 行结果`}
-                onClick={onToggle}
-              >
-                {expanded ? '收起' : `… 其余 ${hidden} 行`}
-              </button>
-            )}
-            {tailHeader !== undefined && (
-              <div key={`tailHeader:${rowKey(tailHeader)}`}>{renderRow(tailHeader)}</div>
-            )}
-            {tail.map(row => (
-              <div key={rowKey(row)}>{renderRow(row)}</div>
-            ))}
-          </div>
-        )}
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-search-block') === undefined) {
+  customElements.define('dsh-search-block', DshSearchBlock)
+}
+
+/**
+ * Create (if needed) or update a SearchBlock element in place.
+ * @param el - an existing `dsh-search-block` element to update, or null to create one.
+ * @param props - see {@link SearchBlockProps}.
+ * @returns the `dsh-search-block` element; keep it and pass it back in to update.
+ */
+export function renderSearchBlock(el: DshSearchBlock | null, props: SearchBlockProps): DshSearchBlock {
+  const target = el ?? document.createElement('dsh-search-block') as DshSearchBlock
+  target.setProps(props)
+  return target
+}
+
+/** One-shot creation helper preserving the original function-component call shape. */
+export function SearchBlock(props: SearchBlockProps): JSX.Element {
+  return renderSearchBlock(null, props) as unknown as JSX.Element
 }

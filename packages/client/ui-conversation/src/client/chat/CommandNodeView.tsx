@@ -1,4 +1,3 @@
-import { memo, useMemo } from 'react'
 import type { PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
 import type {
   ChatNodeViewProps, CommandRowOwnerProps,
@@ -10,31 +9,31 @@ import css from './ChatView.module.css'
 type CommandNodeViewProps = ChatNodeViewProps<'command'> & PropsRenderSlots<'conversation.chat.commandview'>
 
 /** Ordinary command lifecycle renderer with command-name keyed specialization. */
-export const CommandNodeView = memo(function CommandNodeView({ node, renderSlot, t }: CommandNodeViewProps) {
+export function CommandNodeView({ node, renderSlot, t }: CommandNodeViewProps): JSX.Element {
   const command = node.data
-  const owner = useMemo<CommandRowOwnerProps>(() => ({ node: command }), [command])
+  const owner: CommandRowOwnerProps = { node: command }
   return (
-    <div className={css.callRow}>
+    <div class={css.callRow ?? ''}>
       {renderSlot('conversation.chat.commandview', owner, {
         entryKey: command.name ?? '',
-        fallback: <GenericCommandCard {...owner} t={t} />,
+        fallback: GenericCommandCard({ ...owner, t }) as unknown as JSX.Element,
       })}
     </div>
   )
-})
+}
 
 /** One integrated `/compact` command and compaction transaction renderer. */
-export const ManualCompactionNodeView = memo(function ManualCompactionNodeView({
+export function ManualCompactionNodeView({
   node, t,
-}: ChatNodeViewProps<'manual-compaction'>) {
+}: ChatNodeViewProps<'manual-compaction'>): JSX.Element {
   const data = node.data
   return (
-    <div className={css.callRow}>
-      <CompactionCommandCard
-        node={data.command}
-        {...data.compaction === null ? {} : { compaction: data.compaction }}
-        t={t}
-      />
+    <div class={css.callRow ?? ''}>
+      {CompactionCommandCard({
+        node: data.command,
+        ...data.compaction === null ? {} : { compaction: data.compaction },
+        t,
+      })}
     </div>
   )
-})
+}

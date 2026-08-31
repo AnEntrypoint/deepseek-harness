@@ -1,7 +1,7 @@
 /**
- * Direct mdast→React markdown renderer. Replaces the react-markdown /
+ * Direct mdast→webjsx markdown renderer. Replaces the react-markdown /
  * remark-rehype pipeline with one switch over parsed nodes so streaming can
- * cache frozen blocks as React elements; the rendered DOM is pinned
+ * cache frozen blocks as webjsx elements; the rendered DOM is pinned
  * byte-for-byte by `tests/fixtures/markdown-dom` and must not drift.
  *
  * Untrusted-output policy (unchanged from the replaced pipeline): link and
@@ -16,16 +16,20 @@
  * may add node types this renderer has no mapping for.
  */
 
-import { Fragment, createElement } from 'react'
-import type { Key, ReactNode } from 'react'
+import { createElement } from 'webjsx'
+import type { JSXChildTypes, NonBooleanPrimitive, VNode } from 'webjsx'
 import clsx from 'clsx'
 import type * as Md from 'mdast'
 import type {} from 'mdast-util-math'
 import { normalizeUri } from 'micromark-util-sanitize-uri'
-import { CodeBlock } from './CodeBlock.tsx'
-import { renderTexToReact } from './katex.tsx'
+import { renderCodeBlock } from './CodeBlock.tsx'
+import type { DshCodeBlock } from './CodeBlock.tsx'
+import { renderTexToVNodes } from './katex.tsx'
 import type { PositionedBlock } from './incremental.ts'
 import css from './MarkdownText.module.css'
+
+/** A rendered node: any webjsx child, including nulls dropped elsewhere. */
+type RNode = JSXChildTypes
 
 /** Copy-button labels forwarded to fence CodeBlocks (this package is cordis-free, so copy arrives via props). */
 export interface MarkdownCodeLabels {
@@ -144,12 +148,12 @@ export interface MarkdownRenderContext {
  * replaced pipeline's child lists so separator newlines land identically.
  * @param blocks - Blocks with their stream-stable render keys.
  * @param context - The pass state; footnote numbering mutates in document order.
- * @returns One React node per rendered block.
+ * @returns One webjsx node per rendered block.
  */
 export function renderBlocks(
   blocks: readonly PositionedBlock[],
   context: MarkdownRenderContext,
-): ReactNode[] {
+): RNode[] {
   return blocks
     .map(block => renderNode(block.node, block.key, context))
     .filter(element => element !== null)
@@ -164,8 +168,8 @@ export function renderBlocks(
  * @param edges - Also emit the leading and trailing newline (hast's loose wrap).
  * @returns The interleaved children.
  */
-export function wrapBlockChildren(elements: readonly ReactNode[], edges: boolean): ReactNode[] {
-  const wrapped: ReactNode[] = []
+export function wrapBlockChildren(elements: readonly RNode[], edges: boolean): RNode[] {
+  const wrapped: RNode[] = []
   for (const element of elements) {
     if (edges || wrapped.length > 0) wrapped.push('\n')
     wrapped.push(element)
@@ -179,7 +183,7 @@ export function wrapBlockChildren(elements: readonly ReactNode[], edges: boolean
  * other blocks (list items unwrap them when tight; footnote bodies receive
  * their back-references inside the trailing paragraph).
  */
-type BlockEntry = { paragraph: ReactNode[] } | { element: ReactNode }
+type BlockEntry = { paragraph: RNode[] } | { element: RNode }
 
 /** Render container children into {@link BlockEntry} values, dropping empty renders. */
 function renderBlockEntries(
@@ -201,11 +205,11 @@ function renderBlockEntries(
 function renderChildren(
   nodes: readonly Md.RootContent[],
   context: MarkdownRenderContext,
-): ReactNode[] {
+): RNode[] {
   return nodes.map((node, index) => renderNode(node, index, context))
 }
 
-function renderNode(node: Md.RootContent, key: Key, context: MarkdownRenderContext): ReactNode {
+function renderNode(node: Md.RootContent, key: NonBooleanPrimitive, context: MarkdownRenderContext): RNode {
   switch (node.type) {
     case 'text':
       return node.value
@@ -226,7 +230,7 @@ function renderNode(node: Md.RootContent, key: Key, context: MarkdownRenderConte
       return <hr key={key} />
     case 'break':
       // The replaced pipeline emitted a newline text node after each <br>.
-      return <Fragment key={key}><br />{'\n'}</Fragment>
+      return [<br key={key} />, '\n']
     case 'strong':
       return <strong key={key}>{renderChildren(node.children, context)}</strong>
     case 'emphasis':
@@ -252,10 +256,10 @@ function renderNode(node: Md.RootContent, key: Key, context: MarkdownRenderConte
           <code key={key}>
             <button
               type="button"
-              className={css.fileMention}
+              class={css.fileMention ?? ''}
               title={mention.title}
               aria-label={mention.label}
-              onClick={mention.open}
+              onclick={mention.open}
             >
               {value}
             </button>
@@ -270,9 +274,9 @@ function renderNode(node: Md.RootContent, key: Key, context: MarkdownRenderConte
     case 'code':
       return renderCode(node, key, context)
     case 'math':
-      return <Fragment key={key}>{renderTexToReact(node.value, true)}</Fragment>
+      return renderTexToVNodes(node.value, true)
     case 'inlineMath':
-      return <Fragment key={key}>{renderTexToReact(node.value, false)}</Fragment>
+      return renderTexToVNodes(node.value, false)
     case 'list':
       return renderList(node, key, context)
     case 'listItem':
@@ -303,13 +307,13 @@ function renderNode(node: Md.RootContent, key: Key, context: MarkdownRenderConte
   }
 }
 
-function renderCode(node: Md.Code, key: Key, context: MarkdownRenderContext): ReactNode {
+function renderCode(node: Md.Code, key: NonBooleanPrimitive, context: MarkdownRenderContext): RNode {
   const language = node.lang ?? undefined
   if (node.value === '') {
     // Parity: the replaced pipeline kept the stock <pre> for an empty fence.
     return (
       <pre key={key}>
-        <code className={language === undefined ? undefined : `language-${language}`} />
+        <code class={language === undefined ? '' : `language-${language}`} />
       </pre>
     )
   }
@@ -319,18 +323,29 @@ function renderCode(node: Md.Code, key: Key, context: MarkdownRenderContext): Re
   if (!context.streaming && lang === 'math') {
     // ```math fences render as display TeX once settled (rehype-katex parity);
     // its text extraction saw the code block's trailing newline.
-    return <Fragment key={key}>{renderTexToReact(`${node.value}\n`, true)}</Fragment>
+    return renderTexToVNodes(`${node.value}\n`, true)
+  }
+  // CodeBlock is a stateful custom element (copy feedback, lazy grammar
+  // subscription): applyDiff's own VNode shape (a plain {type, tagName,
+  // props} description it creates DOM from) cannot carry an already-built
+  // HTMLElement, so a raw <dsh-code-block> intrinsic host tag stands in the
+  // tree and its `ref` — webjsx's documented Ref<Node> escape hatch, fired on
+  // both create and every subsequent update pass touching this node — is
+  // where CodeBlockProps reach the reused instance via setProps, mirroring
+  // how the CodeBlock React version re-ran with new props on every render.
+  const props = {
+    // The replaced hast pipeline appended one synthetic newline that
+    // CodeBlock's display trim removes; feeding the bare value would make
+    // that trim eat a REAL trailing blank line inside the fence instead.
+    code: `${node.value}\n`,
+    lang: context.streaming ? undefined : lang,
+    copyLabel: context.codeLabels?.copyLabel,
+    copiedLabel: context.codeLabels?.copiedLabel,
   }
   return (
-    <CodeBlock
-      key={key}
-      // The replaced hast pipeline appended one synthetic newline that
-      // CodeBlock's display trim removes; feeding the bare value would make
-      // that trim eat a REAL trailing blank line inside the fence instead.
-      code={`${node.value}\n`}
-      lang={context.streaming ? undefined : lang}
-      copyLabel={context.codeLabels?.copyLabel}
-      copiedLabel={context.codeLabels?.copiedLabel}
+    <dsh-code-block
+      key={key as string | number}
+      ref={(el: DshCodeBlock | null) => { renderCodeBlock(el, props) }}
     />
   )
 }
@@ -344,12 +359,12 @@ function listItemLoose(item: Md.ListItem): boolean {
   return item.spread ?? item.children.length > 1
 }
 
-function renderList(node: Md.List, key: Key, context: MarkdownRenderContext): ReactNode {
+function renderList(node: Md.List, key: NonBooleanPrimitive, context: MarkdownRenderContext): RNode {
   const loose = listLoose(node)
-  const properties: { start?: number; className?: string } = {}
+  const properties: { start?: number; class?: string } = {}
   if (typeof node.start === 'number' && node.start !== 1) properties.start = node.start
   if (node.children.some(item => typeof item.checked === 'boolean')) {
-    properties.className = 'contains-task-list'
+    properties.class = 'contains-task-list'
   }
   return createElement(
     node.ordered === true ? 'ol' : 'ul',
@@ -361,9 +376,9 @@ function renderList(node: Md.List, key: Key, context: MarkdownRenderContext): Re
 function renderListItem(
   item: Md.ListItem,
   loose: boolean,
-  key: Key,
+  key: NonBooleanPrimitive,
   context: MarkdownRenderContext,
-): ReactNode {
+): RNode {
   const entries = renderBlockEntries(item.children, context)
   const task = typeof item.checked === 'boolean'
   if (task) {
@@ -379,24 +394,24 @@ function renderListItem(
   // mdast-util-to-hast's list-item handler: a newline before every child
   // except a tight leading paragraph, and after a trailing non-paragraph
   // (or any trailing child when loose).
-  const parts: ReactNode[] = []
+  const parts: RNode[] = []
   for (const [index, entry] of entries.entries()) {
     const isParagraph = 'paragraph' in entry
     if (loose || index !== 0 || !isParagraph) parts.push('\n')
     if (!isParagraph) parts.push(entry.element)
     else if (loose) parts.push(<p key={`p-${index}`}>{entry.paragraph}</p>)
-    else parts.push(<Fragment key={`p-${index}`}>{entry.paragraph}</Fragment>)
+    else parts.push(entry.paragraph)
   }
   const tail = entries[entries.length - 1]
   if (tail !== undefined && (loose || !('paragraph' in tail))) parts.push('\n')
   return (
-    <li key={key} className={task ? 'task-list-item' : undefined}>
+    <li key={key} class={task ? 'task-list-item' : ''}>
       {parts}
     </li>
   )
 }
 
-function renderTable(node: Md.Table, key: Key, context: MarkdownRenderContext): ReactNode {
+function renderTable(node: Md.Table, key: NonBooleanPrimitive, context: MarkdownRenderContext): RNode {
   const align = node.align ?? null
   const [headRow, ...bodyRows] = node.children
   const columns = align === null ? headRow?.children.length ?? 0 : align.length
@@ -413,8 +428,8 @@ function renderTable(node: Md.Table, key: Key, context: MarkdownRenderContext): 
     // and :focus-visible restores scrolling.
     <div
       key={key}
-      className={clsx(css.tableScroll, wide ? 'md-table-wide' : css.tableFill)}
-      tabIndex={wide ? 0 : undefined}
+      class={clsx(css.tableScroll, wide ? 'md-table-wide' : css.tableFill)}
+      tabindex={wide ? 0 : undefined}
     >
       <table>
         {headRow !== undefined && <thead>{renderTableRow(headRow, 'th', align, 0, context)}</thead>}
@@ -432,21 +447,22 @@ function renderTableRow(
   row: Md.TableRow,
   cellTag: 'th' | 'td',
   align: readonly Md.AlignType[] | null,
-  key: Key,
+  key: NonBooleanPrimitive,
   context: MarkdownRenderContext,
-): ReactNode {
+): RNode {
   // With column alignment present, every row renders exactly one cell per
   // column, padding or truncating the row (mdast-util-to-hast parity).
   const length = align === null ? row.children.length : align.length
-  const cells: ReactNode[] = []
+  const cells: RNode[] = []
   for (let index = 0; index < length; index++) {
     const cell = row.children[index]
     const alignValue = align?.[index]
     cells.push(createElement(
       cellTag,
       // hast-util-to-jsx-runtime's default tableCellAlignToStyle turned the
-      // deprecated align attribute into an inline style; keep that DOM.
-      { key: index, style: alignValue == null ? undefined : { textAlign: alignValue } },
+      // deprecated align attribute into an inline style; keep that DOM via a
+      // plain CSS string (webjsx has no style-object prop).
+      { key: index, style: alignValue == null ? undefined : `text-align: ${alignValue}` },
       ...(cell === undefined ? [] : renderChildren(cell.children, context)),
     ))
   }
@@ -454,9 +470,9 @@ function renderTableRow(
 }
 
 /** Anchor over an already-authored href: allowlisted or unwrapped, external links get the safe attributes. */
-function renderSafeLink(href: string, children: ReactNode[], key: Key): ReactNode {
+function renderSafeLink(href: string, children: RNode[], key: NonBooleanPrimitive): RNode {
   const safeHref = sanitizeUrl(href)
-  if (safeHref === '') return <Fragment key={key}>{children}</Fragment>
+  if (safeHref === '') return children
   const external = ['http:', 'https:'].includes(new URL(safeHref).protocol)
   return (
     <a
@@ -470,7 +486,7 @@ function renderSafeLink(href: string, children: ReactNode[], key: Key): ReactNod
 }
 
 /** Anchor over a parsed markdown destination, which hast normalized before the allowlist saw it. */
-function renderAnchor(url: string, children: ReactNode[], key: Key): ReactNode {
+function renderAnchor(url: string, children: RNode[], key: NonBooleanPrimitive): RNode {
   return renderSafeLink(normalizeUri(url), children, key)
 }
 
@@ -489,20 +505,20 @@ function inlineCodeHttpUrl(value: string): string | undefined {
   }
 }
 
-function renderImage(url: string, alt: string, key: Key): ReactNode {
+function renderImage(url: string, alt: string, key: NonBooleanPrimitive): RNode {
   const imageSrc = remoteImageUrl(sanitizeUrl(normalizeUri(url)))
   if (imageSrc === undefined) {
-    return <span key={key} className={css.imageAlt}>{alt}</span>
+    return <span key={key} class={css.imageAlt ?? ''}>{alt}</span>
   }
   return (
     <img
       key={key}
-      className={css.image}
+      class={css.image ?? ''}
       src={imageSrc}
       alt={alt}
       loading="lazy"
       decoding="async"
-      referrerPolicy="no-referrer"
+      referrerpolicy="no-referrer"
     />
   )
 }
@@ -516,25 +532,25 @@ function referenceSuffix(node: Md.LinkReference | Md.ImageReference): string {
 
 function renderLinkReference(
   node: Md.LinkReference,
-  key: Key,
+  key: NonBooleanPrimitive,
   context: MarkdownRenderContext,
-): ReactNode {
+): RNode {
   const definition = context.targets.definitions.get(node.identifier.toUpperCase())
   if (definition === undefined) {
     // The grammar only emits references whose definitions exist somewhere in
     // the same parse, but incremental segments and hand-built trees may still
     // present unresolved ones: revert to the bracketed source text — which is
     // not an anchor, so mentions inside it stay live.
-    return <Fragment key={key}>{'['}{renderChildren(node.children, context)}{referenceSuffix(node)}</Fragment>
+    return ['[', renderChildren(node.children, context), referenceSuffix(node)]
   }
   return renderAnchor(definition.url, renderChildren(node.children, { ...context, inLink: true }), key)
 }
 
 function renderImageReference(
   node: Md.ImageReference,
-  key: Key,
+  key: NonBooleanPrimitive,
   context: MarkdownRenderContext,
-): ReactNode {
+): RNode {
   const definition = context.targets.definitions.get(node.identifier.toUpperCase())
   if (definition === undefined) return `![${node.alt ?? ''}${referenceSuffix(node)}`
   return renderImage(definition.url, node.alt ?? '', key)
@@ -542,9 +558,9 @@ function renderImageReference(
 
 function renderFootnoteReference(
   node: Md.FootnoteReference,
-  key: Key,
+  key: NonBooleanPrimitive,
   context: MarkdownRenderContext,
-): ReactNode {
+): RNode {
   const id = node.identifier.toUpperCase()
   const seen = context.footnoteCounts.get(id)
   if (seen === undefined) context.footnoteOrder.push(id)
@@ -561,13 +577,13 @@ function renderFootnoteReference(
  * @param context - The pass state after all blocks rendered.
  * @returns The section, or null when no referenced footnote has a definition.
  */
-export function renderFootnoteSection(context: MarkdownRenderContext): ReactNode | null {
-  const items: ReactNode[] = []
+export function renderFootnoteSection(context: MarkdownRenderContext): VNode | null {
+  const items: RNode[] = []
   for (const id of context.footnoteOrder) {
     const definition = context.targets.footnotes.get(id)
     if (definition === undefined) continue
     const count = context.footnoteCounts.get(id) ?? 0
-    const backrefs: ReactNode[] = []
+    const backrefs: RNode[] = []
     for (let reference = 1; reference <= count; reference++) {
       if (backrefs.length > 0) backrefs.push(' ')
       backrefs.push('↩')
@@ -575,12 +591,12 @@ export function renderFootnoteSection(context: MarkdownRenderContext): ReactNode
     }
     const entries = renderBlockEntries(definition.children, context)
     const tail = entries[entries.length - 1]
-    const body: ReactNode[] = entries.map((entry, index) => (
+    const body: RNode[] = entries.map((entry, index) => (
       'paragraph' in entry
         ? (
           <p key={`p-${index}`}>
             {entry.paragraph}
-            {entry === tail && <>{' '}{backrefs}</>}
+            {entry === tail && [' ', backrefs]}
           </p>
         )
         : entry.element
@@ -596,8 +612,8 @@ export function renderFootnoteSection(context: MarkdownRenderContext): ReactNode
   }
   if (items.length === 0) return null
   return (
-    <section key="footnotes" data-footnotes className="footnotes">
-      <h2 id="footnote-label" className="sr-only">Footnotes</h2>
+    <section key="footnotes" data-footnotes class="footnotes">
+      <h2 id="footnote-label" class="sr-only">Footnotes</h2>
       <ol>{items}</ol>
     </section>
   )

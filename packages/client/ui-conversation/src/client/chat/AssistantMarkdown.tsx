@@ -9,8 +9,7 @@
 // their branch action is enabled only when the node is also the completed
 // turn's transcript tail. Think / tool-head-only nodes stay chrome-free.
 
-import { Fragment, memo, useMemo } from 'react'
-import type { ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import type { AssistantBlock } from '@deepseek-ai/dsh-client-runtime/client'
 import { JsonBlock, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -31,13 +30,17 @@ export interface AssistantMarkdownProps {
   t: ChatViewSlotProps['t']
 }
 
-/** Reasoning block as the Think variant summary row (figma 39:28304). */
-export const AssistantMarkdown = memo(function AssistantMarkdown({
+/**
+ * Renders one assistant node's ordered blocks (see file header). Stateless:
+ * no per-instance state, so this stays a plain function component (not a
+ * custom element) per the ui-primitives conversion pattern.
+ */
+export function AssistantMarkdown({
   blocks, streaming, interrupted, renderMessageImages, mentions, t,
-}: AssistantMarkdownProps) {
+}: AssistantMarkdownProps): JSX.Element | null {
   // Stable per locale revision (t identity changes on switch): a fresh object
   // per render would rebuild MarkdownText's component table every chunk.
-  const codeLabels = useMemo(() => ({ copyLabel: t('copy'), copiedLabel: t('copied') }), [t])
+  const codeLabels = { copyLabel: t('copy'), copiedLabel: t('copied') }
   const last = blocks.length - 1
   // Tool-call heads render as tool rows in the chat view's grouping pass, so
   // a node that is only those heads (or empty) would paint an empty root
@@ -46,7 +49,7 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
     || interrupted === true
     || blocks.some(block => block.kind !== 'tool-call')
   if (!hasVisible) return null
-  const rendered: ReactNode[] = []
+  const rendered: Array<VNode | string | null> = []
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
     if (block === undefined) continue
@@ -79,13 +82,15 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
           group.push(next)
           i += 1
         }
+        // No Fragment in webjsx: a neutral keyed wrapper stands in for the
+        // React Fragment this group used purely to attach the stable key.
         rendered.push(
-          <Fragment key={start}>
+          <div key={start} class={css.contents ?? ''}>
             {renderMessageImages({
               images: group.map(({ attachment }) => ({ attachment })),
               align: 'start',
-            })}
-          </Fragment>,
+            }) as VNode | string | null}
+          </div>,
         )
         break
       }
@@ -104,11 +109,11 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
     }
   }
   return (
-    <div className={css.root} data-streaming={streaming || undefined}>
-      <div className={css.body}>
+    <div class={css.root ?? ''} data-streaming={streaming || undefined}>
+      <div class={css.body ?? ''}>
         {rendered}
-        {interrupted && <span className={css.stopped}>{t('message.stopped')}</span>}
+        {interrupted === true && <span class={css.stopped ?? ''}>{t('message.stopped')}</span>}
       </div>
     </div>
   )
-})
+}

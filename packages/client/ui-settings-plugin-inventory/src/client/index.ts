@@ -3,7 +3,11 @@
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import { PluginInventorySettingsTab, type PluginInventorySettingsTabInjected } from './PluginInventorySettingsTab.tsx'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import type {
+  PluginInventorySettingsTabInjected, PluginInventorySettingsTabProps,
+} from './PluginInventorySettingsTab.tsx'
+import './PluginInventorySettingsTab.tsx'
 import { en, zh, type PluginInventoryLocaleKey } from './locales.ts'
 
 export type { PluginInventorySettingsTabInjected, PluginInventorySettingsTabProps } from './PluginInventorySettingsTab.tsx'
@@ -43,5 +47,5 @@ export function apply(ctx: ClientContext): void {
     label: () => t('tab'),
     locale: NS,
     inject: injected,
-  }, PluginInventorySettingsTab))
+  }, webjsxSlot<PluginInventorySettingsTabProps>('dsh-plugin-inventory-settings-tab')))
 }

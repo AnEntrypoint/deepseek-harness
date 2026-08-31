@@ -45,7 +45,7 @@ export function webCardModel(block: ToolCallBlock): WebBlockProps | null {
     return {
       kind: 'search',
       answer: result.answer,
-      sources: result.sources.map(source => ({
+      sources: result.sources.map((source: { url: string; title: string; snippet: string; publishedAt?: string | undefined }) => ({
         url: source.url,
         title: source.title,
         snippet: source.snippet,

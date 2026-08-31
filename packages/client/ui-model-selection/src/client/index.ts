@@ -19,11 +19,12 @@ import type { CommandUiContract, SelectOption } from '@deepseek-ai/dsh-client-ui
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelDirectoryState } from './directory.ts'
 import { ModelDirectoryResolver } from './service.ts'
 import type { ModelSelectInjected } from './slots.ts'
-import { ModelSelect } from './ModelSelect.tsx'
+export { ModelSelect } from './ModelSelect.tsx'
 import { en, zh, type ModelKey } from './locales.ts'
 
 export { ModelDirectory } from './directory.ts'
@@ -171,6 +172,6 @@ export function apply(ctx: ClientContext): void {
             : Promise.resolve(false),
         }
       },
-    }, ModelSelect))
+    }, webjsxSlot<ModelSelectInjected>('dsh-model-select')))
   })
 }

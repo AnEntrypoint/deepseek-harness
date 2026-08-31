@@ -5,8 +5,8 @@
     "outDir": "lib/types",
     "tsBuildInfoFile": "lib/tsconfig.client.tsbuildinfo"
   },
-  "files": [
-    "src/client/index.ts"
+  "include": [
+    "src/client/types.d.ts"
   ],
   "references": [
     {

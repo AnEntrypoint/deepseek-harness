@@ -5,7 +5,7 @@
 // dock adapter does the selecting, so the panel takes the plain list and stays
 // framework-free. Visual: figma 772:51905 / 772:52972 / 772:53419.
 
-import { useId, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 // The domain's client-namespace pure-type outlet: one import edge delivers
@@ -31,10 +31,10 @@ function assertNever(value: never): never {
 }
 
 /** Status glyphs share the figma 14×14 artboard; the 16×16 `.glyph` cell centers them. */
-function CompletedGlyph() {
+function CompletedGlyph(): JSX.Element {
   return (
-    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" aria-hidden="true" className={css.glyphCompleted}>
-      <circle cx="7" cy="7" r="6.4" stroke="currentColor" strokeWidth="1.2" />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" class={css.glyphCompleted ?? ''}>
+      <circle cx="7" cy="7" r="6.4" stroke="currentColor" stroke-width="1.2" />
       <path
         d="M10.9631 5.71411L7.70154 8.97571C7.48011 9.19714 7.27736 9.40099 7.09229 9.54993C6.89742 9.70669 6.66314 9.85279 6.3634 9.90027C6.2049 9.92534 6.04339 9.92534 5.88489 9.90027C5.58515 9.85279 5.35087 9.70669 5.15601 9.54993C4.97093 9.40099 4.76818 9.19714 4.54675 8.97571L3.03516 7.46411L3.96313 6.53613L5.47473 8.04773C5.7169 8.28989 5.86196 8.43389 5.97888 8.52795C6.08597 8.61409 6.10875 8.60701 6.08997 8.604C6.11259 8.60758 6.13571 8.60758 6.15833 8.604C6.13954 8.60701 6.16232 8.61409 6.26941 8.52795C6.38633 8.43389 6.53139 8.28989 6.77356 8.04773L10.0352 4.78613L10.9631 5.71411Z"
         fill="currentColor"
@@ -43,32 +43,35 @@ function CompletedGlyph() {
   )
 }
 
+let gradientSeq = 0
+
 /** In-progress: business-blue ring fading out; CSS spins the svg. */
-function ProgressGlyph() {
-  const gradientId = useId()
+function ProgressGlyph(): JSX.Element {
+  gradientSeq += 1
+  const gradientId = `todo-progress-${String(gradientSeq)}`
   return (
-    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" aria-hidden="true" className={css.glyphProgress}>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" class={css.glyphProgress ?? ''}>
       <defs>
         <linearGradient id={gradientId} x1="2.5" y1="12" x2="10.5" y2="3.5" gradientUnits="userSpaceOnUse">
-          <stop stopColor="currentColor" />
-          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+          <stop stop-color="currentColor" />
+          <stop offset="1" stop-color="currentColor" stop-opacity="0" />
         </linearGradient>
       </defs>
-      <circle cx="7" cy="7" r="6.4" stroke={`url(#${gradientId})`} strokeWidth="1.2" />
+      <circle cx="7" cy="7" r="6.4" stroke={`url(#${gradientId})`} stroke-width="1.2" />
     </svg>
   )
 }
 
 /** Pending: dashed unstarted ring (figma dash 2.4 2.4). */
-function PendingGlyph() {
+function PendingGlyph(): JSX.Element {
   return (
-    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" aria-hidden="true" className={css.glyphPending}>
-      <circle cx="7" cy="7" r="6.4" stroke="currentColor" strokeWidth="1.2" strokeDasharray="2.4 2.4" />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" class={css.glyphPending ?? ''}>
+      <circle cx="7" cy="7" r="6.4" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2.4 2.4" />
     </svg>
   )
 }
 
-function StatusGlyph({ status }: { status: TodoItem['status'] }) {
+function StatusGlyph({ status }: { status: TodoItem['status'] }): JSX.Element {
   switch (status) {
     case 'completed': return <CompletedGlyph />
     case 'in_progress': return <ProgressGlyph />
@@ -92,48 +95,83 @@ function progressLabel(todos: readonly TodoItem[], t: TodoPanelProps['t']): stri
   ].join('\u2002·\u2002')
 }
 
-export function TodoPanel({ todos, t }: TodoPanelProps) {
-  const [collapsed, setCollapsed] = useState(true)
-  if (todos.length === 0) return null
+/**
+ * Plan strip custom element: collapsed/expanded is the only local state.
+ * Converted from a React hooks component (useState) to a webjsx custom
+ * element with a private field and an explicit #render() (Toast.tsx's
+ * pattern).
+ */
+export class DshTodoPanel extends HTMLElement {
+  #props: TodoPanelProps = { todos: [], t: ((key: string) => key) as TodoPanelProps['t'] }
+  #collapsed = true
 
-  return (
-    <section className={css.root} data-testid="todo-panel" aria-label={t('todo.title')}>
-      <div className={css.body}>
-        <button
-          type="button"
-          className={css.header}
-          aria-expanded={!collapsed}
-          onClick={() => { setCollapsed(v => !v) }}
-        >
-          <span className={css.lead} aria-hidden><IconChecklistOutline14 /></span>
-          <span className={css.title}>{t('todo.title')}</span>
-          <span className={css.progress}>{progressLabel(todos, t)}</span>
-          <span className={css.chevron} aria-hidden>
-            {collapsed ? <IconChevronUpOutline14 /> : <IconChevronDownOutline14 />}
-          </span>
-        </button>
-        {!collapsed && (
-          <ul className={css.list}>
-            {todos.map(item => (
-              <li key={item.content} className={css.item} data-status={item.status}>
-                <span className={css.glyph} aria-hidden><StatusGlyph status={item.status} /></span>
-                <span className={css.content}>{item.content}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
-  )
+  setProps(props: TodoPanelProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    const { todos, t } = this.#props
+    if (todos.length === 0) {
+      applyDiff(this, <section />)
+      return
+    }
+    const collapsed = this.#collapsed
+    const vdom = (
+      <section class={css.root ?? ''} data-testid="todo-panel" aria-label={t('todo.title')}>
+        <div class={css.body ?? ''}>
+          <button
+            type="button"
+            class={css.header ?? ''}
+            aria-expanded={!collapsed}
+            onclick={() => { this.#collapsed = !this.#collapsed; this.#render() }}
+          >
+            <span class={css.lead ?? ''} aria-hidden><IconChecklistOutline14 /></span>
+            <span class={css.title ?? ''}>{t('todo.title')}</span>
+            <span class={css.progress ?? ''}>{progressLabel(todos, t)}</span>
+            <span class={css.chevron ?? ''} aria-hidden>
+              {collapsed ? <IconChevronUpOutline14 /> : <IconChevronDownOutline14 />}
+            </span>
+          </button>
+          {!collapsed && (
+            <ul class={css.list ?? ''}>
+              {todos.map(item => (
+                <li key={item.content} class={css.item ?? ''} data-status={item.status}>
+                  <span class={css.glyph ?? ''} aria-hidden><StatusGlyph status={item.status} /></span>
+                  <span class={css.content ?? ''}>{item.content}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-todo-panel') === undefined) {
+  customElements.define('dsh-todo-panel', DshTodoPanel)
+}
+
+/** One-shot creation/update helper preserving the original function-component call shape. */
+export function TodoPanel(props: TodoPanelProps): JSX.Element {
+  const el = document.createElement('dsh-todo-panel') as DshTodoPanel
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }
 
 /** Full props of a dock entry: InputZone owner share + session standard kit + global seat + the locale seat. */
 export type TodoDockProps = PropsRuntime<'conversation.input.dock'> & PropsLocale<'conversation'>
 
 /** Dock adapter: reads the host-computed 'todos' projection (whole list; absent or null renders nothing). */
-export function TodoDock({ useProjection, t }: TodoDockProps) {
+export function TodoDock({ useProjection, t }: TodoDockProps): JSX.Element {
   const todos = useProjection('todos')
-  return <TodoPanel todos={todos ?? []} t={t} />
+  return TodoPanel({ todos: todos ?? [], t }) as unknown as JSX.Element
 }
 
 /**

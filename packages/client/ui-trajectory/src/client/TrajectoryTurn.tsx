@@ -1,6 +1,6 @@
 // TrajectoryTurn: sticky Turn header plus the padded Message/Step body.
 
-import type { ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import { TrajectoryTurnHeader } from './TrajectoryTurnHeader.tsx'
 import css from './TrajectoryTurn.module.css'
 
@@ -8,7 +8,7 @@ export interface TrajectoryTurnProps {
   /** 1-based turn index for the sticky header. */
   turn: number
   /** Message / Step headers and TrajectoryCell rows. */
-  children?: ReactNode
+  children?: VNode | VNode[] | string | null
 }
 
 /**
@@ -16,11 +16,11 @@ export interface TrajectoryTurnProps {
  * @param props - turn index and body children.
  * @returns the turn section element.
  */
-export function TrajectoryTurn({ turn, children }: TrajectoryTurnProps) {
+export function TrajectoryTurn({ turn, children }: TrajectoryTurnProps): JSX.Element {
   return (
-    <section className={css.root} data-turn={turn}>
+    <section class={css.root ?? ''} data-turn={turn}>
       <TrajectoryTurnHeader turn={turn} />
-      <div className={css.body}>{children}</div>
+      <div class={css.body ?? ''}>{children}</div>
     </section>
   )
 }

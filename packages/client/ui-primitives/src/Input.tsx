@@ -1,7 +1,7 @@
 // Input: single-line text input atom (search boxes, inline forms). Composer
 // textareas are NOT this atom — they live with the conversation package.
 
-import type { InputHTMLAttributes, ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import css from './Input.module.css'
 
@@ -10,14 +10,14 @@ import css from './Input.module.css'
  * @param props.icon - optional 16px leading icon node.
  * @returns wrapper span containing the native input; input attributes pass through.
  */
-export function Input({ icon, className, ...rest }: {
-  icon?: ReactNode
-  className?: string
-} & InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ icon, class: extraClass, ...rest }: {
+  icon?: VNode | string | null
+  class?: string | undefined
+} & Record<string, unknown>): VNode {
   return (
-    <span className={clsx(css.wrap, className)}>
-      {icon != null && <span className={css.icon}>{icon}</span>}
-      <input className={css.input} {...rest} />
+    <span class={clsx(css.wrap, extraClass)}>
+      {icon != null && <span class={css.icon ?? ''}>{icon}</span>}
+      <input class={css.input ?? ''} {...rest} />
     </span>
   )
 }

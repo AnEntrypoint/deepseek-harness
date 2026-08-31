@@ -1,0 +1,83 @@
+evt: {"changed":["C:\\dev\\deepseek-harness/.gm/config-source-cache-default/gm.config.json"],"changed_count":1,"event":"config_changed","id":"cfg-implicit_default_repo-35bda26f6f49-1788184263459","new_sha":"35bda26f6f49","old_sha":"","tier":"implicit_default_repo","ts":1788184263500}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788184263664,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788184263703,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788184263767,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788184263805,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"instruction.served","mutables_pending_count":0,"phase":"SPECIFY","prd_pending_count":0,"ts":1788184263895}
+evt: {"event":"dispatch.end","ms":7497,"ts":1788184263896,"verb":"instruction"}
+evt: {"event":"config_resolved","sess":"gwconv-1788184716","tier":"implicit_default_repo","ts":1788184810926,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","sess":"gwconv-1788184716","tier":"implicit_default_repo","ts":1788184813239,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","sess":"gwconv-1788184716","tier":"implicit_default_repo","ts":1788184813346,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","sess":"gwconv-1788184716","tier":"implicit_default_repo","ts":1788184813389,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"dim":384,"event":"embed_generation_recorded","key":"b8b6f24106dd526a","model":"BAAI/bge-small-en-v1.5","scope":".gm/.embed-generation.rssearch_vectors","sess":"gwconv-1788184716","ts":1788184814558}
+evt: {"event":"recall_first_touch_sync","namespaces":["default"],"result":{"converged":false,"report":[{"changed":0,"deferred":0,"failed":0,"namespace":"default","rekeyed":0,"removed_keys":0,"resurrected":0,"retimed":0,"upserted":0}]},"sess":"gwconv-1788184716","ts":1788184814786}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sess":"gwconv-1788184716","sync_ms":342,"ts":1788184814787}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":3,"sess":"gwconv-1788184716","ts":1788184814790}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sess":"gwconv-1788184716","sync_ms":8,"ts":1788184814799}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":4,"sess":"gwconv-1788184716","ts":1788184814803}
+evt: {"event":"recall","hit":false,"hit_keys":[],"mode":"kv_query","n_hits":0,"namespace":"default","query":"Convert packages api gateway TypeScript-authored source","sess":"gwconv-1788184716","sub":"memory","ts":1788184814804}
+evt: {"event":"instruction.served","mutables_pending_count":0,"phase":"SPECIFY","prd_pending_count":0,"sess":"gwconv-1788184716","ts":1788184814811}
+evt: {"event":"dispatch.end","ms":3964,"sess":"gwconv-1788184716","ts":1788184814811,"verb":"instruction"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788187819256,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788187819303,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788187819430,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788187819478,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"embed.query_spill_hit","query_len":400,"ts":1788187819647}
+evt: {"dim":384,"event":"embed_generation_recorded","key":"b8b6f24106dd526a","model":"BAAI/bge-small-en-v1.5","scope":".gm/.embed-generation.rssearch_vectors","ts":1788187819670}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":31,"ts":1788187819679}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":3,"ts":1788187819682}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":7,"ts":1788187819692}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":3,"ts":1788187819696}
+evt: {"event":"recall","hit":false,"hit_keys":[],"mode":"kv_query","n_hits":0,"namespace":"default","query":"Convert packages api gateway TypeScript-authored source","sub":"memory","ts":1788187819696}
+evt: {"event":"instruction.served","mutables_pending_count":0,"phase":"SPECIFY","prd_pending_count":0,"ts":1788187819718}
+evt: {"event":"dispatch.end","ms":2643,"ts":1788187819719,"verb":"instruction"}
+evt: {"event":"config_resolved","sess":"webjsx-batch-1","tier":"implicit_default_repo","ts":1788188614678,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","sess":"webjsx-batch-1","tier":"implicit_default_repo","ts":1788188616463,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","sess":"webjsx-batch-1","tier":"implicit_default_repo","ts":1788188616681,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","sess":"webjsx-batch-1","tier":"implicit_default_repo","ts":1788188616720,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"dim":384,"event":"embed_generation_recorded","key":"b8b6f24106dd526a","model":"BAAI/bge-small-en-v1.5","scope":".gm/.embed-generation.rssearch_vectors","sess":"webjsx-batch-1","ts":1788188618953}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sess":"webjsx-batch-1","sync_ms":34,"ts":1788188618962}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":3,"sess":"webjsx-batch-1","ts":1788188618965}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sess":"webjsx-batch-1","sync_ms":8,"ts":1788188618977}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":4,"sess":"webjsx-batch-1","ts":1788188618981}
+evt: {"event":"recall","hit":false,"hit_keys":[],"mode":"kv_query","n_hits":0,"namespace":"default","query":"Convert small React packages webjsx ui-renderer","sess":"webjsx-batch-1","sub":"memory","ts":1788188618982}
+evt: {"event":"config_resolved","sess":"webjsx-batch-1","tier":"implicit_default_repo","ts":1788188619054,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","sess":"webjsx-batch-1","tier":"implicit_default_repo","ts":1788188619105,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"instruction.served","mutables_pending_count":0,"phase":"SPECIFY","prd_pending_count":0,"sess":"webjsx-batch-1","ts":1788188619121}
+evt: {"event":"dispatch.end","ms":4535,"sess":"webjsx-batch-1","ts":1788188619121,"verb":"instruction"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788190411030,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788190411081,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788190411191,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788190411238,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"dim":384,"event":"embed_generation_recorded","key":"b8b6f24106dd526a","model":"BAAI/bge-small-en-v1.5","scope":".gm/.embed-generation.rssearch_vectors","ts":1788190412272}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":32,"ts":1788190412281}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":5,"ts":1788190412285}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":6,"ts":1788190412295}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":3,"ts":1788190412297}
+evt: {"event":"recall","hit":false,"hit_keys":[],"mode":"kv_query","n_hits":0,"namespace":"default","query":"Fully convert packages client ui-renderer React","sub":"memory","ts":1788190412298}
+evt: {"event":"instruction.served","mutables_pending_count":0,"phase":"SPECIFY","prd_pending_count":0,"ts":1788190412320}
+evt: {"event":"dispatch.end","ms":3395,"ts":1788190412320,"verb":"instruction"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788190417066,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788190417104,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"embed.query_spill_hit","query_len":400,"ts":1788190417160}
+evt: {"dim":384,"event":"embed_generation_recorded","key":"b8b6f24106dd526a","model":"BAAI/bge-small-en-v1.5","scope":".gm/.embed-generation.rssearch_vectors","ts":1788190417168}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":14,"ts":1788190417175}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":3,"ts":1788190417178}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":6,"ts":1788190417186}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":2,"ts":1788190417188}
+evt: {"event":"recall","hit":false,"hit_keys":[],"mode":"kv_query","n_hits":0,"namespace":"default","query":"Fully convert packages client ui-renderer React","sub":"memory","ts":1788190417189}
+evt: {"event":"instruction.served","mutables_pending_count":0,"phase":"SPECIFY","prd_pending_count":0,"ts":1788190417194}
+evt: {"event":"dispatch.end","ms":203,"ts":1788190417194,"verb":"instruction"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788197988881,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788197988927,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788197989039,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"config_resolved","tier":"implicit_default_repo","ts":1788197989089,"version":1,"why":"gm's own shared default config repo at https://github.com/AnEntrypoint/gm-config (no project or user config.source.json configured)"}
+evt: {"event":"embed.query_spill_hit","query_len":400,"ts":1788197989251}
+evt: {"dim":384,"event":"embed_generation_recorded","key":"b8b6f24106dd526a","model":"BAAI/bge-small-en-v1.5","scope":".gm/.embed-generation.rssearch_vectors","ts":1788197989273}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":29,"ts":1788197989281}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":5,"ts":1788197989286}
+evt: {"did_sync":false,"event":"recall_vector_phase_timing","namespaces":1,"sync_ms":8,"ts":1788197989297}
+evt: {"event":"recall_vector_phase_timing","outcome":"ok","search_ms":2,"ts":1788197989299}
+evt: {"event":"recall","hit":false,"hit_keys":[],"mode":"kv_query","n_hits":0,"namespace":"default","query":"Fully convert packages client ui-renderer React","sub":"memory","ts":1788197989300}
+evt: {"event":"instruction.served","mutables_pending_count":0,"phase":"SPECIFY","prd_pending_count":0,"ts":1788197989306}
+evt: {"event":"dispatch.end","ms":2546,"ts":1788197989307,"verb":"instruction"}

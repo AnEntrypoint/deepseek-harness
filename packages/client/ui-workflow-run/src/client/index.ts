@@ -3,7 +3,8 @@
 import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { WorkflowRunPanel, type WorkflowRunInjected } from './WorkflowRunPanel.tsx'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import type { WorkflowRunInjected } from './WorkflowRunPanel.tsx'
 import { en, NS, type WorkflowRunKey, zh } from './locales.ts'
 import { workflowRunDefinition } from './workflow-definition.ts'
 
@@ -28,5 +29,5 @@ export function apply(ctx: ClientContext): void {
     inject: (): WorkflowRunInjected => ({
       openSession: (id: SessionId) => { ctx.sessions.open(id) },
     }),
-  }, WorkflowRunPanel))
+  }, webjsxSlot('dsh-workflow-run-panel')))
 }

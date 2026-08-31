@@ -4,14 +4,20 @@
 // ConversationRoot so the textarea survives the hero → composer flip); CSS
 // positions it over this shell's glow area during the hero phase.
 
-import { useId } from 'react'
-import type { ReactNode, RefObject } from 'react'
+import type { VNode } from 'webjsx'
 import {
   FishLogo, IconChevronDownOutline14, IconFolderClose16, IconFolderOpen16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { workspaceTitleOf } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConversationSlotProps } from '../contract/slots.ts'
 import css from './HeroShell.module.css'
+
+let glowFilterSeq = 0
+/** Stable per-mount filter id so multiple hero mounts do not collide in the DOM. */
+function nextGlowFilterId(): string {
+  glowFilterSeq += 1
+  return `empty-glow-${String(glowFilterSeq)}`
+}
 
 /** The owner's locale seat type, passed to hero chrome as a plain prop. */
 type HeroTranslate = ConversationSlotProps['t']
@@ -39,26 +45,26 @@ export function workspaceLabel(cwd: string): string {
  * @returns the chip button element.
  */
 export function WorkspaceChip({ buttonRef, label, menuOpen = false, onClick, t }: {
-  buttonRef?: RefObject<HTMLButtonElement>
+  buttonRef?: { current: HTMLButtonElement | null }
   label?: string | undefined
   menuOpen?: boolean
-  onClick?: () => void
+  onClick?: (() => void) | null
   t: HeroTranslate
-}) {
+}): JSX.Element {
   return (
     <button
       ref={buttonRef}
       type="button"
-      className={css.workspace}
+      class={css.workspace ?? ''}
       aria-label={t('hero.chooseWorkspace')}
       aria-haspopup="menu"
       aria-expanded={menuOpen}
-      onClick={onClick}
+      onclick={onClick ?? null}
     >
       {label === undefined
         ? <IconFolderClose16 className={css.folder} size={16} />
         : <IconFolderOpen16 className={css.folder} size={16} />}
-      <span className={css.workspaceLabel}>{label ?? t('hero.chooseWorkspace')}</span>
+      <span class={css.workspaceLabel ?? ''}>{label ?? t('hero.chooseWorkspace')}</span>
       <IconChevronDownOutline14 className={css.chevron} size={12} />
     </button>
   )
@@ -71,11 +77,10 @@ export function WorkspaceChip({ buttonRef, label, menuOpen = false, onClick, t }
  * @param props.className - positioning class from the owner.
  * @returns the blurred-ellipse svg element.
  */
-export function HeroGlow({ className }: { className?: string | undefined }) {
-  // Stable filter id so multiple hero mounts do not collide in the DOM.
-  const glowFilterId = `empty-glow-${useId().replace(/:/g, '')}`
+export function HeroGlow({ className }: { className?: string | undefined }): JSX.Element {
+  const glowFilterId = nextGlowFilterId()
   return (
-    <svg className={className} viewBox="0 0 1051 468" fill="none" aria-hidden="true">
+    <svg class={className ?? ''} viewBox="0 0 1051 468" fill="none" aria-hidden="true">
       <defs>
         <filter
           id={glowFilterId}
@@ -105,7 +110,7 @@ export interface HeroShellProps {
   /** Authorized renderer for the hero brand-mark slot. */
   renderSlot: ConversationSlotProps['renderSlot']
   /** Overlay content after the stack (modals). */
-  children?: ReactNode
+  children?: VNode | VNode[] | string | null
 }
 
 /**
@@ -114,21 +119,21 @@ export interface HeroShellProps {
  * @param props - see {@link HeroShellProps}.
  * @returns the centered hero element tree.
  */
-export function HeroShell({ t, renderSlot, children }: HeroShellProps) {
+export function HeroShell({ t, renderSlot, children }: HeroShellProps): JSX.Element {
   return (
-    <div className={css.root}>
-      <div className={css.stack}>
-        <div className={css.headline}>
+    <div class={css.root ?? ''}>
+      <div class={css.stack ?? ''}>
+        <div class={css.headline ?? ''}>
           {/* figma 34:10412: fish 34×25 leading the headline, gap 10. */}
-          <span className={css.fishHitbox}>
+          <span class={css.fishHitbox ?? ''}>
             {renderSlot('conversation.hero.brand.mark', { size: 34, className: css.fish }, {
-              fallback: <FishLogo size={34} className={css.fish} />,
+              fallback: <FishLogo size={34} className={css.fish} /> as unknown as JSX.Element,
             })}
           </span>
-          <span className={css.headlineText}>{t('hero.headline')}</span>
-          <span className={css.previewBadge}>{t('hero.preview')}</span>
+          <span class={css.headlineText ?? ''}>{t('hero.headline')}</span>
+          <span class={css.previewBadge ?? ''}>{t('hero.preview')}</span>
         </div>
-        <div className={css.body}>
+        <div class={css.body ?? ''}>
           {/* The resident composer (ConversationRoot's root-owned scrollport;
               the workspace row rides the stack above the card) is CSS-centered
               in that scroll body during hero — see

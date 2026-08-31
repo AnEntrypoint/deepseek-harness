@@ -9,7 +9,7 @@ type OfficialBrandMarkProps = HeroBrandMarkOwnerProps & SidebarBrandMarkOwnerPro
  * @param props - Host-supplied mark presentation.
  * @returns the official whale mark.
  */
-export function OfficialBrandMark({ size, className }: OfficialBrandMarkProps) {
+export function OfficialBrandMark({ size, className }: OfficialBrandMarkProps): JSX.Element {
   return <FishLogo size={size} className={className} />
 }
 
@@ -17,6 +17,6 @@ export function OfficialBrandMark({ size, className }: OfficialBrandMarkProps) {
  * Render the official name artwork without its independently slotted mark.
  * @returns the official name wordmark.
  */
-export function OfficialBrandName() {
+export function OfficialBrandName(): JSX.Element {
   return <BrandWordmark includeMark={false} />
 }

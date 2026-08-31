@@ -1,8 +1,15 @@
 // Settled-node identity prevents stream-delta updates from rerendering this row.
 // Mounted on 'conversation.composer.dock' so it sticks with the composer in the
 // active conversation scrollport (see ConversationRoot data-conversation-scroll).
+//
+// Converted from a React hooks component to a webjsx custom element:
+// truncated useState and rootRef useRef become private fields, the
+// ResizeObserver useLayoutEffect becomes connectedCallback/
+// disconnectedCallback plus an explicit re-bind after each render, and
+// re-render is an explicit applyDiff(this, vdom) call. Avoid <Fragment> JSX
+// tags — the group list uses a plain array instead.
 
-import { Fragment, memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ConversationSnapshot, UseProjection } from '@deepseek-ai/dsh-client-runtime/client'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
@@ -208,75 +215,151 @@ export interface StatsLineProps {
   t: ComposerBarProps['t']
 }
 
-export const StatsLine = memo(function StatsLine({ useSession, useProjection, t }: StatsLineProps) {
-  const settledNodes = useSession(s => s.chat.legacy.nodes)
-  const usage = useProjection('tokenUsage')
-  // Every figure rides the durable sessionStats projection, so paging and
-  // compaction cannot change any of them; an assembly without the unit falls
-  // back to the window-scoped fold wholesale (same field names), paid only
-  // while no projection value is served.
-  const projected = useProjection('sessionStats')
-  const stats = useMemo(() => projected ?? deriveStats(settledNodes), [projected, settledNodes])
-  // Pipe-separated groups (figma stats strip); a group with no data drops out whole.
-  const groups: string[] = []
-  if (stats.steps > 0) {
-    groups.push(t('stats.counts', { turns: stats.turns, steps: stats.steps }))
-    const durations: string[] = []
-    if (stats.llmMs > 0) durations.push(t('stats.llm', { duration: formatDuration(stats.llmMs) }))
-    if (stats.toolMs > 0) durations.push(t('stats.toolCall', { duration: formatDuration(stats.toolMs) }))
-    if (durations.length > 0) groups.push(durations.join(' · '))
-    const speeds: string[] = []
-    if (stats.ttftSteps > 0) {
-      speeds.push(t('stats.ttftAverage', { duration: formatDuration(stats.ttftMs / stats.ttftSteps) }))
-    }
-    if (stats.decodeMs > 0) {
-      speeds.push(t('stats.tokensPerSecond', {
-        throughput: formatTokensPerSecond(stats.decodeTokens / (stats.decodeMs / 1_000)),
-      }))
-    }
-    if (speeds.length > 0) groups.push(speeds.join(' · '))
+const DEFAULT_PROPS: StatsLineProps = {
+  useSession: (() => { throw new Error('StatsLine: useSession not wired') }) as unknown as SnapshotSelectorHook<ConversationSnapshot>,
+  useProjection: (() => undefined) as unknown as UseProjection,
+  t: (key: string) => key,
+}
+
+/** Elided stats strip custom element, with a delayed hover tooltip carrying the full line. */
+export class DshStatsLine extends HTMLElement {
+  #props: StatsLineProps = DEFAULT_PROPS
+  #truncated = false
+  #resizeObserver: ResizeObserver | null = null
+  #unsubscribe: (() => void) | null = null
+
+  setProps(props: StatsLineProps): void {
+    this.#props = props
+    this.#bindSession()
+    this.#render()
   }
-  // Context occupancy deliberately lives on the composer's ContextMeter ring,
-  // not here — one home per fact.
-  // Billing rides the durable projection, so these survive paging and
-  // compaction. Gated on actual token activity: a session whose steps all
-  // settled without billing (e.g. every request failed) shows its counts
-  // without a zero-token group.
-  if (usage !== undefined
-    && (billedInputTokens(usage) > 0 || usage.outputTokens > 0)) {
-    const cacheHit = cacheHitPercent(usage)
-    if (cacheHit !== null) groups.push(t('stats.cacheHit', { percent: cacheHit }))
-    groups.push(t('stats.tokens', {
-      input: formatTokens(billedInputTokens(usage)),
-      output: formatTokens(usage.outputTokens),
-    }))
+
+  connectedCallback(): void {
+    this.#bindSession()
+    this.#render()
   }
-  const line = groups.join(' | ')
-  // The row elides with ellipsis when overlong; a delayed hover tooltip carries
-  // the full line, enabled only while content is actually clipped.
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const [truncated, setTruncated] = useState(false)
-  useLayoutEffect(() => {
-    const el = rootRef.current
-    if (el === null) return
-    const measure = () => { setTruncated(el.scrollWidth > el.clientWidth) }
+
+  disconnectedCallback(): void {
+    this.#unsubscribe?.()
+    this.#unsubscribe = null
+    this.#unbindResize()
+  }
+
+  #bindSession(): void {
+    this.#unsubscribe?.()
+    // useSession/useProjection are React selector hooks in their original
+    // form; this element re-derives on every setProps call from the owner
+    // (the dock re-renders this element on every store change), so no
+    // separate subscription is needed here beyond that external drive.
+    this.#unsubscribe = null
+  }
+
+  #unbindResize(): void {
+    this.#resizeObserver?.disconnect()
+    this.#resizeObserver = null
+  }
+
+  #bindResize(root: HTMLDivElement): void {
+    this.#unbindResize()
+    const measure = (): void => {
+      const next = root.scrollWidth > root.clientWidth
+      if (next === this.#truncated) return
+      this.#truncated = next
+      this.#render()
+    }
     measure()
     if (typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(measure)
-    observer.observe(el)
-    return () => { observer.disconnect() }
-  }, [line])
-  if (groups.length === 0) return null
-  return (
-    <Tooltip label={line} side="top" delayMs={500} disabled={!truncated}>
-      <div ref={rootRef} className={css.root}>
-        {groups.map((group, i) => (
-          <Fragment key={group}>
-            {i > 0 && <><span className={css.sep} aria-hidden>|</span>{' '}</>}
-            <span>{group}</span>
-          </Fragment>
-        ))}
-      </div>
-    </Tooltip>
-  )
-})
+    this.#resizeObserver = new ResizeObserver(measure)
+    this.#resizeObserver.observe(root)
+  }
+
+  #render(): void {
+    const { useSession, useProjection, t } = this.#props
+    const settledNodes = useSession(s => s.chat.legacy.nodes)
+    const usage = useProjection('tokenUsage')
+    // Every figure rides the durable sessionStats projection, so paging and
+    // compaction cannot change any of them; an assembly without the unit falls
+    // back to the window-scoped fold wholesale (same field names), paid only
+    // while no projection value is served.
+    const projected = useProjection('sessionStats')
+    const stats = projected ?? deriveStats(settledNodes)
+    // Pipe-separated groups (figma stats strip); a group with no data drops out whole.
+    const groups: string[] = []
+    if (stats.steps > 0) {
+      groups.push(t('stats.counts', { turns: stats.turns, steps: stats.steps }))
+      const durations: string[] = []
+      if (stats.llmMs > 0) durations.push(t('stats.llm', { duration: formatDuration(stats.llmMs) }))
+      if (stats.toolMs > 0) durations.push(t('stats.toolCall', { duration: formatDuration(stats.toolMs) }))
+      if (durations.length > 0) groups.push(durations.join(' · '))
+      const speeds: string[] = []
+      if (stats.ttftSteps > 0) {
+        speeds.push(t('stats.ttftAverage', { duration: formatDuration(stats.ttftMs / stats.ttftSteps) }))
+      }
+      if (stats.decodeMs > 0) {
+        speeds.push(t('stats.tokensPerSecond', {
+          throughput: formatTokensPerSecond(stats.decodeTokens / (stats.decodeMs / 1_000)),
+        }))
+      }
+      if (speeds.length > 0) groups.push(speeds.join(' · '))
+    }
+    // Context occupancy deliberately lives on the composer's ContextMeter ring,
+    // not here — one home per fact.
+    // Billing rides the durable projection, so these survive paging and
+    // compaction. Gated on actual token activity: a session whose steps all
+    // settled without billing (e.g. every request failed) shows its counts
+    // without a zero-token group.
+    if (usage !== undefined
+      && (billedInputTokens(usage) > 0 || usage.outputTokens > 0)) {
+      const cacheHit = cacheHitPercent(usage)
+      if (cacheHit !== null) groups.push(t('stats.cacheHit', { percent: cacheHit }))
+      groups.push(t('stats.tokens', {
+        input: formatTokens(billedInputTokens(usage)),
+        output: formatTokens(usage.outputTokens),
+      }))
+    }
+    const line = groups.join(' | ')
+
+    if (groups.length === 0) {
+      applyDiff(this, [])
+      this.#unbindResize()
+      return
+    }
+
+    // The row elides with ellipsis when overlong; a delayed hover tooltip carries
+    // the full line, enabled only while content is actually clipped.
+    const vdom = (
+      <Tooltip label={line} side="top" delayMs={500} disabled={!this.#truncated}>
+        <div data-stats-root class={css.root ?? ''}>
+          {groups.map((group, i) => [
+            i > 0 && [<span class={css.sep ?? ''} aria-hidden>|</span>, ' '],
+            <span>{group}</span>,
+          ])}
+        </div>
+      </Tooltip>
+    )
+    applyDiff(this, vdom)
+    const root = this.querySelector<HTMLDivElement>('[data-stats-root]')
+    if (root !== null) this.#bindResize(root)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-stats-line') === undefined) {
+  customElements.define('dsh-stats-line', DshStatsLine)
+}
+
+/**
+ * Create (if needed) or update a StatsLine element in place.
+ * @param el - an existing `dsh-stats-line` element to update, or null to create one.
+ * @param props - see {@link StatsLineProps}.
+ * @returns the `dsh-stats-line` element; keep it and pass it back in to update.
+ */
+export function renderStatsLine(el: DshStatsLine | null, props: StatsLineProps): DshStatsLine {
+  const target = el ?? document.createElement('dsh-stats-line') as DshStatsLine
+  target.setProps(props)
+  return target
+}
+
+/** One-shot creation helper preserving the original function-component call shape. */
+export function StatsLine(props: StatsLineProps): JSX.Element {
+  return renderStatsLine(null, props) as unknown as JSX.Element
+}

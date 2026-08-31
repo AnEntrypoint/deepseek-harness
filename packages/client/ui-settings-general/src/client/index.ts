@@ -9,7 +9,7 @@
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import { resolveSlotLabel, webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: the settings slot declarations plus the ctx.settingsScope Context
 // merge. Cross-plugin collaboration goes through the service, never a value
 // import (client bundle purity gate).
@@ -19,10 +19,10 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {
   SettingsOnboardingStep, SettingsRootInjected, SettingsSectionRow,
 } from './shell-contract.ts'
-import { SettingsRoot } from './SettingsRoot.tsx'
+import './SettingsRoot.tsx'
 import { CloseLabel, HeaderContent, TriggerContent } from './chrome.tsx'
 import { GeneralSection } from './GeneralSection.tsx'
-import { SettingsDocumentAction } from './SettingsDocumentAction.tsx'
+import './SettingsDocumentAction.tsx'
 import type { SettingsDocumentActionInjected } from './SettingsDocumentAction.tsx'
 import { SettingsDocumentStore } from './settings-document-store.ts'
 import { en, zh, type SettingsKey } from './locales.ts'
@@ -149,7 +149,14 @@ export function apply(ctx: ClientContext): void {
       'settings.onboarding': { kind: 'list', scope: 'root' },
     },
     inject: shellInjected,
-  }, SettingsRoot))
+    // The webjsxSlot() stub cannot structurally prove it consumes renderSlot
+    // the way RendersCheck wants (dispatch happens inside the registered
+    // custom element itself, off ui-slots' type-erased entry.component
+    // boundary — see webjsxSlot's own doc, and ui-layout/index.ts for the
+    // same cast). Runtime dispatch is unaffected; only this compile-time
+    // shape check needs it.
+    /* oxlint-disable-next-line typescript/no-explicit-any -- webjsxSlot compile-time shape escape, see comment above */
+  } as any, webjsxSlot('dsh-settings-root')))
 
   ctx.slots.inject('settings.trigger', () =>
     ctx.slots.register({ name: 'settings.trigger', locale: NS }, TriggerContent))
@@ -162,7 +169,7 @@ export function apply(ctx: ClientContext): void {
       order: 0,
       locale: NS,
       inject: documentInjected,
-    }, SettingsDocumentAction))
+    }, webjsxSlot('dsh-settings-document-action')))
   }
   ctx.slots.inject('settings.close', () =>
     ctx.slots.register({ name: 'settings.close', locale: NS }, CloseLabel))

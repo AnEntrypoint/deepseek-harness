@@ -48,20 +48,20 @@ export function ValueField(props: FieldProps & {
   numeric?: boolean
   /** Placeholder shown while the draft is empty. */
   placeholder?: string
-}) {
+}): JSX.Element {
   return (
-    <div className={css.field}>
-      <div className={css.head}>
-        <label className={css.label} htmlFor={props.id}>{props.label}</label>
+    <div class={css.field ?? ''}>
+      <div class={css.head ?? ''}>
+        <label class={css.label ?? ''} for={props.id}>{props.label}</label>
         {props.overridden
           ? (
-            <span className={css.badges}>
-              <span className={css.badge}>{props.overriddenLabel}</span>
+            <span class={css.badges ?? ''}>
+              <span class={css.badge ?? ''}>{props.overriddenLabel}</span>
               <button
                 type="button"
-                className={css.reset}
+                class={css.reset ?? ''}
                 disabled={props.disabled}
-                onClick={props.onReset}
+                onclick={props.onReset}
               >
                 {props.resetLabel}
               </button>
@@ -71,16 +71,16 @@ export function ValueField(props: FieldProps & {
       </div>
       <input
         id={props.id}
-        className={props.invalid ? css.inputInvalid : css.input}
+        class={props.invalid ? css.inputInvalid ?? '' : css.input ?? ''}
         type="text"
-        {...props.numeric === true ? { inputMode: 'numeric' as const } : {}}
-        {...props.invalid ? { 'aria-invalid': true } : {}}
+        inputmode={props.numeric === true ? 'numeric' : undefined}
+        aria-invalid={props.invalid ? true : undefined}
         value={props.text}
         placeholder={props.placeholder ?? ''}
         disabled={props.disabled}
-        onChange={(event) => { props.onEdit(event.target.value) }}
+        oninput={(event: Event) => { props.onEdit((event.target as HTMLInputElement).value) }}
       />
-      <p className={props.invalid ? css.invalid : css.hint}>
+      <p class={props.invalid ? css.invalid ?? '' : css.hint ?? ''}>
         {props.invalid ? props.invalidLabel : props.hint}
       </p>
     </div>
@@ -99,25 +99,25 @@ export function SecretField(props: Pick<FieldProps, 'id' | 'label' | 'hint' | 't
   configured: boolean
   /** Copy describing the configured state. */
   stateLabel: string
-}) {
+}): JSX.Element {
   return (
-    <div className={css.field}>
-      <div className={css.head}>
-        <label className={css.label} htmlFor={props.id}>{props.label}</label>
-        <span className={css.badges}>
-          <span className={props.configured ? css.badge : css.badgeMuted}>{props.stateLabel}</span>
+    <div class={css.field ?? ''}>
+      <div class={css.head ?? ''}>
+        <label class={css.label ?? ''} for={props.id}>{props.label}</label>
+        <span class={css.badges ?? ''}>
+          <span class={props.configured ? css.badge ?? '' : css.badgeMuted ?? ''}>{props.stateLabel}</span>
         </span>
       </div>
       <input
         id={props.id}
-        className={css.input}
+        class={css.input ?? ''}
         type="password"
-        autoComplete="off"
+        autocomplete="off"
         value={props.text}
         disabled={props.disabled}
-        onChange={(event) => { props.onEdit(event.target.value) }}
+        oninput={(event: Event) => { props.onEdit((event.target as HTMLInputElement).value) }}
       />
-      <p className={css.hint}>{props.hint}</p>
+      <p class={css.hint ?? ''}>{props.hint}</p>
     </div>
   )
 }

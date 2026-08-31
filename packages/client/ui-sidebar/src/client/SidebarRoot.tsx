@@ -14,14 +14,29 @@
  * scrollbar at all: the shell tracks the pointer and rebinds ui-theme's
  * scrollbar indirection away while it is elsewhere, so a list the user is not
  * pointing at carries no bar.
+ *
+ * Converted from a React function component (useState/useEffect/useRef) to a
+ * webjsx custom element: instance fields replace state/refs,
+ * connectedCallback/disconnectedCallback replace effect mount/cleanup.
  */
-import { useEffect, useRef, useState } from 'react'
+import { applyDiff } from 'webjsx'
+import type { JSXChildTypes } from 'webjsx'
 import clsx from 'clsx'
 import {
   FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SidebarRootComponentProps } from './contract/slots.ts'
 import css from './SidebarRoot.module.css'
+
+/**
+ * `renderSlot` is typed for React's ReactNode (the framework hook contract,
+ * PropsRenderSlots); for a webjsx-tagged registrant it actually resolves to a
+ * hosted custom element via the slot renderer's WebjsxBridge, so its return
+ * value is safe to embed as opaque webjsx child content — cast the type only.
+ */
+function asChild(node: unknown): JSXChildTypes {
+  return node as JSXChildTypes
+}
 
 /** Wide-content unmount delay; matches the 150ms wide-content fade-out. */
 const COLLAPSE_SETTLE_MS = 150
@@ -35,57 +50,112 @@ const COLLAPSE_SETTLE_MS = 150
 const SCROLLBAR_LINGER_MS = 2000
 
 /**
- * Render the sidebar column shell.
- * @param props - composed slot props (runtime share + injected callbacks, contract/slots.ts).
- * @returns the sidebar element tree.
+ * Sidebar shell custom element: column geometry (fold state machine, brand
+ * row, New Session), rendering the `sidebar.workspaces`/`sidebar.settings`/
+ * `sidebar.footer.action` holes at the fold state. Registered as
+ * `dsh-sidebar-root` via `webjsxSlot` at the slot's register call site (see
+ * index.ts).
  */
-export function SidebarRoot({
-  collapsed,
-  width,
-  startSession,
-  toggleSidebar,
-  t,
-  renderSlot,
-}: SidebarRootComponentProps) {
+export class DshSidebarRoot extends HTMLElement {
+  #props: SidebarRootComponentProps | null = null
+
   // Wide content stays mounted while the collapse animates (fading via
   // .collapsed .wide), unmounts at settle, and remounts right away on expand.
-  const [settled, setSettled] = useState(collapsed)
-  useEffect(() => {
-    if (!collapsed) { setSettled(false); return }
-    const timer = window.setTimeout(() => { setSettled(true) }, COLLAPSE_SETTLE_MS)
-    return () => { window.clearTimeout(timer) }
-  }, [collapsed])
-  const wide = !collapsed || !settled
+  #settled = false
+  #settleTimer: ReturnType<typeof setTimeout> | null = null
 
   // Freeze the content at its expanded width while it fades out (collapsed
   // && wide): the sliding column then clips it instead of reflowing it. The
   // rail layout (.collapsed styles) only applies once the fade settles.
-  const lastWideWidth = useRef(width)
-  if (!collapsed) lastWideWidth.current = width
+  #lastWideWidth = 0
 
   // Rail-in only crossfades a live collapse: a refresh straight into the
   // collapsed state renders the rail statically (no delay-hidden icons).
-  const everWide = useRef(!collapsed)
-  if (!collapsed) everWide.current = true
+  #everWide = false
 
   // Scrollbars in the column follow the pointer (.quietBars rebinds them
   // away): drawn while it is inside, and for SCROLLBAR_LINGER_MS after it
   // leaves. A pointer that returns within that window cancels the pending
   // hide rather than restarting from a hidden bar.
-  const column = useRef<HTMLDivElement>(null)
-  const [pointerInside, setPointerInside] = useState(false)
-  const lingerTimer = useRef<number | undefined>(undefined)
-  const armLinger = (): void => {
-    if (lingerTimer.current !== undefined) return
-    lingerTimer.current = window.setTimeout(() => {
-      lingerTimer.current = undefined
-      setPointerInside(false)
+  #pointerInside = false
+  #lingerTimer: number | undefined = undefined
+  #pointerMoveHandler: ((event: PointerEvent) => void) | null = null
+
+  // See DshConversationRoot's identical guard (ui-conversation package): the
+  // webjsxSlot-tagged one-shot mount path calls setProps() synchronously
+  // before this element is inserted into the document, and connectedCallback
+  // then fires again right after insertion. Rendering unconditionally in
+  // both places double-renders the very first mount around that
+  // detach/attach boundary, desyncing webjsx's per-element diff cache from
+  // the live DOM and leaving a duplicate `[data-slot]` subtree (the
+  // `sidebar.workspaces` region rendered twice, one copy behind the other)
+  // instead of updating one in place.
+  #renderedOnce = false
+
+  /** Set/replace props and re-render; called by the slot renderer's webjsx bridge. */
+  setProps(props: SidebarRootComponentProps): void {
+    const prevCollapsed = this.#props?.collapsed
+    this.#props = props
+    if (!props.collapsed) this.#lastWideWidth = props.width
+    if (!props.collapsed) this.#everWide = true
+
+    if (prevCollapsed !== props.collapsed) {
+      if (props.collapsed) {
+        this.#settled = false
+        this.#armSettle()
+      } else {
+        this.#clearSettle()
+        this.#settled = false
+      }
+    }
+    this.#render()
+    this.#renderedOnce = true
+  }
+
+  connectedCallback(): void {
+    if (!this.#renderedOnce) return
+    const props = this.#props
+    if (props !== null) {
+      this.#settled = props.collapsed
+      if (!props.collapsed) { this.#lastWideWidth = props.width; this.#everWide = true }
+    }
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#clearSettle()
+    this.#cancelLinger()
+    this.#unbindPointerMove()
+  }
+
+  #armSettle(): void {
+    this.#clearSettle()
+    this.#settleTimer = setTimeout(() => {
+      this.#settleTimer = null
+      this.#settled = true
+      this.#render()
+    }, COLLAPSE_SETTLE_MS)
+  }
+
+  #clearSettle(): void {
+    if (this.#settleTimer !== null) { clearTimeout(this.#settleTimer); this.#settleTimer = null }
+  }
+
+  #armLinger = (): void => {
+    if (this.#lingerTimer !== undefined) return
+    this.#lingerTimer = window.setTimeout(() => {
+      this.#lingerTimer = undefined
+      this.#pointerInside = false
+      this.#unbindPointerMove()
+      this.#render()
     }, SCROLLBAR_LINGER_MS)
   }
-  const cancelLinger = (): void => {
-    window.clearTimeout(lingerTimer.current)
-    lingerTimer.current = undefined
+
+  #cancelLinger(): void {
+    window.clearTimeout(this.#lingerTimer)
+    this.#lingerTimer = undefined
   }
+
   // Leaving is decided by the column's BOX, not by DOM containment, and only
   // while the bars are drawn. ui-settings renders its full-viewport panel as a
   // fixed-position DESCENDANT of this column, so a pointer moved onto that
@@ -93,118 +163,137 @@ export function SidebarRoot({
   // here, and the bars would stay drawn over a column nobody is pointing at.
   // The element's own leave stays as the one signal geometry cannot give: a
   // pointer that leaves the window emits no further moves.
-  useEffect(() => {
-    if (!pointerInside) return
+  #bindPointerMove(): void {
+    if (this.#pointerMoveHandler !== null) return
     const onMove = (event: PointerEvent): void => {
-      const rect = column.current?.getBoundingClientRect()
-      /* v8 ignore next -- the listener only exists while the column is mounted and revealed. */
-      if (rect === undefined) return
+      const rect = this.getBoundingClientRect()
       const inside = event.clientX >= rect.left && event.clientX < rect.right
         && event.clientY >= rect.top && event.clientY < rect.bottom
-      if (inside) cancelLinger()
-      else armLinger()
+      if (inside) this.#cancelLinger()
+      else this.#armLinger()
     }
+    this.#pointerMoveHandler = onMove
     document.addEventListener('pointermove', onMove)
-    return () => {
-      document.removeEventListener('pointermove', onMove)
-      cancelLinger()
-    }
-  }, [pointerInside])
+  }
 
-  return (
-    <div
-      ref={column}
-      className={clsx(
-        css.root, !wide && css.collapsed, !wide && everWide.current && css.railIn,
-        collapsed && wide && css.fading, !pointerInside && css.quietBars,
-      )}
-      style={wide ? { width: collapsed ? lastWideWidth.current : width } : undefined}
-      onPointerEnter={() => {
-        cancelLinger()
-        setPointerInside(true)
-      }}
-      onPointerLeave={() => { armLinger() }}
-    >
-      <div className={css.logoRow}>
-        {/* Expanded, the brand doubles as a New Session shortcut; the
-            collapsed rail's logo is the expand toggle below instead. */}
-        {wide && (
-          <button
-            type="button"
-            className={clsx(css.brand, css.wide)}
-            aria-label={t('session.new.label')}
-            onClick={() => { startSession() }}
-          >
-            <span className={css.brandIdentity} aria-hidden="true">
-              <span className={css.brandMark}>
-                {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
-              </span>
-              <span className={css.brandName}>
-                {renderSlot('sidebar.brand.name', {}, {
-                  fallback: (
-                    <>
-                      <span className={css.fallbackBrandName}>DSH Local Build</span>
-                      {process.env.DSH_CLIENT_COMMIT_HASH
-                        ? <span className={css.buildRevision}>{process.env.DSH_CLIENT_COMMIT_HASH}</span>
-                        : null}
-                    </>
-                  ),
-                })}
-              </span>
-            </span>
-          </button>
+  #unbindPointerMove(): void {
+    if (this.#pointerMoveHandler === null) return
+    document.removeEventListener('pointermove', this.#pointerMoveHandler)
+    this.#pointerMoveHandler = null
+    this.#cancelLinger()
+  }
+
+  #onPointerEnter = (): void => {
+    this.#cancelLinger()
+    this.#pointerInside = true
+    this.#bindPointerMove()
+    this.#render()
+  }
+
+  #onPointerLeave = (): void => {
+    this.#armLinger()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { collapsed, width, startSession, toggleSidebar, t, renderSlot } = props
+    const wide = !collapsed || !this.#settled
+
+    const vdom = (
+      <div
+        class={clsx(
+          css.root, !wide && css.collapsed, !wide && this.#everWide && css.railIn,
+          collapsed && wide && css.fading, !this.#pointerInside && css.quietBars,
         )}
-        {/* Rail resting state is the whale mark; hovering swaps in the panel
-            icon (the expand affordance, figma sidebar-hover flow). */}
-        <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500}>
+        style={wide ? `width: ${collapsed ? this.#lastWideWidth : width}px` : ''}
+        onpointerenter={this.#onPointerEnter}
+        onpointerleave={this.#onPointerLeave}
+      >
+        <div class={css.logoRow ?? ''}>
+          {/* Expanded, the brand doubles as a New Session shortcut; the
+              collapsed rail's logo is the expand toggle below instead. */}
+          {wide && (
+            <button
+              type="button"
+              class={clsx(css.brand, css.wide)}
+              aria-label={t('session.new.label')}
+              onclick={() => { startSession() }}
+            >
+              <span class={css.brandIdentity ?? ''} aria-hidden="true">
+                <span class={css.brandMark ?? ''}>
+                  {asChild(renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> }))}
+                </span>
+                <span class={css.brandName ?? ''}>
+                  {asChild(renderSlot('sidebar.brand.name', {}, {
+                    fallback: [
+                      <span class={css.fallbackBrandName ?? ''}>DSH Local Build</span>,
+                      process.env.DSH_CLIENT_COMMIT_HASH
+                        ? <span class={css.buildRevision ?? ''}>{process.env.DSH_CLIENT_COMMIT_HASH}</span>
+                        : null,
+                    ],
+                  }))}
+                </span>
+              </span>
+            </button>
+          )}
+          {/* Rail resting state is the whale mark; hovering swaps in the panel
+              icon (the expand affordance, figma sidebar-hover flow). */}
+          <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500}>
+            <button
+              type="button"
+              class={clsx(css.iconButton, css.toggle)}
+              aria-label={collapsed ? t('toggle.open') : t('toggle.collapse')}
+              onclick={() => { toggleSidebar() }}
+            >
+              {!wide && (
+                <span class={css.railMark ?? ''} aria-hidden="true">
+                  {asChild(renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> }))}
+                </span>
+              )}
+              {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
+              <IconPanelLeftOutline16 className={css.panelIcon} size={wide ? 16 : 18} />
+            </button>
+          </Tooltip>
+        </div>
+
+        {/* Expanded, the button carries its own label — tooltip only on the rail. */}
+        <Tooltip label={t('session.new.label')} delayMs={500} disabled={wide}>
           <button
             type="button"
-            className={clsx(css.iconButton, css.toggle)}
-            aria-label={collapsed ? t('toggle.open') : t('toggle.collapse')}
-            onClick={() => { toggleSidebar() }}
+            class={css.newSession ?? ''}
+            aria-label={t('session.new.label')}
+            onclick={() => { startSession() }}
           >
-            {!wide && (
-              <span className={css.railMark} aria-hidden="true">
-                {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
-              </span>
-            )}
-            {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
-            <IconPanelLeftOutline16 className={css.panelIcon} size={wide ? 16 : 18} />
+            <IconNewChatOutline16 size={wide ? 14 : 18} />
+            {wide && <span class={clsx(css.newSessionLabel, css.wide)}>{t('session.new')}</span>}
           </button>
         </Tooltip>
-      </div>
 
-      {/* Expanded, the button carries its own label — tooltip only on the rail. */}
-      <Tooltip label={t('session.new.label')} delayMs={500} disabled={wide}>
-        <button
-          type="button"
-          className={css.newSession}
-          aria-label={t('session.new.label')}
-          onClick={() => { startSession() }}
-        >
-          <IconNewChatOutline16 size={wide ? 14 : 18} />
-          {wide && <span className={clsx(css.newSessionLabel, css.wide)}>{t('session.new')}</span>}
-        </button>
-      </Tooltip>
-
-      {/* The browsing region fills the column between the controls and the
-          foot in both states; its rail icon column rides the same slot. */}
-      <div className={css.regionArea}>
-        {renderSlot('sidebar.workspaces', {
-          wide,
-          expandSidebar: () => { if (collapsed) toggleSidebar() },
-        })}
-      </div>
-
-      {/* Footer actions stack above Settings in both sidebar widths. */}
-      <div className={css.footArea}>
-        <div className={css.footerActions}>
-          {renderSlot('sidebar.footer.action', { wide })}
+        {/* The browsing region fills the column between the controls and the
+            foot in both states; its rail icon column rides the same slot. */}
+        <div class={css.regionArea ?? ''}>
+          {asChild(renderSlot('sidebar.workspaces', {
+            wide,
+            expandSidebar: () => { if (collapsed) toggleSidebar() },
+          }))}
         </div>
-        <div className={css.settingsArea}>
-          {renderSlot('sidebar.settings', { wide })}
+
+        {/* Footer actions stack above Settings in both sidebar widths. */}
+        <div class={css.footArea ?? ''}>
+          <div class={css.footerActions ?? ''}>
+            {asChild(renderSlot('sidebar.footer.action', { wide }))}
+          </div>
+          <div class={css.settingsArea ?? ''}>
+            {asChild(renderSlot('sidebar.settings', { wide }))}
+          </div>
         </div>
       </div>
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-sidebar-root') === undefined) {
+  customElements.define('dsh-sidebar-root', DshSidebarRoot)
 }

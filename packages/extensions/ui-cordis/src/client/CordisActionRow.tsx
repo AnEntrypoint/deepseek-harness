@@ -12,31 +12,31 @@ import css from './CordisRunRow.module.css'
 export type CordisActionRowProps = ToolCallViewProps & PropsLocale<'cordis'>
 
 /** Render one Stop or Remove call with Cordis-owned localized copy. */
-export function CordisActionRow({ callId, toolName, block, inspect, t }: CordisActionRowProps) {
+export function CordisActionRow({ callId, toolName, block, inspect, t }: CordisActionRowProps): JSX.Element {
   const card = cordisActionCard(block)
   const remove = toolName === 'cordis_undefine'
   const summary = card.errorSummary ?? card.pluginId ?? callId
 
   return (
-    <div className={css.card} data-tool={toolName} data-state={card.state}>
-      <div className={css.row}>
-        <span className={css.icon}>
+    <div class={css.card ?? ''} data-tool={toolName} data-state={card.state}>
+      <div class={css.row ?? ''}>
+        <span class={css.icon ?? ''}>
           {card.state === 'error'
             ? <StateDot state="error" />
             : card.state === 'stopped'
               ? <StateDot state="warning" />
               : remove ? <IconTrashOutline16 size={14} /> : <IconStopFill16 size={14} />}
         </span>
-        <span className={css.title}>{t(remove ? 'row.removeTitle' : 'row.stopTitle')}</span>
-        <span className={css.separator} aria-hidden />
-        <span className={card.errorSummary === null ? css.summary : css.error}>{summary}</span>
+        <span class={css.title ?? ''}>{t(remove ? 'row.removeTitle' : 'row.stopTitle')}</span>
+        <span class={css.separator ?? ''} aria-hidden />
+        <span class={card.errorSummary === null ? (css.summary ?? '') : (css.error ?? '')}>{summary}</span>
         {inspect !== undefined && (
-          <button type="button" className={css.inspect} aria-label="Inspect" onClick={inspect}>
+          <button type="button" class={css.inspect ?? ''} aria-label="Inspect" onclick={inspect}>
             <IconInspectOutline12 />
           </button>
         )}
       </div>
-      {card.output !== null && <pre className={css.output}>{card.output}</pre>}
+      {card.output !== null && <pre class={css.output ?? ''}>{card.output}</pre>}
     </div>
   )
 }

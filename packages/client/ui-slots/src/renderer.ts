@@ -1,6 +1,5 @@
 /** React-free contracts between the slot host and an installed renderer. */
-import type { ReactNode } from 'react'
-import type { SlotEntryDef, SlotSpec, StoredEntry, Translate } from './index.ts'
+import type { RenderOutput, SlotEntryDef, SlotSpec, StoredEntry, Translate } from './index.ts'
 
 /**
  * The locale face the render machinery consumes: namespace binding plus an
@@ -92,7 +91,7 @@ export interface SessionProvideInfo extends SessionMaybeProvideInfo {
 export interface RenderOpts {
   entryKey?: string
   only?: string
-  fallback?: ReactNode
+  fallback?: RenderOutput
   /** Opaque occurrence context consumed only by function-valued injected Hooks. */
   hookContext?: unknown
 }
@@ -193,7 +192,7 @@ export interface SlotRenderer {
    * @param ownerProps - owner props from the shell's renderSlot('root', ...) call.
    * @returns the rendered tree.
    */
-  renderRoot(host: SlotRendererHost, ownerProps: object): ReactNode
+  renderRoot(host: SlotRendererHost, ownerProps: object): RenderOutput
 }
 
 /** Thrown when a retained renderSlot binding is invoked after its declaring entry was disposed. */

@@ -5,7 +5,8 @@
  * except workspace Rename/Delete and session Rename/Fork/Archive; the session
  * and workspace hover cards are suppressed while a menu is open.
  */
-import { useState } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import {
   HoverCard, IconArchiveOutline20, IconBranchOutline16, IconEditOutline16,
@@ -57,12 +58,12 @@ function WorkspaceHoverContent({ label, cwd, createdAt, t }: {
   cwd: string | undefined
   createdAt: number
   t: RowTranslate
-}) {
+}): JSX.Element {
   return (
-    <div className={css.hoverContent}>
-      <div className={css.hoverTitle}>{label}</div>
-      <div className={css.hoverPath}>{cwd}</div>
-      <div className={css.hoverTime}>{createdLabel(createdAt, t)}</div>
+    <div class={css.hoverContent ?? ''}>
+      <div class={css.hoverTitle ?? ''}>{label}</div>
+      <div class={css.hoverPath ?? ''}>{cwd}</div>
+      <div class={css.hoverTime ?? ''}>{createdLabel(createdAt, t)}</div>
     </div>
   )
 }
@@ -96,20 +97,8 @@ function rowHalf(e: { clientY: number; currentTarget: HTMLElement }): 'before' |
   return e.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
 }
 
-/**
- * Project (workspace) header row: folder + title;
- * hover reveals the chevron and create button, and dwelling on a real
- * Workspace shows its hover card (the ungrouped bucket has none).
- * `containsCurrent` arrives on the node (derivation fact, no renderer scan).
- * @param props.group - derived group node.
- * @param props.onToggle - expand/collapse the group.
- * @param props.onCreate - start a frontend Session inside this Workspace.
- * @param props.drag - optional workspace-row drag wiring.
- * @param props.home - host account home for POSIX hover-path abbreviation.
- * @param props.t - the browser root's locale seat.
- * @returns the row element.
- */
-export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, home, t }: {
+/** Own props of the {@link DshProjectRowItem} custom element. */
+export interface ProjectRowItemProps {
   group: GroupNode
   onToggle: () => void
   onCreate: () => void
@@ -120,98 +109,133 @@ export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, home,
   /** Host account home; POSIX home-rooted hover paths display as `~`. */
   home?: string | undefined
   t: RowTranslate
-}) {
-  const row = group
-  // The ungrouped bucket has no workspace title: its label is dictionary copy.
-  const label = row.workspaceId === undefined ? t('group.ungrouped') : row.label
-  const active = group.expanded && group.containsCurrent
-  const [menuOpen, setMenuOpen] = useState(false)
-  const workspaceMenuItems = [
-    { id: 'rename', label: t('rename'), icon: <IconEditOutline16 /> },
-    { id: 'delete', label: t('delete.workspace'), icon: <IconTrashOutline16 />, danger: true },
-  ]
-  const ownRow = (
-    <div
-      className={clsx(css.projectRow, menuOpen && css.menuOpen)}
-      role="treeitem"
-      aria-expanded={row.expanded}
-      onClick={onToggle}
-      draggable={drag !== undefined}
-      onDragStart={drag === undefined
-        ? undefined
-        : (e) => {
-          e.dataTransfer.effectAllowed = 'move'
-          e.dataTransfer.setData('text/plain', row.key)
-          drag.start()
-        }}
-      onDragEnd={drag?.end}
-    >
-      <span className={clsx(css.slot, css.folder, active && css.folderActive)}>
-        {row.expanded ? <IconFolderOpen16 /> : <IconFolderClose16 />}
-      </span>
-      <span className={clsx(css.slot, css.chevron)}>
-        <IconTriangleRightFill14 className={clsx(css.arrow, row.expanded && css.arrowOpen)} />
-      </span>
-      <span className={css.projectText}>
-        <span className={css.title}>{label}</span>
-      </span>
-      <span className={css.rowActions}>
-        {actions !== undefined && (
-          <Menu
-            open={menuOpen}
-            onClose={() => { setMenuOpen(false) }}
-            items={workspaceMenuItems}
-            onSelect={(id) => {
-              setMenuOpen(false)
-              // Unknown ids leave before the dispatch: a future menu row must
-              // not inherit the destructive branch as an else fallback.
-              /* v8 ignore next -- workspaceMenuItems carries exactly these two rows today. */
-              if (id !== 'rename' && id !== 'delete') return
-              if (id === 'rename') actions.rename()
-              else actions.delete()
-            }}
-            portal
-            closeOnPointerLeave
-            anchor={(
-              <button
-                type="button"
-                className={css.iconButton}
-                aria-label={t('actions.workspace.aria', { name: label })}
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v) }}
-              >
-                <IconEllipsisOutline16 />
-              </button>
-            )}
-          />
-        )}
-        <button
-          type="button"
-          className={css.iconButton}
-          aria-label={t('actions.newSession.aria', { name: label })}
-          onClick={(e) => { e.stopPropagation(); onCreate() }}
-        >
-          <IconPlusOutline16 />
-        </button>
-      </span>
-    </div>
-  )
-  // The ungrouped bucket has no backing Workspace: no card to show.
-  if (row.createdAt === undefined) return ownRow
-  return (
-    <HoverCard
-      anchor={ownRow}
-      content={<WorkspaceHoverContent
-        label={row.label}
-        cwd={row.cwd === undefined ? undefined : abbreviateHomePath(row.cwd, home)}
-        createdAt={row.createdAt}
-        t={t}
-      />}
-      disabled={menuOpen}
-      copyText={row.cwd}
-      copyLabel={t('copy')}
-      copiedLabel={t('hover.copied')}
-    />
-  )
+}
+
+/**
+ * Project (workspace) header row custom element: folder + title;
+ * hover reveals the chevron and create button, and dwelling on a real
+ * Workspace shows its hover card (the ungrouped bucket has none).
+ * `containsCurrent` arrives on the node (derivation fact, no renderer scan).
+ * Converted from a React function component (useState menuOpen) to a webjsx
+ * custom element: menuOpen becomes an instance field, re-render is explicit.
+ */
+export class DshProjectRowItem extends HTMLElement {
+  #props: ProjectRowItemProps | null = null
+  #menuOpen = false
+
+  setProps(props: ProjectRowItemProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { group, onToggle, onCreate, actions, drag, home, t } = props
+    const row = group
+    // The ungrouped bucket has no workspace title: its label is dictionary copy.
+    const label = row.workspaceId === undefined ? t('group.ungrouped') : row.label
+    const active = group.expanded && group.containsCurrent
+    const menuOpen = this.#menuOpen
+    const workspaceMenuItems = [
+      { id: 'rename', label: t('rename'), icon: <IconEditOutline16 /> },
+      { id: 'delete', label: t('delete.workspace'), icon: <IconTrashOutline16 />, danger: true },
+    ]
+    const ownRow = (
+      <div
+        class={clsx(css.projectRow, menuOpen && css.menuOpen)}
+        role="treeitem"
+        aria-expanded={String(row.expanded)}
+        onclick={onToggle}
+        draggable={drag !== undefined}
+        ondragstart={drag === undefined
+          ? null
+          : (e: DragEvent) => {
+            if (e.dataTransfer === null) return
+            e.dataTransfer.effectAllowed = 'move'
+            e.dataTransfer.setData('text/plain', row.key)
+            drag.start()
+          }}
+        ondragend={drag?.end ?? null}
+      >
+        <span class={clsx(css.slot, css.folder, active && css.folderActive)}>
+          {row.expanded ? <IconFolderOpen16 /> : <IconFolderClose16 />}
+        </span>
+        <span class={clsx(css.slot, css.chevron)}>
+          <IconTriangleRightFill14 className={clsx(css.arrow, row.expanded && css.arrowOpen)} />
+        </span>
+        <span class={css.projectText ?? ''}>
+          <span class={css.title ?? ''}>{label}</span>
+        </span>
+        <span class={css.rowActions ?? ''}>
+          {actions !== undefined && (
+            <Menu
+              open={menuOpen}
+              onClose={() => { this.#menuOpen = false; this.#render() }}
+              items={workspaceMenuItems}
+              onSelect={(id) => {
+                this.#menuOpen = false
+                // Unknown ids leave before the dispatch: a future menu row must
+                // not inherit the destructive branch as an else fallback.
+                /* v8 ignore next -- workspaceMenuItems carries exactly these two rows today. */
+                if (id !== 'rename' && id !== 'delete') { this.#render(); return }
+                if (id === 'rename') actions.rename()
+                else actions.delete()
+                this.#render()
+              }}
+              portal
+              closeOnPointerLeave
+              anchor={(
+                <button
+                  type="button"
+                  class={css.iconButton ?? ''}
+                  aria-label={t('actions.workspace.aria', { name: label })}
+                  onclick={(e: MouseEvent) => { e.stopPropagation(); this.#menuOpen = !this.#menuOpen; this.#render() }}
+                >
+                  <IconEllipsisOutline16 />
+                </button>
+              )}
+            />
+          )}
+          <button
+            type="button"
+            class={css.iconButton ?? ''}
+            aria-label={t('actions.newSession.aria', { name: label })}
+            onclick={(e: MouseEvent) => { e.stopPropagation(); onCreate() }}
+          >
+            <IconPlusOutline16 />
+          </button>
+        </span>
+      </div>
+    )
+    // The ungrouped bucket has no backing Workspace: no card to show.
+    const vdom = row.createdAt === undefined
+      ? ownRow
+      : (
+        <HoverCard
+          anchor={ownRow}
+          content={<WorkspaceHoverContent
+            label={row.label}
+            cwd={row.cwd === undefined ? undefined : abbreviateHomePath(row.cwd, home)}
+            createdAt={row.createdAt}
+            t={t}
+          />}
+          disabled={menuOpen}
+          copyText={row.cwd}
+          copyLabel={t('copy')}
+          copiedLabel={t('hover.copied')}
+        />
+      )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-project-row-item') === undefined) {
+  customElements.define('dsh-project-row-item', DshProjectRowItem)
 }
 
 /* v8 ignore next 3 -- closed-union backstop; only reached if the status is forged */
@@ -269,28 +293,26 @@ function sessionStatuses(
 }
 
 /** Primary status dot plus every status's screen-reader label, shared by the search and session rows. */
-function SessionStatusDots({ statuses }: { statuses: readonly [SessionStatus, ...SessionStatus[]] }) {
-  return (
-    <>
-      <StateDot state={statuses[0].state} />
-      {statuses.map(status => (
-        <span className={css.visuallyHidden} key={status.label}>{status.label}</span>
-      ))}
-    </>
-  )
+function SessionStatusDots({ statuses }: { statuses: readonly [SessionStatus, ...SessionStatus[]] }): VNode[] {
+  return [
+    <StateDot state={statuses[0].state} />,
+    ...statuses.map(status => (
+      <span class={css.visuallyHidden ?? ''} key={status.label}>{status.label}</span>
+    )),
+  ]
 }
 
 /** Hover-card body: full title, relative time, and every relevant live status. */
-function SessionHoverContent({ node, now, t }: { node: SessionNode; now: number; t: RowTranslate }) {
+function SessionHoverContent({ node, now, t }: { node: SessionNode; now: number; t: RowTranslate }): JSX.Element {
   const statuses = sessionStatuses(node, t)
   return (
-    <div className={css.hoverContent}>
-      <div className={css.hoverTitle}>{displayTitle(node, t)}</div>
+    <div class={css.hoverContent ?? ''}>
+      <div class={css.hoverTitle ?? ''}>{displayTitle(node, t)}</div>
       {/* Same placeholder rule as the row's trailing cell: no timestamp
           before the first prompt. */}
-      {!node.blank && <div className={css.hoverTime}>{hoverTimeLabel(node.updatedAt, now, t)}</div>}
+      {!node.blank && <div class={css.hoverTime ?? ''}>{hoverTimeLabel(node.updatedAt, now, t)}</div>}
       {statuses.map(status => (
-        <div className={css.hoverStatus} key={status.label}>
+        <div class={css.hoverStatus ?? ''} key={status.label}>
           <StateDot state={status.state} />
           <span>{status.label}</span>
         </div>
@@ -314,30 +336,30 @@ export function SearchResultItem({ result, currentId, onOpen, t }: {
   currentId: string | undefined
   onOpen: (id: SearchResultNode['id']) => void
   t: RowTranslate
-}) {
+}): JSX.Element {
   const selected = result.id === currentId
   const statuses = sessionStatuses(result, t)
   const primaryStatus = statuses[0]
   return (
     <button
       type="button"
-      className={clsx(css.searchResultRow, selected && css.selected)}
+      class={clsx(css.searchResultRow, selected && css.selected)}
       role="treeitem"
-      aria-selected={selected}
-      onClick={() => { onOpen(result.id) }}
+      aria-selected={String(selected)}
+      onclick={() => { onOpen(result.id) }}
     >
-      <span className={css.searchResultHeading}>
-        <span className={css.slot}>
+      <span class={css.searchResultHeading ?? ''}>
+        <span class={css.slot ?? ''}>
           {(primaryStatus.state !== 'done' || result.completed) && (
-            <SessionStatusDots statuses={statuses} />
+            SessionStatusDots({ statuses })
           )}
         </span>
-        <span className={css.searchResultTitle}>{result.title}</span>
+        <span class={css.searchResultTitle ?? ''}>{result.title}</span>
       </span>
-      <span className={css.searchResultMeta}>
-        <span className={css.searchResultWorkspace}>{result.workspace}</span>
+      <span class={css.searchResultMeta ?? ''}>
+        <span class={css.searchResultWorkspace ?? ''}>{result.workspace}</span>
         {result.snippet !== undefined && (
-          <span className={css.searchResultSnippet}>{result.snippet}</span>
+          <span class={css.searchResultSnippet ?? ''}>{result.snippet}</span>
         )}
       </span>
     </button>
@@ -359,7 +381,7 @@ export function SearchResultItem({ result, currentId, onOpen, t }: {
  * @param props.t - the browser root's locale seat.
  * @returns the session row.
  */
-export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork, onArchive, drag, flat = false, t }: {
+export interface SessionNodeItemProps {
   node: SessionNode
   currentId: string | undefined
   now: number
@@ -375,110 +397,141 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
   /** The row is rendered without a parent Workspace header. */
   flat?: boolean | undefined
   t: RowTranslate
-}) {
-  const row = node
-  const title = displayTitle(node, t)
-  const selected = node.id === currentId
-  const statuses = sessionStatuses(node, t)
-  const primaryStatus = statuses[0]
-  const showStatus = primaryStatus.state !== 'done' || row.completed
-  const [menuOpen, setMenuOpen] = useState(false)
-  // Archive hides the row through the registry-global archive set and never
-  // touches the session log, so it is not styled as destructive and needs no
-  // confirmation dialog.
-  const sessionMenuItems = [
-    { id: 'rename', label: t('rename'), icon: <IconEditOutline16 /> },
-    { id: 'fork', label: t('menu.fork'), icon: <IconBranchOutline16 /> },
-    // 20-native glyph in the menu's 16px icon slot (Menu.module.css .itemIcon).
-    { id: 'archive', label: t('menu.archiveSession'), icon: <IconArchiveOutline20 size={16} /> },
-  ]
-  // Figma session cell: pad 8, status slot 16, then a 4px title gap.
-  const ownRow = (
-    <div
-      className={clsx(
-        css.sessionRow, selected && css.selected, menuOpen && css.menuOpen,
-        flat && !showStatus && css.flatSessionRowWithoutStatus,
-        drag?.marker === 'before' && css.dropBefore, drag?.marker === 'after' && css.dropAfter,
-      )}
-      role="treeitem"
-      aria-selected={selected}
-      onClick={() => { onOpen(node.id) }}
-      draggable={drag !== undefined}
-      onDragStart={drag === undefined
-        ? undefined
-        : (e) => {
-          e.dataTransfer.effectAllowed = 'move'
-          e.dataTransfer.setData('text/plain', node.id)
-          drag.start()
-        }}
-      onDragEnd={drag?.end}
-      onDragOver={drag === undefined
-        ? undefined
-        : (e) => {
-          if (!drag.active) return
-          e.preventDefault()
-          e.dataTransfer.dropEffect = 'move'
-          drag.hover(rowHalf(e))
-        }}
-      onDrop={drag === undefined
-        ? undefined
-        : (e) => {
-          if (!drag.active) return
-          e.preventDefault()
-          drag.drop(rowHalf(e))
-        }}
-    >
-      {/* Pending interaction and own or descendant activity outrank the
-          finished-but-unviewed reminder, which returns after activity stops
-          and is cleared by opening the session. */}
-      {(!flat || showStatus) && (
-        <span className={css.slot}>
-          {showStatus && <SessionStatusDots statuses={statuses} />}
-        </span>
-      )}
-      <span className={css.title}>{title}</span>
-      {/* A blank New Session row is a provisional placeholder: nothing has
-          happened in it yet, so a "now" timestamp and the row verbs
-          (rename/fork/archive) would all act on content that does not
-          exist — both trailing cells stay off until the first prompt. */}
-      {!row.blank && <span className={css.time}>{timeLabel(row.updatedAt, now, t)}</span>}
-      {!row.blank && (
-        <span className={css.rowActions}>
-          <Menu
-            open={menuOpen}
-            onClose={() => { setMenuOpen(false) }}
-            items={sessionMenuItems}
-            onSelect={(id) => {
-              setMenuOpen(false)
-              if (id === 'rename') onRename(node.id, row.title)
-              if (id === 'fork') onFork(node.id)
-              if (id === 'archive') onArchive(node.id)
-            }}
-            portal
-            closeOnPointerLeave
-            anchor={(
-              <button
-                type="button"
-                className={css.iconButton}
-                aria-label={t('actions.session.aria', { name: title })}
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v) }}
-              >
-                <IconEllipsisOutline16 />
-              </button>
-            )}
-          />
-        </span>
-      )}
-    </div>
-  )
-  return (
-    <HoverCard
-      anchor={ownRow}
-      content={<SessionHoverContent node={node} now={now} t={t} />}
-      disabled={menuOpen || drag?.active === true}
-      copyText={row.blank ? undefined : row.title}
-      copyLabel={t('copy')}
-      copiedLabel={t('hover.copied')}
-    />
-  )
+}
+
+/**
+ * Session row custom element. Converted from a React function component
+ * (useState menuOpen) to a webjsx custom element: menuOpen becomes an
+ * instance field, re-render is explicit.
+ */
+export class DshSessionNodeItem extends HTMLElement {
+  #props: SessionNodeItemProps | null = null
+  #menuOpen = false
+
+  setProps(props: SessionNodeItemProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { node, currentId, now, onOpen, onRename, onFork, onArchive, drag, flat = false, t } = props
+    const row = node
+    const title = displayTitle(node, t)
+    const selected = node.id === currentId
+    const statuses = sessionStatuses(node, t)
+    const primaryStatus = statuses[0]
+    const showStatus = primaryStatus.state !== 'done' || row.completed
+    const menuOpen = this.#menuOpen
+    // Archive hides the row through the registry-global archive set and never
+    // touches the session log, so it is not styled as destructive and needs no
+    // confirmation dialog.
+    const sessionMenuItems = [
+      { id: 'rename', label: t('rename'), icon: <IconEditOutline16 /> },
+      { id: 'fork', label: t('menu.fork'), icon: <IconBranchOutline16 /> },
+      // 20-native glyph in the menu's 16px icon slot (Menu.module.css .itemIcon).
+      { id: 'archive', label: t('menu.archiveSession'), icon: <IconArchiveOutline20 size={16} /> },
+    ]
+    // Figma session cell: pad 8, status slot 16, then a 4px title gap.
+    const ownRow = (
+      <div
+        class={clsx(
+          css.sessionRow, selected && css.selected, menuOpen && css.menuOpen,
+          flat && !showStatus && css.flatSessionRowWithoutStatus,
+          drag?.marker === 'before' && css.dropBefore, drag?.marker === 'after' && css.dropAfter,
+        )}
+        role="treeitem"
+        aria-selected={String(selected)}
+        onclick={() => { onOpen(node.id) }}
+        draggable={drag !== undefined}
+        ondragstart={drag === undefined
+          ? null
+          : (e: DragEvent) => {
+            if (e.dataTransfer === null) return
+            e.dataTransfer.effectAllowed = 'move'
+            e.dataTransfer.setData('text/plain', node.id)
+            drag.start()
+          }}
+        ondragend={drag?.end ?? null}
+        ondragover={drag === undefined
+          ? null
+          : (e: DragEvent) => {
+            if (!drag.active) return
+            e.preventDefault()
+            if (e.dataTransfer !== null) e.dataTransfer.dropEffect = 'move'
+            drag.hover(rowHalf(e as unknown as { clientY: number; currentTarget: HTMLElement }))
+          }}
+        ondrop={drag === undefined
+          ? null
+          : (e: DragEvent) => {
+            if (!drag.active) return
+            e.preventDefault()
+            drag.drop(rowHalf(e as unknown as { clientY: number; currentTarget: HTMLElement }))
+          }}
+      >
+        {/* Pending interaction and own or descendant activity outrank the
+            finished-but-unviewed reminder, which returns after activity stops
+            and is cleared by opening the session. */}
+        {(!flat || showStatus) && (
+          <span class={css.slot ?? ''}>
+            {showStatus && SessionStatusDots({ statuses })}
+          </span>
+        )}
+        <span class={css.title ?? ''}>{title}</span>
+        {/* A blank New Session row is a provisional placeholder: nothing has
+            happened in it yet, so a "now" timestamp and the row verbs
+            (rename/fork/archive) would all act on content that does not
+            exist — both trailing cells stay off until the first prompt. */}
+        {!row.blank && <span class={css.time ?? ''}>{timeLabel(row.updatedAt, now, t)}</span>}
+        {!row.blank && (
+          <span class={css.rowActions ?? ''}>
+            <Menu
+              open={menuOpen}
+              onClose={() => { this.#menuOpen = false; this.#render() }}
+              items={sessionMenuItems}
+              onSelect={(id) => {
+                this.#menuOpen = false
+                if (id === 'rename') onRename(node.id, row.title)
+                if (id === 'fork') onFork(node.id)
+                if (id === 'archive') onArchive(node.id)
+                this.#render()
+              }}
+              portal
+              closeOnPointerLeave
+              anchor={(
+                <button
+                  type="button"
+                  class={css.iconButton ?? ''}
+                  aria-label={t('actions.session.aria', { name: title })}
+                  onclick={(e: MouseEvent) => { e.stopPropagation(); this.#menuOpen = !this.#menuOpen; this.#render() }}
+                >
+                  <IconEllipsisOutline16 />
+                </button>
+              )}
+            />
+          </span>
+        )}
+      </div>
+    )
+    const vdom = (
+      <HoverCard
+        anchor={ownRow}
+        content={<SessionHoverContent node={node} now={now} t={t} />}
+        disabled={menuOpen || drag?.active === true}
+        copyText={row.blank ? undefined : row.title}
+        copyLabel={t('copy')}
+        copiedLabel={t('hover.copied')}
+      />
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-session-node-item') === undefined) {
+  customElements.define('dsh-session-node-item', DshSessionNodeItem)
 }

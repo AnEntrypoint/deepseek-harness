@@ -15,7 +15,9 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only: pulls the `plan` SessionProjectionMap merge for useProjection.
 import type {} from '@deepseek-ai/dsh-plan-mode/client'
-import { PlanChip } from './PlanModeControl.tsx'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+export { PlanChip } from './PlanModeControl.tsx'
+import type { PlanChipProps } from './PlanModeControl.tsx'
 import { en, zh, type PlanKey } from './locales.ts'
 
 export type { PlanKey } from './locales.ts'
@@ -61,5 +63,5 @@ export function apply(ctx: ClientContext): void {
         return null
       },
     }),
-  }, PlanChip))
+  }, webjsxSlot<PlanChipProps>('dsh-plan-chip')))
 }

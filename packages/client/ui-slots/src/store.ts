@@ -121,7 +121,20 @@ export type BoundActions<H> = H extends StoreHandle<infer T, infer A> ? BakedAct
  * (no update/set — reads via useStore, writes via the declared actions only).
  */
 export type PropsStore<H> = H extends StoreHandle<infer T, infer A>
-  ? { useStore: SnapshotSelectorHook<T>; actions: BakedActions<T, A> }
+  ? {
+    useStore: SnapshotSelectorHook<T>
+    actions: BakedActions<T, A>
+    /**
+       * Raw change-notification subscribe (uSES subscribe side only — no
+       * getSnapshot/setState leak). `useStore` itself never re-renders a
+       * caller (see bind.ts: it is a plain synchronous reader); a custom
+       * element that must re-render when store actions mutate state
+       * subscribes here directly in its own connectedCallback, the same
+       * pattern already used for other HostObservable sources
+       * (Toast.tsx/CodeBlock.tsx).
+       */
+    subscribeStore: (fn: () => void) => () => void
+  }
   : object
 
 /**

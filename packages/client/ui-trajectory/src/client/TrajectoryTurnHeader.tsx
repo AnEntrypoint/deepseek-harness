@@ -14,14 +14,14 @@ export interface TrajectoryTurnHeaderProps {
  * @param props.turn - turn index.
  * @returns the sticky header element.
  */
-export function TrajectoryTurnHeader({ turn }: TrajectoryTurnHeaderProps) {
+export function TrajectoryTurnHeader({ turn }: TrajectoryTurnHeaderProps): JSX.Element {
   return (
-    <div className={css.root}>
-      <div className={css.inner}>
-        <span className={css.title}>Turn {turn}</span>
-        <div className={css.columns} aria-hidden="true">
+    <div class={css.root ?? ''}>
+      <div class={css.inner ?? ''}>
+        <span class={css.title ?? ''}>Turn {turn}</span>
+        <div class={css.columns ?? ''} aria-hidden="true">
           {COLUMN_LABELS.map(label => (
-            <span key={label} className={css.column}>{label}</span>
+            <span key={label} class={css.column ?? ''}>{label}</span>
           ))}
         </div>
       </div>

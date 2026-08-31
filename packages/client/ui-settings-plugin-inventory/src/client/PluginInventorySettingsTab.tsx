@@ -1,4 +1,11 @@
-import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
+// Read-only Host plugin inventory registered into Web Settings.
+//
+// Converted from a React function component (useState/useEffect/useMemo/
+// useId) to a webjsx custom element: instance fields replace state,
+// connectedCallback/disconnectedCallback replace effect mount/cleanup, and a
+// module-level counter replaces useId (stable per element instance).
+
+import { applyDiff } from 'webjsx'
 import type { PluginInventorySnapshot } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   IconChevronDownOutline14,
@@ -60,138 +67,186 @@ function matches(entry: PluginInventoryEntry, normalizedQuery: string): boolean 
     .some(value => value.toLocaleLowerCase().includes(normalizedQuery))
 }
 
-/** Render the read-only current Loader inventory. */
-export function PluginInventorySettingsTab({ list, t }: PluginInventorySettingsTabProps): ReactNode {
-  const catalogId = useId()
-  const [request, setRequest] = useState(0)
-  const [query, setQuery] = useState('')
-  const [expanded, setExpanded] = useState<PluginInventoryEntry['entryId'] | null>(null)
-  const [state, setState] = useState<ViewState>({ status: 'loading' })
+let nextCatalogId = 0
 
-  useEffect(() => {
-    let current = true
-    void Promise.resolve().then(() => list()).then(
-      (snapshot) => { if (current) setState({ status: 'ready', snapshot }) },
-      () => { if (current) setState({ status: 'error' }) },
-    )
-    return () => { current = false }
-  }, [list, request])
+/**
+ * Read-only Loader inventory tab custom element. Registered as
+ * `dsh-plugin-inventory-settings-tab` via `webjsxSlot` at the slot's register
+ * call site (see index.ts).
+ */
+export class DshPluginInventorySettingsTab extends HTMLElement {
+  #props: PluginInventorySettingsTabProps | null = null
+  #catalogId = `plugin-inventory-${nextCatalogId++}`
+  #query = ''
+  #expanded: PluginInventoryEntry['entryId'] | null = null
+  #state: ViewState = { status: 'loading' }
+  #request = 0
+  #fetchToken = 0
 
-  const normalizedQuery = query.trim().toLocaleLowerCase()
-  const filteredEntries = useMemo(
-    () => state.status === 'ready'
-      ? state.snapshot.entries.filter(entry => matches(entry, normalizedQuery))
-      : [],
-    [normalizedQuery, state],
-  )
-
-  useEffect(() => {
-    if (expanded !== null && !filteredEntries.some(entry => entry.entryId === expanded)) {
-      setExpanded(null)
-    }
-  }, [expanded, filteredEntries])
-
-  const retry = (): void => {
-    setState({ status: 'loading' })
-    setRequest(value => value + 1)
+  /** Set/replace props and re-render; called by the slot renderer's webjsx bridge. */
+  setProps(props: PluginInventorySettingsTabProps): void {
+    this.#props = props
+    this.#render()
   }
 
-  return (
-    <div className={css.section} aria-busy={state.status === 'loading'}>
-      {state.status === 'loading' ? <p className={css.status}>{t('loading')}</p> : null}
-      {state.status === 'error' ? (
-        <div className={css.failure}>
-          <p role="alert">{t('error')}</p>
-          <button type="button" onClick={retry}>{t('retry')}</button>
-        </div>
-      ) : null}
-      {state.status === 'ready' ? (
-        <div className={css.catalog}>
-          <label className={css.search}>
-            <IconSearchOutline16 aria-hidden="true" />
-            <span className={css.visuallyHidden}>{t('search')}</span>
-            <input
-              type="search"
-              value={query}
-              placeholder={t('search')}
-              aria-label={t('search')}
-              onChange={(event) => { setQuery(event.currentTarget.value) }}
-            />
-          </label>
-          <div className={css.catalogHeading}>
-            <h3>{t('catalog')}</h3>
-            <span data-plugin-count={filteredEntries.length}>{filteredEntries.length}</span>
+  connectedCallback(): void {
+    this.#load()
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    // Invalidate any in-flight load so a late resolution after unmount is a no-op.
+    this.#fetchToken += 1
+  }
+
+  #load(): void {
+    const props = this.#props
+    if (props === null) return
+    const token = ++this.#fetchToken
+    void Promise.resolve().then(() => props.list()).then(
+      (snapshot) => {
+        if (token !== this.#fetchToken) return
+        this.#state = { status: 'ready', snapshot }
+        this.#syncExpanded()
+        this.#render()
+      },
+      () => {
+        if (token !== this.#fetchToken) return
+        this.#state = { status: 'error' }
+        this.#render()
+      },
+    )
+  }
+
+  #syncExpanded(): void {
+    if (this.#state.status !== 'ready' || this.#expanded === null) return
+    const normalizedQuery = this.#query.trim().toLocaleLowerCase()
+    const filtered = this.#state.snapshot.entries.filter(entry => matches(entry, normalizedQuery))
+    if (!filtered.some(entry => entry.entryId === this.#expanded)) this.#expanded = null
+  }
+
+  #retry = (): void => {
+    this.#state = { status: 'loading' }
+    this.#request += 1
+    this.#load()
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { t } = props
+    const state = this.#state
+    const normalizedQuery = this.#query.trim().toLocaleLowerCase()
+    const filteredEntries = state.status === 'ready'
+      ? state.snapshot.entries.filter(entry => matches(entry, normalizedQuery))
+      : []
+
+    const vdom = (
+      <div class={css.section ?? ''} aria-busy={String(state.status === 'loading')}>
+        {state.status === 'loading' ? <p class={css.status ?? ''}>{t('loading')}</p> : null}
+        {state.status === 'error' ? (
+          <div class={css.failure ?? ''}>
+            <p role="alert">{t('error')}</p>
+            <button type="button" onclick={this.#retry}>{t('retry')}</button>
           </div>
-          {state.snapshot.entries.length === 0 ? <p className={css.status}>{t('empty')}</p> : null}
-          {state.snapshot.entries.length > 0 && filteredEntries.length === 0
-            ? <p className={css.status}>{t('emptySearch')}</p>
-            : null}
-          {filteredEntries.length > 0 ? (
-            <ul className={css.cards}>
-              {filteredEntries.map((entry) => {
-                const status = phaseLabel(entry.fiberPhase, t)
-                const title = moduleShortName(entry.moduleName)
-                const configuration = t(entry.enabled ? 'enabledTag' : 'disabledTag')
-                const open = expanded === entry.entryId
-                const detailId = `${catalogId}-details-${encodeURIComponent(entry.entryId)}`
-                return (
-                  <li
-                    className={css.card}
-                    key={entry.entryId}
-                    data-plugin-entry={entry.entryId}
-                    data-open={open ? 'true' : undefined}
-                  >
-                    <button
-                      className={css.cardContent}
-                      type="button"
-                      aria-expanded={open}
-                      aria-controls={detailId}
-                      aria-label={entry.enabled ? `${title}, ${status}, ${configuration}` : `${title}, ${configuration}`}
-                      onClick={() => {
-                        setExpanded(current => current === entry.entryId ? null : entry.entryId)
-                      }}
+        ) : null}
+        {state.status === 'ready' ? (
+          <div class={css.catalog ?? ''}>
+            <label class={css.search ?? ''}>
+              <IconSearchOutline16 />
+              <span class={css.visuallyHidden ?? ''}>{t('search')}</span>
+              <input
+                type="search"
+                value={this.#query}
+                placeholder={t('search')}
+                aria-label={t('search')}
+                oninput={(event: Event) => {
+                  this.#query = (event.currentTarget as HTMLInputElement).value
+                  this.#render()
+                }}
+              />
+            </label>
+            <div class={css.catalogHeading ?? ''}>
+              <h3>{t('catalog')}</h3>
+              <span data-plugin-count={String(filteredEntries.length)}>{filteredEntries.length}</span>
+            </div>
+            {state.snapshot.entries.length === 0 ? <p class={css.status ?? ''}>{t('empty')}</p> : null}
+            {state.snapshot.entries.length > 0 && filteredEntries.length === 0
+              ? <p class={css.status ?? ''}>{t('emptySearch')}</p>
+              : null}
+            {filteredEntries.length > 0 ? (
+              <ul class={css.cards ?? ''}>
+                {filteredEntries.map((entry) => {
+                  const status = phaseLabel(entry.fiberPhase, t)
+                  const title = moduleShortName(entry.moduleName)
+                  const configuration = t(entry.enabled ? 'enabledTag' : 'disabledTag')
+                  const open = this.#expanded === entry.entryId
+                  const detailId = `${this.#catalogId}-details-${encodeURIComponent(entry.entryId)}`
+                  return (
+                    <li
+                      class={css.card ?? ''}
+                      data-plugin-entry={entry.entryId}
+                      data-open={open ? 'true' : null}
                     >
-                      <strong className={css.cardTitle} title={entry.moduleName}>{title}</strong>
-                      <span className={css.cardTrailing}>
-                        {entry.enabled ? (
-                          <span
-                            className={css.statusDot}
-                            data-phase={entry.fiberPhase ?? 'unobserved'}
-                            role="img"
-                            aria-label={status}
-                            title={status}
-                          />
-                        ) : null}
-                        <span className={css.configTag} data-enabled={entry.enabled ? 'true' : 'false'}>
-                          {configuration}
-                        </span>
-                        <IconChevronDownOutline14 className={css.chevron} size={12} aria-hidden="true" />
-                      </span>
-                    </button>
-                    {open ? (
-                      <div className={css.cardDetails} id={detailId}>
-                        <code className={css.entryValue} data-loader-entry>{entry.entryId}</code>
-                        <dl className={css.details}>
-                          <div>
-                            <dt>{t('configuration')}</dt>
-                            <dd>{configuration}</dd>
-                          </div>
+                      <button
+                        class={css.cardContent ?? ''}
+                        type="button"
+                        aria-expanded={String(open)}
+                        aria-controls={detailId}
+                        aria-label={entry.enabled ? `${title}, ${status}, ${configuration}` : `${title}, ${configuration}`}
+                        onclick={() => {
+                          this.#expanded = this.#expanded === entry.entryId ? null : entry.entryId
+                          this.#render()
+                        }}
+                      >
+                        <strong class={css.cardTitle ?? ''} title={entry.moduleName}>{title}</strong>
+                        <span class={css.cardTrailing ?? ''}>
                           {entry.enabled ? (
-                            <div>
-                              <dt>{t('cordis')}</dt>
-                              <dd>{status}</dd>
-                            </div>
+                            <span
+                              class={css.statusDot ?? ''}
+                              data-phase={entry.fiberPhase ?? 'unobserved'}
+                              role="img"
+                              aria-label={status}
+                              title={status}
+                            />
                           ) : null}
-                        </dl>
-                      </div>
-                    ) : null}
-                  </li>
-                )
-              })}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  )
+                          <span class={css.configTag ?? ''} data-enabled={entry.enabled ? 'true' : 'false'}>
+                            {configuration}
+                          </span>
+                          <IconChevronDownOutline14 className={css.chevron} size={12} />
+                        </span>
+                      </button>
+                      {open ? (
+                        <div class={css.cardDetails ?? ''} id={detailId}>
+                          <code class={css.entryValue ?? ''} data-loader-entry>{entry.entryId}</code>
+                          <dl class={css.details ?? ''}>
+                            <div>
+                              <dt>{t('configuration')}</dt>
+                              <dd>{configuration}</dd>
+                            </div>
+                            {entry.enabled ? (
+                              <div>
+                                <dt>{t('cordis')}</dt>
+                                <dd>{status}</dd>
+                              </div>
+                            ) : null}
+                          </dl>
+                        </div>
+                      ) : null}
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-plugin-inventory-settings-tab') === undefined) {
+  customElements.define('dsh-plugin-inventory-settings-tab', DshPluginInventorySettingsTab)
 }

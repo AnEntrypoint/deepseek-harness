@@ -36,7 +36,7 @@ const SEARCH_TITLES: Record<string, string> = {
  * settled call with no search card surfaces its model-facing text through
  * ToolRow's Output section, since the keyed SearchRow owns this render slot.
  */
-export function SearchRow({ toolName, block, inspect, t }: SearchRowProps) {
+export function SearchRow({ toolName, block, inspect, t }: SearchRowProps): JSX.Element {
   const model = toolRowModel(toolName, block)
   const search = searchCardModel(block)
   return (
@@ -61,7 +61,7 @@ export function SearchRow({ toolName, block, inspect, t }: SearchRowProps) {
       search={search}
       state={model.state}
       inspect={inspect}
-    />
+    /> as unknown as JSX.Element
   )
 }
 

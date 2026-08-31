@@ -7,11 +7,16 @@
  * which keys to dispatch.
  */
 
-import { Fragment } from 'react'
+import type { VNode } from 'webjsx'
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from './slot-contract.ts'
 import type { ConfigurablePluginsTabFace } from './tab-store.ts'
 import css from './PluginsSettingsSection.module.css'
+
+/** Cast a renderSlot() RenderOutput result into a webjsx-embeddable child. */
+function asChild(node: unknown): VNode {
+  return node as unknown as VNode
+}
 
 /** Props the renderer binds for the configurable tab. */
 export type ConfigurablePluginsTabProps =
@@ -25,19 +30,18 @@ export type ConfigurablePluginsTabProps =
  * @param props - locale copy, slot rendering, and the namespaces to dispatch.
  * @returns the card list, or the empty line once the Host has answered.
  */
-export function ConfigurablePluginsTab(props: ConfigurablePluginsTabProps) {
+export function ConfigurablePluginsTab(props: ConfigurablePluginsTabProps): JSX.Element | null {
   const { t, renderSlot } = props
   const { loaded, namespaces } = props.useConfigurablePlugins(snapshot => snapshot)
   if (namespaces.length > 0) {
     return (
-      <ul className={css.cards}>
-        {namespaces.map(ns => (
+      <ul class={css.cards ?? ''}>
+        {namespaces.map(ns =>
           // One dispatch per namespace, so the list identity is the namespace
           // rather than a position that shifts as cards arrive.
-          <Fragment key={ns}>{renderSlot('settings.plugin.item', {}, { entryKey: ns })}</Fragment>
-        ))}
+          asChild(renderSlot('settings.plugin.item', {}, { entryKey: ns })))}
       </ul>
     )
   }
-  return loaded ? <p className={css.empty}>{t('empty')}</p> : null
+  return loaded ? <p class={css.empty ?? ''}>{t('empty')}</p> : null
 }

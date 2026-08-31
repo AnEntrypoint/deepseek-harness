@@ -64,7 +64,7 @@ export function TrajectoryCell({
   selected = false,
   className,
   ...rest
-}: TrajectoryCellProps) {
+}: TrajectoryCellProps): JSX.Element {
   const rootClass = [
     css.root,
     selected ? css.selected : undefined,
@@ -72,21 +72,19 @@ export function TrajectoryCell({
   ].filter((c): c is string => c !== undefined).join(' ')
   const showMetrics = kind === 'message'
   return (
-    <div className={rootClass} data-kind={kind} data-selected={selected || undefined} {...rest}>
-      <span className={css.index}>#{index}</span>
-      <span className={css.tagSlot}>
-        <span className={[css.tag, TAG_CLASS[kind]].filter((c): c is string => c !== undefined).join(' ')}>{KIND_LABEL[kind]}</span>
+    <div class={rootClass} data-kind={kind} data-selected={selected || undefined} {...rest}>
+      <span class={css.index ?? ''}>#{index}</span>
+      <span class={css.tagSlot ?? ''}>
+        <span class={[css.tag, TAG_CLASS[kind]].filter((c): c is string => c !== undefined).join(' ')}>{KIND_LABEL[kind]}</span>
       </span>
-      <span className={css.text}>{text}</span>
-      <span className={css.trailing}>
-        {showMetrics ? (
-          <>
-            <span className={css.metric}>{input ?? ''}</span>
-            <span className={css.metric}>{output ?? ''}</span>
-            <span className={css.metric}>{think ?? ''}</span>
-          </>
-        ) : null}
-        <span className={css.time}>{formatElapsedSeconds(timeSeconds)}</span>
+      <span class={css.text ?? ''}>{text}</span>
+      <span class={css.trailing ?? ''}>
+        {showMetrics ? [
+          <span class={css.metric ?? ''}>{input ?? ''}</span>,
+          <span class={css.metric ?? ''}>{output ?? ''}</span>,
+          <span class={css.metric ?? ''}>{think ?? ''}</span>,
+        ] : null}
+        <span class={css.time ?? ''}>{formatElapsedSeconds(timeSeconds)}</span>
       </span>
     </div>
   )

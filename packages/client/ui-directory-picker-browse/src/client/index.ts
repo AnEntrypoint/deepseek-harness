@@ -8,10 +8,11 @@
  * copy is locale-registered here — the flow package owns its own strings.
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: pulls the SlotMap merge declaring the directory-flow holes.
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
-import type { BrowseFlowInjected } from './flow.ts'
-import { BrowseDirectoryFlow } from './flow.ts'
+import type { BrowseFlowInjected } from './flow.tsx'
+import './flow.tsx'
 
 /** Locale namespace owning the browser dialog's copy. */
 const LOCALE_NS = 'directory-browser'
@@ -84,9 +85,9 @@ export function apply(ctx: ClientContext): void {
     ctx.slots.inject('sidebar.workspaces.directoryFlow', function* () {
       yield ctx.slots.register({
         name: 'conversation.hero.workspace.directoryFlow', inject: injected,
-      }, BrowseDirectoryFlow)
+      }, webjsxSlot('dsh-browse-directory-flow'))
       yield ctx.slots.register({
         name: 'sidebar.workspaces.directoryFlow', inject: injected,
-      }, BrowseDirectoryFlow)
+      }, webjsxSlot('dsh-browse-directory-flow'))
     }))
 }

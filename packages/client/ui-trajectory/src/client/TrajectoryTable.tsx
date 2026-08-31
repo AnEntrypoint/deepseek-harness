@@ -1,8 +1,9 @@
 /** Turn-aware trajectory event ledger with a local record inspector. */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
+import { Virtualizer } from '@tanstack/virtual-core'
+import type { VirtualizerOptions } from '@tanstack/virtual-core'
 import {
   IconChevronRightOutline14,
   IconSettingsOutline16,
@@ -45,7 +46,7 @@ const KIND_LABEL: Record<TrajectoryCellKind, string> = {
   subtool: 'SUBTOOL',
 }
 
-function ToolWrenchIcon(): ReactNode {
+function ToolWrenchIcon(): JSX.Element {
   return (
     <svg
       width="13"
@@ -53,9 +54,9 @@ function ToolWrenchIcon(): ReactNode {
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
       data-role-icon="wrench"
       aria-hidden="true"
     >
@@ -64,7 +65,7 @@ function ToolWrenchIcon(): ReactNode {
   )
 }
 
-function InformationIcon(): ReactNode {
+function InformationIcon(): JSX.Element {
   return (
     <svg
       width="14"
@@ -72,19 +73,19 @@ function InformationIcon(): ReactNode {
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.4"
-      strokeLinecap="round"
+      stroke-width="1.4"
+      stroke-linecap="round"
       data-role-icon="information"
       aria-hidden="true"
     >
       <circle cx="8" cy="8" r="6.7" />
       <circle cx="8" cy="5.5" r=".85" fill="currentColor" stroke="none" />
-      <path d="M8 7.75v3.4" strokeWidth="1.8" />
+      <path d="M8 7.75v3.4" stroke-width="1.8" />
     </svg>
   )
 }
 
-function CompactedIcon(): ReactNode {
+function CompactedIcon(): JSX.Element {
   return (
     <svg
       width="13"
@@ -92,9 +93,9 @@ function CompactedIcon(): ReactNode {
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
       data-role-icon="compacted"
       aria-hidden="true"
     >
@@ -106,14 +107,16 @@ function CompactedIcon(): ReactNode {
   )
 }
 
-const KIND_ICON: Record<TrajectoryCellKind, ReactNode> = {
-  system: <IconSettingsOutline16 size={13} />,
-  user: <IconUserOutline16 size={13} />,
-  context: <InformationIcon />,
-  compacted: <CompactedIcon />,
-  message: <IconSparkle16 size={13} />,
-  tool: <ToolWrenchIcon />,
-  subtool: <ToolWrenchIcon />,
+function kindIcon(kind: TrajectoryCellKind): JSX.Element {
+  switch (kind) {
+    case 'system': return <IconSettingsOutline16 size={13} />
+    case 'user': return <IconUserOutline16 size={13} />
+    case 'context': return <InformationIcon />
+    case 'compacted': return <CompactedIcon />
+    case 'message': return <IconSparkle16 size={13} />
+    case 'tool': return <ToolWrenchIcon />
+    case 'subtool': return <ToolWrenchIcon />
+  }
 }
 
 interface TableRecord {
@@ -133,22 +136,20 @@ interface VirtualRowStructure {
   key: string
 }
 
-function useStableVirtualRowStructure(
+function stableVirtualRowStructure(
   rows: readonly TrajectoryVirtualRow<TableRecord>[],
+  cache: { rows: readonly TrajectoryVirtualRow<TableRecord>[]; structure: readonly VirtualRowStructure[] },
 ): readonly VirtualRowStructure[] {
-  const cache = useRef<{
-    rows: readonly TrajectoryVirtualRow<TableRecord>[]
-    structure: readonly VirtualRowStructure[]
-  }>({ rows: [], structure: [] })
-  if (cache.current.rows === rows) return cache.current.structure
-  const structure = cache.current.structure.length === rows.length
+  if (cache.rows === rows) return cache.structure
+  const structure = cache.structure.length === rows.length
     && rows.every((row, index) => {
-      const previous = cache.current.structure[index]
+      const previous = cache.structure[index]
       return previous?.key === row.key && previous.height === row.height
     })
-    ? cache.current.structure
+    ? cache.structure
     : rows.map(row => ({ key: row.key, height: row.height }))
-  cache.current = { rows, structure }
+  cache.rows = rows
+  cache.structure = structure
   return structure
 }
 
@@ -221,18 +222,6 @@ const REQUEST_TABS: readonly DetailTabItem[] = [
   { id: 'timing', label: 'Timing' },
 ]
 
-type TrajectorySplitStyle = CSSProperties & {
-  '--trajectory-tool-request-width': string
-}
-
-type RequestBoundaryStyle = CSSProperties & {
-  '--request-boundary-offset': string
-}
-
-type VirtualSpacerStyle = CSSProperties & {
-  '--trajectory-virtual-spacer-height': string
-}
-
 interface OlderLoadAnchor {
   readonly historyStartSeq: number | undefined
   readonly scrollHeight: number
@@ -281,18 +270,25 @@ function clickSelectsText(target: Node): boolean {
     && selection.getRangeAt(0).intersectsNode(target)
 }
 
-function StartedAtValue({ timestamp }: { timestamp: number | null }) {
-  const [showUnix, setShowUnix] = useState(false)
+function StartedAtValue({
+  timestamp,
+  showUnix,
+  onToggle,
+}: {
+  timestamp: number | null
+  showUnix: boolean
+  onToggle: () => void
+}): JSX.Element {
   if (timestamp === null || !Number.isFinite(timestamp)) return <dd>Not available</dd>
   return (
     <dd>
       <button
         type="button"
-        className={css.timestampToggle}
+        class={css.timestampToggle ?? ''}
         title={showUnix ? 'Show local time' : 'Show Unix timestamp'}
-        onClick={(event) => {
-          if (clickSelectsText(event.currentTarget)) return
-          setShowUnix(current => !current)
+        onclick={(event: MouseEvent) => {
+          if (clickSelectsText(event.currentTarget as Node)) return
+          onToggle()
         }}
       >
         {showUnix ? (timestamp / 1_000).toFixed(3) : formatStartedAt(timestamp)}
@@ -331,10 +327,18 @@ function throughput(metrics: AssistantMetricDetail): string {
   return `${(metrics.outputTokens / generationSeconds).toFixed(1)} tok/s`
 }
 
-function AssistantTimingPanel({ metrics }: { metrics: AssistantMetricDetail }) {
+function AssistantTimingPanel({
+  metrics,
+  showUnix,
+  onToggleUnix,
+}: {
+  metrics: AssistantMetricDetail
+  showUnix: boolean
+  onToggleUnix: () => void
+}): JSX.Element {
   return (
-    <dl className={css.overview}>
-      <div><dt>Started</dt><StartedAtValue timestamp={metrics.stepStartTime} /></div>
+    <dl class={css.overview ?? ''}>
+      <div><dt>Started</dt><StartedAtValue timestamp={metrics.stepStartTime} showUnix={showUnix} onToggle={onToggleUnix} /></div>
       <div><dt>Total duration</dt><dd>{totalTime(metrics)}</dd></div>
       <div><dt>TTFT</dt><dd>{ttft(metrics)}</dd></div>
       <div><dt>Generation</dt><dd>{generationTime(metrics)}</dd></div>
@@ -593,7 +597,7 @@ function collapseTurnRecords(
         turnStart: false,
         turnEnd: true,
         collapsedSummary: summarizeTurn(contentRecords.slice(1)),
-        collapsedSummaryKind: 'turn',
+        collapsedSummaryKind: 'turn' as const,
       },
     ]
   })
@@ -657,7 +661,7 @@ function collapseAssistantRecords(
       turnStart: false,
       turnEnd: last?.turnEnd ?? false,
       collapsedSummary: summarizeAssistantTools(calls),
-      collapsedSummaryKind: 'assistant',
+      collapsedSummaryKind: 'assistant' as const,
     })
     i += calls.length
   }
@@ -680,30 +684,32 @@ function statusLabel(state: RecordState): string {
   return 'Completed'
 }
 
-function TokenRows({ cell }: { cell: TrajectoryCellProps }) {
+function TokenRows({ cell }: { cell: TrajectoryCellProps }): (JSX.Element | null)[] {
   const content = cell.output !== undefined && cell.think !== undefined
     ? Math.max(0, cell.output - cell.think)
     : undefined
-  return (
-    <>
-      <div>
-        <dt>Tokens</dt>
-        <dd>{cell.output === undefined ? '—' : `${cell.output} tok`}</dd>
-      </div>
-      {cell.think !== undefined && (
-        <div className={css.requestTokenDetail}>
+  return [
+    <div>
+      <dt>Tokens</dt>
+      <dd>{cell.output === undefined ? '—' : `${cell.output} tok`}</dd>
+    </div>,
+    cell.think !== undefined
+      ? (
+        <div class={css.requestTokenDetail ?? ''}>
           <dt>Reasoning</dt>
           <dd>{cell.think} tok</dd>
         </div>
-      )}
-      {content !== undefined && (
-        <div className={css.requestTokenDetail}>
+      )
+      : null,
+    content !== undefined
+      ? (
+        <div class={css.requestTokenDetail ?? ''}>
           <dt>Content</dt>
           <dd>{content} tok</dd>
         </div>
-      )}
-    </>
-  )
+      )
+      : null,
+  ]
 }
 
 function inputTotal(usage: TrajectoryUsage): number | undefined {
@@ -715,31 +721,31 @@ function inputTotal(usage: TrajectoryUsage): number | undefined {
   return (usage.input ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0)
 }
 
-function UsageRows({ usage }: { usage: TrajectoryUsage | undefined }) {
-  if (usage === undefined) return <p className={css.noPayload}>Usage not reported</p>
+function UsageRows({ usage }: { usage: TrajectoryUsage | undefined }): JSX.Element {
+  if (usage === undefined) return <p class={css.noPayload ?? ''}>Usage not reported</p>
   const totalInput = inputTotal(usage)
   const otherOutput = usage.output !== undefined && usage.reasoning !== undefined
     ? usage.output - usage.reasoning
     : undefined
   return (
-    <dl className={css.overview}>
+    <dl class={css.overview ?? ''}>
       {totalInput !== undefined && (
         <div><dt>Input</dt><dd>{totalInput} tok</dd></div>
       )}
       {usage.cacheRead !== undefined && (
-        <div className={css.requestTokenDetail}>
+        <div class={css.requestTokenDetail ?? ''}>
           <dt>Cached</dt>
           <dd>{usage.cacheRead} tok</dd>
         </div>
       )}
       {usage.cacheWrite !== undefined && (
-        <div className={css.requestTokenDetail}>
+        <div class={css.requestTokenDetail ?? ''}>
           <dt>Cache created</dt>
           <dd>{usage.cacheWrite} tok</dd>
         </div>
       )}
       {usage.input !== undefined && (
-        <div className={css.requestTokenDetail}>
+        <div class={css.requestTokenDetail ?? ''}>
           <dt>Other</dt>
           <dd>{usage.input} tok</dd>
         </div>
@@ -748,13 +754,13 @@ function UsageRows({ usage }: { usage: TrajectoryUsage | undefined }) {
         <div><dt>Output</dt><dd>{usage.output} tok</dd></div>
       )}
       {usage.reasoning !== undefined && (
-        <div className={css.requestTokenDetail}>
+        <div class={css.requestTokenDetail ?? ''}>
           <dt>Reasoning</dt>
           <dd>{usage.reasoning} tok</dd>
         </div>
       )}
       {otherOutput !== undefined && (
-        <div className={css.requestTokenDetail}>
+        <div class={css.requestTokenDetail ?? ''}>
           <dt>Content</dt>
           <dd>{otherOutput} tok</dd>
         </div>
@@ -769,15 +775,15 @@ function RequestUsagePanel({
 }: {
   usage: TrajectoryUsage | undefined
   cumulative: TrajectoryUsage | undefined
-}) {
+}): JSX.Element {
   return (
-    <div className={css.usagePanel}>
-      <section className={css.usageGroup}>
-        <h4 className={css.usageHeading}>This request</h4>
+    <div class={css.usagePanel ?? ''}>
+      <section class={css.usageGroup ?? ''}>
+        <h4 class={css.usageHeading ?? ''}>This request</h4>
         <UsageRows usage={usage} />
       </section>
-      <section className={css.usageGroup}>
-        <h4 className={css.usageHeading}>Session cumulative</h4>
+      <section class={css.usageGroup ?? ''}>
+        <h4 class={css.usageHeading ?? ''}>Session cumulative</h4>
         <UsageRows usage={cumulative} />
       </section>
     </div>
@@ -790,16 +796,16 @@ function RequestOptions({
 }: {
   options: AssistantRequestConfig | undefined
   preview?: boolean
-}) {
+}): JSX.Element {
   if (options === undefined) {
-    return <p className={css.noPayload}>Options not recorded</p>
+    return <p class={css.noPayload ?? ''}>Options not recorded</p>
   }
   return (
     <JsonTree
       data={options}
       label="Request options JSON"
       className={preview ? css.jsonPreview : css.jsonPayload}
-    />
+    /> as unknown as JSX.Element
   )
 }
 
@@ -826,9 +832,9 @@ function messageSourceLabel(source: unknown): string {
   return `${kind[0]?.toUpperCase() ?? ''}${kind.slice(1)}`
 }
 
-function MessageSource({ record }: { record: TableRecord }) {
+function MessageSource({ record }: { record: TableRecord }): JSX.Element {
   const source = record.cell.messageSource
-  if (source === undefined) return <p className={css.noPayload}>Source not recorded</p>
+  if (source === undefined) return <p class={css.noPayload ?? ''}>Source not recorded</p>
   const data = typeof source === 'object' && source !== null
     ? source
     : { value: source }
@@ -837,7 +843,7 @@ function MessageSource({ record }: { record: TableRecord }) {
       data={data}
       label="Message source JSON"
       className={css.jsonPayload}
-    />
+    /> as unknown as JSX.Element
   )
 }
 
@@ -972,24 +978,9 @@ interface RecordPresentationValue {
   toolCallText: ToolCallTextParts | undefined
 }
 
-function RecordPresentation({
-  cell,
-  children,
-}: {
-  cell: TrajectoryCellProps
-  children: (value: RecordPresentationValue) => ReactNode
-}) {
-  const displayText = useMemo(
-    () => recordDisplayText(cell),
-    [
-      cell.kind, cell.text, cell.previewMarkdown,
-      cell.inputDetail, cell.outputDetail, cell.thinkingDetail,
-    ],
-  )
-  const resultText = useMemo(
-    () => recordResultText(cell),
-    [cell.result, cell.resultPreviewMarkdown],
-  )
+function recordPresentation(cell: TrajectoryCellProps): RecordPresentationValue {
+  const displayText = recordDisplayText(cell)
+  const resultText = recordResultText(cell)
   const toolCallOnly = isToolCallOnly(cell)
   const toolCallText = toolCallTextParts(cell.kind, displayText)
   const listDisplayText = toolCallOnly
@@ -997,36 +988,36 @@ function RecordPresentation({
     : toolCallText === undefined
       ? displayText
       : [toolCallText.name, toolCallText.args].filter(Boolean).join(' ')
-  return children({
+  return {
     displayText,
     listDisplayText,
     resultText,
     toolCallOnly,
     toolCallText,
-  })
+  }
 }
 
 function RecordListText({
   displayText,
   toolCallOnly,
   toolCallText,
-}: Pick<RecordPresentationValue, 'displayText' | 'toolCallOnly' | 'toolCallText'>) {
+}: Pick<RecordPresentationValue, 'displayText' | 'toolCallOnly' | 'toolCallText'>): VNode | string {
   if (toolCallOnly) {
-    return <span className={css.toolCallOnly}>(tool call only)</span>
+    return <span class={css.toolCallOnly ?? ''}>(tool call only)</span>
   }
   if (toolCallText === undefined) return displayText || '—'
-  return (
-    <>
-      <span className={css.toolCallNameTypeface}>
-        {toolCallText.name || '—'}
-      </span>
-      {toolCallText.args !== undefined && (
-        <span className={css.toolCallPayload}>
+  return [
+    <span class={css.toolCallNameTypeface ?? ''}>
+      {toolCallText.name || '—'}
+    </span>,
+    toolCallText.args !== undefined
+      ? (
+        <span class={css.toolCallPayload ?? ''}>
           {toolCallText.args}
         </span>
-      )}
-    </>
-  )
+      )
+      : null,
+  ] as unknown as VNode
 }
 
 function MarkdownFragment({
@@ -1037,16 +1028,16 @@ function MarkdownFragment({
   text: string
   rendered: boolean
   preview: boolean
-}) {
+}): JSX.Element {
   if (rendered) {
     return (
-      <div className={preview ? css.markdownPreview : css.markdownPayload}>
+      <div class={(preview ? css.markdownPreview : css.markdownPayload) ?? ''}>
         <MarkdownText text={text} />
       </div>
     )
   }
   return (
-    <pre className={`${css.payload} ${preview ? css.payloadPreview : ''}`}>
+    <pre class={`${css.payload ?? ''} ${preview ? css.payloadPreview ?? '' : ''}`}>
       {text}
     </pre>
   )
@@ -1058,38 +1049,38 @@ function SourceBlocks({
 }: {
   blocks: readonly TrajectorySourceBlock[]
   onOpenCall: (callId: string) => void
-}) {
+}): JSX.Element {
   return (
-    <div className={css.sourceBlocks}>
+    <div class={css.sourceBlocks ?? ''}>
       {blocks.map((block, index) => (
-        <section className={css.sourceBlock} key={index}>
+        <section class={css.sourceBlock ?? ''} key={index}>
           {block.callId !== undefined
             ? (
               <button
                 type="button"
-                className={css.sourceBlockJumpTarget}
+                class={css.sourceBlockJumpTarget ?? ''}
                 aria-label={`Open Block #${index + 1} tool call summary`}
                 title="Open tool call summary"
-                onClick={() => {
+                onclick={() => {
                   if (block.callId !== undefined) onOpenCall(block.callId)
                 }}
               >
-                <span className={css.sourceBlockLabel}>
+                <span class={css.sourceBlockLabel ?? ''}>
                   {`Block #${index + 1} ${block.type}`}
                 </span>
                 <IconChevronRightOutline14 className={css.sourceBlockJumpIcon} size={12} />
               </button>
             )
             : (
-              <div className={css.sourceBlockHeader}>
-                <span className={css.sourceBlockLabel}>
+              <div class={css.sourceBlockHeader ?? ''}>
+                <span class={css.sourceBlockLabel ?? ''}>
                   {`Block #${index + 1} ${block.type}`}
                 </span>
               </div>
             )}
           {block.imageSrc !== undefined
             ? <PanelImage block={block} />
-            : <pre className={css.sourceBlockContent}>{block.content}</pre>}
+            : <pre class={css.sourceBlockContent ?? ''}>{block.content}</pre>}
         </section>
       ))}
     </div>
@@ -1102,18 +1093,18 @@ function PanelImage({
 }: {
   block: TrajectorySourceBlock
   preview?: boolean
-}) {
+}): JSX.Element | null {
   if (block.imageSrc === undefined) return null
   return (
     <a
-      className={preview ? `${css.panelImageLink} ${css.panelImageLinkPreview}` : css.panelImageLink}
+      class={(preview ? `${css.panelImageLink ?? ''} ${css.panelImageLinkPreview ?? ''}` : css.panelImageLink) ?? ''}
       href={block.imageSrc}
       target="_blank"
       rel="noopener noreferrer"
       title="Open image"
     >
       <img
-        className={css.panelImage}
+        class={css.panelImage ?? ''}
         src={block.imageSrc}
         alt={block.imageAlt ?? ''}
       />
@@ -1127,11 +1118,11 @@ function MessageImages({
 }: {
   blocks: readonly TrajectorySourceBlock[] | undefined
   preview: boolean
-}) {
+}): JSX.Element | null {
   const images = blocks?.filter(block => block.imageSrc !== undefined) ?? []
   if (images.length === 0) return null
   return (
-    <div className={preview ? `${css.messageImages} ${css.messageImagesPreview}` : css.messageImages}>
+    <div class={(preview ? `${css.messageImages ?? ''} ${css.messageImagesPreview ?? ''}` : css.messageImages) ?? ''}>
       {images.map((block, index) => <PanelImage block={block} preview={preview} key={index} />)}
     </div>
   )
@@ -1145,26 +1136,26 @@ function AssistantToolCalls({
   blocks: readonly TrajectorySourceBlock[] | undefined
   preview: boolean
   onOpenCall: (callId: string) => void
-}) {
+}): JSX.Element | null {
   const calls = blocks?.filter(block => block.type === 'tool-call') ?? []
   if (calls.length === 0) return null
   return (
-    <ul className={preview
-      ? `${css.assistantToolCalls} ${css.assistantToolCallsPreview}`
-      : css.assistantToolCalls}
+    <ul class={(preview
+      ? `${css.assistantToolCalls ?? ''} ${css.assistantToolCallsPreview ?? ''}`
+      : css.assistantToolCalls) ?? ''}
     >
       {calls.map((call, index) => (
         <li key={call.callId ?? index}>
           <button
             type="button"
-            className={css.assistantToolCallButton}
+            class={css.assistantToolCallButton ?? ''}
             title="Open tool call summary"
-            onClick={() => {
+            onclick={() => {
               if (call.callId !== undefined) onOpenCall(call.callId)
             }}
           >
             <svg
-              className={css.assistantToolCallIcon}
+              class={css.assistantToolCallIcon ?? ''}
               width="12"
               height="12"
               viewBox="0 0 24 24"
@@ -1174,17 +1165,17 @@ function AssistantToolCalls({
               <path
                 d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"
                 stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               />
             </svg>
-            <span className={css.assistantToolCallText}>
-              <span className={css.assistantToolCallName}>
+            <span class={css.assistantToolCallText ?? ''}>
+              <span class={css.assistantToolCallName ?? ''}>
                 {call.toolName ?? 'tool-call'}
               </span>
               {call.content !== '' && (
-                <span className={css.assistantToolCallArgs}>{call.content}</span>
+                <span class={css.assistantToolCallArgs ?? ''}>{call.content}</span>
               )}
             </span>
           </button>
@@ -1194,10 +1185,10 @@ function AssistantToolCalls({
   )
 }
 
-function ToolGlyph() {
+function ToolGlyph(): JSX.Element {
   return (
     <svg
-      className={css.toolCatalogIcon}
+      class={css.toolCatalogIcon ?? ''}
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -1207,35 +1198,35 @@ function ToolGlyph() {
       <path
         d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"
         stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       />
     </svg>
   )
 }
 
-function ToolCatalog({ tools }: { tools: ConversationPromptSnapshot['tools'] }) {
-  if (tools.length === 0) return <p className={css.noPayload}>No tools in this request</p>
+function ToolCatalog({ tools }: { tools: ConversationPromptSnapshot['tools'] }): JSX.Element {
+  if (tools.length === 0) return <p class={css.noPayload ?? ''}>No tools in this request</p>
   return (
-    <div className={css.toolCatalog}>
+    <div class={css.toolCatalog ?? ''}>
       {tools.map((tool, index) => (
-        <details className={css.toolCatalogItem} key={`${tool.name}:${index}`}>
-          <summary className={css.toolCatalogSummary}>
+        <details class={css.toolCatalogItem ?? ''} key={`${tool.name}:${index}`}>
+          <summary class={css.toolCatalogSummary ?? ''}>
             <IconChevronRightOutline14 className={css.toolCatalogChevron} size={12} />
             <ToolGlyph />
-            <span className={css.toolCatalogName}>{tool.name}</span>
-            <span className={css.toolCatalogDescription}>{tool.description}</span>
+            <span class={css.toolCatalogName ?? ''}>{tool.name}</span>
+            <span class={css.toolCatalogDescription ?? ''}>{tool.description}</span>
           </summary>
-          <div className={css.toolCatalogDefinition}>
+          <div class={css.toolCatalogDefinition ?? ''}>
             {tool.description !== '' && (
-              <p className={css.toolCatalogFullDescription}>{tool.description}</p>
+              <p class={css.toolCatalogFullDescription ?? ''}>{tool.description}</p>
             )}
             <JsonTree
               data={tool.parameters}
               label={`${tool.name} parameters JSON`}
               className={css.toolCatalogTree}
-            />
+            /> as unknown as VNode
           </div>
         </details>
       ))}
@@ -1273,15 +1264,15 @@ function PromptDiffSection({
   title: string
   before: string
   after: string
-}) {
+}): JSX.Element | null {
   const lines = promptDiffLines(before, after)
   if (lines.length === 0) return null
   return (
-    <section className={css.promptDiffSection}>
-      <h3 className={css.promptDiffTitle}>{title}</h3>
-      <pre className={css.promptDiff}>
+    <section class={css.promptDiffSection ?? ''}>
+      <h3 class={css.promptDiffTitle ?? ''}>{title}</h3>
+      <pre class={css.promptDiff ?? ''}>
         {lines.map((line, index) => (
-          <span className={css[`promptDiffLine${line.kind}`]} key={index}>
+          <span class={css[`promptDiffLine${line.kind}`] ?? ''} key={index}>
             {line.text || ' '}
             {'\n'}
           </span>
@@ -1297,11 +1288,11 @@ function SystemPromptDiff({
 }: {
   before: ConversationPromptSnapshot
   after: ConversationPromptSnapshot
-}) {
+}): JSX.Element {
   const toolsBefore = JSON.stringify(before.tools, null, 2)
   const toolsAfter = JSON.stringify(after.tools, null, 2)
   return (
-    <div className={css.promptDiffSections}>
+    <div class={css.promptDiffSections ?? ''}>
       {before.system !== after.system && (
         <PromptDiffSection
           title="System Prompt"
@@ -1328,9 +1319,9 @@ function ToolOutputBlocks({
   blocks: readonly TrajectorySourceBlock[]
   error: boolean
   preview: boolean
-}) {
+}): JSX.Element {
   return (
-    <div className={[
+    <div class={[
       css.resultBlocks,
       preview ? css.resultBlocksPreview : undefined,
       error ? css.errorPayload : undefined,
@@ -1340,7 +1331,7 @@ function ToolOutputBlocks({
         block.imageSrc !== undefined
           ? <PanelImage block={block} preview={preview} key={index} />
           : block.content !== ''
-            ? <pre className={css.resultBlockText} key={index}>{block.content}</pre>
+            ? <pre class={css.resultBlockText ?? ''} key={index}>{block.content}</pre>
             : null
       ))}
     </div>
@@ -1361,7 +1352,7 @@ function MarkdownRecordContent({
   thinkingExpanded: boolean
   onThinkingExpandedChange: (expanded: boolean) => void
   onOpenCall: (callId: string) => void
-}) {
+}): JSX.Element {
   if (!rendered && record.cell.sourceBlocks && record.cell.sourceBlocks.length > 0) {
     return <SourceBlocks blocks={record.cell.sourceBlocks} onOpenCall={onOpenCall} />
   }
@@ -1374,18 +1365,18 @@ function MarkdownRecordContent({
       return <MarkdownFragment text={source} rendered={false} preview={preview} />
     }
     return (
-      <div className={`${css.assistantContent} ${css.assistantContentRendered}`}>
-        <div className={
-          preview && !record.cell.outputDetail
-            ? `${css.thinkingQuote} ${css.thinkingQuoteOnlyPreview}`
-            : css.thinkingQuote
+      <div class={`${css.assistantContent ?? ''} ${css.assistantContentRendered ?? ''}`}>
+        <div class={
+          (preview && !record.cell.outputDetail
+            ? `${css.thinkingQuote ?? ''} ${css.thinkingQuoteOnlyPreview ?? ''}`
+            : css.thinkingQuote) ?? ''
         }
         >
           <button
             type="button"
-            className={css.thinkingToggle}
+            class={css.thinkingToggle ?? ''}
             aria-expanded={thinkingExpanded}
-            onClick={() => { onThinkingExpandedChange(!thinkingExpanded) }}
+            onclick={() => { onThinkingExpandedChange(!thinkingExpanded) }}
           >
             Thinking
             <IconChevronRightOutline14 className={css.thinkingChevron} size={12} />
@@ -1399,7 +1390,7 @@ function MarkdownRecordContent({
           )}
         </div>
         {record.cell.outputDetail && (
-          <div className={css.assistantOutput}>
+          <div class={css.assistantOutput ?? ''}>
             <MarkdownFragment
               text={record.cell.outputDetail}
               rendered={rendered}
@@ -1427,7 +1418,7 @@ function MarkdownRecordContent({
     const emptyLabel = isToolCallOnly(record.cell)
       ? 'Tool call only'
       : record.cell.text || 'No content'
-    return <p className={css.noPayload}>{emptyLabel}</p>
+    return <p class={css.noPayload ?? ''}>{emptyLabel}</p>
   }
   if (!rendered || (!hasImages && !hasToolCalls)) {
     return <MarkdownFragment text={source ?? ''} rendered={rendered} preview={preview} />
@@ -1447,12 +1438,20 @@ function MarkdownRecordContent({
   )
 }
 
-function RecordTiming({ record }: { record: TableRecord }) {
+function RecordTiming({
+  record,
+  showUnix,
+  onToggleUnix,
+}: {
+  record: TableRecord
+  showUnix: boolean
+  onToggleUnix: () => void
+}): JSX.Element {
   return record.cell.kind === 'message' && record.cell.assistantMetrics !== undefined
-    ? <AssistantTimingPanel metrics={record.cell.assistantMetrics} />
+    ? <AssistantTimingPanel metrics={record.cell.assistantMetrics} showUnix={showUnix} onToggleUnix={onToggleUnix} />
     : (
-      <dl className={css.overview}>
-        <div><dt>Started</dt><StartedAtValue timestamp={record.cell.startedAt ?? null} /></div>
+      <dl class={css.overview ?? ''}>
+        <div><dt>Started</dt><StartedAtValue timestamp={record.cell.startedAt ?? null} showUnix={showUnix} onToggle={onToggleUnix} /></div>
         <div><dt>Duration</dt><dd>{formatElapsedSeconds(record.cell.timeSeconds)}</dd></div>
         <div><dt>Timing source</dt><dd>{record.cell.timeSeconds === null ? 'Not available' : 'Session timestamps'}</dd></div>
       </dl>
@@ -1463,19 +1462,23 @@ function RequestTiming({
   assistant,
   anchor,
   request,
+  showUnix,
+  onToggleUnix,
 }: {
   assistant: TableRecord | undefined
   anchor: TableRecord | undefined
   request: TrajectoryRequestNumber | undefined
-}) {
-  if (assistant !== undefined) return <RecordTiming record={assistant} />
+  showUnix: boolean
+  onToggleUnix: () => void
+}): JSX.Element {
+  if (assistant !== undefined) return <RecordTiming record={assistant} showUnix={showUnix} onToggleUnix={onToggleUnix} />
   if (request?.startedAt !== undefined) {
     const duration = request.completedAt === null || request.completedAt === undefined
       ? null
       : Math.max(0, (request.completedAt - request.startedAt) / 1000)
     return (
-      <dl className={css.overview}>
-        <div><dt>Started</dt><StartedAtValue timestamp={request.startedAt} /></div>
+      <dl class={css.overview ?? ''}>
+        <div><dt>Started</dt><StartedAtValue timestamp={request.startedAt} showUnix={showUnix} onToggle={onToggleUnix} /></div>
         <div><dt>Duration</dt><dd>{formatElapsedSeconds(duration)}</dd></div>
         <div>
           <dt>Timing source</dt>
@@ -1485,10 +1488,10 @@ function RequestTiming({
     )
   }
   return (
-    <dl className={css.overview}>
+    <dl class={css.overview ?? ''}>
       <div>
         <dt>Started</dt>
-        <StartedAtValue timestamp={anchor?.cell.startedAt ?? null} />
+        <StartedAtValue timestamp={anchor?.cell.startedAt ?? null} showUnix={showUnix} onToggle={onToggleUnix} />
       </div>
       <div><dt>Duration</dt><dd>{formatElapsedSeconds(null)}</dd></div>
     </dl>
@@ -1503,15 +1506,15 @@ function RecordPayload({
   record: TableRecord
   direction: 'input' | 'output'
   preview?: boolean
-}) {
+}): JSX.Element {
   const value = direction === 'input' ? record.cell.inputDetail : record.cell.outputDetail
   const missing = direction === 'input'
     ? 'No payload captured'
     : 'No result captured'
-  if (!value) return <p className={css.noPayload}>{missing}</p>
+  if (!value) return <p class={css.noPayload ?? ''}>{missing}</p>
   const error = direction === 'output' && record.cell.isError === true
   const payloadClass = preview ? css.jsonPreview : css.jsonPayload
-  const payloadClassName = error ? `${payloadClass} ${css.errorPayload}` : payloadClass
+  const payloadClassName = error ? `${payloadClass ?? ''} ${css.errorPayload ?? ''}` : payloadClass
 
   const json = parseJsonContainer(value)
   const singleTextResult = direction === 'output'
@@ -1523,7 +1526,7 @@ function RecordPayload({
         data={json}
         label="Result JSON"
         className={payloadClassName}
-      />
+      /> as unknown as JSX.Element
     )
   }
 
@@ -1549,7 +1552,7 @@ function RecordPayload({
   )
   if (markdown) {
     return (
-      <div className={[
+      <div class={[
         preview ? css.markdownPreview : css.markdownPayload,
         error ? css.errorPayload : undefined,
       ].filter((className): className is string => className !== undefined).join(' ')}
@@ -1564,11 +1567,11 @@ function RecordPayload({
         data={json}
         label={`${direction === 'input' ? 'Payload' : 'Result'} JSON`}
         className={payloadClassName}
-      />
+      /> as unknown as JSX.Element
     )
   }
   return (
-    <pre className={[
+    <pre class={[
       css.payload,
       preview ? css.payloadPreview : undefined,
       error ? css.errorPayload : undefined,
@@ -1586,31 +1589,31 @@ function RecordSchema({
 }: {
   record: TableRecord
   preview?: boolean
-}) {
+}): JSX.Element {
   if (!record.cell.schemaDetail) {
-    return <p className={css.noPayload}>Schema unavailable</p>
+    return <p class={css.noPayload ?? ''}>Schema unavailable</p>
   }
   const schema = parseToolSchema(record.cell.schemaDetail)
   if (schema !== undefined) {
     return (
-      <div className={preview ? `${css.schema} ${css.schemaPreview}` : css.schema}>
-        <header className={css.schemaIntro}>
-          <h3 className={css.schemaName}>{schema.name}</h3>
-          <p className={css.schemaDescription}>{schema.description}</p>
+      <div class={(preview ? `${css.schema ?? ''} ${css.schemaPreview ?? ''}` : css.schema) ?? ''}>
+        <header class={css.schemaIntro ?? ''}>
+          <h3 class={css.schemaName ?? ''}>{schema.name}</h3>
+          <p class={css.schemaDescription ?? ''}>{schema.description}</p>
         </header>
-        <section className={css.schemaParameters}>
-          <h4 className={css.schemaParametersTitle}>Parameters</h4>
+        <section class={css.schemaParameters ?? ''}>
+          <h4 class={css.schemaParametersTitle ?? ''}>Parameters</h4>
           <JsonTree
             data={schema.parameters}
             label={`${schema.name} parameters JSON`}
             className={css.schemaTree}
-          />
+          /> as unknown as VNode
         </section>
       </div>
     )
   }
   return (
-    <pre className={`${css.payload} ${preview ? css.payloadPreview : ''}`}>
+    <pre class={`${css.payload ?? ''} ${preview ? css.payloadPreview ?? '' : ''}`}>
       {record.cell.schemaDetail}
     </pre>
   )
@@ -1660,22 +1663,22 @@ function OverviewSection({
 }: {
   label: string
   onOpen: () => void
-  children: ReactNode
-}) {
+  children: VNode | VNode[] | string | null
+}): JSX.Element {
   return (
-    <section className={css.overviewSection}>
-      <h3 className={css.overviewHeading}>
+    <section class={css.overviewSection ?? ''}>
+      <h3 class={css.overviewHeading ?? ''}>
         <button
           type="button"
-          className={css.overviewTitle}
-          onClick={onOpen}
+          class={css.overviewTitle ?? ''}
+          onclick={onOpen}
         >
           <span>{label}</span>
           <IconChevronRightOutline14 className={css.overviewTitleIcon} size={12} />
         </button>
       </h3>
       <div
-        className={`${css.overviewPreview} ${css.summaryScrollRegion}`}
+        class={`${css.overviewPreview ?? ''} ${css.summaryScrollRegion ?? ''}`}
         data-summary-scroll-region=""
       >
         {children}
@@ -1684,80 +1687,87 @@ function OverviewSection({
   )
 }
 
+interface VirtualState {
+  virtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement> | null
+  cleanup: (() => void) | null
+  structureCache: { rows: readonly TrajectoryVirtualRow<TableRecord>[]; structure: readonly VirtualRowStructure[] }
+}
+
 /**
  * Render trajectory events as a dense ledger with turn and step separators.
  * Clicking ledger whitespace clears the active record or request selection.
- * @param props - Grouped trajectory data and whole-ledger fold state.
- * @returns The ledger and an optional local record inspector.
+ * A stateful HTMLElement custom element: virtualizer lifecycle, local
+ * inspector selection, resize-drag, and scroll-follow state all live as
+ * private fields, re-rendered through an explicit `applyDiff` call.
  */
-export function TrajectoryTable({
-  requestNumbers: sessionRequestNumbers,
-  turns,
-  streamingCells = [],
-  timelineFocusIndexes = null,
-  searchMatchIndexes = null,
-  onSelectedIndexChange,
-  onRecordSelect,
-  recordSelection = null,
-  recordFocus = null,
-  historyLoading = false,
-  olderHistoryLoading = false,
-  historyStartSeq,
-  hasOlderRecords = false,
-  onLoadOlder,
-  onClearSelection,
-  collapsedTurns,
-  onToggleTurn,
-  collapsedAssistants,
-  onToggleAssistant,
-  inspectCallId = null,
-  onInspectApplied,
-}: TrajectoryTableProps) {
-  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null)
-  const [selectedRequest, setSelectedRequest] = useState<SelectedRequest | null>(null)
-  const [activeTab, setActiveTab] = useState<DetailTab>('overview')
-  const [thinkingExpanded, setThinkingExpanded] = useState(false)
-  const [detailsWidth, setDetailsWidth] = useState<number | null>(null)
-  const [toolRequestOffset, setToolRequestOffset] = useState<number | null>(null)
-  const detailsResizeDrag = useRef<DetailsResizeDrag | null>(null)
-  const appliedRecordSelection = useRef<TrajectoryTableProps['recordSelection']>(null)
-  const appliedRecordFocus = useRef<TrajectoryTableProps['recordFocus']>(null)
-  const tabHistory = useRef<Set<DetailTab>>(new Set(['overview']))
-  const rootRef = useRef<HTMLDivElement>(null)
-  const tablePaneRef = useRef<HTMLDivElement>(null)
-  const followsTableTail = useRef(false)
-  const tableScrollInitialized = useRef(false)
-  const [tableScrollReady, setTableScrollReady] = useState(false)
-  const pendingScrollRecordId = useRef<string | null>(null)
-  const loadingOlder = useRef(false)
-  const [olderLoading, setOlderLoading] = useState(false)
-  const olderLoadAnchor = useRef<OlderLoadAnchor | null>(null)
-  const allRecords = useMemo(() => flattenRecords(turns), [turns])
-  const streamingCellsByIndex = useMemo(
-    () => new Map(streamingCells.map(cell => [cell.index, cell])),
-    [streamingCells],
-  )
-  const currentRecord = useCallback((record: TableRecord): TableRecord => {
-    const cell = streamingCellsByIndex.get(record.cell.index)
+export class DshTrajectoryTable extends HTMLElement {
+  #props: TrajectoryTableProps = {
+    turns: [], collapsedTurns: new Set(), onToggleTurn: () => {},
+    collapsedAssistants: new Set(), onToggleAssistant: () => {},
+  }
+
+  #selectedRecordId: string | null = null
+  #selectedRequest: SelectedRequest | null = null
+  #activeTab: DetailTab = 'overview'
+  #thinkingExpanded = false
+  #detailsWidth: number | null = null
+  #toolRequestOffset: number | null = null
+  #detailsResizeDrag: DetailsResizeDrag | null = null
+  #appliedRecordSelection: TrajectoryTableProps['recordSelection'] = null
+  #appliedRecordFocus: TrajectoryTableProps['recordFocus'] = null
+  #tabHistory = new Set<DetailTab>(['overview'])
+  #followsTableTail = false
+  #tableScrollInitialized = false
+  #tableScrollReady = false
+  #pendingScrollRecordId: string | null = null
+  #loadingOlder = false
+  #olderLoading = false
+  #olderLoadAnchor: OlderLoadAnchor | null = null
+  #showUnix = false
+
+  #tablePaneEl: HTMLDivElement | null = null
+  #virtual: VirtualState = { virtualizer: null, cleanup: null, structureCache: { rows: [], structure: [] } }
+  #resizeObserver: ResizeObserver | null = null
+
+  setProps(props: TrajectoryTableProps): void {
+    this.#props = props
+    this.#syncInspectRequest()
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#destroyVirtualizer()
+    if (this.#resizeObserver !== null) {
+      this.#resizeObserver.disconnect()
+      this.#resizeObserver = null
+    }
+  }
+
+  #destroyVirtualizer(): void {
+    this.#virtual.cleanup?.()
+    this.#virtual.cleanup = null
+    this.#virtual.virtualizer = null
+  }
+
+  #allRecords(): TableRecord[] {
+    return flattenRecords(this.#props.turns)
+  }
+
+  #streamingCellsByIndex(): Map<number, TrajectoryCellProps> {
+    return new Map((this.#props.streamingCells ?? []).map(cell => [cell.index, cell]))
+  }
+
+  #currentRecord(record: TableRecord, byIndex: Map<number, TrajectoryCellProps>): TableRecord {
+    const cell = byIndex.get(record.cell.index)
     return cell === undefined ? record : { ...record, cell }
-  }, [streamingCellsByIndex])
-  const selectedTemplate = useMemo(() => selectedRecordId === null
-    ? undefined
-    : allRecords.find(record => trajectoryRecordId(record.cell) === selectedRecordId),
-  [allRecords, selectedRecordId])
-  const selected = selectedTemplate === undefined
-    ? undefined
-    : currentRecord(selectedTemplate)
-  const selectedIndex = selected?.cell.index ?? null
-  useEffect(() => {
-    onSelectedIndexChange?.(selectedIndex)
-  }, [onSelectedIndexChange, selectedIndex])
-  const requestBoundaries = useMemo(() => indexRequestBoundaries(allRecords), [allRecords])
-  const requestNumbers = useMemo(
-    () => indexRequestNumbers(allRecords, sessionRequestNumbers, requestBoundaries),
-    [allRecords, requestBoundaries, sessionRequestNumbers],
-  )
-  const records = useMemo(() => {
+  }
+
+  #records(allRecords: TableRecord[]): TableRecord[] {
+    const { searchMatchIndexes = null, collapsedTurns, collapsedAssistants } = this.#props
     if (searchMatchIndexes !== null) return filterRecords(allRecords, searchMatchIndexes)
     const turnRecords = collapsedTurns.size === 0
       ? allRecords
@@ -1765,247 +1775,52 @@ export function TrajectoryTable({
     return collapsedAssistants.size === 0
       ? turnRecords
       : collapseAssistantRecords(turnRecords, collapsedAssistants)
-  }, [allRecords, collapsedAssistants, collapsedTurns, searchMatchIndexes])
-  const projectedVirtualRows = useMemo(
-    () => groupTrajectoryVirtualRows(records),
-    [records],
-  )
-  const virtualRowStructure = useStableVirtualRowStructure(projectedVirtualRows)
-  const virtualizationEnabled = hasOlderRecords
-    || records.length > VIRTUALIZATION_THRESHOLD
-  const virtualScrollMargin = hasOlderRecords ? HISTORY_LOAD_ROW_HEIGHT_PX : 0
-  const estimateVirtualRowSize = useCallback(
-    (index: number) => virtualRowStructure[index]?.height ?? 30,
-    [virtualRowStructure],
-  )
-  const getVirtualRowKey = useCallback(
-    (index: number) => virtualRowStructure[index]?.key ?? index,
-    [virtualRowStructure],
-  )
-  const getTableScrollElement = useCallback(() => tablePaneRef.current, [])
-  const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
-    count: virtualizationEnabled ? virtualRowStructure.length : 0,
-    enabled: virtualizationEnabled,
-    estimateSize: estimateVirtualRowSize,
-    getItemKey: getVirtualRowKey,
-    getScrollElement: getTableScrollElement,
-    initialRect: { width: 0, height: VIRTUAL_INITIAL_VIEWPORT_HEIGHT_PX },
-    anchorTo: 'end',
-    overscan: VIRTUAL_OVERSCAN_ROWS,
-    scrollMargin: virtualScrollMargin,
-    scrollEndThreshold: BOTTOM_FOLLOW_THRESHOLD_PX,
-  })
-  const virtualIndexByRecordId = useMemo(() => {
-    const indexes = new Map<string, number>()
-    for (const [virtualIndex, row] of projectedVirtualRows.entries()) {
-      for (const entry of row.entries) {
-        if (entry.record.collapsedSummary === undefined) {
-          indexes.set(trajectoryRecordId(entry.record.cell), virtualIndex)
-        }
-      }
-    }
-    return indexes
-  }, [projectedVirtualRows])
-  const virtualItems = virtualizationEnabled ? rowVirtualizer.getVirtualItems() : []
-  const virtualTop = Math.max(0, (virtualItems[0]?.start ?? 0) - virtualScrollMargin)
-  const virtualBottom = virtualItems.length === 0
-    ? 0
-    : Math.max(
-      0,
-      rowVirtualizer.getTotalSize()
-        + virtualScrollMargin
-        - (virtualItems.at(-1)?.end ?? 0),
-    )
-  const renderedRecords = virtualizationEnabled
-    ? virtualItems.flatMap((item) => {
-      const row = projectedVirtualRows[item.index]
-      if (row === undefined) return []
-      return row.entries.map((entry, entryIndex) => ({
-        record: currentRecord(entry.record),
-        position: entry.logicalIndex,
-        terminalRequestBoundary:
-          entry.record.cell.requestOnly === true
-          && row.entries.at(-1)?.record.cell.requestOnly === true
-          && entryIndex === row.entries.length - 1,
-      }))
-    })
-    : records.map((record, position) => ({
-      record: currentRecord(record),
-      position,
-      terminalRequestBoundary:
-        record.cell.requestOnly === true && position === records.length - 1,
-    }))
-  const requestBoundaryRuns = useMemo(
-    () => indexRequestBoundaryRuns(records),
-    [records],
-  )
-  const selectedPrompt = selected?.cell.kind === 'system'
-    ? selected.cell.promptDetail
-    : undefined
-  const selectedPreviousPrompt = selected?.cell.kind === 'system'
-    ? selected.cell.previousPromptDetail
-    : undefined
-  const promptSelected = selectedPrompt !== undefined
-  const selectedState = selected === undefined ? undefined : stateOf(selected)
-  const selectedRequestRecordTemplates = useMemo(() => selectedRequest === null
-    ? []
-    : allRecords.filter(record =>
-      record.turn === selectedRequest.turn
-        && record.group === selectedRequest.group,
-    ), [allRecords, selectedRequest])
-  const selectedRequestRecords = selectedRequestRecordTemplates.map(currentRecord)
-  const selectedRequestAssistant = selectedRequestRecords.find(
-    record => record.cell.kind === 'message',
-  )
-  const selectedRequestAnchor = selectedRequestAssistant ?? selectedRequestRecords[0]
-  const selectedRequestNumber = selectedRequest === null
-    ? undefined
-    : requestNumbers.get(requestKey(selectedRequest.turn, selectedRequest.group))
-  const selectedRequestInfo = selectedRequest === null
-    ? undefined
-    : sessionRequestNumbers?.find(request => selectedRequest.seq === undefined
-      ? request.turn === selectedRequest.turn && request.group === selectedRequest.group
-      : request.seq === selectedRequest.seq)
-  const selectedRequestState: RecordState | undefined = selectedRequest === null
-    ? undefined
-    : selectedRequestInfo?.status
-      ?? (selectedRequestAssistant?.cell.assistantMetrics?.completedTime === null
-        ? 'running'
-        : selectedRequestAssistant === undefined
-          && selectedRequestRecords.some(record => stateOf(record) === 'running')
-          ? 'running'
-          : 'complete')
-  const selectedRequestToolCalls = selectedRequestRecords.filter(
-    record => record.cell.kind === 'tool',
-  ).length
-  const selectedRequestSubtoolCalls = selectedRequestRecords.filter(
-    record => record.cell.kind === 'subtool',
-  ).length
-  const selectedRequestResultTemplate = selectedRequestInfo?.resultSeq === undefined
-    ? selectedRequestAssistant
-    : allRecords.find(record => record.cell.sourceSeq === selectedRequestInfo.resultSeq)
-  const selectedRequestResult = selectedRequestResultTemplate === undefined
-    ? undefined
-    : currentRecord(selectedRequestResultTemplate)
-  const selectedRequestUsage = selectedRequestInfo?.usage ?? (
-    selectedRequestAssistant === undefined
-      ? undefined
-      : {
-        ...(selectedRequestAssistant.cell.input === undefined
-          ? {}
-          : { input: selectedRequestAssistant.cell.input }),
-        ...(selectedRequestAssistant.cell.cacheRead === undefined
-          ? {}
-          : { cacheRead: selectedRequestAssistant.cell.cacheRead }),
-        ...(selectedRequestAssistant.cell.cacheWrite === undefined
-          ? {}
-          : { cacheWrite: selectedRequestAssistant.cell.cacheWrite }),
-        ...(selectedRequestAssistant.cell.output === undefined
-          ? {}
-          : { output: selectedRequestAssistant.cell.output }),
-        ...(selectedRequestAssistant.cell.think === undefined
-          ? {}
-          : { reasoning: selectedRequestAssistant.cell.think }),
-      }
-  )
-  const selectedRequestCumulativeUsage =
-    selectedRequestInfo?.cumulativeUsage ?? selectedRequestUsage
-  const selectedRequestOptions = selectedRequestInfo?.requestConfig
-  const activeTurn = selectedRequest === null ? selected?.turn : selectedRequest.turn
-  const activeSection = selectedRequest === null
-    ? selected?.section
-    : selectedRequestRecords[0]?.section
-  const selectedTabs = selectedRequest !== null
-    ? REQUEST_TABS.filter(tab => tab.id !== 'options' || selectedRequestOptions !== undefined)
-    : selected === undefined ? [] : detailTabs(selected)
-  const selectedParents: ParentRecords = selected === undefined
-    ? {}
-    : parentRecords(allRecords, selected)
-  const selectedParentMessage = selectedParents.message
-  const selectedParentTool = selectedParents.tool
-  const selectedAssistantRequest = selected?.cell.kind === 'message'
-    ? requestNumbers.get(requestKey(selected.turn, selected.group))
-    : undefined
-  const selectedAssistantRequestInfo = selectedAssistantRequest === undefined
-    ? undefined
-    : sessionRequestNumbers?.find(request => request.number === selectedAssistantRequest)
-  const selectedAssistantRequestTarget: SelectedRequest | undefined =
-    selected !== undefined && selectedAssistantRequest !== undefined
-      ? {
-        turn: selected.turn,
-        group: selected.group,
-        ...(selectedAssistantRequestInfo?.seq === undefined
-          ? {}
-          : { seq: selectedAssistantRequestInfo.seq }),
-      }
-      : undefined
-  const hasSelectedHierarchy = selectedAssistantRequestTarget !== undefined
-    || selectedParents.message !== undefined
-    || selectedParents.tool !== undefined
-  const splitStyle: TrajectorySplitStyle | undefined = toolRequestOffset === null
-    ? undefined
-    : {
-      '--trajectory-tool-request-width': `calc(58cqw - ${toolRequestOffset}px)`,
-    }
-
-  const activateTab = (tab: DetailTab) => {
-    tabHistory.current.delete(tab)
-    tabHistory.current.add(tab)
-    setActiveTab(tab)
   }
 
-  const clearInspectorSelection = () => {
-    setSelectedRecordId(null)
-    setSelectedRequest(null)
+  #activateTab(tab: DetailTab): void {
+    this.#tabHistory.delete(tab)
+    this.#tabHistory.add(tab)
+    this.#activeTab = tab
+    this.#render()
   }
 
-  const clearAllSelections = () => {
-    clearInspectorSelection()
-    onClearSelection?.()
+  #clearInspectorSelection(): void {
+    this.#selectedRecordId = null
+    this.#selectedRequest = null
+    this.#render()
   }
 
-  const selectRecord = useCallback((index: number) => {
+  #clearAllSelections(): void {
+    this.#selectedRecordId = null
+    this.#selectedRequest = null
+    this.#props.onClearSelection?.()
+    this.#render()
+  }
+
+  #selectRecord(index: number): void {
+    const allRecords = this.#allRecords()
     const record = allRecords.find(candidate => candidate.cell.index === index)
-    onRecordSelect?.(index)
-    setSelectedRequest(null)
-    setSelectedRecordId(record === undefined ? null : trajectoryRecordId(record.cell))
-    if (record === undefined) return
-    const tabs = detailTabs(record)
-    const available = new Set(tabs.map(tab => tab.id))
-    const recent = [...tabHistory.current].reverse().find(tab => available.has(tab))
-    setActiveTab(recent ?? tabs[0]?.id ?? 'overview')
-  }, [allRecords, onRecordSelect])
-  useEffect(() => {
-    if (
-      recordSelection === null
-      || appliedRecordSelection.current === recordSelection
-    ) return
-    appliedRecordSelection.current = recordSelection
-    selectRecord(recordSelection.index)
-    const record = allRecords.find(candidate => candidate.cell.index === recordSelection.index)
-    pendingScrollRecordId.current = record === undefined
-      ? null
-      : trajectoryRecordId(record.cell)
-  }, [allRecords, recordSelection, selectRecord])
-  useEffect(() => {
-    if (recordFocus === null || appliedRecordFocus.current === recordFocus) return
-    appliedRecordFocus.current = recordFocus
-    const record = allRecords.find(candidate => candidate.cell.index === recordFocus.index)
-    pendingScrollRecordId.current = record === undefined
-      ? null
-      : trajectoryRecordId(record.cell)
-  }, [allRecords, recordFocus])
-
-  const selectRequest = (
-    request: SelectedRequest,
-    tab: 'overview' | 'timing' = 'overview',
-  ) => {
-    setSelectedRecordId(null)
-    setSelectedRequest(request)
-    activateTab(tab)
+    this.#props.onRecordSelect?.(index)
+    this.#selectedRequest = null
+    this.#selectedRecordId = record === undefined ? null : trajectoryRecordId(record.cell)
+    if (record !== undefined) {
+      const tabs = detailTabs(record)
+      const available = new Set(tabs.map(tab => tab.id))
+      const recent = [...this.#tabHistory].reverse().find(tab => available.has(tab))
+      this.#activeTab = recent ?? tabs[0]?.id ?? 'overview'
+    }
+    this.#render()
   }
 
-  const openRecordSummary = (target: TableRecord) => {
+  #selectRequest(request: SelectedRequest, tab: 'overview' | 'timing' = 'overview'): void {
+    this.#selectedRecordId = null
+    this.#selectedRequest = request
+    this.#activateTab(tab)
+  }
+
+  #openRecordSummary(target: TableRecord): void {
+    const { collapsedTurns, onToggleTurn, collapsedAssistants, onToggleAssistant } = this.#props
+    const allRecords = this.#allRecords()
     const targetAt = allRecords.findIndex(record => record.cell.index === target.cell.index)
     if (target.turn !== null && collapsedTurns.has(target.turn)) onToggleTurn(target.turn)
     if (target.cell.kind === 'tool' || target.cell.kind === 'subtool') {
@@ -2018,692 +1833,769 @@ export function TrajectoryTable({
         break
       }
     }
-    setSelectedRequest(null)
-    setSelectedRecordId(trajectoryRecordId(target.cell))
-    activateTab('overview')
+    this.#selectedRequest = null
+    this.#selectedRecordId = trajectoryRecordId(target.cell)
+    this.#activateTab('overview')
   }
 
-  const openCallSummary = (callId: string) => {
-    const target = allRecords.find(record => record.cell.callId === callId)
-    if (target !== undefined) openRecordSummary(target)
+  #openCallSummary(callId: string): void {
+    const target = this.#allRecords().find(record => record.cell.callId === callId)
+    if (target !== undefined) this.#openRecordSummary(target)
   }
 
-  // Cross-view inspect handoff: resolve the requested call to its record,
-  // open its summary, and remember the row to scroll once the un-collapsed
-  // ledger has rendered. Not-found leaves the request pending (`turns` in the
-  // deps retries as history pages in); the ack clears the store field.
-  const openRecordSummaryRef = useRef(openRecordSummary)
-  openRecordSummaryRef.current = openRecordSummary
-  useEffect(() => {
-    if (inspectCallId === null) return
-    const target = flattenRecords(turns).find(record => record.cell.callId === inspectCallId)
-    if (target === undefined) return
-    openRecordSummaryRef.current(target)
-    pendingScrollRecordId.current = trajectoryRecordId(target.cell)
-    onInspectApplied?.()
-  }, [inspectCallId, turns, onInspectApplied])
-  useEffect(() => {
-    const id = pendingScrollRecordId.current
-    if (id === null) return
-    const position = records.findIndex(record =>
-      trajectoryRecordId(record.cell) === id && record.collapsedSummary === undefined)
-    if (position === -1) return
-    if (virtualizationEnabled) {
-      const virtualIndex = virtualIndexByRecordId.get(id)
-      if (virtualIndex === undefined) return
-      pendingScrollRecordId.current = null
-      followsTableTail.current = false
-      rowVirtualizer.scrollToIndex(virtualIndex, { behavior: 'smooth', align: 'center' })
-      return
-    }
-    pendingScrollRecordId.current = null
-    followsTableTail.current = false
-    const recordIndex = records[position]?.cell.index
-    const row = recordIndex === undefined
-      ? null
-      : rootRef.current?.querySelector<HTMLElement>(`tr[data-record-index="${recordIndex}"]`)
-    /* v8 ignore next -- jsdom lacks scrollIntoView; browsers always have it. */
-    if (row !== undefined && row !== null && typeof row.scrollIntoView === 'function') {
-      row.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-  }, [records, rowVirtualizer, virtualIndexByRecordId, virtualizationEnabled])
-  useEffect(() => {
-    if (timelineFocusIndexes === null || timelineFocusIndexes.size === 0) return
-    const focusedPositions = records.flatMap((record, position) =>
-      record.collapsedSummary === undefined
-      && record.cell.requestOnly !== true
-      && timelineFocusIndexes.has(record.cell.index)
-        ? [position]
-        : [])
-    const first = focusedPositions.at(0)
-    const last = focusedPositions.at(-1)
-    if (first === undefined || last === undefined) return
-    if (!virtualizationEnabled) {
-      const ledger = rootRef.current
-      if (ledger === null) return
-      const focusedRows = [
-        ...ledger.querySelectorAll<HTMLElement>('tr[data-timeline-focus="inside"]'),
-      ]
-      const firstRow = focusedRows.at(0)
-      const lastRow = focusedRows.at(-1)
-      if (firstRow === undefined || lastRow === undefined) return
-      const focusHeight =
-        lastRow.getBoundingClientRect().bottom - firstRow.getBoundingClientRect().top
-      const target = focusHeight > ledger.clientHeight
-        ? firstRow
-        : focusedRows[Math.floor((focusedRows.length - 1) / 2)]
-      /* v8 ignore next -- jsdom lacks scrollIntoView; browsers always have it. */
-      if (target !== undefined && typeof target.scrollIntoView === 'function') {
-        followsTableTail.current = false
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: focusHeight > ledger.clientHeight ? 'start' : 'center',
-        })
+  /** Cross-view inspect handoff: resolve requested call to its record, open
+   * its summary, remember the row to scroll once rendered. Runs once per
+   * distinct `inspectCallId` (mirrors the React version's effect + ref ack). */
+  #syncInspectRequest(): void {
+    const { inspectCallId = null, onInspectApplied, recordSelection = null, recordFocus = null } = this.#props
+    if (inspectCallId !== null) {
+      const target = flattenRecords(this.#props.turns).find(record => record.cell.callId === inspectCallId)
+      if (target !== undefined) {
+        this.#openRecordSummary(target)
+        this.#pendingScrollRecordId = trajectoryRecordId(target.cell)
+        onInspectApplied?.()
       }
-      return
     }
-    const focusedVirtualIndexes = [...new Set(focusedPositions.flatMap((position) => {
-      const record = records[position]
-      if (record === undefined) return []
-      const virtualIndex = virtualIndexByRecordId.get(trajectoryRecordId(record.cell))
-      return virtualIndex === undefined ? [] : [virtualIndex]
-    }))].sort((left, right) => left - right)
-    const firstVirtual = focusedVirtualIndexes.at(0)
-    const lastVirtual = focusedVirtualIndexes.at(-1)
-    if (firstVirtual === undefined || lastVirtual === undefined) return
-    const paneHeight = tablePaneRef.current?.clientHeight ?? 0
-    const focusHeight = projectedVirtualRows
-      .slice(firstVirtual, lastVirtual + 1)
-      .reduce((height, row) => height + row.height, 0)
-    followsTableTail.current = false
-    rowVirtualizer.scrollToIndex(
-      focusHeight > paneHeight
-        ? firstVirtual
-        : focusedVirtualIndexes[Math.floor((focusedVirtualIndexes.length - 1) / 2)]
-          ?? firstVirtual,
-      {
-        behavior: 'smooth',
-        align: focusHeight > paneHeight ? 'start' : 'center',
-      },
-    )
-  }, [
-    projectedVirtualRows,
-    records,
-    rowVirtualizer,
-    timelineFocusIndexes,
-    virtualIndexByRecordId,
-    virtualizationEnabled,
-  ])
-  const requestOlder = useCallback((pane: HTMLDivElement, requireTop: boolean) => {
+    if (recordSelection !== null && this.#appliedRecordSelection !== recordSelection) {
+      this.#appliedRecordSelection = recordSelection
+      this.#selectRecord(recordSelection.index)
+      const record = this.#allRecords().find(candidate => candidate.cell.index === recordSelection.index)
+      this.#pendingScrollRecordId = record === undefined ? null : trajectoryRecordId(record.cell)
+    }
+    if (recordFocus !== null && this.#appliedRecordFocus !== recordFocus) {
+      this.#appliedRecordFocus = recordFocus
+      const record = this.#allRecords().find(candidate => candidate.cell.index === recordFocus.index)
+      this.#pendingScrollRecordId = record === undefined ? null : trajectoryRecordId(record.cell)
+    }
+  }
+
+  #requestOlder(pane: HTMLDivElement, requireTop: boolean): void {
+    const { hasOlderRecords = false, onLoadOlder, olderHistoryLoading = false, historyStartSeq } = this.#props
     if (
       !hasOlderRecords
       || onLoadOlder === undefined
-      || loadingOlder.current
+      || this.#loadingOlder
       || olderHistoryLoading
       || (requireTop && pane.scrollTop > OLDER_LOAD_THRESHOLD_PX)
     ) return
-    loadingOlder.current = true
-    setOlderLoading(true)
-    olderLoadAnchor.current = {
+    this.#loadingOlder = true
+    this.#olderLoading = true
+    this.#olderLoadAnchor = {
       historyStartSeq,
       scrollHeight: pane.scrollHeight,
       scrollTop: pane.scrollTop,
     }
+    this.#render()
     void onLoadOlder().then((advanced) => {
-      if (!advanced) olderLoadAnchor.current = null
+      if (!advanced) this.#olderLoadAnchor = null
     }).finally(() => {
-      loadingOlder.current = false
-      setOlderLoading(false)
+      this.#loadingOlder = false
+      this.#olderLoading = false
+      this.#render()
     })
-  }, [hasOlderRecords, historyStartSeq, olderHistoryLoading, onLoadOlder])
-  useLayoutEffect(() => {
-    const pane = tablePaneRef.current
-    if (pane === null) return
-    const anchor = olderLoadAnchor.current
-    if (anchor !== null && anchor.historyStartSeq !== historyStartSeq) {
-      if (!virtualizationEnabled) {
-        pane.scrollTop = anchor.scrollTop + pane.scrollHeight - anchor.scrollHeight
+  }
+
+  #ensureVirtualizer(
+    virtualizationEnabled: boolean,
+    count: number,
+    estimateSize: (index: number) => number,
+    getItemKey: (index: number) => string | number,
+    scrollMargin: number,
+  ): Virtualizer<HTMLDivElement, HTMLTableRowElement> | null {
+    const pane = this.#tablePaneEl
+    if (pane === null) return null
+    const options: VirtualizerOptions<HTMLDivElement, HTMLTableRowElement> = {
+      count: virtualizationEnabled ? count : 0,
+      enabled: virtualizationEnabled,
+      estimateSize,
+      getItemKey,
+      getScrollElement: () => this.#tablePaneEl,
+      scrollToFn: (offset, scrollOptions, instance) => {
+        const target = instance.scrollElement
+        if (target === null) return
+        target.scrollTo(
+          scrollOptions.behavior === undefined
+            ? { top: offset }
+            : { top: offset, behavior: scrollOptions.behavior },
+        )
+      },
+      observeElementRect: (instance, cb) => {
+        const element = instance.scrollElement
+        if (element === null) return undefined
+        const notify = () => cb({ width: element.clientWidth, height: element.clientHeight })
+        notify()
+        const observer = new ResizeObserver(notify)
+        observer.observe(element)
+        return () => { observer.disconnect() }
+      },
+      observeElementOffset: (instance, cb) => {
+        const element = instance.scrollElement
+        if (element === null) return undefined
+        const notify = () => { cb(element.scrollTop, false) }
+        notify()
+        element.addEventListener('scroll', notify, { passive: true })
+        return () => { element.removeEventListener('scroll', notify) }
+      },
+      initialRect: { width: 0, height: VIRTUAL_INITIAL_VIEWPORT_HEIGHT_PX },
+      anchorTo: 'end',
+      overscan: VIRTUAL_OVERSCAN_ROWS,
+      scrollMargin,
+      scrollEndThreshold: BOTTOM_FOLLOW_THRESHOLD_PX,
+    }
+    if (this.#virtual.virtualizer === null) {
+      const virtualizer = new Virtualizer(options)
+      const cleanup = virtualizer._didMount()
+      virtualizer.setOptions({
+        ...options,
+        onChange: () => { this.#render() },
+      })
+      virtualizer._willUpdate()
+      virtualizer.measure()
+      this.#virtual.virtualizer = virtualizer
+      this.#virtual.cleanup = cleanup
+    } else {
+      this.#virtual.virtualizer.setOptions({
+        ...options,
+        onChange: () => { this.#render() },
+      })
+      this.#virtual.virtualizer._willUpdate()
+    }
+    return this.#virtual.virtualizer
+  }
+
+  #render(): void {
+    const {
+      requestNumbers: sessionRequestNumbers,
+      timelineFocusIndexes = null,
+      onSelectedIndexChange,
+      historyLoading = false,
+      olderHistoryLoading = false,
+      hasOlderRecords = false,
+      onLoadOlder,
+      collapsedTurns,
+      onToggleTurn,
+      onToggleAssistant,
+    } = this.#props
+
+    const allRecords = this.#allRecords()
+    const streamingCellsByIndex = this.#streamingCellsByIndex()
+    const currentRecord = (record: TableRecord) => this.#currentRecord(record, streamingCellsByIndex)
+    const selectedTemplate = this.#selectedRecordId === null
+      ? undefined
+      : allRecords.find(record => trajectoryRecordId(record.cell) === this.#selectedRecordId)
+    const selected = selectedTemplate === undefined ? undefined : currentRecord(selectedTemplate)
+    const selectedIndex = selected?.cell.index ?? null
+    onSelectedIndexChange?.(selectedIndex)
+
+    const requestBoundaries = indexRequestBoundaries(allRecords)
+    const requestNumbers = indexRequestNumbers(allRecords, sessionRequestNumbers, requestBoundaries)
+    const records = this.#records(allRecords)
+    const projectedVirtualRows = groupTrajectoryVirtualRows(records)
+    const virtualRowStructure = stableVirtualRowStructure(projectedVirtualRows, this.#virtual.structureCache)
+    const virtualizationEnabled = hasOlderRecords || records.length > VIRTUALIZATION_THRESHOLD
+    const virtualScrollMargin = hasOlderRecords ? HISTORY_LOAD_ROW_HEIGHT_PX : 0
+    const estimateVirtualRowSize = (index: number) => virtualRowStructure[index]?.height ?? 30
+    const getVirtualRowKey = (index: number) => virtualRowStructure[index]?.key ?? index
+
+    let rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement> | null = null
+    if (virtualizationEnabled) {
+      rowVirtualizer = this.#ensureVirtualizer(
+        true, virtualRowStructure.length, estimateVirtualRowSize, getVirtualRowKey, virtualScrollMargin,
+      )
+    } else if (this.#virtual.virtualizer !== null) {
+      this.#destroyVirtualizer()
+    }
+
+    const virtualIndexByRecordId = new Map<string, number>()
+    for (const [virtualIndex, row] of projectedVirtualRows.entries()) {
+      for (const entry of row.entries) {
+        if (entry.record.collapsedSummary === undefined) {
+          virtualIndexByRecordId.set(trajectoryRecordId(entry.record.cell), virtualIndex)
+        }
       }
-      olderLoadAnchor.current = null
-      followsTableTail.current = false
-      return
     }
-    if (!tableScrollInitialized.current) {
-      if (historyLoading) return
-      tableScrollInitialized.current = true
-      followsTableTail.current = true
-      if (virtualizationEnabled) rowVirtualizer.scrollToEnd({ behavior: 'auto' })
-      else pane.scrollTop = pane.scrollHeight
-      setTableScrollReady(true)
-      return
-    }
-    if (!followsTableTail.current) return
-    if (virtualizationEnabled) rowVirtualizer.scrollToEnd({ behavior: 'auto' })
-    else pane.scrollTop = pane.scrollHeight
-  }, [
-    historyLoading,
-    historyStartSeq,
-    rowVirtualizer,
-    virtualRowStructure,
-    virtualizationEnabled,
-  ])
 
-  const olderBusy = olderHistoryLoading || olderLoading
-  const showInitialLoading = historyLoading || !tableScrollReady
-  const historyRowOffset = hasOlderRecords ? 1 : 0
+    const virtualItems = rowVirtualizer !== null ? rowVirtualizer.getVirtualItems() : []
+    const virtualTop = Math.max(0, (virtualItems[0]?.start ?? 0) - virtualScrollMargin)
+    const virtualBottom = virtualItems.length === 0 || rowVirtualizer === null
+      ? 0
+      : Math.max(
+        0,
+        rowVirtualizer.getTotalSize()
+          + virtualScrollMargin
+          - (virtualItems.at(-1)?.end ?? 0),
+      )
+    const renderedRecords = virtualizationEnabled
+      ? virtualItems.flatMap((item) => {
+        const row = projectedVirtualRows[item.index]
+        if (row === undefined) return []
+        return row.entries.map((entry, entryIndex) => ({
+          record: currentRecord(entry.record),
+          position: entry.logicalIndex,
+          terminalRequestBoundary:
+            entry.record.cell.requestOnly === true
+            && row.entries.at(-1)?.record.cell.requestOnly === true
+            && entryIndex === row.entries.length - 1,
+        }))
+      })
+      : records.map((record, position) => ({
+        record: currentRecord(record),
+        position,
+        terminalRequestBoundary:
+          record.cell.requestOnly === true && position === records.length - 1,
+      }))
+    const requestBoundaryRuns = indexRequestBoundaryRuns(records)
+    const selectedPrompt = selected?.cell.kind === 'system' ? selected.cell.promptDetail : undefined
+    const selectedPreviousPrompt = selected?.cell.kind === 'system' ? selected.cell.previousPromptDetail : undefined
+    const promptSelected = selectedPrompt !== undefined
+    const selectedState = selected === undefined ? undefined : stateOf(selected)
+    const selectedRequest = this.#selectedRequest
+    const selectedRequestRecordTemplates = selectedRequest === null
+      ? []
+      : allRecords.filter(record =>
+        record.turn === selectedRequest.turn && record.group === selectedRequest.group)
+    const selectedRequestRecords = selectedRequestRecordTemplates.map(currentRecord)
+    const selectedRequestAssistant = selectedRequestRecords.find(record => record.cell.kind === 'message')
+    const selectedRequestAnchor = selectedRequestAssistant ?? selectedRequestRecords[0]
+    const selectedRequestNumber = selectedRequest === null
+      ? undefined
+      : requestNumbers.get(requestKey(selectedRequest.turn, selectedRequest.group))
+    const selectedRequestInfo = selectedRequest === null
+      ? undefined
+      : sessionRequestNumbers?.find(request => selectedRequest.seq === undefined
+        ? request.turn === selectedRequest.turn && request.group === selectedRequest.group
+        : request.seq === selectedRequest.seq)
+    const selectedRequestState: RecordState | undefined = selectedRequest === null
+      ? undefined
+      : selectedRequestInfo?.status
+        ?? (selectedRequestAssistant?.cell.assistantMetrics?.completedTime === null
+          ? 'running'
+          : selectedRequestAssistant === undefined
+            && selectedRequestRecords.some(record => stateOf(record) === 'running')
+            ? 'running'
+            : 'complete')
+    const selectedRequestToolCalls = selectedRequestRecords.filter(record => record.cell.kind === 'tool').length
+    const selectedRequestSubtoolCalls = selectedRequestRecords.filter(record => record.cell.kind === 'subtool').length
+    const selectedRequestResultTemplate = selectedRequestInfo?.resultSeq === undefined
+      ? selectedRequestAssistant
+      : allRecords.find(record => record.cell.sourceSeq === selectedRequestInfo.resultSeq)
+    const selectedRequestResult = selectedRequestResultTemplate === undefined
+      ? undefined
+      : currentRecord(selectedRequestResultTemplate)
+    const selectedRequestUsage = selectedRequestInfo?.usage ?? (
+      selectedRequestAssistant === undefined
+        ? undefined
+        : {
+          ...(selectedRequestAssistant.cell.input === undefined ? {} : { input: selectedRequestAssistant.cell.input }),
+          ...(selectedRequestAssistant.cell.cacheRead === undefined ? {} : { cacheRead: selectedRequestAssistant.cell.cacheRead }),
+          ...(selectedRequestAssistant.cell.cacheWrite === undefined ? {} : { cacheWrite: selectedRequestAssistant.cell.cacheWrite }),
+          ...(selectedRequestAssistant.cell.output === undefined ? {} : { output: selectedRequestAssistant.cell.output }),
+          ...(selectedRequestAssistant.cell.think === undefined ? {} : { reasoning: selectedRequestAssistant.cell.think }),
+        }
+    )
+    const selectedRequestCumulativeUsage = selectedRequestInfo?.cumulativeUsage ?? selectedRequestUsage
+    const selectedRequestOptions = selectedRequestInfo?.requestConfig
+    const activeTurn = selectedRequest === null ? selected?.turn : selectedRequest.turn
+    const activeSection = selectedRequest === null ? selected?.section : selectedRequestRecords[0]?.section
+    const selectedTabs = selectedRequest !== null
+      ? REQUEST_TABS.filter(tab => tab.id !== 'options' || selectedRequestOptions !== undefined)
+      : selected === undefined ? [] : detailTabs(selected)
+    const selectedParents: ParentRecords = selected === undefined ? {} : parentRecords(allRecords, selected)
+    const selectedParentMessage = selectedParents.message
+    const selectedParentTool = selectedParents.tool
+    const selectedAssistantRequest = selected?.cell.kind === 'message'
+      ? requestNumbers.get(requestKey(selected.turn, selected.group))
+      : undefined
+    const selectedAssistantRequestInfo = selectedAssistantRequest === undefined
+      ? undefined
+      : sessionRequestNumbers?.find(request => request.number === selectedAssistantRequest)
+    const selectedAssistantRequestTarget: SelectedRequest | undefined =
+      selected !== undefined && selectedAssistantRequest !== undefined
+        ? {
+          turn: selected.turn,
+          group: selected.group,
+          ...(selectedAssistantRequestInfo?.seq === undefined ? {} : { seq: selectedAssistantRequestInfo.seq }),
+        }
+        : undefined
+    const hasSelectedHierarchy = selectedAssistantRequestTarget !== undefined
+      || selectedParents.message !== undefined
+      || selectedParents.tool !== undefined
+    const splitStyle = this.#toolRequestOffset === null
+      ? ''
+      : `--trajectory-tool-request-width: calc(58cqw - ${this.#toolRequestOffset}px)`
 
-  return (
-    <div ref={rootRef} className={css.split} style={splitStyle}>
-      <div
-        ref={tablePaneRef}
-        className={css.tablePane}
-        data-trajectory-scroll=""
-        onScroll={(event) => {
-          const pane = event.currentTarget
-          followsTableTail.current =
-            pane.scrollHeight - pane.clientHeight - pane.scrollTop
-              <= BOTTOM_FOLLOW_THRESHOLD_PX
-          requestOlder(pane, true)
-        }}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) clearAllSelections()
-        }}
-      >
-        {showInitialLoading && (
-          <div className={css.historyLoading} role="status" aria-live="polite">
-            <span className={css.historyLoadingBar}>
-              <span className={css.historyLoadingSpinner} aria-hidden="true" />
-              Loading trajectory…
-            </span>
-          </div>
-        )}
-        <table
-          className={css.table}
-          data-scroll-ready={tableScrollReady || undefined}
-          aria-rowcount={records.length + historyRowOffset}
+    const toggleUnix = () => { this.#showUnix = !this.#showUnix; this.#render() }
+
+    // Scroll-to-record and timeline-focus effects (post-render, DOM-dependent)
+    queueMicrotask(() => {
+      this.#applyPendingScroll(records, virtualizationEnabled, virtualIndexByRecordId, rowVirtualizer)
+      this.#applyTimelineFocus(
+        records, projectedVirtualRows, virtualizationEnabled, virtualIndexByRecordId, rowVirtualizer, timelineFocusIndexes,
+      )
+      this.#syncScrollInit(historyLoading, virtualizationEnabled, rowVirtualizer)
+    })
+
+    const olderBusy = olderHistoryLoading || this.#olderLoading
+    const showInitialLoading = historyLoading || !this.#tableScrollReady
+    const historyRowOffset = hasOlderRecords ? 1 : 0
+
+    const vdom: VNode = (
+      <div class={css.split ?? ''} style={splitStyle}>
+        <div
+          class={css.tablePane ?? ''}
+          data-trajectory-scroll=""
+          onscroll={(event: Event) => {
+            const pane = event.currentTarget as HTMLDivElement
+            this.#followsTableTail =
+              pane.scrollHeight - pane.clientHeight - pane.scrollTop <= BOTTOM_FOLLOW_THRESHOLD_PX
+            this.#requestOlder(pane, true)
+          }}
+          onclick={(event: MouseEvent) => {
+            if (event.target === event.currentTarget) this.#clearAllSelections()
+          }}
         >
-          <colgroup>
-            <col className={css.eventColumn} />
-            <col className={css.contentColumn} />
-          </colgroup>
-          <tbody>
-            {hasOlderRecords && (
-              <tr
-                className={css.historyLoadRow}
-                data-history-load=""
-                aria-rowindex={1}
-              >
-                <td colSpan={2}>
-                  <button
-                    type="button"
-                    className={css.historyLoadButton}
-                    disabled={olderBusy || onLoadOlder === undefined}
-                    aria-label={olderBusy
-                      ? 'Loading earlier history…'
-                      : 'Load earlier history'}
-                    onClick={() => {
-                      const pane = tablePaneRef.current
-                      if (pane !== null) requestOlder(pane, false)
-                    }}
-                  >
-                    {olderBusy && (
-                      <span className={css.historyLoadingSpinner} aria-hidden="true" />
-                    )}
-                    <span aria-hidden="true">
-                      {olderBusy ? 'Loading earlier history…' : 'Load earlier history'}
-                    </span>
-                    <span className={css.visuallyHidden} role="status" aria-live="polite">
-                      {olderBusy ? 'Loading earlier history…' : ''}
-                    </span>
-                  </button>
-                </td>
-              </tr>
-            )}
-            {virtualTop > 0 && (
-              <tr className={css.virtualSpacer} data-virtual-spacer="top" aria-hidden="true">
-                <td
-                  colSpan={2}
-                  style={{
-                    '--trajectory-virtual-spacer-height': `${virtualTop}px`,
-                  } as VirtualSpacerStyle}
-                />
-              </tr>
-            )}
-            {renderedRecords.map(({ record, position, terminalRequestBoundary }) => (
-              <RecordPresentation
-                key={trajectoryVirtualRecordKey(record)}
-                cell={record.cell}
-              >
-                {({ displayText, listDisplayText, resultText, toolCallOnly, toolCallText }) => {
-                  const isCollapsedSummary = record.collapsedSummary !== undefined
-                  const isRequestOnly = record.cell.requestOnly === true
-                  const isInitialSystem = record.cell.kind === 'system'
-                && record.cell.index === allRecords[0]?.cell.index
-                  const key = requestKey(record.turn, record.group)
-                  const request = requestBoundaries.get(key) === record.cell.index
-                && !isCollapsedSummary
-                && (record.turn === null || !collapsedTurns.has(record.turn))
-                    ? requestNumbers.get(key)
-                    : undefined
-                  const requestInfo = request === undefined
-                    ? undefined
-                    : sessionRequestNumbers?.find(candidate => candidate.number === request)
-                  const requestStatus = requestInfo?.status
-                ?? (record.cell.isError === true ? 'error' : undefined)
-                  const requestRunIndex = requestBoundaryRuns.get(record.cell.index) ?? 0
-                  const requestBoundaryStyle: RequestBoundaryStyle = {
-                    '--request-boundary-offset': `${requestRunIndex * 8}px`,
-                  }
-                  const requestLabel = request === undefined
-                    ? undefined
-                    : `Request #${request}${requestInfo?.purpose === 'compaction' ? ' · Compaction' : ''}`
-                  const requestSelected = request !== undefined
-                && selectedRequest?.turn === record.turn
-                && selectedRequest.group === record.group
-                  const sectionActive = record.turn === null
-                    ? activeSection === record.section
-                    : activeTurn === record.turn
-                  return (
-                    <tr
-                      tabIndex={isRequestOnly ? -1 : 0}
-                      aria-rowindex={position + 1 + historyRowOffset}
-                      aria-label={isCollapsedSummary
-                        ? `Collapsed ${record.collapsedSummaryKind} summary, ${record.collapsedSummary}`
-                        : isRequestOnly
-                          ? `Request ${request ?? ''}, compaction`
-                          : `${request === undefined ? '' : `Request ${request}, `}${KIND_LABEL[record.cell.kind]}, ${listDisplayText || 'no content'}`}
-                      aria-selected={!isCollapsedSummary && !isRequestOnly && selectedIndex === record.cell.index}
-                      data-kind={record.cell.kind}
-                      data-trajectory-row-key={trajectoryVirtualRecordKey(record)}
-                      data-virtual-position={virtualizationEnabled ? position : undefined}
-                      data-record-index={!isCollapsedSummary && !isRequestOnly
-                        ? record.cell.index
-                        : undefined}
-                      data-request-only={isRequestOnly || undefined}
-                      data-terminal-request-boundary={terminalRequestBoundary || undefined}
-                      data-group-start={record.groupStart || undefined}
-                      data-turn-start={record.turnStart || undefined}
-                      data-error={record.cell.isError || undefined}
-                      data-running={stateOf(record) === 'running' || undefined}
-                      data-turn-end={record.turnEnd || undefined}
-                      data-collapsed-summary={record.collapsedSummaryKind}
-                      data-selected={!isCollapsedSummary && selectedIndex === record.cell.index || undefined}
-                      data-timeline-focus={isCollapsedSummary || timelineFocusIndexes === null
-                        ? undefined
-                        : timelineFocusIndexes.has(record.cell.index) ? 'inside' : 'outside'}
-                      onClick={isRequestOnly
-                        ? undefined
-                        : isCollapsedSummary
-                          ? () => {
-                            if (record.collapsedSummaryKind === 'turn' && record.turn !== null) {
-                              onToggleTurn(record.turn)
-                            } else onToggleAssistant(trajectoryRecordId(record.cell))
-                          }
-                          : () => { selectRecord(record.cell.index) }}
-                      onDoubleClick={(event) => {
-                        if (isCollapsedSummary || isRequestOnly) return
-                        if (record.turn !== null && collapsedTurns.has(record.turn)) {
-                          event.preventDefault()
-                          onToggleTurn(record.turn)
-                          return
-                        }
-                        if (
-                          record.cell.kind === 'message'
-                      && assistantToolCalls(allRecords, record.cell.index).length > 0
-                        ) {
-                          event.preventDefault()
-                          onToggleAssistant(trajectoryRecordId(record.cell))
-                          return
-                        }
-                        if (!record.turnStart) return
-                        if (record.turn === null) return
-                        if (allRecords.filter(candidate =>
-                          candidate.turn === record.turn
-                      && candidate.cell.requestOnly !== true
-                      && candidate.cell.kind !== 'system').length <= 1) return
-                        event.preventDefault()
-                        onToggleTurn(record.turn)
+          {showInitialLoading && (
+            <div class={css.historyLoading ?? ''} role="status" aria-live="polite">
+              <span class={css.historyLoadingBar ?? ''}>
+                <span class={css.historyLoadingSpinner ?? ''} aria-hidden="true" />
+                Loading trajectory…
+              </span>
+            </div>
+          )}
+          <table
+            class={css.table ?? ''}
+            data-scroll-ready={this.#tableScrollReady || undefined}
+            aria-rowcount={records.length + historyRowOffset}
+          >
+            <colgroup>
+              <col class={css.eventColumn ?? ''} />
+              <col class={css.contentColumn ?? ''} />
+            </colgroup>
+            <tbody>
+              {hasOlderRecords && (
+                <tr class={css.historyLoadRow ?? ''} data-history-load="" aria-rowindex={1}>
+                  <td colSpan={2}>
+                    <button
+                      type="button"
+                      class={css.historyLoadButton ?? ''}
+                      disabled={olderBusy || onLoadOlder === undefined}
+                      aria-label={olderBusy ? 'Loading earlier history…' : 'Load earlier history'}
+                      onclick={() => {
+                        const pane = this.#tablePaneEl
+                        if (pane !== null) this.#requestOlder(pane, false)
                       }}
-                      onKeyDown={(event) => {
-                        if (isRequestOnly) return
-                        if (event.key !== 'Enter' && event.key !== ' ') return
-                        event.preventDefault()
-                        if (isCollapsedSummary) {
+                    >
+                      {olderBusy && <span class={css.historyLoadingSpinner ?? ''} aria-hidden="true" />}
+                      <span aria-hidden="true">
+                        {olderBusy ? 'Loading earlier history…' : 'Load earlier history'}
+                      </span>
+                      <span class={css.visuallyHidden ?? ''} role="status" aria-live="polite">
+                        {olderBusy ? 'Loading earlier history…' : ''}
+                      </span>
+                    </button>
+                  </td>
+                </tr>
+              )}
+              {virtualTop > 0 && (
+                <tr class={css.virtualSpacer ?? ''} data-virtual-spacer="top" aria-hidden="true">
+                  <td colSpan={2} style={`--trajectory-virtual-spacer-height: ${virtualTop}px`} />
+                </tr>
+              )}
+              {renderedRecords.map(({ record, position, terminalRequestBoundary }) => {
+                const { displayText, listDisplayText, resultText, toolCallOnly, toolCallText } = recordPresentation(record.cell)
+                const isCollapsedSummary = record.collapsedSummary !== undefined
+                const isRequestOnly = record.cell.requestOnly === true
+                const isInitialSystem = record.cell.kind === 'system'
+                  && record.cell.index === allRecords[0]?.cell.index
+                const key = requestKey(record.turn, record.group)
+                const request = requestBoundaries.get(key) === record.cell.index
+                  && !isCollapsedSummary
+                  && (record.turn === null || !collapsedTurns.has(record.turn))
+                  ? requestNumbers.get(key)
+                  : undefined
+                const requestInfo = request === undefined
+                  ? undefined
+                  : sessionRequestNumbers?.find(candidate => candidate.number === request)
+                const requestStatus = requestInfo?.status ?? (record.cell.isError === true ? 'error' : undefined)
+                const requestRunIndex = requestBoundaryRuns.get(record.cell.index) ?? 0
+                const requestBoundaryStyle = `--request-boundary-offset: ${requestRunIndex * 8}px`
+                const requestLabel = request === undefined
+                  ? undefined
+                  : `Request #${request}${requestInfo?.purpose === 'compaction' ? ' · Compaction' : ''}`
+                const requestSelected = request !== undefined
+                  && selectedRequest?.turn === record.turn
+                  && selectedRequest.group === record.group
+                const sectionActive = record.turn === null
+                  ? activeSection === record.section
+                  : activeTurn === record.turn
+
+                return (
+                  <tr
+                    tabIndex={isRequestOnly ? -1 : 0}
+                    aria-rowindex={position + 1 + historyRowOffset}
+                    aria-label={isCollapsedSummary
+                      ? `Collapsed ${record.collapsedSummaryKind} summary, ${record.collapsedSummary}`
+                      : isRequestOnly
+                        ? `Request ${request ?? ''}, compaction`
+                        : `${request === undefined ? '' : `Request ${request}, `}${KIND_LABEL[record.cell.kind]}, ${listDisplayText || 'no content'}`}
+                    aria-selected={!isCollapsedSummary && !isRequestOnly && selectedIndex === record.cell.index}
+                    data-kind={record.cell.kind}
+                    data-trajectory-row-key={trajectoryVirtualRecordKey(record)}
+                    data-virtual-position={virtualizationEnabled ? position : undefined}
+                    data-record-index={!isCollapsedSummary && !isRequestOnly ? record.cell.index : undefined}
+                    data-request-only={isRequestOnly || undefined}
+                    data-terminal-request-boundary={terminalRequestBoundary || undefined}
+                    data-group-start={record.groupStart || undefined}
+                    data-turn-start={record.turnStart || undefined}
+                    data-error={record.cell.isError || undefined}
+                    data-running={stateOf(record) === 'running' || undefined}
+                    data-turn-end={record.turnEnd || undefined}
+                    data-collapsed-summary={record.collapsedSummaryKind}
+                    data-selected={!isCollapsedSummary && selectedIndex === record.cell.index || undefined}
+                    data-timeline-focus={isCollapsedSummary || timelineFocusIndexes === null
+                      ? undefined
+                      : timelineFocusIndexes.has(record.cell.index) ? 'inside' : 'outside'}
+                    onclick={isRequestOnly
+                      ? null
+                      : isCollapsedSummary
+                        ? () => {
                           if (record.collapsedSummaryKind === 'turn' && record.turn !== null) {
                             onToggleTurn(record.turn)
                           } else onToggleAssistant(trajectoryRecordId(record.cell))
-                          return
                         }
-                        selectRecord(record.cell.index)
-                      }}
-                    >
-                      <td className={css.event}>
-                        {request !== undefined && (
-                          <button
-                            type="button"
-                            className={requestSelected
-                              ? `${css.requestBoundaryControl} ${css.requestBoundaryControlActive}`
-                              : css.requestBoundaryControl}
-                            aria-label={requestLabel}
-                            aria-pressed={requestSelected}
-                            data-label={requestLabel}
-                            data-request-run-index={requestRunIndex}
-                            data-request-status={requestStatus}
-                            style={requestBoundaryStyle}
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              selectRequest({
-                                turn: record.turn,
-                                group: record.group,
-                                ...(requestInfo?.seq === undefined ? {} : { seq: requestInfo.seq }),
-                              })
-                            }}
-                            onDoubleClick={(event) => { event.stopPropagation() }}
-                          />
-                        )}
-                        {record.turn !== null
-                    && activeTurn === record.turn
-                    && !isInitialSystem && (
-                          <span className={css.turnRail} aria-hidden="true" />
-                        )}
-                        {!isCollapsedSummary && selectedIndex === record.cell.index && (
-                          <span className={css.selectionRail} aria-hidden="true" />
-                        )}
-                        {!isCollapsedSummary
-                    && !isRequestOnly
-                    && record.turnStart && (
-                          <span
-                            className={sectionActive
-                              ? `${css.turnLabel} ${css.turnLabelActive}`
-                              : css.turnLabel}
-                            aria-label={sectionLabel(record.turn)}
-                          >
-                            {record.turn === null
-                              ? sectionLabel(record.turn)
-                              : (
-                                <>
-                                  <span className={css.turnLabelFull} aria-hidden="true">
-                                    {sectionLabel(record.turn)}
-                                  </span>
-                                  <span className={css.turnLabelCompact} aria-hidden="true">
-                                    #{record.turn}
-                                  </span>
-                                </>
-                              )}
-                          </span>
-                        )}
-                        <div className={css.eventInner}>
-                          {!isCollapsedSummary && !isRequestOnly && (
+                        : () => { this.#selectRecord(record.cell.index) }}
+                    ondblclick={(event: MouseEvent) => {
+                      if (isCollapsedSummary || isRequestOnly) return
+                      if (record.turn !== null && collapsedTurns.has(record.turn)) {
+                        event.preventDefault()
+                        onToggleTurn(record.turn)
+                        return
+                      }
+                      if (
+                        record.cell.kind === 'message'
+                        && assistantToolCalls(allRecords, record.cell.index).length > 0
+                      ) {
+                        event.preventDefault()
+                        onToggleAssistant(trajectoryRecordId(record.cell))
+                        return
+                      }
+                      if (!record.turnStart) return
+                      if (record.turn === null) return
+                      if (allRecords.filter(candidate =>
+                        candidate.turn === record.turn
+                        && candidate.cell.requestOnly !== true
+                        && candidate.cell.kind !== 'system').length <= 1) return
+                      event.preventDefault()
+                      onToggleTurn(record.turn)
+                    }}
+                    onkeydown={(event: KeyboardEvent) => {
+                      if (isRequestOnly) return
+                      if (event.key !== 'Enter' && event.key !== ' ') return
+                      event.preventDefault()
+                      if (isCollapsedSummary) {
+                        if (record.collapsedSummaryKind === 'turn' && record.turn !== null) {
+                          onToggleTurn(record.turn)
+                        } else onToggleAssistant(trajectoryRecordId(record.cell))
+                        return
+                      }
+                      this.#selectRecord(record.cell.index)
+                    }}
+                  >
+                    <td class={css.event ?? ''}>
+                      {request !== undefined && (
+                        <button
+                          type="button"
+                          class={(requestSelected
+                            ? `${css.requestBoundaryControl ?? ''} ${css.requestBoundaryControlActive ?? ''}`
+                            : css.requestBoundaryControl) ?? ''}
+                          aria-label={requestLabel}
+                          aria-pressed={requestSelected}
+                          data-label={requestLabel}
+                          data-request-run-index={requestRunIndex}
+                          data-request-status={requestStatus}
+                          style={requestBoundaryStyle}
+                          onclick={(event: MouseEvent) => {
+                            event.stopPropagation()
+                            this.#selectRequest({
+                              turn: record.turn,
+                              group: record.group,
+                              ...(requestInfo?.seq === undefined ? {} : { seq: requestInfo.seq }),
+                            })
+                          }}
+                          ondblclick={(event: MouseEvent) => { event.stopPropagation() }}
+                        />
+                      )}
+                      {record.turn !== null && activeTurn === record.turn && !isInitialSystem && (
+                        <span class={css.turnRail ?? ''} aria-hidden="true" />
+                      )}
+                      {!isCollapsedSummary && selectedIndex === record.cell.index && (
+                        <span class={css.selectionRail ?? ''} aria-hidden="true" />
+                      )}
+                      {!isCollapsedSummary && !isRequestOnly && record.turnStart && (
+                        <span
+                          class={(sectionActive
+                            ? `${css.turnLabel ?? ''} ${css.turnLabelActive ?? ''}`
+                            : css.turnLabel) ?? ''}
+                          aria-label={sectionLabel(record.turn)}
+                        >
+                          {record.turn === null
+                            ? sectionLabel(record.turn)
+                            : [
+                              <span class={css.turnLabelFull ?? ''} aria-hidden="true">
+                                {sectionLabel(record.turn)}
+                              </span>,
+                              <span class={css.turnLabelCompact ?? ''} aria-hidden="true">
+                                #{record.turn}
+                              </span>,
+                            ]}
+                        </span>
+                      )}
+                      <div class={css.eventInner ?? ''}>
+                        {!isCollapsedSummary && !isRequestOnly && (
+                          <span class={css.kindSlot ?? ''}>
                             <span
-                              className={css.kindSlot}
+                              class={`${css.kindTag ?? ''} ${
+                                (record.cell.kind === 'system'
+                                  ? css.systemNeutral
+                                  : record.cell.kind === 'context'
+                                    ? css.contextGreen
+                                    : record.cell.kind === 'compacted'
+                                      ? css.compacted
+                                      : record.cell.kind === 'tool'
+                                        ? css.toolAmber
+                                        : record.cell.kind === 'message'
+                                          ? css.assistantVioletBright
+                                          : record.cell.kind === 'subtool'
+                                            ? css.subtoolAmber
+                                            : css[record.cell.kind]) ?? ''
+                              }`}
+                              data-role-kind={record.cell.kind}
                             >
-                              <span
-                                className={`${css.kindTag} ${
-                                  record.cell.kind === 'system'
-                                    ? css.systemNeutral
-                                    : record.cell.kind === 'context'
-                                      ? css.contextGreen
-                                      : record.cell.kind === 'compacted'
-                                        ? css.compacted
-                                        : record.cell.kind === 'tool'
-                                          ? css.toolAmber
-                                          : record.cell.kind === 'message'
-                                            ? css.assistantVioletBright
-                                            : record.cell.kind === 'subtool'
-                                              ? css.subtoolAmber
-                                              : css[record.cell.kind]
-                                }`}
-                                data-role-kind={record.cell.kind}
-                              >
-                                <Tooltip
-                                  label={KIND_LABEL[record.cell.kind]}
-                                  side="right"
-                                >
-                                  <span className={css.kindTagIcon} aria-hidden="true">
-                                    {KIND_ICON[record.cell.kind]}
-                                  </span>
-                                </Tooltip>
-                                <span className={css.kindTagLabel}>
-                                  {KIND_LABEL[record.cell.kind]}
+                              <Tooltip label={KIND_LABEL[record.cell.kind]} side="right">
+                                <span class={css.kindTagIcon ?? ''} aria-hidden="true">
+                                  {kindIcon(record.cell.kind)}
                                 </span>
+                              </Tooltip>
+                              <span class={css.kindTagLabel ?? ''}>
+                                {KIND_LABEL[record.cell.kind]}
                               </span>
                             </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className={css.content}>
-                        {isRequestOnly
-                          ? null
-                          : record.collapsedSummary !== undefined
-                            ? (
-                              <span className={css.collapsedTurnContent} title={record.collapsedSummary}>
-                                <span className={css.collapsedTurnEllipsis}>…</span>
-                                <span className={css.collapsedTurnText}>{record.collapsedSummary}</span>
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td class={css.content ?? ''}>
+                      {isRequestOnly
+                        ? null
+                        : record.collapsedSummary !== undefined
+                          ? (
+                            <span class={css.collapsedTurnContent ?? ''} title={record.collapsedSummary}>
+                              <span class={css.collapsedTurnEllipsis ?? ''}>…</span>
+                              <span class={css.collapsedTurnText ?? ''}>{record.collapsedSummary}</span>
+                            </span>
+                          )
+                          : (
+                            <span
+                              class={(resultText === undefined ? css.contentText : css.resultPreview) ?? ''}
+                              title={resultText === undefined ? listDisplayText : `${listDisplayText} → ${resultText}`}
+                            >
+                              <span class={(resultText === undefined ? undefined : css.resultRequest) ?? ''}>
+                                {RecordListText({
+                                  displayText,
+                                  toolCallOnly,
+                                  toolCallText,
+                                })}
                               </span>
-                            )
-                            : (
-                              <span
-                                className={resultText === undefined ? css.contentText : css.resultPreview}
-                                title={resultText === undefined
-                                  ? listDisplayText
-                                  : `${listDisplayText} → ${resultText}`}
-                              >
-                                <span className={resultText === undefined ? undefined : css.resultRequest}>
-                                  <RecordListText
-                                    displayText={displayText}
-                                    toolCallOnly={toolCallOnly}
-                                    toolCallText={toolCallText}
-                                  />
-                                </span>
-                                {resultText !== undefined && (
-                                  <span className={record.cell.isError ? `${css.inlineResult} ${css.error}` : css.inlineResult}>
-                                    <span className={css.arrow}>→</span>
-                                    <span className={resultText === 'No output'
-                                      ? `${css.inlineResultText} ${css.noOutputText}`
-                                      : css.inlineResultText}
-                                    >
-                                      {resultText}
-                                    </span>
+                              {resultText !== undefined && (
+                                <span class={(record.cell.isError ? `${css.inlineResult ?? ''} ${css.error ?? ''}` : css.inlineResult) ?? ''}>
+                                  <span class={css.arrow ?? ''}>→</span>
+                                  <span class={(resultText === 'No output'
+                                    ? `${css.inlineResultText ?? ''} ${css.noOutputText ?? ''}`
+                                    : css.inlineResultText) ?? ''}
+                                  >
+                                    {resultText}
                                   </span>
-                                )}
-                              </span>
-                            )}
-                      </td>
-                    </tr>
-                  )
-                }}
-              </RecordPresentation>
-            ))}
-            {virtualBottom > 0 && (
-              <tr className={css.virtualSpacer} data-virtual-spacer="bottom" aria-hidden="true">
-                <td
-                  colSpan={2}
-                  style={{
-                    '--trajectory-virtual-spacer-height': `${virtualBottom}px`,
-                  } as VirtualSpacerStyle}
-                />
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {(selectedRequest !== null
-        || promptSelected
-        || (selected !== undefined && selectedState !== undefined)) && (
-        <aside
-          className={css.details}
-          aria-label="Event details"
-          style={detailsWidth === null ? undefined : { width: detailsWidth }}
-        >
-          <div
-            className={css.detailsResizeHandle}
-            role="separator"
-            aria-label="Resize event details"
-            aria-controls="trajectory-detail-panel"
-            aria-orientation="vertical"
-            tabIndex={0}
-            title="Drag to resize. Double-click to reset."
-            onDoubleClick={() => {
-              setDetailsWidth(null)
-              setToolRequestOffset(null)
-            }}
-            onPointerDown={(event) => {
-              if (event.button !== 0) return
-              const details = event.currentTarget.parentElement
-              if (details === null) return
-              const split = details.parentElement
-              if (split === null) return
-              const splitWidth = split.getBoundingClientRect().width
-              detailsResizeDrag.current = {
-                pointerId: event.pointerId,
-                startX: event.clientX,
-                startWidth: details.getBoundingClientRect().width,
-                splitWidth,
-                startToolRequestOffset: toolRequestOffset ?? (
+                                </span>
+                              )}
+                            </span>
+                          )}
+                    </td>
+                  </tr>
+                )
+              })}
+              {virtualBottom > 0 && (
+                <tr class={css.virtualSpacer ?? ''} data-virtual-spacer="bottom" aria-hidden="true">
+                  <td colSpan={2} style={`--trajectory-virtual-spacer-height: ${virtualBottom}px`} />
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {(selectedRequest !== null
+          || promptSelected
+          || (selected !== undefined && selectedState !== undefined)) && (
+          <aside
+            class={css.details ?? ''}
+            aria-label="Event details"
+            style={this.#detailsWidth === null ? '' : `width: ${this.#detailsWidth}px`}
+          >
+            <div
+              class={css.detailsResizeHandle ?? ''}
+              role="separator"
+              aria-label="Resize event details"
+              aria-controls="trajectory-detail-panel"
+              aria-orientation="vertical"
+              tabIndex={0}
+              title="Drag to resize. Double-click to reset."
+              ondblclick={() => {
+                this.#detailsWidth = null
+                this.#toolRequestOffset = null
+                this.#render()
+              }}
+              onpointerdown={(event: PointerEvent) => {
+                if (event.button !== 0) return
+                const details = (event.currentTarget as HTMLElement).parentElement
+                if (details === null) return
+                const split = details.parentElement
+                if (split === null) return
+                const splitWidth = split.getBoundingClientRect().width
+                this.#detailsResizeDrag = {
+                  pointerId: event.pointerId,
+                  startX: event.clientX,
+                  startWidth: details.getBoundingClientRect().width,
+                  splitWidth,
+                  startToolRequestOffset: this.#toolRequestOffset ?? (
+                    splitWidth * TOOL_REQUEST_SHARE - defaultToolRequestWidth(splitWidth)
+                  ),
+                }
+                ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+                event.preventDefault()
+              }}
+              onpointermove={(event: PointerEvent) => {
+                const drag = this.#detailsResizeDrag
+                if (drag === null || drag.pointerId !== event.pointerId) return
+                const nextDetailsWidth = clampDetailsWidth(
+                  drag.startWidth + drag.startX - event.clientX,
+                  drag.splitWidth,
+                )
+                this.#detailsWidth = nextDetailsWidth
+                this.#toolRequestOffset = drag.startToolRequestOffset
+                  + (nextDetailsWidth - drag.startWidth) * TOOL_REQUEST_SHARE
+                this.#render()
+              }}
+              onpointerup={(event: PointerEvent) => {
+                if (this.#detailsResizeDrag?.pointerId !== event.pointerId) return
+                this.#detailsResizeDrag = null
+                ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
+              }}
+              onpointercancel={() => {
+                this.#detailsResizeDrag = null
+              }}
+              onkeydown={(event: KeyboardEvent) => {
+                if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+                const details = (event.currentTarget as HTMLElement).parentElement
+                if (details === null) return
+                const split = details.parentElement
+                if (split === null) return
+                const direction = event.key === 'ArrowLeft' ? 1 : -1
+                const currentDetailsWidth = details.getBoundingClientRect().width
+                const splitWidth = split.getBoundingClientRect().width
+                const nextDetailsWidth = clampDetailsWidth(
+                  currentDetailsWidth + direction * DETAILS_RESIZE_STEP,
+                  splitWidth,
+                )
+                const currentToolRequestOffset = this.#toolRequestOffset ?? (
                   splitWidth * TOOL_REQUEST_SHARE - defaultToolRequestWidth(splitWidth)
-                ),
-              }
-              event.currentTarget.setPointerCapture(event.pointerId)
-              event.preventDefault()
-            }}
-            onPointerMove={(event) => {
-              const drag = detailsResizeDrag.current
-              if (drag === null || drag.pointerId !== event.pointerId) return
-              const nextDetailsWidth = clampDetailsWidth(
-                drag.startWidth + drag.startX - event.clientX,
-                drag.splitWidth,
-              )
-              setDetailsWidth(nextDetailsWidth)
-              setToolRequestOffset(
-                drag.startToolRequestOffset
-                + (nextDetailsWidth - drag.startWidth) * TOOL_REQUEST_SHARE,
-              )
-            }}
-            onPointerUp={(event) => {
-              if (detailsResizeDrag.current?.pointerId !== event.pointerId) return
-              detailsResizeDrag.current = null
-              event.currentTarget.releasePointerCapture(event.pointerId)
-            }}
-            onPointerCancel={() => {
-              detailsResizeDrag.current = null
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
-              const details = event.currentTarget.parentElement
-              if (details === null) return
-              const split = details.parentElement
-              if (split === null) return
-              const direction = event.key === 'ArrowLeft' ? 1 : -1
-              const currentDetailsWidth = details.getBoundingClientRect().width
-              const splitWidth = split.getBoundingClientRect().width
-              const nextDetailsWidth = clampDetailsWidth(
-                currentDetailsWidth + direction * DETAILS_RESIZE_STEP,
-                splitWidth,
-              )
-              const currentToolRequestOffset = toolRequestOffset ?? (
-                splitWidth * TOOL_REQUEST_SHARE - defaultToolRequestWidth(splitWidth)
-              )
-              setDetailsWidth(nextDetailsWidth)
-              setToolRequestOffset(
-                currentToolRequestOffset
-                + (nextDetailsWidth - currentDetailsWidth) * TOOL_REQUEST_SHARE,
-              )
-              event.preventDefault()
-            }}
-          />
-          <div className={css.detailsHeader}>
-            <div className={css.detailsTitle}>
-              {selectedRequest !== null
-                ? (
-                  <>
-                    <span className={css.requestDetailsDot} aria-hidden="true" />
-                    <span className={css.requestDetailsName}>
+                )
+                this.#detailsWidth = nextDetailsWidth
+                this.#toolRequestOffset = currentToolRequestOffset
+                  + (nextDetailsWidth - currentDetailsWidth) * TOOL_REQUEST_SHARE
+                this.#render()
+                event.preventDefault()
+              }}
+            />
+            <div class={css.detailsHeader ?? ''}>
+              <div class={css.detailsTitle ?? ''}>
+                {selectedRequest !== null
+                  ? [
+                    <span class={css.requestDetailsDot ?? ''} aria-hidden="true" />,
+                    <span class={css.requestDetailsName ?? ''}>
                       Request #{selectedRequestNumber ?? '—'}
-                    </span>
-                    <span className={css.detailsLocation}>
+                    </span>,
+                    <span class={css.detailsLocation ?? ''}>
                       {selectedRequestInfo?.purpose === 'compaction'
                         ? `Compaction · ${sectionLabel(selectedRequest.turn)}`
                         : sectionLabel(selectedRequest.turn)}
-                    </span>
-                  </>
-                )
-                : promptSelected
-                  ? (
-                    <>
-                      <span className={`${css.kindTag} ${css.systemNeutral}`}>SYSTEM</span>
-                      <span className={css.detailsLocation}>{selected?.cell.text}</span>
-                    </>
-                  )
-                  : selected !== undefined && (
-                    <>
-                      <span className={`${css.kindTag} ${
-                        selected.cell.kind === 'context'
-                          ? css.contextGreen
-                          : selected.cell.kind === 'compacted'
-                            ? css.compacted
-                            : selected.cell.kind === 'tool'
-                              ? css.toolAmber
-                              : selected.cell.kind === 'message'
-                                ? css.assistantVioletBright
-                                : selected.cell.kind === 'subtool'
-                                  ? css.subtoolAmber
-                                  : css[selected.cell.kind]
-                      }`}
-                      >
-                        {KIND_LABEL[selected.cell.kind]}
-                      </span>
-                      <span className={css.detailsLocation}>
-                        {selected.cell.kind === 'compacted'
-                          ? sectionLabel(selected.turn)
-                          : `${sectionLabel(selected.turn)} · ${selected.group}`}
-                      </span>
-                    </>
-                  )}
-            </div>
-            <button
-              type="button"
-              className={css.close}
-              aria-label="Close details"
-              onClick={clearInspectorSelection}
-            >
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
-          <div className={css.detailTabs} role="tablist" aria-label="Event details">
-            {selectedTabs.map(tab => (
+                    </span>,
+                  ]
+                  : promptSelected
+                    ? [
+                      <span class={`${css.kindTag ?? ''} ${css.systemNeutral ?? ''}`}>SYSTEM</span>,
+                      <span class={css.detailsLocation ?? ''}>{selected?.cell.text}</span>,
+                    ]
+                    : selected !== undefined
+                      ? [
+                        <span
+                          class={`${css.kindTag ?? ''} ${
+                            (selected.cell.kind === 'context'
+                              ? css.contextGreen
+                              : selected.cell.kind === 'compacted'
+                                ? css.compacted
+                                : selected.cell.kind === 'tool'
+                                  ? css.toolAmber
+                                  : selected.cell.kind === 'message'
+                                    ? css.assistantVioletBright
+                                    : selected.cell.kind === 'subtool'
+                                      ? css.subtoolAmber
+                                      : css[selected.cell.kind]) ?? ''
+                          }`}
+                        >
+                          {KIND_LABEL[selected.cell.kind]}
+                        </span>,
+                        <span class={css.detailsLocation ?? ''}>
+                          {selected.cell.kind === 'compacted'
+                            ? sectionLabel(selected.turn)
+                            : `${sectionLabel(selected.turn)} · ${selected.group}`}
+                        </span>,
+                      ]
+                      : null}
+              </div>
               <button
-                key={tab.id}
-                id={`trajectory-detail-${tab.id}`}
                 type="button"
-                role="tab"
-                aria-controls="trajectory-detail-panel"
-                aria-selected={activeTab === tab.id}
-                className={activeTab === tab.id ? `${css.detailTab} ${css.detailTabActive}` : css.detailTab}
-                onClick={() => { activateTab(tab.id) }}
+                class={css.close ?? ''}
+                aria-label="Close details"
+                onclick={() => { this.#clearInspectorSelection() }}
               >
-                {tab.label}
+                <span aria-hidden="true">×</span>
               </button>
-            ))}
-          </div>
-          <div
-            id="trajectory-detail-panel"
-            className={activeTab === 'overview'
-              ? `${css.detailBody} ${css.detailBodySummary}`
-              : css.detailBody}
-            role="tabpanel"
-            aria-labelledby={`trajectory-detail-${activeTab}`}
-          >
-            {selectedRequest !== null
-              && selectedRequestState !== undefined
-              && activeTab === 'overview' && (
-              <>
-                <dl
-                  className={`${css.overview} ${css.summaryScrollRegion}`}
-                  data-summary-scroll-region=""
+            </div>
+            <div class={css.detailTabs ?? ''} role="tablist" aria-label="Event details">
+              {selectedTabs.map(tab => (
+                <button
+                  key={tab.id}
+                  id={`trajectory-detail-${tab.id}`}
+                  type="button"
+                  role="tab"
+                  aria-controls="trajectory-detail-panel"
+                  aria-selected={this.#activeTab === tab.id}
+                  class={(this.#activeTab === tab.id ? `${css.detailTab ?? ''} ${css.detailTabActive ?? ''}` : css.detailTab) ?? ''}
+                  onclick={() => { this.#activateTab(tab.id) }}
                 >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div
+              id="trajectory-detail-panel"
+              class={(this.#activeTab === 'overview' ? `${css.detailBody ?? ''} ${css.detailBodySummary ?? ''}` : css.detailBody) ?? ''}
+              role="tabpanel"
+              aria-labelledby={`trajectory-detail-${this.#activeTab}`}
+            >
+              {selectedRequest !== null && selectedRequestState !== undefined && this.#activeTab === 'overview' && [
+                <dl class={`${css.overview ?? ''} ${css.summaryScrollRegion ?? ''}`} data-summary-scroll-region="">
                   <div>
                     <dt>Status</dt>
-                    <dd className={selectedRequestState === 'error' ? css.error : undefined}>
+                    <dd class={(selectedRequestState === 'error' ? css.error : undefined) ?? ''}>
                       {statusLabel(selectedRequestState)}
                     </dd>
                   </div>
@@ -2713,24 +2605,16 @@ export function TrajectoryTable({
                       <dd>Compaction</dd>
                     </div>
                   )}
-                  {(selectedRequestInfo?.provider
-                    ?? selectedRequestInfo?.requestConfig?.provider) !== undefined && (
+                  {(selectedRequestInfo?.provider ?? selectedRequestInfo?.requestConfig?.provider) !== undefined && (
                     <div>
                       <dt>Provider</dt>
-                      <dd>
-                        {selectedRequestInfo?.provider
-                          ?? selectedRequestInfo?.requestConfig?.provider}
-                      </dd>
+                      <dd>{selectedRequestInfo?.provider ?? selectedRequestInfo?.requestConfig?.provider}</dd>
                     </div>
                   )}
-                  {(selectedRequestInfo?.model
-                    ?? selectedRequestInfo?.requestConfig?.model) !== undefined && (
+                  {(selectedRequestInfo?.model ?? selectedRequestInfo?.requestConfig?.model) !== undefined && (
                     <div>
                       <dt>Model</dt>
-                      <dd>
-                        {selectedRequestInfo?.model
-                          ?? selectedRequestInfo?.requestConfig?.model}
-                      </dd>
+                      <dd>{selectedRequestInfo?.model ?? selectedRequestInfo?.requestConfig?.model}</dd>
                     </div>
                   )}
                   <div>
@@ -2746,7 +2630,7 @@ export function TrajectoryTable({
                   {selectedRequestInfo?.error !== undefined && (
                     <div>
                       <dt>Error</dt>
-                      <dd className={css.error}>{selectedRequestInfo.error}</dd>
+                      <dd class={css.error ?? ''}>{selectedRequestInfo.error}</dd>
                     </div>
                   )}
                   {selectedRequestInfo?.retry !== undefined && (
@@ -2754,9 +2638,7 @@ export function TrajectoryTable({
                       <dt>Retry</dt>
                       <dd>
                         Scheduled {selectedRequestInfo.retry}
-                        {selectedRequestInfo.maxRetries === undefined
-                          ? ''
-                          : ` of ${selectedRequestInfo.maxRetries}`}
+                        {selectedRequestInfo.maxRetries === undefined ? '' : ` of ${selectedRequestInfo.maxRetries}`}
                       </dd>
                     </div>
                   )}
@@ -2769,95 +2651,79 @@ export function TrajectoryTable({
                   {selectedRequestResult !== undefined && (
                     <div>
                       <dt>Result</dt>
-                      <dd className={css.overviewParentLinks}>
+                      <dd class={css.overviewParentLinks ?? ''}>
                         <button
                           type="button"
-                          className={css.overviewHierarchyNavLink}
-                          onClick={() => {
-                            openRecordSummary(selectedRequestResult)
-                          }}
+                          class={css.overviewHierarchyNavLink ?? ''}
+                          onclick={() => { this.#openRecordSummary(selectedRequestResult) }}
                         >
                           <span>
-                            {selectedRequestInfo?.purpose === 'compaction'
-                              ? 'Compacted'
-                              : 'Assistant Message'}
+                            {selectedRequestInfo?.purpose === 'compaction' ? 'Compacted' : 'Assistant Message'}
                           </span>
-                          <IconChevronRightOutline14
-                            className={css.overviewHierarchyJumpIconTight}
-                            size={11}
-                          />
+                          <IconChevronRightOutline14 className={css.overviewHierarchyJumpIconTight} size={11} />
                         </button>
                       </dd>
                     </div>
                   )}
-                </dl>
-                <div className={css.overviewSections}>
+                </dl>,
+                <div class={css.overviewSections ?? ''}>
                   {selectedRequestOptions !== undefined && (
-                    <OverviewSection label="Options" onOpen={() => { activateTab('options') }}>
+                    <OverviewSection label="Options" onOpen={() => { this.#activateTab('options') }}>
                       <RequestOptions options={selectedRequestOptions} preview />
                     </OverviewSection>
                   )}
-                  <OverviewSection label="Usage" onOpen={() => { activateTab('usage') }}>
+                  <OverviewSection label="Usage" onOpen={() => { this.#activateTab('usage') }}>
                     <UsageRows usage={selectedRequestUsage} />
                   </OverviewSection>
-                  <OverviewSection label="Timing" onOpen={() => { activateTab('timing') }}>
+                  <OverviewSection label="Timing" onOpen={() => { this.#activateTab('timing') }}>
                     <RequestTiming
                       assistant={selectedRequestAssistant}
                       anchor={selectedRequestAnchor}
                       request={selectedRequestInfo}
+                      showUnix={this.#showUnix}
+                      onToggleUnix={toggleUnix}
                     />
                   </OverviewSection>
-                </div>
-              </>
-            )}
-            {selectedRequest !== null && activeTab === 'options' && (
-              <RequestOptions options={selectedRequestOptions} />
-            )}
-            {selectedRequest !== null && activeTab === 'usage' && (
-              <RequestUsagePanel
-                usage={selectedRequestUsage}
-                cumulative={selectedRequestCumulativeUsage}
-              />
-            )}
-            {selectedRequest !== null && activeTab === 'timing' && (
-              <RequestTiming
-                assistant={selectedRequestAssistant}
-                anchor={selectedRequestAnchor}
-                request={selectedRequestInfo}
-              />
-            )}
-            {promptSelected
-              && selectedPreviousPrompt !== undefined
-              && activeTab === 'diff' && (
-              <SystemPromptDiff
-                before={selectedPreviousPrompt}
-                after={selectedPrompt}
-              />
-            )}
-            {promptSelected && activeTab === 'system-prompt' && (
-              selectedPrompt.system === ''
-                ? <p className={css.noPayload}>No system prompt in this request</p>
-                : (
-                  <div className={`${css.markdownPayload} ${css.systemPrompt}`}>
-                    <MarkdownText text={selectedPrompt.system} />
-                  </div>
-                )
-            )}
-            {promptSelected && activeTab === 'tools' && (
-              <ToolCatalog tools={selectedPrompt.tools} />
-            )}
-            {!promptSelected
-              && selected?.cell.kind === 'compacted'
-              && selectedState !== undefined
-              && activeTab === 'overview' && (
-              <>
-                <dl
-                  className={`${css.overview} ${css.summaryScrollRegion}`}
-                  data-summary-scroll-region=""
-                >
+                </div>,
+              ]}
+              {selectedRequest !== null && this.#activeTab === 'options' && (
+                <RequestOptions options={selectedRequestOptions} />
+              )}
+              {selectedRequest !== null && this.#activeTab === 'usage' && (
+                <RequestUsagePanel usage={selectedRequestUsage} cumulative={selectedRequestCumulativeUsage} />
+              )}
+              {selectedRequest !== null && this.#activeTab === 'timing' && (
+                <RequestTiming
+                  assistant={selectedRequestAssistant}
+                  anchor={selectedRequestAnchor}
+                  request={selectedRequestInfo}
+                  showUnix={this.#showUnix}
+                  onToggleUnix={toggleUnix}
+                />
+              )}
+              {promptSelected && selectedPreviousPrompt !== undefined && this.#activeTab === 'diff' && (
+                <SystemPromptDiff before={selectedPreviousPrompt} after={selectedPrompt} />
+              )}
+              {promptSelected && this.#activeTab === 'system-prompt' && (
+                selectedPrompt.system === ''
+                  ? <p class={css.noPayload ?? ''}>No system prompt in this request</p>
+                  : (
+                    <div class={`${css.markdownPayload ?? ''} ${css.systemPrompt ?? ''}`}>
+                      <MarkdownText text={selectedPrompt.system} />
+                    </div>
+                  )
+              )}
+              {promptSelected && this.#activeTab === 'tools' && (
+                <ToolCatalog tools={selectedPrompt.tools} />
+              )}
+              {!promptSelected
+                && selected?.cell.kind === 'compacted'
+                && selectedState !== undefined
+                && this.#activeTab === 'overview' && [
+                <dl class={`${css.overview ?? ''} ${css.summaryScrollRegion ?? ''}`} data-summary-scroll-region="">
                   <div>
                     <dt>Status</dt>
-                    <dd className={selectedState === 'error' ? css.error : undefined}>
+                    <dd class={(selectedState === 'error' ? css.error : undefined) ?? ''}>
                       {statusLabel(selectedState)}
                     </dd>
                   </div>
@@ -2869,98 +2735,74 @@ export function TrajectoryTable({
                     <dt>Tokens</dt>
                     <dd>—</dd>
                   </div>
-                </dl>
-                {selected.cell.outputDetail !== undefined && (
-                  <div
-                    className={`${css.compactedSummary} ${css.summaryScrollRegion}`}
-                    data-summary-scroll-region=""
-                  >
-                    <MarkdownRecordContent
-                      record={selected}
-                      rendered
-                      thinkingExpanded={thinkingExpanded}
-                      onThinkingExpandedChange={setThinkingExpanded}
-                      onOpenCall={openCallSummary}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-            {!promptSelected
-              && selected !== undefined
-              && selected.cell.kind !== 'compacted'
-              && selectedState !== undefined
-              && activeTab === 'overview' && (
-              <>
-                <dl
-                  className={`${css.overview} ${css.summaryScrollRegion}`}
-                  data-summary-scroll-region=""
-                >
+                </dl>,
+                selected.cell.outputDetail !== undefined
+                  ? (
+                    <div class={`${css.compactedSummary ?? ''} ${css.summaryScrollRegion ?? ''}`} data-summary-scroll-region="">
+                      <MarkdownRecordContent
+                        record={selected}
+                        rendered
+                        thinkingExpanded={this.#thinkingExpanded}
+                        onThinkingExpandedChange={(expanded) => { this.#thinkingExpanded = expanded; this.#render() }}
+                        onOpenCall={(callId) => { this.#openCallSummary(callId) }}
+                      />
+                    </div>
+                  )
+                  : null,
+              ]}
+              {!promptSelected
+                && selected !== undefined
+                && selected.cell.kind !== 'compacted'
+                && selectedState !== undefined
+                && this.#activeTab === 'overview' && [
+                <dl class={`${css.overview ?? ''} ${css.summaryScrollRegion ?? ''}`} data-summary-scroll-region="">
                   {selected.cell.messageSource !== undefined && (
                     <div>
                       <dt>Source</dt>
-                      <dd className={css.overviewParentLinks}>
+                      <dd class={css.overviewParentLinks ?? ''}>
                         <button
                           type="button"
-                          className={css.overviewHierarchyNavLink}
-                          onClick={() => { activateTab('source') }}
+                          class={css.overviewHierarchyNavLink ?? ''}
+                          onclick={() => { this.#activateTab('source') }}
                         >
                           <span>{messageSourceLabel(selected.cell.messageSource)}</span>
-                          <IconChevronRightOutline14
-                            className={css.overviewHierarchyJumpIconTight}
-                            size={11}
-                          />
+                          <IconChevronRightOutline14 className={css.overviewHierarchyJumpIconTight} size={11} />
                         </button>
                       </dd>
                     </div>
                   )}
                   {hasSelectedHierarchy && (
                     <div>
-                      <dt>
-                        {selectedAssistantRequestTarget !== undefined
-                          ? 'Source'
-                          : 'Hierarchy'}
-                      </dt>
-                      <dd className={css.overviewParentLinks}>
+                      <dt>{selectedAssistantRequestTarget !== undefined ? 'Source' : 'Hierarchy'}</dt>
+                      <dd class={css.overviewParentLinks ?? ''}>
                         {selectedAssistantRequestTarget !== undefined && (
                           <button
                             type="button"
-                            className={css.overviewHierarchyNavLink}
-                            onClick={() => {
-                              selectRequest(selectedAssistantRequestTarget)
-                            }}
+                            class={css.overviewHierarchyNavLink ?? ''}
+                            onclick={() => { this.#selectRequest(selectedAssistantRequestTarget) }}
                           >
                             <span>Request #{selectedAssistantRequest ?? '—'}</span>
-                            <IconChevronRightOutline14
-                              className={css.overviewHierarchyJumpIconTight}
-                              size={11}
-                            />
+                            <IconChevronRightOutline14 className={css.overviewHierarchyJumpIconTight} size={11} />
                           </button>
                         )}
                         {selectedParentMessage !== undefined && (
                           <button
                             type="button"
-                            className={css.overviewHierarchyNavLink}
-                            onClick={() => { openRecordSummary(selectedParentMessage) }}
+                            class={css.overviewHierarchyNavLink ?? ''}
+                            onclick={() => { this.#openRecordSummary(selectedParentMessage) }}
                           >
                             <span>Assistant Message</span>
-                            <IconChevronRightOutline14
-                              className={css.overviewHierarchyJumpIconTight}
-                              size={11}
-                            />
+                            <IconChevronRightOutline14 className={css.overviewHierarchyJumpIconTight} size={11} />
                           </button>
                         )}
                         {selectedParentTool !== undefined && (
                           <button
                             type="button"
-                            className={css.overviewHierarchyNavLink}
-                            onClick={() => { openRecordSummary(selectedParentTool) }}
+                            class={css.overviewHierarchyNavLink ?? ''}
+                            onclick={() => { this.#openRecordSummary(selectedParentTool) }}
                           >
                             <span>Tool Call</span>
-                            <IconChevronRightOutline14
-                              className={css.overviewHierarchyJumpIconTight}
-                              size={11}
-                            />
+                            <IconChevronRightOutline14 className={css.overviewHierarchyJumpIconTight} size={11} />
                           </button>
                         )}
                       </dd>
@@ -2968,107 +2810,245 @@ export function TrajectoryTable({
                   )}
                   <div>
                     <dt>Status</dt>
-                    <dd className={selectedState === 'error' ? css.error : undefined}>
+                    <dd class={(selectedState === 'error' ? css.error : undefined) ?? ''}>
                       {statusLabel(selectedState)}
                     </dd>
                   </div>
-                  {selected.cell.kind === 'message' && (
-                    <TokenRows cell={selected.cell} />
-                  )}
+                  {selected.cell.kind === 'message' && TokenRows({ cell: selected.cell })}
                   {(selected.cell.kind === 'user' || selected.cell.kind === 'context') && (
                     <div>
                       <dt>Duration</dt>
                       <dd>{formatElapsedSeconds(selected.cell.timeSeconds)}</dd>
                     </div>
                   )}
-                </dl>
-                <div className={css.overviewSections}>
+                </dl>,
+                <div class={css.overviewSections ?? ''}>
                   {isMarkdownRecord(selected)
                     ? (
-                      <>
-                        <OverviewSection label="Preview" onOpen={() => { activateTab('rendered') }}>
-                          <MarkdownRecordContent
-                            record={selected}
-                            rendered
-                            preview
-                            thinkingExpanded={thinkingExpanded}
-                            onThinkingExpandedChange={setThinkingExpanded}
-                            onOpenCall={openCallSummary}
-                          />
-                        </OverviewSection>
-                      </>
+                      <OverviewSection label="Preview" onOpen={() => { this.#activateTab('rendered') }}>
+                        <MarkdownRecordContent
+                          record={selected}
+                          rendered
+                          preview
+                          thinkingExpanded={this.#thinkingExpanded}
+                          onThinkingExpandedChange={(expanded) => { this.#thinkingExpanded = expanded; this.#render() }}
+                          onOpenCall={(callId) => { this.#openCallSummary(callId) }}
+                        />
+                      </OverviewSection>
                     )
-                    : (
-                      <>
-                        {selected.cell.inputDetail && (
-                          <OverviewSection label="Payload" onOpen={() => { activateTab('input') }}>
+                    : [
+                      selected.cell.inputDetail
+                        ? (
+                          <OverviewSection label="Payload" onOpen={() => { this.#activateTab('input') }}>
                             <RecordPayload record={selected} direction="input" preview />
                           </OverviewSection>
-                        )}
-                        {selected.cell.outputDetail && (
-                          <OverviewSection label="Result" onOpen={() => { activateTab('output') }}>
+                        )
+                        : null,
+                      selected.cell.outputDetail
+                        ? (
+                          <OverviewSection label="Result" onOpen={() => { this.#activateTab('output') }}>
                             <RecordPayload record={selected} direction="output" preview />
                           </OverviewSection>
-                        )}
-                        <OverviewSection label="Schema" onOpen={() => { activateTab('schema') }}>
-                          <RecordSchema record={selected} preview />
-                        </OverviewSection>
-                      </>
-                    )}
+                        )
+                        : null,
+                      <OverviewSection label="Schema" onOpen={() => { this.#activateTab('schema') }}>
+                        <RecordSchema record={selected} preview />
+                      </OverviewSection>,
+                    ]}
                   {selectedAssistantRequestTarget !== undefined && (
                     <OverviewSection
                       label="Request Timing"
-                      onOpen={() => {
-                        selectRequest(selectedAssistantRequestTarget, 'timing')
-                      }}
+                      onOpen={() => { this.#selectRequest(selectedAssistantRequestTarget, 'timing') }}
                     >
-                      <RecordTiming record={selected} />
+                      <RecordTiming record={selected} showUnix={this.#showUnix} onToggleUnix={toggleUnix} />
                     </OverviewSection>
                   )}
                   {(selected.cell.kind === 'tool' || selected.cell.kind === 'subtool') && (
-                    <OverviewSection label="Timing" onOpen={() => { activateTab('timing') }}>
-                      <RecordTiming record={selected} />
+                    <OverviewSection label="Timing" onOpen={() => { this.#activateTab('timing') }}>
+                      <RecordTiming record={selected} showUnix={this.#showUnix} onToggleUnix={toggleUnix} />
                     </OverviewSection>
                   )}
-                </div>
-              </>
-            )}
-            {!promptSelected && selected !== undefined && activeTab === 'rendered' && (
-              <MarkdownRecordContent
-                record={selected}
-                rendered
-                thinkingExpanded={thinkingExpanded}
-                onThinkingExpandedChange={setThinkingExpanded}
-                onOpenCall={openCallSummary}
-              />
-            )}
-            {!promptSelected && selected !== undefined && activeTab === 'raw' && (
-              <MarkdownRecordContent
-                record={selected}
-                rendered={false}
-                thinkingExpanded={thinkingExpanded}
-                onThinkingExpandedChange={setThinkingExpanded}
-                onOpenCall={openCallSummary}
-              />
-            )}
-            {!promptSelected && selected !== undefined && activeTab === 'source' && (
-              <MessageSource record={selected} />
-            )}
-            {!promptSelected && selected !== undefined && activeTab === 'input' && (
-              <RecordPayload record={selected} direction="input" />
-            )}
-            {!promptSelected && selected !== undefined && activeTab === 'output' && (
-              <RecordPayload record={selected} direction="output" />
-            )}
-            {!promptSelected && selected !== undefined && activeTab === 'schema' && (
-              <RecordSchema record={selected} />
-            )}
-            {!promptSelected && selected !== undefined && activeTab === 'timing' && (
-              <RecordTiming record={selected} />
-            )}
-          </div>
-        </aside>
-      )}
-    </div>
-  )
+                </div>,
+              ]}
+              {!promptSelected && selected !== undefined && this.#activeTab === 'rendered' && (
+                <MarkdownRecordContent
+                  record={selected}
+                  rendered
+                  thinkingExpanded={this.#thinkingExpanded}
+                  onThinkingExpandedChange={(expanded) => { this.#thinkingExpanded = expanded; this.#render() }}
+                  onOpenCall={(callId) => { this.#openCallSummary(callId) }}
+                />
+              )}
+              {!promptSelected && selected !== undefined && this.#activeTab === 'raw' && (
+                <MarkdownRecordContent
+                  record={selected}
+                  rendered={false}
+                  thinkingExpanded={this.#thinkingExpanded}
+                  onThinkingExpandedChange={(expanded) => { this.#thinkingExpanded = expanded; this.#render() }}
+                  onOpenCall={(callId) => { this.#openCallSummary(callId) }}
+                />
+              )}
+              {!promptSelected && selected !== undefined && this.#activeTab === 'source' && (
+                <MessageSource record={selected} />
+              )}
+              {!promptSelected && selected !== undefined && this.#activeTab === 'input' && (
+                <RecordPayload record={selected} direction="input" />
+              )}
+              {!promptSelected && selected !== undefined && this.#activeTab === 'output' && (
+                <RecordPayload record={selected} direction="output" />
+              )}
+              {!promptSelected && selected !== undefined && this.#activeTab === 'schema' && (
+                <RecordSchema record={selected} />
+              )}
+              {!promptSelected && selected !== undefined && this.#activeTab === 'timing' && (
+                <RecordTiming record={selected} showUnix={this.#showUnix} onToggleUnix={toggleUnix} />
+              )}
+            </div>
+          </aside>
+        )}
+      </div>
+    )
+    applyDiff(this, vdom)
+    this.#tablePaneEl = this.querySelector<HTMLDivElement>(`.${css.tablePane}`)
+    if (virtualizationEnabled && this.#tablePaneEl !== null && this.#virtual.virtualizer !== null) {
+      // Ensure the virtualizer observes the (possibly newly mounted) pane.
+      this.#virtual.virtualizer.scrollElement = this.#tablePaneEl
+    }
+    this.#syncScrollInit(historyLoading, virtualizationEnabled, rowVirtualizer)
+  }
+
+  #applyPendingScroll(
+    records: TableRecord[],
+    virtualizationEnabled: boolean,
+    virtualIndexByRecordId: Map<string, number>,
+    rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement> | null,
+  ): void {
+    const id = this.#pendingScrollRecordId
+    if (id === null) return
+    const position = records.findIndex(record =>
+      trajectoryRecordId(record.cell) === id && record.collapsedSummary === undefined)
+    if (position === -1) return
+    if (virtualizationEnabled) {
+      const virtualIndex = virtualIndexByRecordId.get(id)
+      if (virtualIndex === undefined) return
+      this.#pendingScrollRecordId = null
+      this.#followsTableTail = false
+      rowVirtualizer?.scrollToIndex(virtualIndex, { behavior: 'smooth', align: 'center' })
+      return
+    }
+    this.#pendingScrollRecordId = null
+    this.#followsTableTail = false
+    const recordIndex = records[position]?.cell.index
+    const row = recordIndex === undefined
+      ? null
+      : this.querySelector<HTMLElement>(`tr[data-record-index="${recordIndex}"]`)
+    if (row !== undefined && row !== null && typeof row.scrollIntoView === 'function') {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
+  #applyTimelineFocus(
+    records: TableRecord[],
+    projectedVirtualRows: readonly TrajectoryVirtualRow<TableRecord>[],
+    virtualizationEnabled: boolean,
+    virtualIndexByRecordId: Map<string, number>,
+    rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement> | null,
+    timelineFocusIndexes: ReadonlySet<number> | null,
+  ): void {
+    if (timelineFocusIndexes === null || timelineFocusIndexes.size === 0) return
+    const focusedPositions = records.flatMap((record, position) =>
+      record.collapsedSummary === undefined
+      && record.cell.requestOnly !== true
+      && timelineFocusIndexes.has(record.cell.index)
+        ? [position]
+        : [])
+    const first = focusedPositions.at(0)
+    const last = focusedPositions.at(-1)
+    if (first === undefined || last === undefined) return
+    if (!virtualizationEnabled) {
+      const focusedRows = [...this.querySelectorAll<HTMLElement>('tr[data-timeline-focus="inside"]')]
+      const firstRow = focusedRows.at(0)
+      const lastRow = focusedRows.at(-1)
+      if (firstRow === undefined || lastRow === undefined) return
+      const focusHeight = lastRow.getBoundingClientRect().bottom - firstRow.getBoundingClientRect().top
+      const ledgerHeight = this.clientHeight
+      const target = focusHeight > ledgerHeight
+        ? firstRow
+        : focusedRows[Math.floor((focusedRows.length - 1) / 2)]
+      if (target !== undefined && typeof target.scrollIntoView === 'function') {
+        this.#followsTableTail = false
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: focusHeight > ledgerHeight ? 'start' : 'center',
+        })
+      }
+      return
+    }
+    const focusedVirtualIndexes = [...new Set(focusedPositions.flatMap((position) => {
+      const record = records[position]
+      if (record === undefined) return []
+      const virtualIndex = virtualIndexByRecordId.get(trajectoryRecordId(record.cell))
+      return virtualIndex === undefined ? [] : [virtualIndex]
+    }))].sort((left, right) => left - right)
+    const firstVirtual = focusedVirtualIndexes.at(0)
+    const lastVirtual = focusedVirtualIndexes.at(-1)
+    if (firstVirtual === undefined || lastVirtual === undefined) return
+    const paneHeight = this.#tablePaneEl?.clientHeight ?? 0
+    const focusHeight = projectedVirtualRows
+      .slice(firstVirtual, lastVirtual + 1)
+      .reduce((height, row) => height + row.height, 0)
+    this.#followsTableTail = false
+    rowVirtualizer?.scrollToIndex(
+      focusHeight > paneHeight
+        ? firstVirtual
+        : focusedVirtualIndexes[Math.floor((focusedVirtualIndexes.length - 1) / 2)] ?? firstVirtual,
+      {
+        behavior: 'smooth',
+        align: focusHeight > paneHeight ? 'start' : 'center',
+      },
+    )
+  }
+
+  #syncScrollInit(
+    historyLoading: boolean,
+    virtualizationEnabled: boolean,
+    rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement> | null,
+  ): void {
+    const pane = this.#tablePaneEl
+    if (pane === null) return
+    const { historyStartSeq } = this.#props
+    const anchor = this.#olderLoadAnchor
+    if (anchor !== null && anchor.historyStartSeq !== historyStartSeq) {
+      if (!virtualizationEnabled) {
+        pane.scrollTop = anchor.scrollTop + pane.scrollHeight - anchor.scrollHeight
+      }
+      this.#olderLoadAnchor = null
+      this.#followsTableTail = false
+      return
+    }
+    if (!this.#tableScrollInitialized) {
+      if (historyLoading) return
+      this.#tableScrollInitialized = true
+      this.#followsTableTail = true
+      if (virtualizationEnabled) rowVirtualizer?.scrollToEnd({ behavior: 'auto' })
+      else pane.scrollTop = pane.scrollHeight
+      this.#tableScrollReady = true
+      this.#render()
+      return
+    }
+    if (!this.#followsTableTail) return
+    if (virtualizationEnabled) rowVirtualizer?.scrollToEnd({ behavior: 'auto' })
+    else pane.scrollTop = pane.scrollHeight
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-trajectory-table') === undefined) {
+  customElements.define('dsh-trajectory-table', DshTrajectoryTable)
+}
+
+/** Create and mount a TrajectoryTable element in place of the old function-component call. */
+export function TrajectoryTable(props: TrajectoryTableProps): JSX.Element {
+  const el = document.createElement('dsh-trajectory-table') as DshTrajectoryTable
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

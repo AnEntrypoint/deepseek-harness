@@ -1,10 +1,20 @@
-/** Frame-wide dynamic Plugin inventory, approvals, versions, and lifecycle actions. */
+/** Frame-wide dynamic Plugin inventory, approvals, versions, and lifecycle actions.
+ *
+ * Converted from a React hooks component to a webjsx custom element: every
+ * useState becomes a private instance field, useLayoutEffect/useEffect become
+ * connectedCallback/disconnectedCallback-managed listeners driven from
+ * #setOpen/#render, useDismissOnOutsidePointer becomes
+ * createDismissOnOutsidePointer (JobListAction.tsx's pattern), and re-render
+ * is an explicit applyDiff(this, vdom) call instead of implicit re-render on
+ * setState. className -> class, camelCase event handlers -> lowercase, and
+ * the inline `style={anchor}` object becomes a CSS string.
+ */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import {
   IconCheckOutline16, IconCloseOutline16, IconCordisPluginOutline14, IconPlayOutline16,
-  IconStopFill16, IconTrashOutline16, Tooltip, useDismissOnOutsidePointer,
+  IconStopFill16, IconTrashOutline16, Tooltip, createDismissOnOutsidePointer,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
@@ -82,133 +92,141 @@ function blockingFirst(rows: readonly RowView[]): readonly RowView[] {
 
 function RowAction({ label, children, ...props }: {
   label: string
-  children: ReactNode
-} & ButtonHTMLAttributes<HTMLButtonElement>) {
+  children: VNode | VNode[]
+} & Record<string, unknown>): JSX.Element {
   return (
     <Tooltip label={label} side="bottom" delayMs={500}>
-      <button type="button" className={css.actionButton} aria-label={label} {...props}>
+      <button type="button" class={css.actionButton ?? ''} aria-label={label} {...props}>
         {children}
       </button>
     </Tooltip>
   )
 }
 
-function DoubleCheckIcon() {
+function DoubleCheckIcon(): JSX.Element {
   return (
-    <span className={css.doubleCheck} aria-hidden>
+    <span class={css.doubleCheck ?? ''} aria-hidden>
       <IconCheckOutline16 size={12} />
       <IconCheckOutline16 size={12} />
     </span>
   )
 }
 
-/** Render the inventory panel and its unified footer action. */
-export function CordisPanel({
-  wide,
-  useSessions, useInventory, useActiveRuns, useRunErrors, useLoaded, useRenderFailures,
-  onApprove, onDecline, onRun, onStop, onRemove, onRefresh, t,
-}: CordisPanelProps) {
-  const inventory = useInventory(snapshot => snapshot)
-  const activeRuns = useActiveRuns(snapshot => snapshot)
-  const errors = useRunErrors(snapshot => snapshot)
-  const loaded = useLoaded(snapshot => snapshot)
-  const renderFailures = useRenderFailures(snapshot => snapshot)
-  const current = useSessions(state => state.current)
-  const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState<Record<string, CordisDynamicPackageId>>({})
-  const [pending, setPending] = useState<ReadonlySet<CordisDynamicPluginId>>(new Set())
-  const [actionErrors, setActionErrors] = useState<ReadonlyMap<CordisDynamicPluginId, string>>(new Map())
-  const visibleRequests = useRef<Set<ApprovalRequestId>>(new Set())
-  const rootRef = useRef<HTMLDivElement>(null)
-  const [anchor, setAnchor] = useState<{ left: number; bottom: number }>()
+/** Frame-wide dynamic Plugin inventory panel, as a webjsx custom element. */
+export class DshCordisPanel extends HTMLElement {
+  #props: CordisPanelProps | null = null
+  #open = false
+  #selected: Record<string, CordisDynamicPackageId> = {}
+  #pending: ReadonlySet<CordisDynamicPluginId> = new Set()
+  #actionErrors: ReadonlyMap<CordisDynamicPluginId, string> = new Map()
+  #visibleRequests: Set<ApprovalRequestId> = new Set()
+  #anchor: { left: number; bottom: number } | undefined
+  #resizeHandler: (() => void) | null = null
+  #dismiss = createDismissOnOutsidePointer({ root: this, onDismiss: () => { this.#setOpen(false) } })
 
-  // The panel is position: fixed (the sidebar clips overflow), so it hugs the
-  // trigger through a measured offset instead of document flow.
-  useLayoutEffect(() => {
-    if (!open) return
-    const place = (): void => {
-      const rect = rootRef.current?.getBoundingClientRect()
-      if (rect !== undefined) {
-        setAnchor({ left: rect.left, bottom: window.innerHeight - rect.top + 8 })
-      }
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: CordisPanelProps): void {
+    const first = this.#props === null
+    this.#props = props
+    this.#syncActiveRuns()
+    this.#render()
+    if (first) props.onRefresh()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#dismiss.stop()
+    this.#unbindResize()
+  }
+
+  #setOpen(open: boolean): void {
+    if (this.#open === open) return
+    this.#open = open
+    if (open) {
+      this.#dismiss.start()
+      this.#bindResize()
+      this.#props?.onRefresh()
+    } else {
+      this.#dismiss.stop()
+      this.#unbindResize()
     }
-    place()
+    this.#render()
+  }
+
+  #placeAnchor(): void {
+    const rect = this.getBoundingClientRect()
+    this.#anchor = { left: rect.left, bottom: window.innerHeight - rect.top + 8 }
+  }
+
+  #bindResize(): void {
+    this.#unbindResize()
+    this.#placeAnchor()
+    const place = (): void => {
+      this.#placeAnchor()
+      this.#render()
+    }
+    this.#resizeHandler = place
     window.addEventListener('resize', place)
-    return () => { window.removeEventListener('resize', place) }
-  }, [open])
+  }
 
-  useDismissOnOutsidePointer(rootRef, open, setOpen)
+  #unbindResize(): void {
+    if (this.#resizeHandler === null) return
+    window.removeEventListener('resize', this.#resizeHandler)
+    this.#resizeHandler = null
+  }
 
-  useEffect(() => {
+  /** Auto-open the panel when a new approval request appears. */
+  #syncActiveRuns(): void {
+    const props = this.#props
+    if (props === null) return
+    const activeRuns = props.useActiveRuns(snapshot => snapshot)
     const now = new Set<ApprovalRequestId>()
     for (const activity of activeRuns.values()) {
       if (activity.phase === 'awaiting-approval') now.add(activity.requestId)
     }
-    const discovered = [...now].some(requestId => !visibleRequests.current.has(requestId))
-    visibleRequests.current = now
-    if (discovered) setOpen(true)
-  }, [activeRuns])
-
-  useEffect(() => { onRefresh() }, [onRefresh])
-  useEffect(() => { if (open) onRefresh() }, [onRefresh, open])
-
-  const byPlugin = new Map<CordisDynamicPluginId, RowView>()
-  for (const listed of inventory.rows) {
-    const activity = activeRuns.get(listed.pluginId)
-    byPlugin.set(listed.pluginId, {
-      pluginId: listed.pluginId,
-      agentId: activity?.agentId ?? listed.agentId,
-      listed,
-      ...activity === undefined ? {} : { activity },
-    })
+    const discovered = [...now].some(requestId => !this.#visibleRequests.has(requestId))
+    this.#visibleRequests = now
+    if (discovered) this.#setOpen(true)
   }
-  for (const [pluginId, activity] of activeRuns) {
-    if (byPlugin.has(pluginId)) continue
-    byPlugin.set(pluginId, { pluginId, agentId: activity.agentId, activity })
-  }
-  const all = [...byPlugin.values()]
-  const mine = blockingFirst(all.filter(row => current !== undefined && row.agentId === current))
-  const theirs = blockingFirst(all.filter(row => current === undefined || row.agentId !== current))
-  const approvals = [...activeRuns.values()].filter(activity => activity.phase === 'awaiting-approval').length
-  const running = all.filter(view => visiblePanelStatus(
-    view,
-    selectedPackageIdOf(view, selected),
-    loaded,
-  ) === 'running').length
 
-  if (all.length === 0) return null
-
-  const runAction = async (pluginId: CordisDynamicPluginId, action: () => Promise<void | { ok: boolean; message?: string }>) => {
-    if (pending.has(pluginId)) return
-    setPending(currentPending => new Set(currentPending).add(pluginId))
-    setActionErrors((currentErrors) => {
-      const next = new Map(currentErrors)
-      next.delete(pluginId)
-      return next
-    })
-    try {
-      const result = await action()
-      if (result !== undefined && !result.ok) {
-        setActionErrors(currentErrors => new Map(currentErrors).set(pluginId, result.message ?? 'operation failed'))
-      }
-    } catch (error) {
-      setActionErrors(currentErrors => new Map(currentErrors).set(
-        pluginId,
-        error instanceof Error ? error.message : String(error),
-      ))
-    } finally {
-      setPending((currentPending) => {
-        const next = new Set(currentPending)
+  #runAction(pluginId: CordisDynamicPluginId, action: () => Promise<void | { ok: boolean; message?: string }>): void {
+    if (this.#pending.has(pluginId)) return
+    this.#pending = new Set(this.#pending).add(pluginId)
+    const clearedErrors = new Map(this.#actionErrors)
+    clearedErrors.delete(pluginId)
+    this.#actionErrors = clearedErrors
+    this.#render()
+    void (async () => {
+      try {
+        const result = await action()
+        if (result !== undefined && !result.ok) {
+          this.#actionErrors = new Map(this.#actionErrors).set(pluginId, result.message ?? 'operation failed')
+        }
+      } catch (error) {
+        this.#actionErrors = new Map(this.#actionErrors).set(
+          pluginId,
+          error instanceof Error ? error.message : String(error),
+        )
+      } finally {
+        const next = new Set(this.#pending)
         next.delete(pluginId)
-        return next
-      })
-      onRefresh()
-    }
+        this.#pending = next
+        this.#props?.onRefresh()
+        this.#render()
+      }
+    })()
   }
 
-  const renderRow = (view: RowView) => {
+  #renderRow(view: RowView): VNode {
+    const props = this.#props
+    if (props === null) return <></> as unknown as VNode
+    const { t, useLoaded, onApprove, onDecline, onRun, onStop, onRemove } = props
+    const loaded = useLoaded(snapshot => snapshot)
     const { pluginId, listed, activity } = view
-    const selectedPackageId = selectedPackageIdOf(view, selected)
+    const selectedPackageId = selectedPackageIdOf(view, this.#selected)
     const selectedPackage = listed !== undefined && selectedPackageId !== undefined
       ? packageOf(listed, selectedPackageId)
       : undefined
@@ -224,11 +242,11 @@ export function CordisPanel({
       ? activity.requestId
       : latest?.status === 'awaiting-approval' ? latest.approvalRequestId : undefined
     const status = visiblePanelStatus(view, selectedPackageId, loaded)
-    const busy = pending.has(pluginId) || activity?.phase === 'orchestrating'
-    const failure = errors.get(pluginId)
+    const busy = this.#pending.has(pluginId) || activity?.phase === 'orchestrating'
+    const failure = props.useRunErrors(snapshot => snapshot).get(pluginId)
     const hostFailure = latest?.status === 'failed' ? latest.error : undefined
-    const renderFailure = renderFailures.get(pluginId)
-    const actionError = actionErrors.get(pluginId)
+    const renderFailure = props.useRenderFailures(snapshot => snapshot).get(pluginId)
+    const actionError = this.#actionErrors.get(pluginId)
     const nextPackageId = listed?.nextPackageId !== undefined
       && listed.nextPackageId !== listed.currentPackageId ? listed.nextPackageId : undefined
     const currentPackageId = listed?.currentPackageId
@@ -238,27 +256,26 @@ export function CordisPanel({
     return (
       <li
         key={pluginId}
-        className={css.row}
+        class={css.row ?? ''}
         data-cordis-row={pluginId}
         data-cordis-status={status}
         data-cordis-awaiting={awaiting !== undefined || undefined}
       >
-        <div className={css.rowHead}>
-          <span className={css.rowId}>{pluginId}</span>
-          <span className={css.rowName}>{name}</span>
-          <span className={css.rowStatus}>{t(STATUS_LABELS[status])}</span>
+        <div class={css.rowHead ?? ''}>
+          <span class={css.rowId ?? ''}>{pluginId}</span>
+          <span class={css.rowName ?? ''}>{name}</span>
+          <span class={css.rowStatus ?? ''}>{t(STATUS_LABELS[status])}</span>
         </div>
         {listed !== undefined && listed.packages.length > 1 && selectedPackageId !== undefined && (
-          <label className={css.versionPicker}>
+          <label class={css.versionPicker ?? ''}>
             <span>{t('panel.version')}</span>
             <select
               value={selectedPackageId}
               disabled={busy}
-              onChange={(event) => {
-                setSelected(currentSelected => ({
-                  ...currentSelected,
-                  [pluginId]: event.target.value as CordisDynamicPackageId,
-                }))
+              onchange={(event: Event) => {
+                const value = (event.target as HTMLSelectElement).value as CordisDynamicPackageId
+                this.#selected = { ...this.#selected, [pluginId]: value }
+                this.#render()
               }}
             >
               {listed.packages.map(pkg => (
@@ -267,18 +284,18 @@ export function CordisPanel({
             </select>
           </label>
         )}
-        <div className={css.rowDetail}>
-          <span className={css.rowPurpose}>{purpose}</span>
-          <div className={css.rowActions}>
+        <div class={css.rowDetail ?? ''}>
+          <span class={css.rowPurpose ?? ''}>{purpose}</span>
+          <div class={css.rowActions ?? ''}>
             {awaiting !== undefined && (
               <>
                 <RowAction
                   label={t('action.approveOnce')}
                   data-cordis-approve={awaiting}
                   disabled={busy}
-                  onClick={() => { void runAction(pluginId, async () => {
+                  onclick={() => { this.#runAction(pluginId, async () => {
                     await onApprove(awaiting, false)
-                    setOpen(false)
+                    this.#setOpen(false)
                   }) }}
                 >
                   <IconCheckOutline16 size={14} />
@@ -287,9 +304,9 @@ export function CordisPanel({
                   label={t('action.approvePlugin')}
                   data-cordis-approve-plugin={awaiting}
                   disabled={busy}
-                  onClick={() => { void runAction(pluginId, async () => {
+                  onclick={() => { this.#runAction(pluginId, async () => {
                     await onApprove(awaiting, true)
-                    setOpen(false)
+                    this.#setOpen(false)
                   }) }}
                 >
                   <DoubleCheckIcon />
@@ -298,9 +315,9 @@ export function CordisPanel({
                   label={t('action.decline')}
                   data-cordis-decline={awaiting}
                   disabled={busy}
-                  onClick={() => { void runAction(pluginId, async () => {
+                  onclick={() => { this.#runAction(pluginId, async () => {
                     await onDecline(awaiting)
-                    setOpen(false)
+                    this.#setOpen(false)
                   }) }}
                 >
                   <IconCloseOutline16 size={14} />
@@ -313,7 +330,7 @@ export function CordisPanel({
                 label={t('action.run')}
                 data-cordis-switch="run"
                 disabled={busy}
-                onClick={() => { void runAction(pluginId, () => onRun({
+                onclick={() => { this.#runAction(pluginId, () => onRun({
                   agentId: listed.agentId,
                   pluginId,
                   packageId: selectedPackageId,
@@ -330,7 +347,7 @@ export function CordisPanel({
                 label={t('action.run')}
                 data-cordis-switch="run"
                 disabled={busy}
-                onClick={() => { void runAction(pluginId, () => onRun({
+                onclick={() => { this.#runAction(pluginId, () => onRun({
                   agentId: listed.agentId,
                   pluginId,
                   packageId: selectedPackage.packageId,
@@ -347,7 +364,7 @@ export function CordisPanel({
                 label={t('action.run')}
                 data-cordis-switch="run"
                 disabled={busy}
-                onClick={() => { void runAction(pluginId, () => onRun({
+                onclick={() => { this.#runAction(pluginId, () => onRun({
                   agentId: listed.agentId,
                   pluginId,
                   packageId: activePackage.packageId,
@@ -363,7 +380,7 @@ export function CordisPanel({
                 label={t('action.stop')}
                 data-cordis-switch="stop"
                 disabled={busy}
-                onClick={() => { void runAction(pluginId, () => onStop(listed.agentId, pluginId)) }}
+                onclick={() => { this.#runAction(pluginId, () => onStop(listed.agentId, pluginId)) }}
               >
                 <IconStopFill16 size={14} />
               </RowAction>
@@ -373,7 +390,7 @@ export function CordisPanel({
                 label={t('action.remove')}
                 data-cordis-remove={pluginId}
                 disabled={busy}
-                onClick={() => { void runAction(pluginId, () => onRemove(listed.agentId, pluginId)) }}
+                onclick={() => { this.#runAction(pluginId, () => onRemove(listed.agentId, pluginId)) }}
               >
                 <IconTrashOutline16 size={14} />
               </RowAction>
@@ -381,14 +398,14 @@ export function CordisPanel({
           </div>
         </div>
         {awaiting === undefined && nextPackageId !== undefined && listed !== undefined && (
-          <div className={css.transition}>
+          <div class={css.transition ?? ''}>
             <span>{currentPackageId === undefined ? '' : t('panel.current', { packageId: currentPackageId })}</span>
             <span>{t('panel.next', { packageId: nextPackageId })}</span>
-            <div className={css.transitionActions}>
+            <div class={css.transitionActions ?? ''}>
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => { void runAction(pluginId, () => onRun({
+                onclick={() => { this.#runAction(pluginId, () => onRun({
                   agentId: listed.agentId,
                   pluginId,
                   packageId: nextPackageId,
@@ -400,7 +417,7 @@ export function CordisPanel({
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => { void runAction(pluginId, () => onRun({
+                  onclick={() => { this.#runAction(pluginId, () => onRun({
                     agentId: listed.agentId,
                     pluginId,
                     packageId: currentPackageId,
@@ -413,15 +430,15 @@ export function CordisPanel({
           </div>
         )}
         {failure !== undefined && (
-          <div className={css.rowError} role="alert">{`${failure.message} (${failure.reason})`}</div>
+          <div class={css.rowError ?? ''} role="alert">{`${failure.message} (${failure.reason})`}</div>
         )}
         {failure === undefined && hostFailure !== undefined && (
-          <div className={css.rowError} role="alert">{`${hostFailure.message} (${hostFailure.phase})`}</div>
+          <div class={css.rowError ?? ''} role="alert">{`${hostFailure.message} (${hostFailure.phase})`}</div>
         )}
-        {actionError !== undefined && <div className={css.rowError} role="alert">{actionError}</div>}
+        {actionError !== undefined && <div class={css.rowError ?? ''} role="alert">{actionError}</div>}
         {renderFailure !== undefined && (
           <div
-            className={css.rowError}
+            class={css.rowError ?? ''}
             role="alert"
             data-cordis-render-failure={renderFailure.slot}
             data-cordis-render-abdicated={renderFailure.abdicated || undefined}
@@ -432,60 +449,110 @@ export function CordisPanel({
           </div>
         )}
         {activePackage !== undefined && activePackage.packageId !== selectedPackageId && (
-          <span className={css.activeVersion}>{`${t('status.running')}: ${activePackage.name} · ${activePackage.packageId}`}</span>
+          <span class={css.activeVersion ?? ''}>{`${t('status.running')}: ${activePackage.name} · ${activePackage.packageId}`}</span>
         )}
       </li>
-    )
+    ) as unknown as VNode
   }
 
-  return (
-    <div ref={rootRef} className={wide ? css.layer : `${css.layer} ${css.rail}`}>
-      {open && anchor !== undefined && (
-        <section className={css.panel} style={anchor} data-cordis-panel aria-label={t('panel.title')}>
-          <header className={css.header}>
-            <span className={css.title}>{t('panel.title')}</span>
-          </header>
-          <div className={css.body}>
-            {inventory.error !== undefined && (
-              <p className={css.readError} role="alert">{t('panel.readFailed', { message: inventory.error })}</p>
+  #render(): void {
+    const props = this.#props
+    if (props === null) { applyDiff(this, <span style="display:none" />); return }
+    const { wide, useSessions, useInventory, useActiveRuns, useLoaded, t } = props
+
+    const inventory = useInventory(snapshot => snapshot)
+    const activeRuns = useActiveRuns(snapshot => snapshot)
+    const loaded = useLoaded(snapshot => snapshot)
+    const current = useSessions(state => state.current)
+
+    const byPlugin = new Map<CordisDynamicPluginId, RowView>()
+    for (const listed of inventory.rows) {
+      const activity = activeRuns.get(listed.pluginId)
+      byPlugin.set(listed.pluginId, {
+        pluginId: listed.pluginId,
+        agentId: activity?.agentId ?? listed.agentId,
+        listed,
+        ...activity === undefined ? {} : { activity },
+      })
+    }
+    for (const [pluginId, activity] of activeRuns) {
+      if (byPlugin.has(pluginId)) continue
+      byPlugin.set(pluginId, { pluginId, agentId: activity.agentId, activity })
+    }
+    const all = [...byPlugin.values()]
+    const mine = blockingFirst(all.filter(row => current !== undefined && row.agentId === current))
+    const theirs = blockingFirst(all.filter(row => current === undefined || row.agentId !== current))
+    const approvals = [...activeRuns.values()].filter(activity => activity.phase === 'awaiting-approval').length
+    const running = all.filter(view => visiblePanelStatus(
+      view,
+      selectedPackageIdOf(view, this.#selected),
+      loaded,
+    ) === 'running').length
+
+    if (all.length === 0) { applyDiff(this, <span style="display:none" />); return }
+
+    const open = this.#open
+    const anchor = this.#anchor
+
+    const vdom = (
+      <div class={wide ? (css.layer ?? '') : `${css.layer ?? ''} ${css.rail ?? ''}`}>
+        {open && anchor !== undefined && (
+          <section
+            class={css.panel ?? ''}
+            style={`left: ${anchor.left}px; bottom: ${anchor.bottom}px`}
+            data-cordis-panel
+            aria-label={t('panel.title')}
+          >
+            <header class={css.header ?? ''}>
+              <span class={css.title ?? ''}>{t('panel.title')}</span>
+            </header>
+            <div class={css.body ?? ''}>
+              {inventory.error !== undefined && (
+                <p class={css.readError ?? ''} role="alert">{t('panel.readFailed', { message: inventory.error })}</p>
+              )}
+              {!inventory.read && inventory.error === undefined && <p class={css.note ?? ''}>{t('panel.loading')}</p>}
+              {inventory.read && all.length === 0 && <p class={css.note ?? ''}>{t('panel.empty')}</p>}
+              {mine.length > 0 && (
+                <section>
+                  <h3 class={css.group ?? ''}>{t('panel.group.current')}</h3>
+                  <ul class={css.rows ?? ''}>{mine.map(view => this.#renderRow(view))}</ul>
+                </section>
+              )}
+              {theirs.length > 0 && (
+                <section>
+                  <h3 class={css.group ?? ''}>{t('panel.group.others')}</h3>
+                  <ul class={css.rows ?? ''}>{theirs.map(view => this.#renderRow(view))}</ul>
+                </section>
+              )}
+            </div>
+          </section>
+        )}
+        <div class={css.footerButtons ?? ''}>
+          <button
+            type="button"
+            class={css.badge ?? ''}
+            data-cordis-badge={all.length}
+            data-cordis-approval-badge={approvals}
+            data-active={approvals > 0 || undefined}
+            aria-label={t('panel.plugins.aria')}
+            aria-expanded={open}
+            onclick={() => { this.#setOpen(!open) }}
+          >
+            <IconCordisPluginOutline14 size={wide ? 16 : 18} />
+            {wide && (
+              <>
+                <span class={css.badgeLabel ?? ''}>{t('panel.trigger')}</span>
+                <span class={css.badgeCount ?? ''}>{t('panel.runningCount', { count: running })}</span>
+              </>
             )}
-            {!inventory.read && inventory.error === undefined && <p className={css.note}>{t('panel.loading')}</p>}
-            {inventory.read && all.length === 0 && <p className={css.note}>{t('panel.empty')}</p>}
-            {mine.length > 0 && (
-              <section>
-                <h3 className={css.group}>{t('panel.group.current')}</h3>
-                <ul className={css.rows}>{mine.map(renderRow)}</ul>
-              </section>
-            )}
-            {theirs.length > 0 && (
-              <section>
-                <h3 className={css.group}>{t('panel.group.others')}</h3>
-                <ul className={css.rows}>{theirs.map(renderRow)}</ul>
-              </section>
-            )}
-          </div>
-        </section>
-      )}
-      <div className={css.footerButtons}>
-        <button
-          type="button"
-          className={css.badge}
-          data-cordis-badge={all.length}
-          data-cordis-approval-badge={approvals}
-          data-active={approvals > 0 || undefined}
-          aria-label={t('panel.plugins.aria')}
-          aria-expanded={open}
-          onClick={() => { setOpen(value => !value) }}
-        >
-          <IconCordisPluginOutline14 size={wide ? 16 : 18} />
-          {wide && (
-            <>
-              <span className={css.badgeLabel}>{t('panel.trigger')}</span>
-              <span className={css.badgeCount}>{t('panel.runningCount', { count: running })}</span>
-            </>
-          )}
-        </button>
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-cordis-panel') === undefined) {
+  customElements.define('dsh-cordis-panel', DshCordisPanel)
 }

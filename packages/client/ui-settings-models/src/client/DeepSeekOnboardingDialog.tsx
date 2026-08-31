@@ -4,10 +4,12 @@
  * can already talk to ends the step, and only a user with none is offered the
  * official DeepSeek route. The step reuses that page's credential editor in
  * the onboarding plugin's shared modal, so the key is entered once.
+ *
+ * Converted from a React hooks component: the load-on-idle and
+ * complete()-on-readiness effects become plain calls made on each render,
+ * guarded per-controller the same way WelcomeNotice guards `complete()`.
  */
 
-import { useEffect } from 'react'
-import type { ReactNode } from 'react'
 import type { IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -39,6 +41,9 @@ export interface DeepSeekOnboardingInjected {
 export type DeepSeekOnboardingDialogProps =
   PropsRuntime<'settings.onboarding'> & InjectFace<DeepSeekOnboardingInjected>
 
+/** Per-controller guard so a repeated terminal readiness calls `complete()` once. */
+const finishedControllers = new WeakSet<ModelsSettingsStore>()
+
 /* v8 ignore next 3 -- closed-union defaults only defend future source widening */
 function assertNever(_value: never): never {
   throw new Error('unexpected DeepSeek onboarding state')
@@ -50,22 +55,25 @@ function assertNever(_value: never): never {
  * @param props - settings-shell owner state and Models feature dependencies.
  * @returns the onboarding modal or null when onboarding needs no intervention.
  */
-export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): ReactNode {
+export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): JSX.Element | null {
   const { complete, controller, useModels, api, schema, t } = props
   const state = useModels(snapshot => snapshot)
   const readiness = onboardingReadiness(state)
 
-  useEffect(() => {
-    if (state.status === 'idle') void controller.load()
-  }, [controller, state.status])
+  if (state.status === 'idle') void controller.load()
 
-  useEffect(() => {
-    if (
-      readiness.kind === 'adapter-absent'
-      || readiness.kind === 'provider-ready'
-      || readiness.kind === 'unavailable'
-    ) complete()
-  }, [complete, readiness.kind])
+  if (
+    readiness.kind === 'adapter-absent'
+    || readiness.kind === 'provider-ready'
+    || readiness.kind === 'unavailable'
+  ) {
+    if (!finishedControllers.has(controller)) {
+      finishedControllers.add(controller)
+      complete()
+    }
+  } else {
+    finishedControllers.delete(controller)
+  }
 
   switch (readiness.kind) {
     case 'loading':
@@ -90,6 +98,7 @@ export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): 
 
   const finishCredential = (changed: boolean): void => {
     if (!changed) {
+      finishedControllers.add(controller)
       complete()
       return
     }
@@ -98,8 +107,8 @@ export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): 
 
   return (
     <OnboardingModal title={t('onboardingTitle')}>
-      <p className={styles.description}>{t('onboardingDescription')}</p>
-      <div className={styles.editor}>
+      <p class={styles.description ?? ''}>{t('onboardingDescription')}</p>
+      <div class={styles.editor ?? ''}>
         <ProviderEditor
           provider={row.entry.provider}
           displayName={row.entry.displayName}

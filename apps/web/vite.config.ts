@@ -1,7 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
-import react from '@vitejs/plugin-react'
 import { clientBuildEnvironmentDefines } from '../../scripts/client-build-environment.ts'
 
 const src = (rel: string): string => fileURLToPath(new URL(rel, import.meta.url))
@@ -44,16 +43,16 @@ function rejectStandaloneServe(): Plugin {
  * imported solely by these and rollup's chunk coloring pulls them into
  * vendor automatically. A dependency shared with index-side code falls back
  * to index — a few kB of dilution, never a correctness problem. Anything not
- * listed (react family, the vendored cordis workspace, tiny helpers like
+ * listed (webjsx itself, the vendored cordis workspace, tiny helpers like
  * anser/clsx, all workspace code) stays in the default `index` chunk, so
  * editing shell code re-hashes only index and returning clients keep the
  * cached vendor chunk.
  *
- * Every member must be React-free. A package that
- * imports react/jsx-runtime must never be listed — rollup folds a module
- * shared between the entry and a manual chunk into the manual chunk, so one
- * react-importing member would drag the single shared react copy into
- * vendor. The React side of markdown/math rendering is workspace code and
+ * Every member must be webjsx-free. A package that imports
+ * webjsx/jsx-runtime must never be listed — rollup folds a module shared
+ * between the entry and a manual chunk into the manual chunk, so one
+ * webjsx-importing member would drag the single shared webjsx copy into
+ * vendor. The webjsx side of markdown/math rendering is workspace code and
  * rides index.
  */
 const VENDOR_PACKAGES: ReadonlySet<string> = new Set([
@@ -108,7 +107,7 @@ function npmPackageOf(id: string): string | undefined {
 }
 
 export default defineConfig({
-  plugins: [rejectStandaloneServe(), clientDocumentTitle(), react()],
+  plugins: [rejectStandaloneServe(), clientDocumentTitle()],
   build: {
     sourcemap: true,
     rollupOptions: {
@@ -146,13 +145,13 @@ export default defineConfig({
   },
   resolve: {
     // One instance per shared npm identity: a bare specifier otherwise resolves
-    // from the importer's directory, so a diverging range ships a second React
-    // and splits hook and element identity. Entries are package ids — they cover
-    // react/jsx-runtime and react-dom/client — and resolve from this package's
-    // node_modules, so react must stay a devDependency here and any watcher must
-    // run vite from this directory (scripts/dev-web.ts). Workspace packages need
-    // no entry: pnpm links each of them to a single directory.
-    dedupe: ['react', 'react-dom'],
+    // from the importer's directory, so a diverging range ships a second webjsx
+    // copy and splits custom-element/VNode identity. The entry covers
+    // webjsx/jsx-runtime and resolves from this package's node_modules, so
+    // webjsx must stay a devDependency here and any watcher must run vite from
+    // this directory (scripts/dev-web.ts). Workspace packages need no entry:
+    // pnpm links each of them to a single directory.
+    dedupe: ['webjsx'],
     // Workspace packages are consumed as built lib products: each resolves
     // through its own package.json exports from the importer's directory, and
     // CSS still rides Vite's pipeline because the client build preset emits it

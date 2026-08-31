@@ -12,9 +12,14 @@
  * A card renders nothing while its namespace is unavailable: a deployment that
  * does not compose the owning plugin should show no trace of it, rather than a
  * disabled card the user cannot act on.
+ *
+ * Converted from a React hooks component (useState) to a webjsx custom
+ * element: `open` becomes an instance field, and re-render is an explicit
+ * applyDiff(this, vdom) call (Toast.tsx's pattern).
  */
 
-import { useState, type ReactNode } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { CardShell } from './card-form.ts'
@@ -36,63 +41,95 @@ export interface PluginCardProps {
   /** Drop every staged edit. */
   onDiscard: () => void
   /** The plugin's controls. */
-  children: ReactNode
+  children: VNode | VNode[] | string | null
+}
+
+/** One plugin card custom element. See {@link PluginCardProps} for the field-by-field docs. */
+export class DshPluginCard extends HTMLElement {
+  #props: PluginCardProps | null = null
+  #open = false
+
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: PluginCardProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { state } = props
+    if (!state.available) {
+      applyDiff(this, [])
+      return
+    }
+    const open = this.#open
+    const title = props.t(props.titleKey)
+    const blocked = !state.dirty || state.invalid || state.saving
+    const vdom = (
+      <li class={clsx(css.card, open && css.cardOpen)}>
+        <button
+          type="button"
+          class={css.header ?? ''}
+          aria-expanded={open}
+          aria-label={`${props.t(open ? 'collapse' : 'expand')}: ${title}`}
+          onclick={() => { this.#open = !this.#open; this.#render() }}
+        >
+          <span class={css.headText ?? ''}>
+            <span class={css.name ?? ''}>{title}</span>
+            <span class={css.description ?? ''}>{props.t(props.descriptionKey)}</span>
+          </span>
+          {state.dirty ? <span class={css.pending ?? ''}>{props.t('unsaved')}</span> : null}
+          <IconChevronDownOutline14 className={clsx(css.chevron, open && css.chevronOpen)} />
+        </button>
+        {open
+          ? (
+            <div class={css.body ?? ''}>
+              {!state.writable ? <p class={css.readOnly ?? ''} role="status">{props.t('readOnly')}</p> : null}
+              {props.children}
+              <div class={css.footer ?? ''}>
+                {state.failed ? <p class={css.failed ?? ''} role="status">{props.t('saveFailed')}</p> : null}
+                <button
+                  type="button"
+                  class={css.discard ?? ''}
+                  disabled={!state.dirty || state.saving}
+                  onclick={props.onDiscard}
+                >
+                  {props.t('discard')}
+                </button>
+                <button
+                  type="button"
+                  class={css.save ?? ''}
+                  disabled={blocked}
+                  onclick={props.onSave}
+                >
+                  {props.t(state.saving ? 'saving' : 'save')}
+                </button>
+              </div>
+            </div>
+          )
+          : null}
+      </li>
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-plugin-card') === undefined) {
+  customElements.define('dsh-plugin-card', DshPluginCard)
 }
 
 /**
  * Render one plugin card.
  * @param props - the plugin's copy keys, its form state, and its controls.
- * @returns the card, or nothing when the namespace is unavailable.
+ * @returns the card; renders nothing when the namespace is unavailable.
  */
-export function PluginCard(props: PluginCardProps) {
-  const [open, setOpen] = useState(false)
-  const { state } = props
-  if (!state.available) return null
-  const title = props.t(props.titleKey)
-  const blocked = !state.dirty || state.invalid || state.saving
-  return (
-    <li className={clsx(css.card, open && css.cardOpen)}>
-      <button
-        type="button"
-        className={css.header}
-        aria-expanded={open}
-        aria-label={`${props.t(open ? 'collapse' : 'expand')}: ${title}`}
-        onClick={() => { setOpen(!open) }}
-      >
-        <span className={css.headText}>
-          <span className={css.name}>{title}</span>
-          <span className={css.description}>{props.t(props.descriptionKey)}</span>
-        </span>
-        {state.dirty ? <span className={css.pending}>{props.t('unsaved')}</span> : null}
-        <IconChevronDownOutline14 className={clsx(css.chevron, open && css.chevronOpen)} />
-      </button>
-      {open
-        ? (
-          <div className={css.body}>
-            {!state.writable ? <p className={css.readOnly} role="status">{props.t('readOnly')}</p> : null}
-            {props.children}
-            <div className={css.footer}>
-              {state.failed ? <p className={css.failed} role="status">{props.t('saveFailed')}</p> : null}
-              <button
-                type="button"
-                className={css.discard}
-                disabled={!state.dirty || state.saving}
-                onClick={props.onDiscard}
-              >
-                {props.t('discard')}
-              </button>
-              <button
-                type="button"
-                className={css.save}
-                disabled={blocked}
-                onClick={props.onSave}
-              >
-                {props.t(state.saving ? 'saving' : 'save')}
-              </button>
-            </div>
-          </div>
-        )
-        : null}
-    </li>
-  )
+export function PluginCard(props: PluginCardProps): JSX.Element {
+  const el = document.createElement('dsh-plugin-card') as DshPluginCard
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

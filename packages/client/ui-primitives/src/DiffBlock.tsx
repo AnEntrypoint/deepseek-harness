@@ -7,10 +7,19 @@
 // Output never soft-wraps — an aligned source line keeps its indentation and
 // scrolls horizontally instead of folding. Colors resolve through --dsw-*
 // tokens; geometry mirrors CodeBlock.
+//
+// Converted from a React hooks component to a webjsx custom element:
+// expanded/copied become instance fields, and copy feedback now uses the
+// createCopyFeedback factory (replacing the old useCallback/useState pair)
+// driven from connectedCallback/disconnectedCallback. Re-render is an
+// explicit applyDiff(this, vdom) call (Toast.tsx's pattern). The buildRows
+// useMemo becomes a plain recompute inside #render guarded by a last-diffs
+// identity check.
 
-import { useCallback, useMemo, useState } from 'react'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
-import { writeClipboard } from './clipboard.ts'
+import { createCopyFeedback, type CopyFeedbackController } from './use-copy-feedback.ts'
 import css from './DiffBlock.module.css'
 
 /**
@@ -21,7 +30,7 @@ import css from './DiffBlock.module.css'
 export const DEFAULT_DIFF_MAX_LINES = 16
 
 /**
- * One file's change, in the shape {@link DiffBlock} draws. Structurally the
+ * One file's change, in the shape {@link DiffBlockProps} draws. Structurally the
  * render-intent contract's `FileDiff`, redeclared here so this primitive stays
  * free of the tool contract (the terminal card's decoupling, applied to diffs).
  */
@@ -133,63 +142,110 @@ function copyText(rows: DiffRow[]): string {
   }).join('\n')
 }
 
-/**
- * Render a file mutation as an inline diff surface.
- * @param props - see {@link DiffBlockProps}.
- * @returns the diff block element.
- */
-export function DiffBlock({ diffs, maxLines = DEFAULT_DIFF_MAX_LINES, className }: DiffBlockProps) {
-  const { rows, added, removed, files } = useMemo(() => buildRows(diffs), [diffs])
-  const [expanded, setExpanded] = useState(false)
-  const [copied, setCopied] = useState(false)
+const DEFAULT_PROPS: DiffBlockProps = { diffs: [] }
 
-  const onCopy = useCallback(() => {
-    if (copied) return
-    void writeClipboard(copyText(rows)).then((ok) => {
-      if (!ok) return
-      setCopied(true)
-      window.setTimeout(() => { setCopied(false) }, 1000)
-    })
-  }, [copied, rows])
+/** File-mutation inline-diff surface, as a custom element. */
+export class DshDiffBlock extends HTMLElement {
+  #props: DiffBlockProps = DEFAULT_PROPS
+  #expanded = false
+  #copyFeedback: CopyFeedbackController | null = null
+  #lastDiffs: DiffHunk[] | null = null
+  #lastBuilt: { rows: DiffRow[]; added: number; removed: number; files: number } = { rows: [], added: 0, removed: 0, files: 0 }
 
-  const onToggle = useCallback(() => { setExpanded(value => !value) }, [])
+  setProps(props: DiffBlockProps): void {
+    this.#props = props
+    this.#render()
+  }
 
-  if (rows.length === 0) return null
+  connectedCallback(): void {
+    this.#copyFeedback = createCopyFeedback(() => copyText(this.#built().rows), () => { this.#render() })
+    this.#render()
+  }
 
-  const hidden = rows.length - maxLines
-  const capped = hidden > 0 && !expanded
-  // Same split arithmetic as TerminalBlock and the TUI transcript's collapsed
-  // card, so a body's head and tail slices agree across the front ends.
-  const headLines = Math.ceil(maxLines / 2)
-  const tailLines = maxLines - headLines
-  const head = capped ? rows.slice(0, headLines) : rows
-  const tail = capped ? rows.slice(rows.length - tailLines) : []
+  disconnectedCallback(): void {
+    this.#copyFeedback?.stop()
+    this.#copyFeedback = null
+  }
 
-  return (
-    <div className={clsx(css.block, className)} data-diff="">
-      <button type="button" className={css.copyButton} onClick={onCopy}>
-        {copied ? '复制成功' : '复制'}
-      </button>
-      <div className={css.body}>
-        {head.map((row, index) => (
-          <div key={index} className={clsx(css.line, ROW_CLASS[row.kind])}>{row.text}</div>
-        ))}
-        {hidden > 0 && (
-          <button
-            type="button"
-            className={css.expand}
-            aria-expanded={expanded}
-            aria-label={expanded ? '收起差异' : `展开其余 ${hidden} 行差异`}
-            onClick={onToggle}
-          >
-            {expanded ? '收起' : `… 其余 ${hidden} 行`}
-          </button>
-        )}
-        {tail.map((row, index) => (
-          <div key={index} className={clsx(css.line, ROW_CLASS[row.kind])}>{row.text}</div>
-        ))}
+  #built(): { rows: DiffRow[]; added: number; removed: number; files: number } {
+    if (this.#lastDiffs !== this.#props.diffs) {
+      this.#lastDiffs = this.#props.diffs
+      this.#lastBuilt = buildRows(this.#props.diffs)
+    }
+    return this.#lastBuilt
+  }
+
+  #render(): void {
+    const { maxLines = DEFAULT_DIFF_MAX_LINES, className } = this.#props
+    const { rows, added, removed, files } = this.#built()
+
+    if (rows.length === 0) {
+      applyDiff(this, <span style="display:none" />)
+      return
+    }
+
+    const copied = this.#copyFeedback?.copied ?? false
+    const hidden = rows.length - maxLines
+    const capped = hidden > 0 && !this.#expanded
+    // Same split arithmetic as TerminalBlock and the TUI transcript's collapsed
+    // card, so a body's head and tail slices agree across the front ends.
+    const headLines = Math.ceil(maxLines / 2)
+    const tailLines = maxLines - headLines
+    const head = capped ? rows.slice(0, headLines) : rows
+    const tail = capped ? rows.slice(rows.length - tailLines) : []
+
+    const vdom: VNode = (
+      <div class={clsx(css.block, className)} data-diff="">
+        <button type="button" class={css.copyButton ?? ''} onclick={() => this.#copyFeedback?.onCopy()}>
+          {copied ? '复制成功' : '复制'}
+        </button>
+        <div class={css.body ?? ''}>
+          {head.map((row, index) => (
+            <div key={index} class={clsx(css.line, ROW_CLASS[row.kind])}>{row.text}</div>
+          ))}
+          {hidden > 0 && (
+            <button
+              type="button"
+              class={css.expand ?? ''}
+              aria-expanded={this.#expanded}
+              aria-label={this.#expanded ? '收起差异' : `展开其余 ${hidden} 行差异`}
+              onclick={() => { this.#expanded = !this.#expanded; this.#render() }}
+            >
+              {this.#expanded ? '收起' : `… 其余 ${hidden} 行`}
+            </button>
+          )}
+          {tail.map((row, index) => (
+            <div key={index} class={clsx(css.line, ROW_CLASS[row.kind])}>{row.text}</div>
+          ))}
+        </div>
+        <div class={css.footer ?? ''}>└ +{added} -{removed} · {files} file{files === 1 ? '' : 's'}</div>
       </div>
-      <div className={css.footer}>└ +{added} -{removed} · {files} file{files === 1 ? '' : 's'}</div>
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-diff-block') === undefined) {
+  customElements.define('dsh-diff-block', DshDiffBlock)
+}
+
+/**
+ * Create (if needed) or update a DiffBlock element in place.
+ * @param el - an existing `dsh-diff-block` element to update, or null to create one.
+ * @param props - see {@link DiffBlockProps}.
+ * @returns the `dsh-diff-block` element; keep it and pass it back in to update.
+ */
+export function renderDiffBlock(el: DshDiffBlock | null, props: DiffBlockProps): DshDiffBlock {
+  const target = el ?? document.createElement('dsh-diff-block') as DshDiffBlock
+  target.setProps(props)
+  return target
+}
+
+/**
+ * One-shot creation helper preserving the original function-component call
+ * shape. Cast to `JSX.Element` (Modal.tsx's pattern) so `<DiffBlock ... />`
+ * typechecks as a JSX component call.
+ */
+export function DiffBlock(props: DiffBlockProps): JSX.Element {
+  return renderDiffBlock(null, props) as unknown as JSX.Element
 }

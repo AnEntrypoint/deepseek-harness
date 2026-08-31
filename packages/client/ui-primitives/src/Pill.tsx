@@ -1,30 +1,31 @@
 // Pill: small rounded label chip (view switcher tabs, filters, badges).
 
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import css from './Pill.module.css'
 
 /**
- * Render a pill chip. Interactive when onClick is supplied (renders a button);
+ * Render a pill chip. Interactive when onclick is supplied (renders a button);
  * otherwise a static span.
  * @param props.active - selected/active visual state.
  * @returns pill element.
  */
-export function Pill({ active = false, className, children, onClick, ...rest }: {
+export function Pill({ active = false, class: extraClass, children, onclick, ...rest }: {
   active?: boolean
   // `| undefined` so a caller can forward an optional class straight through
   // under exactOptionalPropertyTypes (a CSS-module lookup is string|undefined).
-  className?: string | undefined
-  children?: ReactNode
-} & ButtonHTMLAttributes<HTMLButtonElement>) {
-  if (!onClick) {
-    return <span className={clsx(css.pill, active && css.active, className)}>{children}</span>
+  class?: string | undefined
+  children?: VNode | VNode[] | string | null
+  onclick?: ((event: MouseEvent) => void) | undefined
+} & Record<string, unknown>): JSX.Element {
+  if (!onclick) {
+    return <span class={clsx(css.pill, active && css.active, extraClass)}>{children}</span>
   }
   return (
     <button
       type="button"
-      className={clsx(css.pill, css.interactive, active && css.active, className)}
-      onClick={onClick}
+      class={clsx(css.pill, css.interactive, active && css.active, extraClass)}
+      onclick={onclick}
       {...rest}
     >
       {children}

@@ -5,10 +5,11 @@
     "outDir": "lib/types",
     "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
   },
-  "files": [
-    "src/index.ts",
-    "src/invariant.ts",
-    "src/types.ts"
+  "include": [
+    "src/types.d.ts"
+  ],
+  "exclude": [
+    "src/client"
   ],
   "references": [
     {

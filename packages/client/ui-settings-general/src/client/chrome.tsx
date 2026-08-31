@@ -19,13 +19,11 @@ export type HeaderContentProps = PropsRuntime<'settings.header'> & PropsLocale<'
  * @param props - composed slot props.
  * @returns the trigger content fragment.
  */
-export function TriggerContent({ wide, t }: TriggerContentProps) {
-  return (
-    <>
-      {wide ? <IconSettingsOutline16 size={16} /> : <IconSettingsOutline14 size={18} />}
-      {wide && <span className={css.triggerLabel}>{t('trigger')}</span>}
-    </>
-  )
+export function TriggerContent({ wide, t }: TriggerContentProps): JSX.Element[] {
+  return [
+    wide ? <IconSettingsOutline16 size={16} /> : <IconSettingsOutline14 size={18} />,
+    ...(wide ? [<span class={css.triggerLabel ?? ''}>{t('trigger')}</span>] : []),
+  ]
 }
 
 /**
@@ -33,8 +31,8 @@ export function TriggerContent({ wide, t }: TriggerContentProps) {
  * @param props - composed slot props.
  * @returns the title text node.
  */
-export function HeaderContent({ t }: HeaderContentProps) {
-  return <>{t('title')}</>
+export function HeaderContent({ t }: HeaderContentProps): string {
+  return t('title')
 }
 
 /** Close-button label text props: the standard locale seat only. */
@@ -45,6 +43,6 @@ export type CloseLabelProps = PropsRuntime<'settings.close'> & PropsLocale<'sett
  * @param props - composed slot props.
  * @returns the label text node.
  */
-export function CloseLabel({ t }: CloseLabelProps) {
-  return <>{t('close')}</>
+export function CloseLabel({ t }: CloseLabelProps): string {
+  return t('close')
 }

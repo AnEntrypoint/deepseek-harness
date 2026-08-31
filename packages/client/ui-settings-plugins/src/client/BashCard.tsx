@@ -17,7 +17,7 @@ export type BashCardProps =
  * @param props - locale copy, the card snapshot, and its form actions.
  * @returns the card.
  */
-export function BashCard(props: BashCardProps) {
+export function BashCard(props: BashCardProps): JSX.Element {
   const { t } = props
   const state = props.useBashCard(snapshot => snapshot)
   const disabled = !state.writable

@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { IconDownloadOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { SessionLogDownloadDialog, type SessionLogDownloadDialogProps } from './Dialog.tsx'
 import css from './HeaderAction.module.css'
@@ -8,7 +7,7 @@ import css from './HeaderAction.module.css'
  * @param props - Session runtime, download controller, and localized dialog copy.
  * @returns the persistent Header action and Session-scoped dialog.
  */
-export function SessionLogDownloadHeaderAction(props: SessionLogDownloadDialogProps): ReactNode {
+export function SessionLogDownloadHeaderAction(props: SessionLogDownloadDialogProps): JSX.Element {
   const { sessionId, useSessionLogDownload, request } = props
   const entry = useSessionLogDownload(state => state.bySession[String(sessionId)])
   const busy = entry?.status === 'downloading'
@@ -17,10 +16,10 @@ export function SessionLogDownloadHeaderAction(props: SessionLogDownloadDialogPr
     <>
       <button
         type="button"
-        className={css.sessionLogButton}
+        class={css.sessionLogButton ?? ''}
         disabled={busy}
         aria-busy={busy}
-        onClick={() => { void request(sessionId) }}
+        onclick={() => { void request(sessionId) }}
       >
         <span>Session log</span>
         <IconDownloadOutline16 size={12} />

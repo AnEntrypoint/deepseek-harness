@@ -1,7 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+// MessageImage: compact history renderer with retryable async loading and
+// click-to-open preview, converted from a React hooks component to a webjsx
+// custom element. State (src/error/open/attempt) becomes instance fields,
+// the async load effect becomes an explicit #load() call guarded by a
+// liveness epoch (mirrors the original useEffect's cleanup flag), and
+// re-render is an explicit applyDiff(this, vdom) call (Toast.tsx's pattern).
+
+import { applyDiff } from 'webjsx'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
-import { ImageLightbox } from './ImageLightbox.tsx'
-import type { ImageLightboxLabels } from './ImageLightbox.tsx'
+import { renderImageLightbox } from './ImageLightbox.tsx'
+import type { DshImageLightbox, ImageLightboxLabels } from './ImageLightbox.tsx'
 import css from './MessageImage.module.css'
 
 /** Loads a session-authorized durable image URL. */
@@ -21,6 +28,13 @@ export interface MessageImageLabels {
   loadFailed: string
   /** Lightbox strings forwarded to the opened preview. */
   lightbox: ImageLightboxLabels
+}
+
+export interface MessageImageProps {
+  attachment: ImageAttachmentRef
+  load: ImageLoader
+  variant: 'single' | 'tile'
+  labels: MessageImageLabels
 }
 
 /** Display box for a lone image (DeepSeek Chat rule): long edge 240px with
@@ -44,60 +58,114 @@ function singleFit(attachment: ImageAttachmentRef): { width: number; height: num
  * Compact history renderer with retryable loading and click-to-open original
  * preview. A lone image renders at its `singleFit` size; an image among
  * several renders as a fixed 64px square tile.
- *
- * @param props.attachment - the durable image reference to load and bound.
- * @param props.load - session-authorized URL loader.
- * @param props.variant - `single` for a message's lone image, `tile` otherwise.
- * @param props.labels - resolved strings (tooltip, loading, retry, lightbox).
- * @returns the bounded thumbnail button, or the retry control on failure.
  */
-export function MessageImage({ attachment, load, variant, labels }: {
-  attachment: ImageAttachmentRef
-  load: ImageLoader
-  variant: 'single' | 'tile'
-  labels: MessageImageLabels
-}) {
-  const [src, setSrc] = useState<string | null>(null)
-  const [error, setError] = useState(false)
-  const [open, setOpen] = useState(false)
-  // Retry re-arms the one load effect below, so every attempt — first load or
-  // retry — runs under the same liveness guard and the same reset.
-  const [attempt, setAttempt] = useState(0)
-  const request = useCallback(() => { setAttempt(a => a + 1) }, [])
-  const close = useCallback(() => { setOpen(false) }, [])
-  const fit = useMemo(
-    () => (variant === 'single' ? singleFit(attachment) : undefined),
-    [attachment, variant],
-  )
+export class DshMessageImage extends HTMLElement {
+  #props: MessageImageProps | null = null
+  #src: string | null = null
+  #error = false
+  #open = false
+  #epoch = 0
+  #lightboxEl: DshImageLightbox | null = null
 
-  useEffect(() => {
-    let live = true
-    setError(false)
-    setSrc(null)
-    void load(attachment).then((url) => { if (live) setSrc(url) }).catch(() => { if (live) setError(true) })
-    return () => { live = false }
-  }, [attachment, load, attempt])
+  setProps(props: MessageImageProps): void {
+    const prev = this.#props
+    const attachmentChanged = prev === null || prev.attachment !== props.attachment || prev.load !== props.load
+    this.#props = props
+    if (attachmentChanged) this.#request()
+    this.#render()
+  }
 
-  const label = attachment.name ?? labels.image
-  if (error) return <button type="button" className={css.error} data-variant={variant} onClick={request}>{labels.loadFailed}</button>
-  return (
-    <>
+  connectedCallback(): void {
+    if (this.#props !== null && this.#src === null && !this.#error) this.#request()
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    this.#epoch += 1
+    this.#lightboxEl?.remove()
+    this.#lightboxEl = null
+  }
+
+  #request(): void {
+    const props = this.#props
+    if (props === null) return
+    this.#epoch += 1
+    const epoch = this.#epoch
+    this.#error = false
+    this.#src = null
+    void props.load(props.attachment)
+      .then((url) => { if (epoch === this.#epoch) { this.#src = url; this.#render() } })
+      .catch(() => { if (epoch === this.#epoch) { this.#error = true; this.#render() } })
+  }
+
+  #close = (): void => {
+    this.#open = false
+    this.#lightboxEl?.remove()
+    this.#lightboxEl = null
+    this.#render()
+  }
+
+  #render(): void {
+    const props = this.#props
+    if (props === null) return
+    const { attachment, variant, labels } = props
+    const fit = variant === 'single' ? singleFit(attachment) : undefined
+    const label = attachment.name ?? labels.image
+
+    if (this.#open && this.#src !== null) {
+      this.#lightboxEl = renderImageLightbox(this.#lightboxEl, {
+        src: this.#src, alt: label, labels: labels.lightbox, onClose: this.#close,
+      })
+    } else if (this.#lightboxEl !== null) {
+      this.#lightboxEl.remove()
+      this.#lightboxEl = null
+    }
+
+    if (this.#error) {
+      applyDiff(this, (
+        <button type="button" class={css.error ?? ''} data-variant={variant} onclick={() => { this.#request() }}>
+          {labels.loadFailed}
+        </button>
+      ))
+      return
+    }
+
+    const vdom = (
       <button
         type="button"
-        className={css.frame}
+        class={css.frame ?? ''}
         data-variant={variant}
-        style={fit === undefined ? undefined : { width: fit.width, height: fit.height }}
+        style={fit === undefined ? '' : `width: ${fit.width}px; height: ${fit.height}px`}
         title={labels.open}
         aria-label={labels.openNamed(label)}
-        onClick={() => { if (src !== null) setOpen(true) }}
+        onclick={() => { if (this.#src !== null) { this.#open = true; this.#render() } }}
       >
-        {src === null
-          ? <span className={css.loading}>{labels.loading}</span>
-          : <img src={src} alt={label} style={fit === undefined ? undefined : { objectPosition: fit.objectPosition }} />}
+        {this.#src === null
+          ? <span class={css.loading ?? ''}>{labels.loading}</span>
+          : <img src={this.#src} alt={label} style={fit === undefined ? '' : `object-position: ${fit.objectPosition}`} />}
       </button>
-      {open && src !== null && <ImageLightbox src={src} alt={label} labels={labels.lightbox} onClose={close} />}
-    </>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-message-image') === undefined) {
+  customElements.define('dsh-message-image', DshMessageImage)
+}
+
+/** Create (if needed) and update a MessageImage element in place.
+ * @param el - an existing `dsh-message-image` element to update, or null to create one.
+ * @param props - see {@link MessageImageProps}.
+ * @returns the `dsh-message-image` element; keep it and pass it back in to update. */
+export function renderMessageImage(el: DshMessageImage | null, props: MessageImageProps): DshMessageImage {
+  const target = el ?? document.createElement('dsh-message-image') as DshMessageImage
+  target.setProps(props)
+  return target
+}
+
+/** One-shot creation helper preserving the original function-component call shape. */
+export function MessageImage(props: MessageImageProps): JSX.Element {
+  return renderMessageImage(null, props) as unknown as JSX.Element
 }
 
 /** Wrapping image group shared by user and assistant history: a lone image
@@ -107,14 +175,12 @@ export function ImageGallery({ images, load, align, labels }: {
   load: ImageLoader
   align: 'start' | 'end'
   labels: MessageImageLabels
-}) {
+}): JSX.Element | null {
   if (images.length === 0) return null
   const variant = images.length === 1 ? 'single' : 'tile'
   return (
-    <div className={css.gallery} data-align={align}>
-      {images.map((image, index) => (
-        <MessageImage key={`${image.attachment.attachmentId}:${index}`} {...image} load={load} variant={variant} labels={labels} />
-      ))}
+    <div class={css.gallery ?? ''} data-align={align}>
+      {images.map(image => MessageImage({ attachment: image.attachment, load, variant, labels }))}
     </div>
   )
 }

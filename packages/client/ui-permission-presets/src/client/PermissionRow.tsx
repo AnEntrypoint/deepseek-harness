@@ -2,9 +2,13 @@
  * Permission preference row: the default preset for subsequently created
  * sessions. Current-session switches remain on the composer `/permission`
  * control.
+ *
+ * Converted from a React hooks component to a webjsx custom element:
+ * open/confirmingFullAccess/acknowledged state become instance fields, the
+ * settings-status-driven effect becomes logic inside `#derive`/`#render`, and
+ * re-render is an explicit applyDiff(this, vdom) call (Toast.tsx's pattern).
  */
-
-import { useEffect, useState } from 'react'
+import { applyDiff } from 'webjsx'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
@@ -35,53 +39,82 @@ export type PermissionRowProps =
 
 /**
  * Render the new-session Permission default selector.
- * @param props - composed slot props.
- * @returns the row, or null when the host does not expose permission settings.
  */
-export function PermissionRow({ load, select, usePermission, t }: PermissionRowProps) {
-  const state = usePermission(snapshot => snapshot)
-  const [open, setOpen] = useState(false)
-  const [confirmingFullAccess, setConfirmingFullAccess] = useState(false)
-  const [acknowledged, setAcknowledged] = useState(false)
+export class DshPermissionRow extends HTMLElement {
+  #props: PermissionRowProps | null = null
+  #open = false
+  #confirmingFullAccess = false
+  #acknowledged = false
+  #lastWritable: boolean | null = null
+  #lastStatus: PermissionSettingsState['status'] | null = null
+  #loaded = false
 
-  useEffect(() => {
-    void load()
-  }, [load])
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: PermissionRowProps): void {
+    this.#props = props
+    if (!this.#loaded) {
+      this.#loaded = true
+      void props.load()
+    }
+    this.#render()
+  }
 
-  useEffect(() => {
-    if (state.writable && state.status !== 'unavailable') return
-    setOpen(false)
-    setAcknowledged(false)
-    setConfirmingFullAccess(false)
-  }, [state.status, state.writable])
+  connectedCallback(): void {
+    this.#render()
+  }
 
-  if (state.status === 'unavailable') return null
-  const selected = state.options.find(option => option.id === state.currentValue)
-  const busy = state.status === 'loading' || state.status === 'saving' || confirmingFullAccess
-  const label = selected?.label
-    ?? (busy ? t('loading') : t('unavailable'))
-  const description: string = state.error ?? t('description')
+  disconnectedCallback(): void {}
 
-  return (
-    <>
-      <div className={css.row}>
-        <div className={css.rowText}>
-          <div className={css.title}>{t('title')}</div>
-          <div className={css.desc} role={state.error === null ? undefined : 'alert'}>{description}</div>
+  #render(): void {
+    const props = this.#props
+    if (props === null) { applyDiff(this, []); return }
+    const { select, t, usePermission } = props
+    // NOTE: usePermission is the framework standard-kit's React-hook binding
+    // (InjectFace synthesizes it from the registered SnapshotStore); this
+    // custom element calls it outside a React render as a best-effort bridge
+    // — the raw observable itself is not threaded onto composed props. See
+    // batch report: cross-package blocker in ui-slots/ui-renderer, out of
+    // this package's scope.
+    const state = usePermission(snapshot => snapshot)
+
+    if (state.writable && state.status !== 'unavailable') {
+      // no-op: keep current open/confirm state
+    } else if (this.#lastWritable !== state.writable || this.#lastStatus !== state.status) {
+      this.#open = false
+      this.#acknowledged = false
+      this.#confirmingFullAccess = false
+    }
+    this.#lastWritable = state.writable
+    this.#lastStatus = state.status
+
+    if (state.status === 'unavailable') { applyDiff(this, []); return }
+    const selected = state.options.find(option => option.id === state.currentValue)
+    const busy = state.status === 'loading' || state.status === 'saving' || this.#confirmingFullAccess
+    const label = selected?.label
+      ?? (busy ? t('loading') : t('unavailable'))
+    const description: string = state.error ?? t('description')
+
+    const vdom = [
+      <div class={css.row ?? ''}>
+        <div class={css.rowText ?? ''}>
+          <div class={css.title ?? ''}>{t('title')}</div>
+          <div class={css.desc ?? ''} role={state.error === null ? null : 'alert'}>{description}</div>
         </div>
         <Menu
-          open={open}
-          onClose={() => { setOpen(false) }}
+          open={this.#open}
+          onClose={() => { this.#open = false; this.#render() }}
           items={state.options.map(option => ({ id: option.id, label: option.label }))}
           selectedId={state.currentValue}
           onSelect={(id) => {
-            setOpen(false)
-            if (id === state.currentValue) return
+            this.#open = false
+            if (id === state.currentValue) { this.#render(); return }
             if (id === FULL_ACCESS_PRESET) {
-              setAcknowledged(false)
-              setConfirmingFullAccess(true)
+              this.#acknowledged = false
+              this.#confirmingFullAccess = true
+              this.#render()
               return
             }
+            this.#render()
             void select(id)
           }}
           align="end"
@@ -89,40 +122,54 @@ export function PermissionRow({ load, select, usePermission, t }: PermissionRowP
           anchor={(
             <button
               type="button"
-              className={css.selector}
+              class={css.selector ?? ''}
               aria-haspopup="menu"
-              aria-expanded={open}
+              aria-expanded={this.#open}
               disabled={busy || !state.writable || state.options.length === 0}
-              onClick={() => { setOpen(value => !value) }}
+              onclick={() => { this.#open = !this.#open; this.#render() }}
             >
               {label}
               <IconChevronDownOutline14 className={css.chevron} />
             </button>
           )}
         />
-      </div>
+      </div>,
       <RiskConfirmation
-        open={confirmingFullAccess}
+        open={this.#confirmingFullAccess}
         title={t('confirm.title')}
         description={t('confirm.description')}
         acknowledgeLabel={t('confirm.acknowledge')}
         cancelLabel={t('confirm.cancel')}
         confirmLabel={t('confirm.enable')}
-        acknowledged={acknowledged}
+        acknowledged={this.#acknowledged}
         disabled={!state.writable || state.status === 'saving'}
-        onAcknowledgedChange={setAcknowledged}
+        onAcknowledgedChange={(acknowledged: boolean) => { this.#acknowledged = acknowledged; this.#render() }}
         onCancel={() => {
-          setAcknowledged(false)
-          setConfirmingFullAccess(false)
+          this.#acknowledged = false
+          this.#confirmingFullAccess = false
+          this.#render()
         }}
         onConfirm={() => {
-          setAcknowledged(false)
-          setConfirmingFullAccess(false)
+          this.#acknowledged = false
+          this.#confirmingFullAccess = false
+          this.#render()
           void select(FULL_ACCESS_PRESET)
         }}
-      />
-    </>
-  )
+      />,
+    ]
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-permission-row') === undefined) {
+  customElements.define('dsh-permission-row', DshPermissionRow)
+}
+
+/** One-shot creation helper preserving the original function-component call shape. */
+export function PermissionRow(props: PermissionRowProps): DshPermissionRow {
+  const el = document.createElement('dsh-permission-row') as DshPermissionRow
+  el.setProps(props)
+  return el
 }
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {

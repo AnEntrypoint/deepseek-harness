@@ -5,9 +5,17 @@
  * redirects without touching the page. The host syntax-prechecked the source at
  * define time; SyntaxError handling here is the engine-divergence fallback and
  * reaches the model through the load report.
+ *
+ * `React` is withheld the same way as the other teaching-redirect globals
+ * below: the whole GUI is webjsx now (no React runtime ships to the page), so
+ * a dynamic package reaching for `React.createElement`/`React.useState` gets
+ * a redirect toward the tool.view.cordis business slot's own webjsx contract
+ * (a plain function returning JSX, or an HTMLElement subclass registered via
+ * `customElements.define` for stateful views — see ui-primitives' Button.tsx/
+ * Toast.tsx for the two shapes) instead of a runtime crash reading `useState`
+ * off `undefined`.
  */
 
-import * as React from 'react'
 import type { CordisDynamicPluginId } from '@deepseek-ai/dsh-api-remotes/client'
 
 /** A mountable plugin as the closure must return it (FUNCTION or OBJECT form). */
@@ -48,7 +56,11 @@ export const DYNAMIC_CLIENT_REDIRECTS: Readonly<Record<string, string>> = {
   fetch:
     'network belongs to the HOST half: register a handler there with harness.handle(method, fn) and call it here via host.call(method, args).',
   require:
-    'modules cannot be imported here. React arrives as the `React` closure symbol; everything else goes through ctx services or host.call.',
+    'modules cannot be imported here. Everything goes through ctx services or host.call.',
+  React:
+    'there is no React runtime in this app — the whole GUI is webjsx. Return a plain object/array JSX tree from a '
+    + 'function (stateless) or an HTMLElement subclass registered with customElements.define (stateful, exposing '
+    + 'setProps); see the tool.view.cordis business-view contract for the expected shape.',
 }
 
 /** Callable teaching traps shadowing the ambient globals the closure must not reach. */
@@ -170,7 +182,7 @@ export async function evaluateClientHalf(
   styles: DynamicCordisStyles,
 ): Promise<DynamicCordisEvaluatedPlugin | ((ctx: unknown) => unknown)> {
   const traps = closureTraps()
-  const parameters = ['React', 'console', 'styles', 'host', 'harness', ...Object.keys(traps), 'process', 'Buffer']
+  const parameters = ['console', 'styles', 'host', 'harness', ...Object.keys(traps), 'process', 'Buffer']
   let closure: (...args: unknown[]) => Promise<unknown>
   try {
     // The wrapper mirrors the host precheck exactly, so line offsets match.
@@ -185,7 +197,7 @@ export async function evaluateClientHalf(
     // line/caret teaching; browsers give only the message.
     throw new Error(
       `client half failed to parse in this browser: ${error.message}\n`
-      + 'The browser half is plain JavaScript (no JSX, no TypeScript); build elements with React.createElement.',
+      + 'The browser half is plain JavaScript (no JSX, no TypeScript); build elements with plain object/array JSX trees or DOM APIs.',
     )
   }
   const host = {
@@ -199,7 +211,6 @@ export async function evaluateClientHalf(
     call: (method: string, args: unknown = null): Promise<unknown> => env.invoke(method, args),
   }
   const returned = await closure(
-    React,
     taggedConsole(pluginId, (message) => { env.noteError(message) }),
     styles,
     host,

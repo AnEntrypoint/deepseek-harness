@@ -8,15 +8,15 @@
  * settings General section — the theme feature owns its own settings surface.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
+import { type BoundActions, webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: the ctx.settingsScope Context merge. Cross-plugin collaboration
 // goes through the service, never a value import (client bundle purity gate).
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type { AppearanceRowInjected } from './AppearanceRow.tsx'
-import { AppearanceRow } from './AppearanceRow.tsx'
+import type { AppearanceRowComponentProps, AppearanceRowInjected } from './AppearanceRow.tsx'
+import './AppearanceRow.tsx'
 import { createAppearanceRowStore } from './settings-store.ts'
 import { installThemeStyles } from './styles.ts'
 import { en, zh, type ThemeKey } from './locales.ts'
@@ -412,5 +412,5 @@ export function apply(ctx: ClientContext): void {
     store,
     locale: SETTINGS_NS,
     inject: injected,
-  }, AppearanceRow))
+  }, webjsxSlot<AppearanceRowComponentProps>('dsh-theme-appearance-row')))
 }

@@ -2,6 +2,6 @@
 
 import css from './MessageText.module.css'
 
-export function MessageText({ text }: { text: string }) {
-  return <div className={css.text}>{text}</div>
+export function MessageText({ text }: { text: string }): JSX.Element {
+  return <div class={css.text ?? ''}>{text}</div>
 }

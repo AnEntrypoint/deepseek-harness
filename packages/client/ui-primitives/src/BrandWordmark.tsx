@@ -22,9 +22,9 @@ export function BrandWordmark({ size = 24, className, includeMark = true }: Bran
   const width = includeMark ? 182 : 156
   return (
     <svg
-      width={(size * width) / 24}
-      height={size}
-      className={className}
+      width={String((size * width) / 24)}
+      height={String(size)}
+      class={className ?? ''}
       viewBox={includeMark ? '0 0 182 24' : '26 0 156 24'}
       fill="none"
       aria-hidden="true"

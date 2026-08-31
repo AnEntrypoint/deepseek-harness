@@ -4,7 +4,7 @@
 // an absent, unknown, or malformed form — a resumed or foreign log must render
 // even when this UI version has never seen its producer.
 
-import type { ReactNode } from 'react'
+import type { VNode } from 'webjsx'
 import type { ContextMessageNode, KnownContextForm } from '@deepseek-ai/dsh-client-runtime/client'
 import { JsonBlock } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
@@ -88,18 +88,18 @@ function SourceFields({ source, formRendered, t }: {
   source: unknown
   formRendered: boolean
   t: Translate
-}): ReactNode {
+}): JSX.Element | null {
   const record = asRecord(source)
   if (record === null) return null
   const hidden = formRendered ? ['kind', 'form'] : ['kind']
   const rows = Object.entries(record).filter(([key]) => !hidden.includes(key))
   if (rows.length === 0) return null
   return (
-    <dl className={css.fields} data-context-fields>
+    <dl class={css.fields ?? ''} data-context-fields>
       {rows.map(([key, value]) => (
-        <div key={key} className={css.field}>
-          <dt className={css.fieldKey}>{key}</dt>
-          <dd className={css.fieldValue}>{fieldValue(value, t)}</dd>
+        <div key={key} class={css.field ?? ''}>
+          <dt class={css.fieldKey ?? ''}>{key}</dt>
+          <dd class={css.fieldValue ?? ''}>{fieldValue(value, t)}</dd>
         </div>
       ))}
     </dl>
@@ -113,19 +113,15 @@ function SourceFields({ source, formRendered, t }: {
  * @param props - The unrecognized blocks and the locale seat.
  * @returns One generic JSON block per unknown entry.
  */
-function UnknownBlocks({ blocks, t }: { blocks: readonly unknown[]; t: Translate }): ReactNode {
-  return (
-    <>
-      {blocks.map((block, index) => (
-        <JsonBlock
-          key={index}
-          label={t('message.unknownBlock')}
-          payload={block}
-          truncatedLabel={total => t('json.truncated', { total })}
-        />
-      ))}
-    </>
-  )
+function UnknownBlocks({ blocks, t }: { blocks: readonly unknown[]; t: Translate }): VNode[] {
+  return blocks.map((block, index) => (
+    <JsonBlock
+      key={index}
+      label={t('message.unknownBlock')}
+      payload={block}
+      truncatedLabel={total => t('json.truncated', { total })}
+    />
+  )) as unknown as VNode[]
 }
 
 /**
@@ -138,23 +134,19 @@ function UnknownBlocks({ blocks, t }: { blocks: readonly unknown[]; t: Translate
 function ModelFacingContent({ content, t }: {
   content: ContextMessageNode['content']
   t: Translate
-}): ReactNode {
-  return (
-    <>
-      {contentRuns(content).map((run, index) => ('text' in run
-        ? run.text !== '' && (
-          <pre key={index} className={css.text} data-context-text>{boundedText(run.text, t)}</pre>
-        )
-        : (
-          <JsonBlock
-            key={index}
-            label={t('message.unknownBlock')}
-            payload={run.block}
-            truncatedLabel={total => t('json.truncated', { total })}
-          />
-        )))}
-    </>
-  )
+}): VNode[] {
+  return contentRuns(content).flatMap((run, index) => ('text' in run
+    ? run.text !== ''
+      ? [<pre key={index} class={css.text ?? ''} data-context-text>{boundedText(run.text, t)}</pre>]
+      : []
+    : [
+      <JsonBlock
+        key={index}
+        label={t('message.unknownBlock')}
+        payload={run.block}
+        truncatedLabel={total => t('json.truncated', { total })}
+      />,
+    ])) as unknown as VNode[]
 }
 
 /**
@@ -168,13 +160,11 @@ export function OpaqueBody({ content, source, t }: {
   content: ContextMessageNode['content']
   source: unknown
   t: Translate
-}): ReactNode {
-  return (
-    <>
-      <ModelFacingContent content={content} t={t} />
-      <SourceFields source={source} formRendered={false} t={t} />
-    </>
-  )
+}): VNode[] {
+  const fields = SourceFields({ source, formRendered: false, t })
+  return fields === null
+    ? ModelFacingContent({ content, t })
+    : [...ModelFacingContent({ content, t }), fields as unknown as VNode]
 }
 
 /** One reconciled instruction file, as the durable source records it. */
@@ -247,25 +237,23 @@ export function InstructionsBody({ content, source, t }: {
   content: ContextMessageNode['content']
   source: unknown
   t: Translate
-}): ReactNode {
+}): VNode | VNode[] {
   const changes = instructionChanges(source)
-  if (changes === null) return <OpaqueBody content={content} source={source} t={t} />
+  if (changes === null) return OpaqueBody({ content, source, t })
   const baseline = asRecord(source)?.['baseline'] === true
-  return (
-    <>
-      <ul className={css.files} data-context-files>
-        {changes.map(change => (
-          <li key={change.path} className={css.file} title={change.digest}>
-            <span className={css.filePath}>{change.path}</span>
-            <span className={css.fileAction}>
-              {t(instructionAction(change.action, baseline))}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <ModelFacingContent content={content} t={t} />
-    </>
-  )
+  return [
+    <ul class={css.files ?? ''} data-context-files>
+      {changes.map(change => (
+        <li key={change.path} class={css.file ?? ''} title={change.digest}>
+          <span class={css.filePath ?? ''}>{change.path}</span>
+          <span class={css.fileAction ?? ''}>
+            {t(instructionAction(change.action, baseline))}
+          </span>
+        </li>
+      ))}
+    </ul> as unknown as VNode,
+    ...ModelFacingContent({ content, t }),
+  ]
 }
 
 /** One catalog entry, as the durable source records it. */
@@ -312,37 +300,37 @@ export function CatalogBody({ content, source, t }: {
   content: ContextMessageNode['content']
   source: unknown
   t: Translate
-}): ReactNode {
+}): VNode | VNode[] {
   const entries = catalogEntries(source)
-  if (entries === null) return <OpaqueBody content={content} source={source} t={t} />
+  if (entries === null) return OpaqueBody({ content, source, t })
   const update = asRecord(source)?.['update'] === true
   // Entry count is unbounded (a provider may publish any number of skills), and
   // the scrollport bounds height, not node count — so the list bounds itself.
   const shown = entries.slice(0, MAX_ENTRIES)
   const rest = unknownBlocks(content)
-  return (
-    <>
-      {update && <p className={css.catalogNotice} data-context-catalog-update>{t('message.context.catalog.replaced')}</p>}
-      <ul className={css.entries} data-context-entries>
-        {shown.map((entry, index) => (
-          // Index key: a hand-edited or foreign log may repeat a name, and a
-          // duplicate React key would drop a row the model did see.
-          <li key={index} className={css.entry}>
-            <code className={css.entryName}>{entry.name}</code>
-            <span className={css.entryDescription}>{entry.description}</span>
-          </li>
-        ))}
-      </ul>
-      {shown.length < entries.length && (
-        <p className={css.catalogNotice} data-context-entries-truncated>
+  return [
+    ...(update ? [<p class={css.catalogNotice ?? ''} data-context-catalog-update>{t('message.context.catalog.replaced')}</p> as unknown as VNode] : []),
+    <ul class={css.entries ?? ''} data-context-entries>
+      {shown.map((entry, index) => (
+        // Index key: a hand-edited or foreign log may repeat a name, and a
+        // duplicate React key would drop a row the model did see.
+        <li key={index} class={css.entry ?? ''}>
+          <code class={css.entryName ?? ''}>{entry.name}</code>
+          <span class={css.entryDescription ?? ''}>{entry.description}</span>
+        </li>
+      ))}
+    </ul> as unknown as VNode,
+    ...(shown.length < entries.length
+      ? [
+        <p class={css.catalogNotice ?? ''} data-context-entries-truncated>
           {t('message.context.catalog.more', { count: entries.length - shown.length })}
-        </p>
-      )}
-      {/* The block union is merge-extensible: a catalog message carrying an
-          unknown block still shows it rather than dropping model-visible content. */}
-      <UnknownBlocks blocks={rest} t={t} />
-    </>
-  )
+        </p> as unknown as VNode,
+      ]
+      : []),
+    // The block union is merge-extensible: a catalog message carrying an
+    // unknown block still shows it rather than dropping model-visible content.
+    ...UnknownBlocks({ blocks: rest, t }),
+  ]
 }
 
 /** One named contribution to a runtime snapshot, as the durable source records it. */
@@ -388,25 +376,23 @@ export function SnapshotBody({ content, source, t }: {
   content: ContextMessageNode['content']
   source: unknown
   t: Translate
-}): ReactNode {
+}): VNode | VNode[] {
   const sections = snapshotSections(source)
   /* v8 ignore next -- contextBody reads the sections before choosing this body. */
-  if (sections === null) return <OpaqueBody content={content} source={source} t={t} />
-  return (
-    <>
-      <p className={css.catalogNotice} data-context-snapshot-supersedes>
-        {t('message.context.snapshot.supersedes')}
-      </p>
-      <dl className={css.sections} data-context-sections>
-        {sections.map((section, index) => (
-          <div key={index} className={css.section}>
-            <dt className={css.sectionName}>{section.name}</dt>
-            <dd className={css.sectionText}>{boundedText(section.text, t)}</dd>
-          </div>
-        ))}
-      </dl>
-    </>
-  )
+  if (sections === null) return OpaqueBody({ content, source, t })
+  return [
+    <p class={css.catalogNotice ?? ''} data-context-snapshot-supersedes>
+      {t('message.context.snapshot.supersedes')}
+    </p> as unknown as VNode,
+    <dl class={css.sections ?? ''} data-context-sections>
+      {sections.map((section, index) => (
+        <div key={index} class={css.section ?? ''}>
+          <dt class={css.sectionName ?? ''}>{section.name}</dt>
+          <dd class={css.sectionText ?? ''}>{boundedText(section.text, t)}</dd>
+        </div>
+      ))}
+    </dl> as unknown as VNode,
+  ]
 }
 
 /**
@@ -421,8 +407,8 @@ export function NoticeBody({ content, t }: {
   content: ContextMessageNode['content']
   source: unknown
   t: Translate
-}): ReactNode {
-  return <ModelFacingContent content={content} t={t} />
+}): VNode[] {
+  return ModelFacingContent({ content, t })
 }
 
 /**
@@ -437,18 +423,16 @@ export function RelayBody({ content, source, t }: {
   content: ContextMessageNode['content']
   source: unknown
   t: Translate
-}): ReactNode {
+}): VNode | VNode[] {
   const sender = relaySender(source)
   /* v8 ignore next -- contextBody resolves the sender before choosing this body. */
-  if (sender === null) return <OpaqueBody content={content} source={source} t={t} />
-  return (
-    <>
-      <p className={css.relaySender} data-context-relay-sender>
-        {t('message.context.relay.from', { session: sender })}
-      </p>
-      <ModelFacingContent content={content} t={t} />
-    </>
-  )
+  if (sender === null) return OpaqueBody({ content, source, t })
+  return [
+    <p class={css.relaySender ?? ''} data-context-relay-sender>
+      {t('message.context.relay.from', { session: sender })}
+    </p> as unknown as VNode,
+    ...ModelFacingContent({ content, t }),
+  ]
 }
 
 /** The sending agent's session id, or null when the record does not name one. */
@@ -503,30 +487,28 @@ export function RecallBody({ content, source, t }: {
   content: ContextMessageNode['content']
   source: unknown
   t: Translate
-}): ReactNode {
+}): VNode | VNode[] {
   const sessions = recalledSessions(source)
-  if (sessions === null) return <OpaqueBody content={content} source={source} t={t} />
-  return (
-    <>
-      <ul className={css.recalls} data-context-recalls>
-        {sessions.map((session, index) => (
-          <li key={index} className={css.recall}>
-            <span className={css.recallLabel}>{session.label}</span>
-            <span className={css.recallCounts}>
-              {t('message.context.recall.counts', {
-                retained: session.retained,
-                omitted: session.omitted,
-              })}
-            </span>
-            {session.truncated && (
-              <span className={css.recallCounts}>{t('message.context.recall.truncated')}</span>
-            )}
-          </li>
-        ))}
-      </ul>
-      <ModelFacingContent content={content} t={t} />
-    </>
-  )
+  if (sessions === null) return OpaqueBody({ content, source, t })
+  return [
+    <ul class={css.recalls ?? ''} data-context-recalls>
+      {sessions.map((session, index) => (
+        <li key={index} class={css.recall ?? ''}>
+          <span class={css.recallLabel ?? ''}>{session.label}</span>
+          <span class={css.recallCounts ?? ''}>
+            {t('message.context.recall.counts', {
+              retained: session.retained,
+              omitted: session.omitted,
+            })}
+          </span>
+          {session.truncated && (
+            <span class={css.recallCounts ?? ''}>{t('message.context.recall.truncated')}</span>
+          )}
+        </li>
+      ))}
+    </ul> as unknown as VNode,
+    ...ModelFacingContent({ content, t }),
+  ]
 }
 
 /** The one-line account a `notice` puts on its collapsed row, when it records one. */
@@ -550,35 +532,35 @@ function noticeSummary(source: unknown): string | null {
 export function contextBody(
   form: ContextMessageNode['form'],
   props: { content: ContextMessageNode['content']; source: unknown; t: Translate },
-): { rendered: KnownContextForm | null; summary: string | null; body: ReactNode } {
-  const opaque = { rendered: null, summary: null, body: <OpaqueBody {...props} /> }
+): { rendered: KnownContextForm | null; summary: string | null; body: VNode | VNode[] } {
+  const opaque = { rendered: null, summary: null, body: OpaqueBody(props) }
   switch (form) {
     case 'instructions':
       return instructionChanges(props.source) === null
         ? opaque
-        : { rendered: 'instructions', summary: null, body: <InstructionsBody {...props} /> }
+        : { rendered: 'instructions', summary: null, body: InstructionsBody(props) }
     case 'catalog':
       return catalogEntries(props.source) === null
         ? opaque
-        : { rendered: 'catalog', summary: null, body: <CatalogBody {...props} /> }
+        : { rendered: 'catalog', summary: null, body: CatalogBody(props) }
     case 'snapshot':
       return snapshotSections(props.source) === null
         ? opaque
-        : { rendered: 'snapshot', summary: null, body: <SnapshotBody {...props} /> }
+        : { rendered: 'snapshot', summary: null, body: SnapshotBody(props) }
     case 'notice': {
       const summary = noticeSummary(props.source)
       return summary === null
         ? opaque
-        : { rendered: 'notice', summary, body: <NoticeBody {...props} /> }
+        : { rendered: 'notice', summary, body: NoticeBody(props) }
     }
     case 'relay':
       return relaySender(props.source) === null
         ? opaque
-        : { rendered: 'relay', summary: null, body: <RelayBody {...props} /> }
+        : { rendered: 'relay', summary: null, body: RelayBody(props) }
     case 'recall':
       return recalledSessions(props.source) === null
         ? opaque
-        : { rendered: 'recall', summary: null, body: <RecallBody {...props} /> }
+        : { rendered: 'recall', summary: null, body: RecallBody(props) }
     case null:
       return opaque
     /* v8 ignore next 4 -- closed-union backstop; the compiler rejects a new

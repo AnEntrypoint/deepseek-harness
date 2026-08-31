@@ -42,9 +42,9 @@ interface DeliverablesState extends DeliverablesTurnData {
  */
 function producedPaths(view: ToolResultNode['callView']): readonly string[] {
   if (view === null) return []
-  if (view.card === 'diff') return (view.locations ?? []).map(location => location.path)
+  if (view.card === 'diff') return (view.locations ?? []).map((location: { path: string }) => location.path)
   if (view.card === 'generic' && view.kind === 'edit') {
-    return (view.locations ?? []).map(location => location.path)
+    return (view.locations ?? []).map((location: { path: string }) => location.path)
   }
   return []
 }

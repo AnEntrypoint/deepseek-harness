@@ -1,69 +1,64 @@
 /**
- * TeX-to-React via KaTeX, replicating the rehype-katex pipeline this renderer
+ * TeX-to-webjsx via KaTeX, replicating the rehype-katex pipeline this renderer
  * replaced: the same three-arm error chain (strict render, `strict: 'ignore'`
  * retry, error span) and a DOM-identical element tree, so settled math keeps
  * its exact markup. KaTeX emits an HTML string; the browser's own HTML parser
  * (`DOMParser`, applying the spec's SVG/MathML foreign-content attribute
  * adjustments KaTeX output relies on) turns it into a tree this module maps
- * onto React elements — KaTeX output is a static span/MathML/SVG vocabulary
+ * onto webjsx VNodes — KaTeX output is a static span/MathML/SVG vocabulary
  * with no raw user HTML, the same trust shiki's tree gets in CodeBlock.
  *
- * React 18 has no MathML support, so the `.katex-mathml` subtree's elements
- * land in the HTML namespace — exactly as they did under the replaced
- * hast-util-to-jsx-runtime pipeline. The visual arm is the `.katex-html`
- * span tree; the MathML arm serves assistive technology, which reads it by
- * tag name regardless of namespace.
+ * webjsx has no MathML-aware renderer beyond plain DOM creation, so the
+ * `.katex-mathml` subtree's elements land the same way they did under the
+ * replaced hast-util-to-jsx-runtime pipeline: tag names only, no namespace
+ * distinction at this layer. The visual arm is the `.katex-html` span tree;
+ * the MathML arm serves assistive technology, which reads it by tag name
+ * regardless of namespace.
  */
 
-import { createElement } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { createElement } from 'webjsx'
+import type { VNode } from 'webjsx'
 import katex from 'katex'
 
 /**
- * Convert one inline `style` attribute string into React's style object.
- * KaTeX emits only plain kebab-case declarations (no custom properties and no
- * nameless declarations), so camel-casing the property is the whole mapping.
+ * Convert one inline `style` attribute string into a CSS string webjsx's
+ * `style` prop accepts directly (webjsx has no style-object prop; the
+ * original attribute text is already valid CSS since KaTeX emits only plain
+ * kebab-case declarations with no custom properties).
  */
-function styleObject(css: string): CSSProperties {
-  const style: Record<string, string> = {}
-  for (const declaration of css.split(';')) {
-    const colon = declaration.indexOf(':')
-    if (colon === -1) continue
-    const name = declaration.slice(0, colon).trim()
-    const key = name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase())
-    style[key] = declaration.slice(colon + 1).trim()
-  }
-  return style
+function styleValue(css: string): string {
+  return css
 }
 
-/** Map one parsed DOM node onto a React element (text nodes pass through). */
-function domToReact(node: ChildNode, key: number): ReactNode {
-  if (node.nodeType === Node.TEXT_NODE) return node.textContent
+/** Map one parsed DOM node onto a webjsx VNode (text nodes pass through). */
+function domToVNode(node: ChildNode, key: number): VNode {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? ''
   /* v8 ignore next 2 -- KaTeX output holds only elements and text; other
      node kinds cannot appear in its serialized vocabulary. */
-  if (node.nodeType !== Node.ELEMENT_NODE) return null
+  if (node.nodeType !== Node.ELEMENT_NODE) return ''
   const element = node as Element
   const props: Record<string, unknown> = { key }
   for (const attribute of element.attributes) {
-    if (attribute.name === 'class') props['className'] = attribute.value
-    else if (attribute.name === 'style') props['style'] = styleObject(attribute.value)
+    if (attribute.name === 'class') props['class'] = attribute.value
+    else if (attribute.name === 'style') props['style'] = styleValue(attribute.value)
     else props[attribute.name] = attribute.value
   }
-  const children = [...element.childNodes].map(domToReact)
-  return children.length === 0
+  const children = [...element.childNodes].map((child, index) => domToVNode(child, index))
+  const result = children.length === 0
     ? createElement(element.localName, props)
     : createElement(element.localName, props, ...children)
+  return result as VNode
 }
 
 /**
- * Render TeX source to React elements through KaTeX.
+ * Render TeX source to webjsx VNodes through KaTeX.
  * @param value - The TeX source (math node value; fenced `math` blocks append
  * their trailing newline to match the replaced pipeline's text extraction).
  * @param displayMode - Display (block) versus inline rendering.
  * @returns KaTeX's element tree, or the error span when the source does not
  * parse (colored with KaTeX's stock `errorColor`, matching rehype-katex).
  */
-export function renderTexToReact(value: string, displayMode: boolean): ReactNode {
+export function renderTexToVNodes(value: string, displayMode: boolean): VNode[] {
   let html: string
   try {
     html = katex.renderToString(value, { displayMode, throwOnError: true })
@@ -74,17 +69,17 @@ export function renderTexToReact(value: string, displayMode: boolean): ReactNode
       // KaTeX renders ParseErrors itself under throwOnError: false; only its
       // internal errors reach here, so mirror rehype-katex's manual span.
       /* v8 ignore next 8 */
-      return (
+      return [
         <span
-          className="katex-error"
-          style={{ color: '#cc0000' }}
+          class="katex-error"
+          style="color: #cc0000"
           title={String(error)}
         >
           {value}
-        </span>
-      )
+        </span>,
+      ]
     }
   }
   const parsed = new DOMParser().parseFromString(html, 'text/html')
-  return [...parsed.body.childNodes].map(domToReact)
+  return [...parsed.body.childNodes].map((node, index) => domToVNode(node, index))
 }

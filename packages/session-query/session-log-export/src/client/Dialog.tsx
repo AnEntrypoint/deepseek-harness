@@ -43,7 +43,7 @@ export function SessionLogDownloadDialog({
       title={title}
       description={description}
       closeLabel={t('dialog.close')}
-      footer={<Button variant="primary" onClick={() => { dismiss(sessionId) }}>{t('dialog.close')}</Button>}
+      footer={<Button variant="primary" onclick={() => { dismiss(sessionId) }}>{t('dialog.close')}</Button>}
     />
   )
 }

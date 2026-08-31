@@ -2,85 +2,138 @@
 // The overlay portals to this document's body so ancestor stacking contexts
 // cannot leave sticky page controls above the mask. This is still an in-page
 // WebUI dialog; it never creates or targets another browser/native window.
+//
+// Converted from a React hooks component to a webjsx custom element: the
+// Escape-key listener that was useEffect becomes connectedCallback/
+// disconnectedCallback, and re-render is an explicit applyDiff(this, vdom)
+// call (Toast.tsx's pattern) instead of implicit re-render on state change.
 
-import { useEffect } from 'react'
-import type { ReactNode } from 'react'
-import { createPortal } from 'react-dom'
+import { applyDiff } from 'webjsx'
+import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { IconCloseOutline16 } from './icons/index.tsx'
 import css from './Modal.module.css'
 
-/**
- * Render a centered modal over a blurred page mask.
- * @param props.open - whether the dialog is showing.
- * @param props.onClose - Escape or mask click.
- * @param props.title - dialog heading (aria-label in every mode).
- * @param props.closeLabel - accessible close-button label.
- * @param props.description - optional supporting sentence under the title.
- * @param props.children - body (inputs, etc.).
- * @param props.footer - action row (Cancel / Create).
- * @param props.contentClassName - optional class for a scrollable content region.
- * @param props.headless - render children directly in the card (no default
- * header/close/body chrome) for dialogs whose figma frame owns its own
- * header structure; mask, card, Escape, and aria-label remain.
- * @param props.closeLabel - close-button aria label; the owner passes
- * localized copy (this package is cordis-free, so copy arrives via props).
- * @returns null when closed; otherwise the overlay tree.
- */
-export function Modal({
-  open, onClose, title, closeLabel = 'Close', description, children, footer, className, contentClassName, headless = false,
-}: {
+export interface ModalProps {
   open: boolean
   onClose: () => void
   title: string
   closeLabel?: string
   description?: string
-  children?: ReactNode
-  footer?: ReactNode
+  children?: VNode | VNode[] | string | null
+  footer?: VNode | VNode[] | string | null
   className?: string
   contentClassName?: string
   headless?: boolean
-}) {
-  useEffect(() => {
-    if (!open) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+}
+
+/**
+ * Centered modal over a blurred page mask, as a custom element. Attaches
+ * itself to `document.body` on connect (mirrors Toast's mount pattern) so an
+ * owner inside a transformed or filtered ancestor cannot trap the fixed
+ * overlay in that ancestor's box.
+ */
+export class DshModal extends HTMLElement {
+  #props: ModalProps = { open: false, onClose: () => {}, title: '' }
+
+  /** Set/replace props and re-render; call after creating or updating the element. */
+  setProps(props: ModalProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    document.addEventListener('keydown', this.#onKeyDown)
+    this.#render()
+  }
+
+  disconnectedCallback(): void {
+    document.removeEventListener('keydown', this.#onKeyDown)
+  }
+
+  #onKeyDown = (e: KeyboardEvent): void => {
+    if (!this.#props.open) return
+    if (e.key === 'Escape') this.#props.onClose()
+  }
+
+  #render(): void {
+    const {
+      open, onClose, title, closeLabel = 'Close', description, children, footer,
+      className, contentClassName, headless = false,
+    } = this.#props
+
+    if (!open) {
+      applyDiff(this, <span style="display:none" />)
+      return
     }
-    document.addEventListener('keydown', onKeyDown)
-    return () => { document.removeEventListener('keydown', onKeyDown) }
-  }, [open, onClose])
 
-  if (!open) return null
-
-  return createPortal((
-    <div className={css.root} role="presentation">
-      <div className={css.mask} aria-hidden="true" onClick={onClose} />
-      <div
-        className={clsx(css.dialog, className)}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        {headless
-          ? children
-          : (
-            <>
-              <div className={clsx(css.content, contentClassName)}>
-                <div className={css.header}>
-                  <h2 className={css.title}>{title}</h2>
-                  <button type="button" className={css.close} aria-label={closeLabel} onClick={onClose}>
-                    <IconCloseOutline16 size={14} />
-                  </button>
+    const vdom = (
+      <div class={css.root ?? ''} role="presentation">
+        <div class={css.mask ?? ''} aria-hidden="true" onclick={onClose} />
+        <div
+          class={clsx(css.dialog, className)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+        >
+          {headless
+            ? children
+            : (
+              <>
+                <div class={clsx(css.content, contentClassName)}>
+                  <div class={css.header ?? ''}>
+                    <h2 class={css.title ?? ''}>{title}</h2>
+                    <button type="button" class={css.close ?? ''} aria-label={closeLabel} onclick={onClose}>
+                      <IconCloseOutline16 size={14} />
+                    </button>
+                  </div>
+                  {description !== undefined && description !== '' && (
+                    <p class={css.description ?? ''}>{description}</p>
+                  )}
+                  {children !== undefined && children !== null && <div class={css.body ?? ''}>{children}</div>}
                 </div>
-                {description !== undefined && description !== '' && (
-                  <p className={css.description}>{description}</p>
-                )}
-                {children !== undefined && <div className={css.body}>{children}</div>}
-              </div>
-              {footer !== undefined && <div className={css.footer}>{footer}</div>}
-            </>
-          )}
+                {footer !== undefined && footer !== null && <div class={css.footer ?? ''}>{footer}</div>}
+              </>
+            )}
+        </div>
       </div>
-    </div>
-  ), document.body)
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-modal') === undefined) {
+  customElements.define('dsh-modal', DshModal)
+}
+
+/**
+ * Create (if needed) and update a Modal mounted on `document.body`.
+ * @param el - an existing mounted modal (from a prior call), or null to create one.
+ * @param props - see {@link ModalProps}.
+ * @returns the mounted `dsh-modal` element; keep it and pass it back in to update, `.remove()` when done with it.
+ */
+export function renderModal(el: DshModal | null, props: ModalProps): DshModal {
+  const target = el ?? (() => {
+    const created = document.createElement('dsh-modal') as DshModal
+    document.body.appendChild(created)
+    return created
+  })()
+  target.setProps(props)
+  return target
+}
+
+/**
+ * Convenience wrapper preserving the original function-component call shape
+ * for simple one-shot usage: creates the element, sets props, and returns it.
+ * Callers that need to update props across renders should hold the returned
+ * element and call `.setProps()` directly.
+ *
+ * The `DshModal` return is cast to `JSX.Element` so `<Modal ... />` typechecks
+ * as a JSX component call: the element self-mounts to `document.body` (see
+ * the class doc above), so it is never diffed as a child of the caller's own
+ * vdom — the JSX call site only needs the side effect and the typecheck, not
+ * a structurally valid `VElement`.
+ */
+export function Modal(props: ModalProps): JSX.Element {
+  return renderModal(null, props) as unknown as JSX.Element
 }

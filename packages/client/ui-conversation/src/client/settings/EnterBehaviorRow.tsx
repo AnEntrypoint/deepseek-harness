@@ -1,5 +1,9 @@
-/** General Settings row for the Composer's busy-state Enter preference. */
-import { useState } from 'react'
+/** General Settings row for the Composer's busy-state Enter preference.
+ *
+ * Converted from a React hooks component to a webjsx custom element: `open`
+ * becomes an instance field and re-render is an explicit applyDiff(this,
+ * vdom) call (Toast.tsx's pattern). */
+import { applyDiff } from 'webjsx'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { IconChevronDownOutline14, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -32,45 +36,72 @@ const OPTIONS: readonly {
 ]
 
 /**
- * Render the busy-state Enter behavior selector.
- * @param props - composed Settings slot props.
- * @returns the preference row.
+ * Busy-state Enter behavior selector custom element.
  */
-export function EnterBehaviorRow({ useBusyEnter, setBusyEnter, t }: EnterBehaviorRowProps) {
-  const behavior = useBusyEnter(value => value)
-  const [open, setOpen] = useState(false)
-  const selectedLabel = behavior === 'queue' ? 'settings.enter.queue' : 'settings.enter.steer'
+export class DshEnterBehaviorRow extends HTMLElement {
+  #props: EnterBehaviorRowProps | null = null
+  #open = false
 
-  return (
-    <div className={css.row}>
-      <div className={css.rowText}>
-        <div className={css.title}>{t('settings.enter.title')}</div>
-        <div className={css.desc}>{t('settings.enter.description')}</div>
+  setProps(props: EnterBehaviorRowProps): void {
+    this.#props = props
+    this.#render()
+  }
+
+  connectedCallback(): void {
+    this.#render()
+  }
+
+  #render(): void {
+    if (this.#props === null) return
+    const { useBusyEnter, setBusyEnter, t } = this.#props
+    const behavior = useBusyEnter(value => value)
+    const open = this.#open
+    const selectedLabel = behavior === 'queue' ? 'settings.enter.queue' : 'settings.enter.steer'
+
+    const vdom = (
+      <div class={css.row ?? ''}>
+        <div class={css.rowText ?? ''}>
+          <div class={css.title ?? ''}>{t('settings.enter.title')}</div>
+          <div class={css.desc ?? ''}>{t('settings.enter.description')}</div>
+        </div>
+        {Menu({
+          open,
+          onClose: () => { this.#open = false; this.#render() },
+          items: OPTIONS.map(option => ({ id: option.id, label: t(option.label) })),
+          selectedId: behavior,
+          onSelect: (id) => {
+            this.#open = false
+            setBusyEnter(id as BusyEnterBehavior)
+            this.#render()
+          },
+          align: 'end',
+          portal: true,
+          anchor: (
+            <button
+              type="button"
+              class={css.selector ?? ''}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              onclick={() => { this.#open = !this.#open; this.#render() }}
+            >
+              {t(selectedLabel)}
+              <IconChevronDownOutline14 className={css.chevron} />
+            </button>
+          ) as unknown as JSX.Element,
+        }) as unknown as JSX.Element}
       </div>
-      <Menu
-        open={open}
-        onClose={() => { setOpen(false) }}
-        items={OPTIONS.map(option => ({ id: option.id, label: t(option.label) }))}
-        selectedId={behavior}
-        onSelect={(id) => {
-          setOpen(false)
-          setBusyEnter(id as BusyEnterBehavior)
-        }}
-        align="end"
-        portal
-        anchor={(
-          <button
-            type="button"
-            className={css.selector}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            onClick={() => { setOpen(value => !value) }}
-          >
-            {t(selectedLabel)}
-            <IconChevronDownOutline14 className={css.chevron} />
-          </button>
-        )}
-      />
-    </div>
-  )
+    )
+    applyDiff(this, vdom)
+  }
+}
+
+if (typeof customElements !== 'undefined' && customElements.get('dsh-enter-behavior-row') === undefined) {
+  customElements.define('dsh-enter-behavior-row', DshEnterBehaviorRow)
+}
+
+/** One-shot creation/update helper preserving the original function-component call shape. */
+export function EnterBehaviorRow(props: EnterBehaviorRowProps): JSX.Element {
+  const el = document.createElement('dsh-enter-behavior-row') as DshEnterBehaviorRow
+  el.setProps(props)
+  return el as unknown as JSX.Element
 }

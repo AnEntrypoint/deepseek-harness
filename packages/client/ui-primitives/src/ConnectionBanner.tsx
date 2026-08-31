@@ -3,6 +3,7 @@
 // A null/connecting state upstream should stay quiet too — only an actual
 // outage (reconnect backoff in progress) shows the strip.
 
+import type { VNode } from 'webjsx'
 import css from './ConnectionBanner.module.css'
 
 /**
@@ -15,7 +16,7 @@ import css from './ConnectionBanner.module.css'
 export function ConnectionBanner({ reconnecting, label = '连接已断开，正在重连…' }: {
   reconnecting: boolean
   label?: string | undefined
-}) {
+}): VNode | null {
   if (!reconnecting) return null
-  return <div className={css.banner}>{label}</div>
+  return <div class={css.banner ?? ''}>{label}</div>
 }
