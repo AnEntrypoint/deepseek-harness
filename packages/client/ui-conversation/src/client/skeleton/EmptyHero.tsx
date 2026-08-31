@@ -12,13 +12,6 @@ import { workspaceTitleOf } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConversationSlotProps } from '../contract/slots.ts'
 import css from './HeroShell.module.css'
 
-let glowFilterSeq = 0
-/** Stable per-mount filter id so multiple hero mounts do not collide in the DOM. */
-function nextGlowFilterId(): string {
-  glowFilterSeq += 1
-  return `empty-glow-${String(glowFilterSeq)}`
-}
-
 /** The owner's locale seat type, passed to hero chrome as a plain prop. */
 type HeroTranslate = ConversationSlotProps['t']
 
@@ -70,38 +63,6 @@ export function WorkspaceChip({ buttonRef, label, menuOpen = false, onClick, t }
   )
 }
 
-/**
- * The soft blue backdrop ellipse (figma 313:14109). Rendered by the hero
- * owner (ConversationRoot), not HeroShell, so it can center on the input
- * card; the owner's className supplies all positioning.
- * @param props.className - positioning class from the owner.
- * @returns the blurred-ellipse svg element.
- */
-export function HeroGlow({ className }: { className?: string | undefined }): JSX.Element {
-  const glowFilterId = nextGlowFilterId()
-  return (
-    <svg class={className ?? ''} viewBox="0 0 1051 468" fill="none" aria-hidden="true">
-      <defs>
-        <filter
-          id={glowFilterId}
-          x="0"
-          y="0"
-          width="1051"
-          height="468"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
-          <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-          <feGaussianBlur stdDeviation="50" result="effect1_foregroundBlur" />
-        </filter>
-      </defs>
-      <g filter={`url(#${glowFilterId})`}>
-        <ellipse cx="525.5" cy="234" rx="425.5" ry="134" fill="#6187D8" fillOpacity="0.08" />
-      </g>
-    </svg>
-  )
-}
 
 /** Hero chrome props. The workspace row rides the InputBar accessory hole, not here. */
 export interface HeroShellProps {
