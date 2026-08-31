@@ -474,9 +474,9 @@ export class DshAgentPresetSection extends HTMLElement {
             </section>
           )
         })}
-        <span data-copy-modal-slot />
-        <span data-view-modal-slot />
-        <span data-delete-modal-slot />
+        <span data-copy-modal-slot="" />
+        <span data-view-modal-slot="" />
+        <span data-delete-modal-slot="" />
       </div>
     )
     applyDiff(this, vdom)

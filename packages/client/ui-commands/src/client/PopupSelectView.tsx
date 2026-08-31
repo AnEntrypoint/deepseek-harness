@@ -19,9 +19,9 @@
 import { applyDiff } from 'webjsx'
 import clsx from 'clsx'
 import {
-  createAnchoredMaxHeight, IconCheckOutline16, RiskConfirmation,
+  createAnchoredMaxHeight, IconCheckOutline16, renderRiskConfirmation,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { AnchoredMaxHeightController } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { AnchoredMaxHeightController, DshModal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { filterOptions } from './popup.ts'
 import type { PopupSelectController } from './popup.ts'
@@ -53,6 +53,11 @@ export class DshPopupSelectView extends HTMLElement {
   #prevActive: number | null = null
   #focusedSearchForOpen = false
   #onPointerDown: ((ev: PointerEvent) => void) | null = null
+  // Held across renders (renderRiskConfirmation(this.#confirmModal, ...))
+  // instead of the bare <RiskConfirmation ... /> one-shot call, which always
+  // created a brand-new dsh-modal appended to document.body on every
+  // #render() — orphaning the previous one instead of updating it in place.
+  #confirmModal: DshModal | null = null
 
   /** Set/replace props and re-render; call after creating or updating the element. */
   setProps(props: PopupSelectViewProps): void {
@@ -207,22 +212,21 @@ export class DshPopupSelectView extends HTMLElement {
           )}
         </div>
       ) : null,
-      confirmation !== undefined ? (
-        <RiskConfirmation
-          open
-          title={confirmation.title}
-          description={confirmation.description}
-          acknowledgeLabel={confirmation.acknowledgeLabel}
-          cancelLabel={confirmation.cancelLabel}
-          confirmLabel={confirmation.confirmLabel}
-          acknowledged={state.acknowledged}
-          onAcknowledgedChange={(value: boolean) => { popup.acknowledge(value) }}
-          onCancel={() => { popup.cancelConfirmation() }}
-          onConfirm={() => { void popup.confirm() }}
-        />
-      ) : null,
     ].filter((node): node is Exclude<typeof node, null> => node !== null)
     applyDiff(this, vdom)
+
+    this.#confirmModal = renderRiskConfirmation(this.#confirmModal, {
+      open: confirmation !== undefined,
+      title: confirmation?.title ?? '',
+      description: confirmation?.description ?? '',
+      acknowledgeLabel: confirmation?.acknowledgeLabel ?? '',
+      cancelLabel: confirmation?.cancelLabel ?? '',
+      confirmLabel: confirmation?.confirmLabel ?? '',
+      acknowledged: state.acknowledged,
+      onAcknowledgedChange: (value: boolean) => { popup.acknowledge(value) },
+      onCancel: () => { popup.cancelConfirmation() },
+      onConfirm: () => { void popup.confirm() },
+    })
 
     // The search input keeps focus while arrows move a virtual highlight, so
     // the browser never scrolls the active row into view — do it here.

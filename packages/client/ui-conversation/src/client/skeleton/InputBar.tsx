@@ -979,7 +979,7 @@ export class DshInputBar extends HTMLElement {
                       ? t('placeholder.steerQueue')
                       : planActive ? t('placeholder.plan') : t('placeholder.default'))}
                 rows="2"
-                onchange={(e: Event) => { this.#onChange(e) }}
+                oninput={(e: Event) => { this.#onChange(e) }}
                 onkeydown={(e: KeyboardEvent) => { this.#onKeyDown(e) }}
                 onselect={() => { this.#onSelect() }}
                 oncopy={(e: ClipboardEvent) => { this.#onCopyOrCut(e, false) }}

@@ -71,7 +71,7 @@ export function DisclosureRow({
     <div class={clsx(css.root, className)} data-open={open || undefined}>
       <div
         class={clsx(css.row, rowClassName)}
-        data-disclosure-row
+        data-disclosure-row=""
         data-expandable={rowExpands || undefined}
         role={rowExpands ? 'button' : null}
         tabindex={rowExpands ? 0 : undefined}

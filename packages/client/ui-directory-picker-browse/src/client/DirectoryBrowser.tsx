@@ -788,7 +788,7 @@ export class DshDirectoryBrowser extends HTMLElement {
           <div class={css.crumbBar ?? ''}>
             {pathDraft === null
               ? [
-                <span class={css.crumbTrail ?? ''} role="navigation" data-crumb-trail>
+                <span class={css.crumbTrail ?? ''} role="navigation" data-crumb-trail="">
                   {crumbs.map((crumb, index) => (
                     <span class={css.crumbSeat ?? ''}>
                       {index > 0 && <IconChevronRightOutline14 size={12} className={css.crumbChevron} />}
@@ -818,7 +818,7 @@ export class DshDirectoryBrowser extends HTMLElement {
                   // listing itself fails, typing an absolute path is the one
                   // remaining way forward.
                   disabled={parentInert}
-                  data-edit-zone
+                  data-edit-zone=""
                   onclick={() => {
                     // Opening the editor supersedes any pending listing: a
                     // settlement landing before the first keystroke would
@@ -850,11 +850,11 @@ export class DshDirectoryBrowser extends HTMLElement {
                   value={pathDraft}
                   aria-label={t('browser.editPath')}
                   autofocus
-                  data-path-input
+                  data-path-input=""
                   disabled={parentInert}
                   oncompositionstart={compositionOn}
                   oncompositionend={compositionOff}
-                  onchange={(event: Event) => {
+                  oninput={(event: Event) => {
                     // Editing the draft supersedes any in-flight navigation:
                     // its completion must neither clear the newer text nor
                     // repopulate the view with the older path.
@@ -895,7 +895,7 @@ export class DshDirectoryBrowser extends HTMLElement {
           </div>
         </div>
         <div class={css.content ?? ''}>
-          <div class={css.millerRow ?? ''} data-miller-row>
+          <div class={css.millerRow ?? ''} data-miller-row="">
             {parent !== null && (
               <LevelColumn
                 entries={parent.entries}
@@ -990,7 +990,7 @@ export class DshDirectoryBrowser extends HTMLElement {
           disabled={creatingFolder}
           oncompositionstart={compositionOn}
           oncompositionend={compositionOff}
-          onchange={(event: Event) => { this.#folderDraft = (event.target as HTMLInputElement).value; this.#render() }}
+          oninput={(event: Event) => { this.#folderDraft = (event.target as HTMLInputElement).value; this.#render() }}
           onkeydown={(event: KeyboardEvent) => {
             if (event.key === 'Enter' && !this.#composing) {
               event.preventDefault()

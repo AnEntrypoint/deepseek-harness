@@ -249,8 +249,8 @@ export class DshAppFrame extends HTMLElement {
         <div class={css.overlayLayer ?? ''} data-shell-overlay>
           {asChild(renderSlot('shell.overlay', {}))}
         </div>
-        <span data-sidebar-handle-slot />
-        <span data-details-handle-slot />
+        <span data-sidebar-handle-slot="" />
+        <span data-details-handle-slot="" />
       </div>
     )
     applyDiff(this, vdom)

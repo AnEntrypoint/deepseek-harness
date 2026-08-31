@@ -115,7 +115,7 @@ export class DshSettingsRoot extends HTMLElement {
           <div class={css.content ?? ''}>
             <div class={css.header ?? ''}>
               <div class={css.actions ?? ''}>{asChild(renderSlot('settings.action', {}))}</div>
-              <button data-close-button type="button" class={css.close ?? ''} onclick={this.#close}>
+              <button data-close-button="" type="button" class={css.close ?? ''} onclick={this.#close}>
                 <IconCloseOutline16 size={14} />
                 <span class={css.hiddenLabel ?? ''}>{asChild(renderSlot('settings.close', {}))}</span>
               </button>

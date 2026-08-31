@@ -7,8 +7,8 @@ import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import type { PermissionSelect as PermissionSelectValue } from '@deepseek-ai/dsh-permission-presets/client'
-import { IconChevronDownOutline14, Menu, RiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, renderMenu, renderRiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { DshMenu, DshModal, MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ComposerBarProps } from '../contract/slots.ts'
 import css from './PermissionSelect.module.css'
 
@@ -87,6 +87,20 @@ export class DshPermissionSelect extends HTMLElement {
   #open = false
   #confirmation: string | null = null
   #acknowledged = false
+  // Held across renders and updated via renderMenu(this.#menu, ...) rather
+  // than the bare Menu(...) one-shot helper: Menu(...) always creates and
+  // returns a brand-new dsh-menu element, so calling it fresh on every
+  // #render() replaced the whole custom element (and its bound click
+  // listeners) on every state change instead of updating the existing one
+  // in place — see Menu.tsx's own renderMenu/Menu split and the same
+  // pattern already used by renderPresetMenu, DirectoryBrowser, JsonTree.
+  #menu: DshMenu | null = null
+  // Same fix, same reason, for the confirmation dialog: held and updated via
+  // renderRiskConfirmation(this.#confirmModal, ...) instead of the bare
+  // <RiskConfirmation ... /> JSX call, which recreated the underlying
+  // dsh-modal (and orphaned the previous one onto document.body) on every
+  // #render() — including the very #render() that opens it.
+  #confirmModal: DshModal | null = null
 
   setProps(props: PermissionSelectProps): void {
     const prevLocked = this.#props?.locked
@@ -187,7 +201,7 @@ export class DshPermissionSelect extends HTMLElement {
       </button>
     )
 
-    const menu = Menu({
+    this.#menu = renderMenu(this.#menu, {
       open,
       items,
       selectedId: currentValue,
@@ -195,24 +209,26 @@ export class DshPermissionSelect extends HTMLElement {
       onClose: () => { this.#open = false; this.#render() },
       side: 'top',
       anchor: menuAnchor,
-    }) as unknown as JSX.Element
+    })
+    const menu = this.#menu as unknown as JSX.Element
+
+    this.#confirmModal = renderRiskConfirmation(this.#confirmModal, {
+      open: confirmation !== null,
+      title: t('access.confirm.title'),
+      description: t('access.confirm.description'),
+      acknowledgeLabel: t('access.confirm.acknowledge'),
+      cancelLabel: t('access.confirm.cancel'),
+      confirmLabel: t('access.confirm.enable'),
+      acknowledged,
+      disabled: locked,
+      onAcknowledgedChange: (next: boolean) => { this.#acknowledged = next; this.#render() },
+      onCancel: () => { this.#closeConfirmation() },
+      onConfirm: () => { this.#confirmFullAccess() },
+    })
 
     const vdom = (
       <span>
         {menu}
-        <RiskConfirmation
-          open={confirmation !== null}
-          title={t('access.confirm.title')}
-          description={t('access.confirm.description')}
-          acknowledgeLabel={t('access.confirm.acknowledge')}
-          cancelLabel={t('access.confirm.cancel')}
-          confirmLabel={t('access.confirm.enable')}
-          acknowledged={acknowledged}
-          disabled={locked}
-          onAcknowledgedChange={(next: boolean) => { this.#acknowledged = next; this.#render() }}
-          onCancel={() => { this.#closeConfirmation() }}
-          onConfirm={() => { this.#confirmFullAccess() }}
-        />
       </span>
     )
     applyDiff(this, vdom)

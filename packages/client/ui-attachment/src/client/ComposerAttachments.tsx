@@ -147,7 +147,7 @@ export class DshComposerAttachments extends HTMLElement {
     }
 
     const vdom = railItems.length > 0
-      ? <div data-composer-rail-wrap class={css.rail ?? ''} />
+      ? <div data-composer-rail-wrap="" class={css.rail ?? ''} />
       : <span style="display:none" />
     applyDiff(this, vdom)
 

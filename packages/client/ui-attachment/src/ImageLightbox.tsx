@@ -66,7 +66,7 @@ export class DshImageLightbox extends HTMLElement {
       >
         <div class={css.mask ?? ''} aria-hidden="true" onmousedown={onClose} />
         <img class={css.image ?? ''} src={src} alt={alt} />
-        <button data-lightbox-close type="button" class={css.close ?? ''} aria-label={labels.close} onclick={onClose}>
+        <button data-lightbox-close="" type="button" class={css.close ?? ''} aria-label={labels.close} onclick={onClose}>
           <IconCloseOutline16 size={16} />
         </button>
       </div>

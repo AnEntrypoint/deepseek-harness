@@ -145,7 +145,7 @@ export class DshQueueDock extends HTMLElement {
                       class={css.editor ?? ''}
                       aria-label={t('queue.edit')}
                       value={editing.text}
-                      onchange={(event: Event) => {
+                      oninput={(event: Event) => {
                         const value = (event.currentTarget as HTMLInputElement).value
                         this.#editing = { id: row.id, text: value }
                         this.#render()

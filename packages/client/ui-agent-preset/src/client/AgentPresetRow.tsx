@@ -86,7 +86,7 @@ export class DshAgentPresetRow extends HTMLElement {
           <div class={css.title ?? ''}>{t('title')}</div>
           <div class={css.desc ?? ''} role={state.error === null ? null : 'alert'}>{description}</div>
         </div>
-        <span data-preset-menu-slot />
+        <span data-preset-menu-slot="" />
       </div>
     )
     applyDiff(this, vdom)

@@ -52,7 +52,7 @@ export class DshLanguageRow extends HTMLElement {
         <div class={css.rowText ?? ''}>
           <div class={css.title ?? ''}>{t('language.title')}</div>
         </div>
-        <span data-language-menu-slot />
+        <span data-language-menu-slot="" />
       </div>
     )
     applyDiff(this, vdom)

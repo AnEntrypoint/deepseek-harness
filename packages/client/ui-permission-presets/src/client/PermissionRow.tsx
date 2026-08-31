@@ -12,8 +12,9 @@ import { applyDiff } from 'webjsx'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  IconChevronDownOutline14, Menu, RiskConfirmation,
+  IconChevronDownOutline14, renderMenu, renderRiskConfirmation,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { DshMenu, DshModal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PermissionSettingsState } from './settings-store.ts'
 import type { PermissionSettingsKey } from './locales.ts'
 import { FULL_ACCESS_PRESET } from './presentation.ts'
@@ -48,6 +49,14 @@ export class DshPermissionRow extends HTMLElement {
   #lastWritable: boolean | null = null
   #lastStatus: PermissionSettingsState['status'] | null = null
   #loaded = false
+  // Held across renders (renderMenu(this.#menu, ...) / renderRiskConfirmation
+  // (this.#confirmModal, ...)) instead of the bare Menu(...)/RiskConfirmation
+  // (...) one-shot calls: those always create a brand-new dsh-menu/dsh-modal,
+  // so calling them fresh on every #render() replaced the live element (and
+  // its bound listeners) — or, for the modal, orphaned a fresh dsh-modal
+  // onto document.body — on every state change.
+  #menu: DshMenu | null = null
+  #confirmModal: DshModal | null = null
 
   /** Set/replace props and re-render; call after creating or updating the element. */
   setProps(props: PermissionRowProps): void {
@@ -100,63 +109,66 @@ export class DshPermissionRow extends HTMLElement {
           <div class={css.title ?? ''}>{t('title')}</div>
           <div class={css.desc ?? ''} role={state.error === null ? null : 'alert'}>{description}</div>
         </div>
-        <Menu
-          open={this.#open}
-          onClose={() => { this.#open = false; this.#render() }}
-          items={state.options.map(option => ({ id: option.id, label: option.label }))}
-          selectedId={state.currentValue}
-          onSelect={(id) => {
-            this.#open = false
-            if (id === state.currentValue) { this.#render(); return }
-            if (id === FULL_ACCESS_PRESET) {
-              this.#acknowledged = false
-              this.#confirmingFullAccess = true
+        {(() => {
+          this.#menu = renderMenu(this.#menu, {
+            open: this.#open,
+            onClose: () => { this.#open = false; this.#render() },
+            items: state.options.map(option => ({ id: option.id, label: option.label })),
+            selectedId: state.currentValue,
+            onSelect: (id) => {
+              this.#open = false
+              if (id === state.currentValue) { this.#render(); return }
+              if (id === FULL_ACCESS_PRESET) {
+                this.#acknowledged = false
+                this.#confirmingFullAccess = true
+                this.#render()
+                return
+              }
               this.#render()
-              return
-            }
-            this.#render()
-            void select(id)
-          }}
-          align="end"
-          portal
-          anchor={(
-            <button
-              type="button"
-              class={css.selector ?? ''}
-              aria-haspopup="menu"
-              aria-expanded={this.#open}
-              disabled={busy || !state.writable || state.options.length === 0}
-              onclick={() => { this.#open = !this.#open; this.#render() }}
-            >
-              {label}
-              <IconChevronDownOutline14 className={css.chevron} />
-            </button>
-          )}
-        />
+              void select(id)
+            },
+            align: 'end',
+            portal: true,
+            anchor: (
+              <button
+                type="button"
+                class={css.selector ?? ''}
+                aria-haspopup="menu"
+                aria-expanded={this.#open}
+                disabled={busy || !state.writable || state.options.length === 0}
+                onclick={() => { this.#open = !this.#open; this.#render() }}
+              >
+                {label}
+                <IconChevronDownOutline14 className={css.chevron} />
+              </button>
+            ),
+          })
+          return this.#menu as unknown as JSX.Element
+        })()}
       </div>,
-      <RiskConfirmation
-        open={this.#confirmingFullAccess}
-        title={t('confirm.title')}
-        description={t('confirm.description')}
-        acknowledgeLabel={t('confirm.acknowledge')}
-        cancelLabel={t('confirm.cancel')}
-        confirmLabel={t('confirm.enable')}
-        acknowledged={this.#acknowledged}
-        disabled={!state.writable || state.status === 'saving'}
-        onAcknowledgedChange={(acknowledged: boolean) => { this.#acknowledged = acknowledged; this.#render() }}
-        onCancel={() => {
-          this.#acknowledged = false
-          this.#confirmingFullAccess = false
-          this.#render()
-        }}
-        onConfirm={() => {
-          this.#acknowledged = false
-          this.#confirmingFullAccess = false
-          this.#render()
-          void select(FULL_ACCESS_PRESET)
-        }}
-      />,
     ]
+    this.#confirmModal = renderRiskConfirmation(this.#confirmModal, {
+      open: this.#confirmingFullAccess,
+      title: t('confirm.title'),
+      description: t('confirm.description'),
+      acknowledgeLabel: t('confirm.acknowledge'),
+      cancelLabel: t('confirm.cancel'),
+      confirmLabel: t('confirm.enable'),
+      acknowledged: this.#acknowledged,
+      disabled: !state.writable || state.status === 'saving',
+      onAcknowledgedChange: (acknowledged: boolean) => { this.#acknowledged = acknowledged; this.#render() },
+      onCancel: () => {
+        this.#acknowledged = false
+        this.#confirmingFullAccess = false
+        this.#render()
+      },
+      onConfirm: () => {
+        this.#acknowledged = false
+        this.#confirmingFullAccess = false
+        this.#render()
+        void select(FULL_ACCESS_PRESET)
+      },
+    })
     applyDiff(this, vdom)
   }
 }

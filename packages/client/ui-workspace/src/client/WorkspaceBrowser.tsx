@@ -1395,7 +1395,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
                   maxLength={String(SEARCH_QUERY_MAX_CODE_UNITS)}
                   value={query}
                   tabIndex={String(searchExpanded ? 0 : -1)}
-                  onchange={(e: Event) => { this.#query = sanitizeSearchQuery((e.target as HTMLInputElement).value); this.#render() }}
+                  oninput={(e: Event) => { this.#query = sanitizeSearchQuery((e.target as HTMLInputElement).value); this.#render() }}
                   onkeydown={(e: KeyboardEvent) => {
                     if (e.key !== 'Escape') return
                     this.#query = ''
@@ -1566,7 +1566,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
               autofocus
               disabled={renaming}
               onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
-              onchange={(e: Event) => {
+              oninput={(e: Event) => {
                 this.#renameDraft = (e.target as HTMLInputElement).value
                 this.#renameError = null
                 this.#render()
@@ -1607,7 +1607,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
               autofocus
               disabled={sessionRenaming}
               onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
-              onchange={(e: Event) => {
+              oninput={(e: Event) => {
                 this.#sessionRenameDraft = (e.target as HTMLInputElement).value
                 this.#sessionRenameError = null
                 this.#render()

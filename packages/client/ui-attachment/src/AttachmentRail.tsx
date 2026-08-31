@@ -207,7 +207,7 @@ export class DshAttachmentRail extends HTMLElement {
           </button>
         )}
         <div
-          data-attachment-rail
+          data-attachment-rail=""
           class={css.rail ?? ''}
           role="group"
           aria-label={labels.group}

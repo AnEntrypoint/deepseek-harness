@@ -98,7 +98,7 @@ function AnswerField(props: AnswerFieldProps): JSX.Element {
         rows={1}
         placeholder={props.placeholder}
         onfocus={props.onFocus ?? null}
-        onchange={props.onChange}
+        oninput={props.onChange}
         onkeydown={props.onKeyDown}
       />
     </div>
