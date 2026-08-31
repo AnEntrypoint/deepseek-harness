@@ -4,6 +4,11 @@ node_modules/
 lib/
 *.tsbuildinfo
 pnpm-debug.log
+dsh-web*.log
+dsh-web*.pid
+dev-server*.log
+*.err.log
+*.out.log
 .pnpm-store/
 .cache/
 examples/*/*.jsonl
