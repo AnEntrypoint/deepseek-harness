@@ -11,7 +11,8 @@
 import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
 import {
-  Button, IconFolderClose16, IconPlusOutline16, Menu, Modal, type MenuEntry,
+  Button, IconFolderClose16, IconPlusOutline16, type DshMenu, renderMenu,
+  type DshModal, renderModal, type MenuEntry,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   WorkspaceId, WorkspaceListState, WorkspaceView,
@@ -68,6 +69,9 @@ export class DshWorkspacePickFlow extends HTMLElement {
   #pickingFolder = false
   /** Edge-trigger latch for the addIsTheOnlyEntry auto-open (was a useEffect deps array). */
   #autoOpenArmedFor: { open: boolean; addIsTheOnlyEntry: boolean; flowBusy: boolean } | null = null
+  // Self-mounting portal elements held across renders (see Menu.tsx/Modal.tsx doc).
+  #menu: DshMenu | null = null
+  #errorModal: DshModal | null = null
 
   setProps(props: WorkspacePickFlowProps): void {
     this.#props = props
@@ -224,36 +228,37 @@ export class DshWorkspacePickFlow extends HTMLElement {
       ? <div class={css.menuStatus ?? ''} role="status">{t('picker.loading')}</div>
       : null
     const vdom: VNode[] = [
-      <Menu
-        open={open && !addIsTheOnlyEntry && !menuIsEmpty}
-        anchor=""
-        items={items}
-        {...pinAdd ? { footer: addEntries } : {}}
-        selectedId={selectedId}
-        onSelect={handleSelect}
-        onClose={onClose}
-        side={side}
-        portal
-        getAnchorRect={this.#getAnchorRect}
-      />,
       ...(statusNode === null ? [] : [statusNode]),
       ...(directoryFlowNode === null ? [] : [directoryFlowNode]),
-      <Modal
-        open={this.#errorOpen}
-        onClose={() => { this.#closeModal() }}
-        closeLabel={t('close')}
-        title={t('folderError.title')}
-        footer={[
-          <Button variant="outline" class={css.modalAction ?? ''} onclick={() => { this.#closeModal() }}>{t('cancel')}</Button>,
-          /* Retrying needs an occupant to serve the flow; without one the
-           * button would open a flow nobody can answer or cancel. */
-          <Button variant="primary" class={css.modalAction ?? ''} disabled={!flowAvailable} onclick={() => { this.#openDirectoryFlow() }}>{t('folderError.retry')}</Button>,
-        ]}
-      >
-        <div class={css.modalError ?? ''} role="alert">{this.#modalError}</div>
-      </Modal>,
     ]
     applyDiff(this, vdom)
+
+    this.#menu = renderMenu(this.#menu, {
+      open: open && !addIsTheOnlyEntry && !menuIsEmpty,
+      anchor: '',
+      items,
+      ...(pinAdd ? { footer: addEntries } : {}),
+      selectedId,
+      onSelect: handleSelect,
+      onClose,
+      side,
+      portal: true,
+      getAnchorRect: this.#getAnchorRect,
+    })
+
+    this.#errorModal = renderModal(this.#errorModal, {
+      open: this.#errorOpen,
+      onClose: () => { this.#closeModal() },
+      closeLabel: t('close'),
+      title: t('folderError.title'),
+      footer: [
+        <Button variant="outline" class={css.modalAction ?? ''} onclick={() => { this.#closeModal() }}>{t('cancel')}</Button>,
+        /* Retrying needs an occupant to serve the flow; without one the
+         * button would open a flow nobody can answer or cancel. */
+        <Button variant="primary" class={css.modalAction ?? ''} disabled={!flowAvailable} onclick={() => { this.#openDirectoryFlow() }}>{t('folderError.retry')}</Button>,
+      ],
+      children: <div class={css.modalError ?? ''} role="alert">{this.#modalError}</div>,
+    })
   }
 }
 

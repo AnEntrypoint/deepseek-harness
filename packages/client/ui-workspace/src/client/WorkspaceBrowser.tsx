@@ -27,7 +27,8 @@ import { applyDiff } from 'webjsx'
 import clsx from 'clsx'
 import {
   Button, IconCloseFill14, IconPersonalizationOutline16,
-  IconProjectAddOutline16, IconSearchOutline16, Menu, Modal, Tooltip,
+  IconProjectAddOutline16, IconSearchOutline16, type DshMenu, renderMenu,
+  type DshModal, renderModal, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   SessionId, SessionListState, SessionSearchResultItem, WorkspaceId, WorkspaceView,
@@ -207,6 +208,7 @@ export interface ViewOptionsMenuProps {
 export class DshViewOptionsMenu extends HTMLElement {
   #props: ViewOptionsMenuProps | null = null
   #open = false
+  #menu: DshMenu | null = null
 
   setProps(props: ViewOptionsMenuProps): void {
     this.#props = props
@@ -222,46 +224,43 @@ export class DshViewOptionsMenu extends HTMLElement {
     if (props === null) return
     const { groupBy, orderBy, onGroupPick, onOrderPick, t } = props
     const open = this.#open
-    const vdom = (
-      <Menu
-        open={open}
-        onClose={() => { this.#open = false; this.#render() }}
-        items={[
-          { type: 'label' as const, id: 'group-by', text: t('groupBy.label') },
-          { id: 'workspace', label: t('groupBy.workspace') },
-          { id: 'flat', label: t('groupBy.flat') },
-          { type: 'separator' as const, id: 'order-by-separator' },
-          { type: 'label' as const, id: 'order-by', text: t('orderBy.label') },
-          { id: 'manual', label: t('orderBy.manual') },
-          { id: 'updated', label: t('orderBy.updated') },
-        ]}
-        selectedIds={[groupBy, orderBy]}
-        onSelect={(id) => {
-          if (id === 'workspace' || id === 'flat') onGroupPick(id)
-          else if (id === 'manual' || id === 'updated') onOrderPick(id)
-          this.#open = false
-          this.#render()
-        }}
-        align="end"
-        dense
-        // Portal: the section header clips overflow, so an in-place list would
-        // be cut off at the header's bounds.
-        portal
-        anchor={(
-          <Tooltip label={t('viewOptions.label')} side="bottom" delayMs={500}>
-            <button
-              type="button"
-              class={clsx(css.iconButton, css.wide)}
-              aria-label={t('viewOptions.label')}
-              onclick={() => { this.#open = !this.#open; this.#render() }}
-            >
-              <IconPersonalizationOutline16 />
-            </button>
-          </Tooltip>
-        )}
-      />
-    )
-    applyDiff(this, vdom)
+    this.#menu = renderMenu(this.#menu, {
+      open,
+      onClose: () => { this.#open = false; this.#render() },
+      items: [
+        { type: 'label' as const, id: 'group-by', text: t('groupBy.label') },
+        { id: 'workspace', label: t('groupBy.workspace') },
+        { id: 'flat', label: t('groupBy.flat') },
+        { type: 'separator' as const, id: 'order-by-separator' },
+        { type: 'label' as const, id: 'order-by', text: t('orderBy.label') },
+        { id: 'manual', label: t('orderBy.manual') },
+        { id: 'updated', label: t('orderBy.updated') },
+      ],
+      selectedIds: [groupBy, orderBy],
+      onSelect: (id) => {
+        if (id === 'workspace' || id === 'flat') onGroupPick(id)
+        else if (id === 'manual' || id === 'updated') onOrderPick(id)
+        this.#open = false
+        this.#render()
+      },
+      align: 'end',
+      dense: true,
+      // Portal: the section header clips overflow, so an in-place list would
+      // be cut off at the header's bounds.
+      portal: true,
+      anchor: (
+        <Tooltip label={t('viewOptions.label')} side="bottom" delayMs={500}>
+          <button
+            type="button"
+            class={clsx(css.iconButton, css.wide)}
+            aria-label={t('viewOptions.label')}
+            onclick={() => { this.#open = !this.#open; this.#render() }}
+          >
+            <IconPersonalizationOutline16 />
+          </button>
+        </Tooltip>
+      ),
+    })
   }
 }
 
@@ -1004,6 +1003,11 @@ export class DshWorkspaceBrowser extends HTMLElement {
   // Delete dialog.
   #deleteTarget: { workspaceId: WorkspaceId; title: string } | null = null
   #deleting = false
+
+  // Self-mounting portal dialogs held across renders (see Modal.tsx doc).
+  #renameModal: DshModal | null = null
+  #sessionRenameModal: DshModal | null = null
+  #deleteModal: DshModal | null = null
   #deleteCommittedId: WorkspaceId | null = null
   #deleteError: string | null = null
 
@@ -1547,117 +1551,115 @@ export class DshWorkspaceBrowser extends HTMLElement {
                 },
               }))}
         </div>
-
-        <Modal
-          open={renameTarget !== null}
-          onClose={() => { this.#closeRename() }}
-          closeLabel={t('close')}
-          title={t('rename.workspace.title')}
-          footer={[
-            <Button variant="outline" disabled={renaming} onclick={() => { this.#closeRename() }}>{t('cancel')}</Button>,
-            <Button variant="primary" disabled={renameBlocked} onclick={() => { this.#confirmRename() }}>{t('rename')}</Button>,
-          ]}
-        >
-          {[
-            <input
-              class={css.renameInput ?? ''}
-              value={renameDraft}
-              aria-label={t('field.workspaceName')}
-              autofocus
-              disabled={renaming}
-              onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
-              oninput={(e: Event) => {
-                this.#renameDraft = (e.target as HTMLInputElement).value
-                this.#renameError = null
-                this.#render()
-              }}
-              oncompositionstart={() => { this.#composing = true }}
-              oncompositionend={() => { this.#composing = false }}
-              onkeydown={(e: KeyboardEvent) => {
-                if (e.key === 'Enter' && !this.#composing) {
-                  e.preventDefault()
-                  this.#confirmRename()
-                }
-              }}
-            />,
-            ...(renameDuplicate
-              ? [<div class={css.renameError ?? ''} role="alert">{t('conflict.named', { name: renameTrimmed })}</div>]
-              : []),
-            ...(renameError !== null
-              ? [<div class={css.renameError ?? ''} role="alert">{renameError}</div>]
-              : []),
-          ]}
-        </Modal>
-
-        <Modal
-          open={sessionRenameTarget !== null}
-          onClose={() => { this.#closeSessionRename() }}
-          closeLabel={t('close')}
-          title={t('rename.session.title')}
-          footer={[
-            <Button variant="outline" disabled={sessionRenaming} onclick={() => { this.#closeSessionRename() }}>{t('cancel')}</Button>,
-            <Button variant="primary" disabled={sessionRenameBlocked} onclick={() => { this.#confirmSessionRename() }}>{t('rename')}</Button>,
-          ]}
-        >
-          {[
-            <input
-              class={css.renameInput ?? ''}
-              value={sessionRenameDraft}
-              aria-label={t('field.sessionName')}
-              autofocus
-              disabled={sessionRenaming}
-              onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
-              oninput={(e: Event) => {
-                this.#sessionRenameDraft = (e.target as HTMLInputElement).value
-                this.#sessionRenameError = null
-                this.#render()
-              }}
-              oncompositionstart={() => { this.#composing = true }}
-              oncompositionend={() => { this.#composing = false }}
-              onkeydown={(e: KeyboardEvent) => {
-                if (e.key === 'Enter' && !this.#composing) {
-                  e.preventDefault()
-                  this.#confirmSessionRename()
-                }
-              }}
-            />,
-            ...(sessionRenameError !== null
-              ? [<div class={css.renameError ?? ''} role="alert">{sessionRenameError}</div>]
-              : []),
-          ]}
-        </Modal>
-        <Modal
-          open={deleteTarget !== null}
-          onClose={() => { this.#closeDelete() }}
-          closeLabel={t('close')}
-          title={t('delete.workspace')}
-          {...deleteTarget === null
-            ? {}
-            : { description: t('delete.desc', { name: deleteTarget.title }) }}
-          footer={[
-            <Button variant="outline" disabled={deleting} onclick={() => { this.#closeDelete() }}>{t('cancel')}</Button>,
-            <Button
-              variant="outline"
-              class={css.deleteAction ?? ''}
-              disabled={deleting}
-              onclick={() => { this.#confirmDelete() }}
-            >
-              {t('delete.workspace')}
-            </Button>,
-          ]}
-        >
-          {[
-            ...(deleting
-              ? [<div class={css.deleteStatus ?? ''} role="status">{t('delete.pending')}</div>]
-              : []),
-            ...(deleteError !== null
-              ? [<div class={css.renameError ?? ''} role="alert">{deleteError}</div>]
-              : []),
-          ]}
-        </Modal>
       </div>
     )
     applyDiff(this, vdom)
+
+    this.#renameModal = renderModal(this.#renameModal, {
+      open: renameTarget !== null,
+      onClose: () => { this.#closeRename() },
+      closeLabel: t('close'),
+      title: t('rename.workspace.title'),
+      footer: [
+        <Button variant="outline" disabled={renaming} onclick={() => { this.#closeRename() }}>{t('cancel')}</Button>,
+        <Button variant="primary" disabled={renameBlocked} onclick={() => { this.#confirmRename() }}>{t('rename')}</Button>,
+      ],
+      children: [
+        <input
+          class={css.renameInput ?? ''}
+          value={renameDraft}
+          aria-label={t('field.workspaceName')}
+          autofocus
+          disabled={renaming}
+          onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
+          oninput={(e: Event) => {
+            this.#renameDraft = (e.target as HTMLInputElement).value
+            this.#renameError = null
+            this.#render()
+          }}
+          oncompositionstart={() => { this.#composing = true }}
+          oncompositionend={() => { this.#composing = false }}
+          onkeydown={(e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !this.#composing) {
+              e.preventDefault()
+              this.#confirmRename()
+            }
+          }}
+        />,
+        ...(renameDuplicate
+          ? [<div class={css.renameError ?? ''} role="alert">{t('conflict.named', { name: renameTrimmed })}</div>]
+          : []),
+        ...(renameError !== null
+          ? [<div class={css.renameError ?? ''} role="alert">{renameError}</div>]
+          : []),
+      ],
+    })
+
+    this.#sessionRenameModal = renderModal(this.#sessionRenameModal, {
+      open: sessionRenameTarget !== null,
+      onClose: () => { this.#closeSessionRename() },
+      closeLabel: t('close'),
+      title: t('rename.session.title'),
+      footer: [
+        <Button variant="outline" disabled={sessionRenaming} onclick={() => { this.#closeSessionRename() }}>{t('cancel')}</Button>,
+        <Button variant="primary" disabled={sessionRenameBlocked} onclick={() => { this.#confirmSessionRename() }}>{t('rename')}</Button>,
+      ],
+      children: [
+        <input
+          class={css.renameInput ?? ''}
+          value={sessionRenameDraft}
+          aria-label={t('field.sessionName')}
+          autofocus
+          disabled={sessionRenaming}
+          onfocus={(e: FocusEvent) => { (e.target as HTMLInputElement).select() }}
+          oninput={(e: Event) => {
+            this.#sessionRenameDraft = (e.target as HTMLInputElement).value
+            this.#sessionRenameError = null
+            this.#render()
+          }}
+          oncompositionstart={() => { this.#composing = true }}
+          oncompositionend={() => { this.#composing = false }}
+          onkeydown={(e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !this.#composing) {
+              e.preventDefault()
+              this.#confirmSessionRename()
+            }
+          }}
+        />,
+        ...(sessionRenameError !== null
+          ? [<div class={css.renameError ?? ''} role="alert">{sessionRenameError}</div>]
+          : []),
+      ],
+    })
+
+    this.#deleteModal = renderModal(this.#deleteModal, {
+      open: deleteTarget !== null,
+      onClose: () => { this.#closeDelete() },
+      closeLabel: t('close'),
+      title: t('delete.workspace'),
+      ...(deleteTarget === null
+        ? {}
+        : { description: t('delete.desc', { name: deleteTarget.title }) }),
+      footer: [
+        <Button variant="outline" disabled={deleting} onclick={() => { this.#closeDelete() }}>{t('cancel')}</Button>,
+        <Button
+          variant="outline"
+          class={css.deleteAction ?? ''}
+          disabled={deleting}
+          onclick={() => { this.#confirmDelete() }}
+        >
+          {t('delete.workspace')}
+        </Button>,
+      ],
+      children: [
+        ...(deleting
+          ? [<div class={css.deleteStatus ?? ''} role="status">{t('delete.pending')}</div>]
+          : []),
+        ...(deleteError !== null
+          ? [<div class={css.renameError ?? ''} role="alert">{deleteError}</div>]
+          : []),
+      ],
+    })
   }
 }
 

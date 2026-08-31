@@ -1,0 +1,50 @@
+C:\dev\deepseek-harness\packages\boot\app-boot\src\index.ts:800
+    throw new Error(`${binName}: ${stage}: ${detail}${stack}`, { cause })
+          ^
+
+Error: dsh: plugin tree failed to load: failed to apply loader entry include (cordis:include): failed to apply loader entry webserver (@deepseek-ai/dsh-host-webserver): listen EADDRINUSE: address already in use 127.0.0.1:3080
+Error: listen EADDRINUSE: address already in use 127.0.0.1:3080
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at node:net:2274:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at boot (C:\dev\deepseek-harness\packages\boot\app-boot\src\index.ts:800:11)
+    at async runProfile (C:\dev\deepseek-harness\apps\cli\src\profile-boot.ts:248:15)
+    at async <anonymous> (C:\dev\deepseek-harness\apps\cli\src\bin.ts:32:5) {
+  [cause]: Error: failed to apply loader entry include (cordis:include): failed to apply loader entry webserver (@deepseek-ai/dsh-host-webserver): listen EADDRINUSE: address already in use 127.0.0.1:3080
+      at updateError (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:26:10)
+      at Entry._init (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:287:13)
+      at async Entry.init (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:261:7)
+      at async Entry.update (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:172:41)
+      at async EntryGroup.create (C:\dev\deepseek-harness\vendor\loader\src\config\group.ts:30:7)
+      at async Proxy.create (C:\dev\deepseek-harness\vendor\loader\src\config\tree.ts:99:16)
+      at async mountRootInclude (C:\dev\deepseek-harness\packages\boot\app-boot\src\index.ts:523:21)
+      at async boot (C:\dev\deepseek-harness\packages\boot\app-boot\src\index.ts:774:5)
+      at async runProfile (C:\dev\deepseek-harness\apps\cli\src\profile-boot.ts:248:15)
+      at async <anonymous> (C:\dev\deepseek-harness\apps\cli\src\bin.ts:32:5) {
+    [cause]: Error: failed to apply loader entry webserver (@deepseek-ai/dsh-host-webserver): listen EADDRINUSE: address already in use 127.0.0.1:3080
+        at updateError (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:26:10)
+        at Entry._init (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:287:13)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async Entry.init (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:261:7)
+        at async Entry.update (C:\dev\deepseek-harness\vendor\loader\src\config\entry.ts:172:41)
+        at async EntryGroup.create (C:\dev\deepseek-harness\vendor\loader\src\config\group.ts:30:7)
+        at async Promise.allSettled (index 94)
+        at async EntryGroup.update (C:\dev\deepseek-harness\vendor\loader\src\config\group.ts:71:24)
+        at async Include._apply (C:\dev\deepseek-harness\vendor\include\src\index.ts:317:5) {
+      [cause]: Error: listen EADDRINUSE: address already in use 127.0.0.1:3080
+          at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+          at listenInCluster (node:net:2065:12)
+          at node:net:2274:7
+          at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+        code: 'EADDRINUSE',
+        errno: -4091,
+        syscall: 'listen',
+        address: '127.0.0.1',
+        port: 3080
+      }
+    }
+  }
+}
+
+Node.js v24.15.0
