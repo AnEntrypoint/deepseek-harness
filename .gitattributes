@@ -7,3 +7,9 @@
 * text=auto eol=lf
 
 *.pdf binary
+
+# Vendored third-party ESM copies, byte-for-byte from their real npm
+# packages (packages/client/vendor-modules) -- trailing whitespace etc. is
+# upstream's own formatting, not ours to "fix" and risk drifting from the
+# patch-signature/content-hash guarantees the vendoring script asserts.
+packages/client/vendor-modules/vendor/** -whitespace

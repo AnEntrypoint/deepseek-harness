@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-web-frontend",
-  "description": "Web application entry: vite build over the @deepseek-ai/dsh-client-web shell library; dist/ served by apps/cli's dsh web",
+  "description": "Web application entry: buildless shell over the @deepseek-ai/dsh-client-web library, served directly by apps/cli's dsh web with no build step",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"
@@ -12,18 +12,14 @@
   },
   "type": "module",
   "exports": {
-    "./dist/*": "./dist/*",
+    "./index.html": "./index.html",
+    "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    "!dist/**/*.map"
+    "index.html",
+    "src"
   ],
-  "scripts": {
-    "build": "vite build",
-    "dev": "vite",
-    "watch": "vite build --watch --no-emptyOutDir"
-  },
   "license": "MIT",
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-group": "workspace:^",
@@ -37,8 +33,6 @@
     "playwright": "^1.49.0",
     "webjsx": "^0.0.73",
     "typescript": "^6.0.3",
-    "vite": "^6.0.0",
-    "vitest": "^4.1.8",
     "fflate": "^0.8.2"
   }
 }

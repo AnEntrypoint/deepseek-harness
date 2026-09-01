@@ -164,6 +164,12 @@
     - id: css-manifest
       name: '@deepseek-ai/dsh-client-css-manifest'
 
+    # Buildless bare-specifier resolution: serves the vendored ESM copy of
+    # every npm and workspace package the client bundle imports under
+    # /vendor, and injects the import map plus the document title.
+    - id: vendor-modules
+      name: '@deepseek-ai/dsh-client-vendor-modules'
+
     # Owns both ends of the web transport: node half binds the gateway to the
     # webserver under /api; browser half is the fetch/SSE client.
     - id: connection

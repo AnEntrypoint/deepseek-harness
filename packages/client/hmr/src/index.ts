@@ -53,13 +53,15 @@ export const Config: z<Config> = z.object({
  * path `dsh-web-app` resolves for `frontend-static` — duplicated here rather
  * than threaded through the YAML composition (this row is declared
  * statically, not mounted imperatively) so a composition needs no config to
- * get shell reload; a checkout without a built frontend simply gets none.
- * @returns the resolved path, or undefined when the frontend package or its dist is absent.
+ * get shell reload; a checkout without the frontend package simply gets none.
+ * apps/web is served buildless (no dist/ build output), so this watches its
+ * own index.html directly — the same file frontend-static serves.
+ * @returns the resolved path, or undefined when the frontend package is absent.
  */
 function resolveDistIndexIfBuilt(): string | undefined {
   const require = createRequire(import.meta.url)
   try {
-    return require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')
+    return require.resolve('@deepseek-ai/dsh-web-frontend/index.html')
   } catch {
     return undefined
   }

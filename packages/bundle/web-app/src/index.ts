@@ -159,14 +159,19 @@ function localWebUrl(ctx: Context): string {
   return `http://${LOOPBACK_HOST}:${String(port)}`
 }
 
-/** Dist location is workspace knowledge of this bundle: resolved through the frontend package exports, not configured. */
+/**
+ * apps/web is served buildless: its own index.html plus everything under
+ * apps/web/src/*.js rides frontend-static's fully generic distRoot/distIndex
+ * serving directly, with no build-output directory or build step at all.
+ * Workspace knowledge of this bundle, never user config.
+ */
 function resolveDistIndex(): string {
   const require = createRequire(import.meta.url)
   try {
-    return require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')
+    return require.resolve('@deepseek-ai/dsh-web-frontend/index.html')
   } catch {
-    /* v8 ignore next 2 -- reachable only on a checkout without a built dist; the test tree builds it */
-    throw new Error('web-app: frontend dist not built; run pnpm run build from the repository root first')
+    /* v8 ignore next 2 -- reachable only on a checkout missing apps/web entirely */
+    throw new Error('web-app: apps/web/index.html not found; check out the repository root first')
   }
 }
 
