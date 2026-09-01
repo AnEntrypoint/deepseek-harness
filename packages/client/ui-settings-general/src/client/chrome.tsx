@@ -19,11 +19,13 @@ export type HeaderContentProps = PropsRuntime<'settings.header'> & PropsLocale<'
  * @param props - composed slot props.
  * @returns the trigger content fragment.
  */
-export function TriggerContent({ wide, t }: TriggerContentProps): JSX.Element[] {
-  return [
-    wide ? <IconSettingsOutline16 size={16} /> : <IconSettingsOutline14 size={18} />,
-    ...(wide ? [<span class={css.triggerLabel ?? ''}>{t('trigger')}</span>] : []),
-  ]
+export function TriggerContent({ wide, t }: TriggerContentProps): JSX.Element {
+  return (
+    <span class={css.triggerContent ?? ''}>
+      {wide ? <IconSettingsOutline16 size={16} /> : <IconSettingsOutline14 size={18} />}
+      {wide && <span class={css.triggerLabel ?? ''}>{t('trigger')}</span>}
+    </span>
+  )
 }
 
 /**
