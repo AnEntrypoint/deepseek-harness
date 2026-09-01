@@ -10,6 +10,7 @@
  */
 import { statSync } from 'node:fs'
 import type { ServerResponse } from 'node:http'
+import { createRequire } from 'node:module'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 // Empty type imports carry the clientModuleHost/webServer Context merges.
@@ -31,11 +32,38 @@ export const inject = ['clientModules', 'webServer']
 export interface Config {
   /** Bundle stat-poll interval in milliseconds (default 500, the build-side watcher's polling default). */
   pollIntervalMs?: number
+  /**
+   * Absolute path to the shell's built `index.html` (`dsh-web-app`'s resolved
+   * dist index), watched the same way as client bundles: a content change
+   * broadcasts a `shell-rebuilt` frame so the browser can reload. Composed by
+   * the bundle that already resolves this path for `frontend-static`
+   * (workspace knowledge, never user config) — omitted compositions simply
+   * carry no shell-reload row, same as today.
+   */
+  distIndex?: string
 }
 
 export const Config: z<Config> = z.object({
   pollIntervalMs: z.number().step(1).min(1).default(500),
+  distIndex: z.string(),
 })
+
+/**
+ * Resolve the Web frontend's built `index.html`, the same workspace-known
+ * path `dsh-web-app` resolves for `frontend-static` — duplicated here rather
+ * than threaded through the YAML composition (this row is declared
+ * statically, not mounted imperatively) so a composition needs no config to
+ * get shell reload; a checkout without a built frontend simply gets none.
+ * @returns the resolved path, or undefined when the frontend package or its dist is absent.
+ */
+function resolveDistIndexIfBuilt(): string | undefined {
+  const require = createRequire(import.meta.url)
+  try {
+    return require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')
+  } catch {
+    return undefined
+  }
+}
 
 /** Serialize one frame as an SSE data line. */
 function sseData(frame: PluginsEventFrame): string {
@@ -145,6 +173,59 @@ export function apply(ctx: Context, config: Config): void {
     }
   }, 'client-hmr: bundle watches')
 
+  // --- shell dist watch: same stat-poll shape, over dsh-web-app's built
+  // index.html rather than a client-plugin bundle. Not part of the loader's
+  // client-module graph (the shell is Vite-bundled, not loader-delivered), so
+  // it gets its own small watch state and a dedicated listener set instead of
+  // riding clientModules.onRebuilt. -------------------------------------
+  let shellWatch: WatchedBundle | undefined
+  const shellRebuiltListeners = new Set<(rev: string) => void>()
+
+  const rehashShell = (watch: WatchedBundle, current: { mtimeMs: number; size: number }): void => {
+    watch.mtimeMs = current.mtimeMs
+    watch.size = current.size
+    watch.dirty = false
+    // No content hash: mtime+size already discriminates a real rewrite from a
+    // stat no-op, and the shell reload is a full page load — nothing here
+    // needs the extra work a rev string would buy the bundle-reload path.
+    const rev = `${String(current.mtimeMs)}-${String(current.size)}`
+    for (const listener of shellRebuiltListeners) listener(rev)
+  }
+
+  const pollShellWatch = (): void => {
+    if (shellWatch === undefined) return
+    const watch = shellWatch
+    let current: { mtimeMs: number; size: number }
+    try {
+      current = statSync(watch.path)
+    } catch (error) {
+      watch.dirty = true
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') ctx.logger.warn(error)
+      return
+    }
+    if (!watch.dirty && current.mtimeMs === watch.mtimeMs && current.size === watch.size) return
+    rehashShell(watch, current)
+  }
+
+  const distIndex = config.distIndex ?? resolveDistIndexIfBuilt()
+  if (distIndex !== undefined) {
+    ctx.effect(() => {
+      try {
+        const baseline = statSync(distIndex)
+        shellWatch = { path: distIndex, mtimeMs: baseline.mtimeMs, size: baseline.size, dirty: false }
+      } catch (error) {
+        shellWatch = { path: distIndex, mtimeMs: 0, size: 0, dirty: true }
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') ctx.logger.warn(error)
+      }
+      const timer = setInterval(pollShellWatch, pollIntervalMs)
+      timer.unref()
+      return () => {
+        clearInterval(timer)
+        shellWatch = undefined
+      }
+    }, 'client-hmr: shell dist watch')
+  }
+
   // --- /plugins/events SSE channel ----------------------------------------
   const connections = new Set<ServerResponse>()
 
@@ -181,8 +262,14 @@ export function apply(ctx: Context, config: Config): void {
       const line = sseData({ type: 'rebuilt', id, rev })
       for (const res of connections) res.write(line)
     })
+    const shellListener = (rev: string): void => {
+      const line = sseData({ type: 'shell-rebuilt', rev })
+      for (const res of connections) res.write(line)
+    }
+    shellRebuiltListeners.add(shellListener)
     return () => {
       unsubscribe()
+      shellRebuiltListeners.delete(shellListener)
       disposeRoute()
       for (const res of connections) res.destroy()
       connections.clear()

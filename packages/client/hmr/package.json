@@ -40,6 +40,9 @@
   "dependencies": {
     "@deepseek-ai/schemastery": "workspace:^"
   },
+  "optionalDependencies": {
+    "@deepseek-ai/dsh-web-frontend": "workspace:^"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
     "@deepseek-ai/dsh-client-modules": "workspace:^",

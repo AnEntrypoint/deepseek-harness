@@ -150,6 +150,14 @@ export function apply(ctx: Context): void {
           ctx.logger.error(error)
         })
         break
+      case 'shell-rebuilt':
+        // Shell code (the boot kernel, ui-renderer, and everything else Vite
+        // bundles into apps/web/dist) has no fiber-level hot-swap path — it
+        // is not a loader entry, so there is nothing here to invalidate and
+        // re-materialize. A full reload is the correct, and only, response.
+        ctx.logger.info('client-hmr: shell rebuilt, reloading')
+        window.location.reload()
+        break
       case 'graph':
         // Connect-time snapshot, unused. The loader's cached graph rev
         // goes stale after rebuilds — harmless, since prefetch hits the
