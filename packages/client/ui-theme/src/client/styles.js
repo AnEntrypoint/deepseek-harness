@@ -1,8 +1,8 @@
-import base from '../styles/base.css?inline'
-import designPlatform from '../styles/design-platform.css?inline'
-import scrollbar from '../styles/scrollbar.css?inline'
-import gradientShadowText from '../styles/gradient-shadow-text.css?inline'
-import shiki from '../styles/shiki.css?inline'
+import base from '../styles/base.css.js'
+import designPlatform from '../styles/design-platform.css.js'
+import scrollbar from '../styles/scrollbar.css.js'
+import gradientShadowText from '../styles/gradient-shadow-text.css.js'
+import shiki from '../styles/shiki.css.js'
 
 const PLUGIN_ID = '@deepseek-ai/dsh-client-ui-theme'
 

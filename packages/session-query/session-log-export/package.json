@@ -2,7 +2,9 @@
   "name": "@deepseek-ai/dsh-session-log-export",
   "description": "Web Session-log export command and shared download dialog",
   "version": "0.1.1-rc.2",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
@@ -11,14 +13,27 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    ".": { "default": "./src/index.js" },
-    "./invariant": { "default": "./src/invariant.js" },
-    "./client": { "default": "./src/client/index.js" },
+    ".": {
+      "default": "./src/index.js"
+    },
+    "./invariant": {
+      "default": "./src/invariant.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "files": ["src/index.js", "src/invariant.js", "src/client/index.js"],
-  "scripts": { "bundle": "tsdown", "watch": "tsdown --watch" },
+  "files": [
+    "src/index.js",
+    "src/invariant.js",
+    "src/client/index.js"
+  ],
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:^",

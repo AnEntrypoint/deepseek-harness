@@ -8,7 +8,7 @@
   "scripts": {
     "build": "pnpm build:ts",
     "build:ts": "tsc -b",
-    "build:native": "tsx ./scripts/build.ts",
+    "build:native": "node ./scripts/build.js",
     "typecheck": "tsc --noEmit && tsc -b --dry",
     "test": "node ./test/entry.test.js && node ./test/launcher.test.js",
     "test:entry": "node ./test/entry.test.js",

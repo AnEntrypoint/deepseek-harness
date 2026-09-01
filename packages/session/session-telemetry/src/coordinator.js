@@ -14,13 +14,6 @@
  * @module @deepseek-ai/dsh-session-telemetry/coordinator
  */
 
-/** Whether capture follows live events or reads the canonical log only when requested. One of: 'live' | 'on-demand' */
-
-/** One projected record ready for backend handoff.
- * - record: SessionTelemetryRecord
- * - seq?: number — Ledger cursor advanced only after the backend accepts this record.
- */
-
 /**
  * The handoff cursor: per session, the highest `seq` handed to a backend.
  * Deliberately MODULE-scope ambient state — a narrow, documented exception
@@ -43,11 +36,11 @@ const handoffCursor = new WeakMap()
  * `session/created`). A `session/disposed` captures the session's `shutdown`
  * operational record at its own termination edge and retires it from the
  * adopted set. On-demand capture registers none of those continuous listeners;
- * {@link captureSession} reads the canonical log explicitly and never creates
- * operational records. Disposal captures shutdown markers for live-adopted
- * sessions, then awaits the backend's `shutdown()`; a failure there warns
- * instead of throwing — best-effort reporting must not fail application
- * teardown.
+ * {@link SessionTelemetryCoordinator#captureSession} reads the canonical log
+ * explicitly and never creates operational records. Disposal captures
+ * shutdown markers for live-adopted sessions, then awaits the backend's
+ * `shutdown()`; a failure there warns instead of throwing — best-effort
+ * reporting must not fail application teardown.
  */
 export class SessionTelemetryCoordinator {
   /**
@@ -55,62 +48,65 @@ export class SessionTelemetryCoordinator {
    * protection and the teardown sweep of unmarked sessions;
    * `session/disposed` marks and retires entries.
    */
-  adopted = new Set()
+  #adopted = new Set()
   /** Per session, the `turn:step` keys whose first chunk already shipped; rebuilt from the log on re-adoption. */
-  chunkSeen = new WeakMap()
+  #chunkSeen = new WeakMap()
+  #ctx
+  #backend
+
   /**
    * @param ctx - the composing backend's context; listeners bind to its fiber.
    * @param backend - the backend receiving records; owned elsewhere, never disposed here beyond `shutdown()` forwarding.
-   * @param capture - follow live events, or wait for explicit canonical-log capture.
+   * @param capture - follow live events ('live'), or wait for explicit canonical-log capture ('on-demand').
    */
   constructor(ctx, backend, capture = 'live') {
-    this.ctx = ctx
-    this.backend = backend
+    this.#ctx = ctx
+    this.#backend = backend
     if (capture === 'live') {
       ctx.on('session/created', (session) => {
-        this.adopt(session)
+        this.#adopt(session)
       })
       // Capture the shutdown marker at the session's own termination edge,
       // then retire the only strong reference owned by this coordinator.
       ctx.on('session/disposed', (session) => {
-        this.contain(() => {
-          if (!this.adopted.delete(session)) return
-          this.deliver(session, { record: this.redact(shutdownRecord(session)) })
+        this.#contain(() => {
+          if (!this.#adopted.delete(session)) return
+          this.#deliver(session, { record: this.#redact(shutdownRecord(session)) })
         })
       })
       ctx.on('session/event', (session, event) => {
-        this.contain(() => {
-          this.captureEvent(session, event)
+        this.#contain(() => {
+          this.#captureEvent(session, event)
         })
       })
       // Parallel listeners are awaited by the loop at turn end; returning void
       // (not the SDK's flush promise) is the turn-latency contract.
       ctx.on('session/flush', (session) => {
-        this.contain(() => {
-          this.hintFlush(session)
+        this.#contain(() => {
+          this.#hintFlush(session)
         })
       })
       ctx.on('agent/error', ({ agent, turn, step, error }) => {
-        this.contain(() => {
-          this.relayAgentError(agent, turn, step, error)
+        this.#contain(() => {
+          this.#relayAgentError(agent, turn, step, error)
         })
       })
       for (const session of ctx.sessions.list()) {
-        this.adopt(session)
+        this.#adopt(session)
       }
     }
     ctx.effect(() => async () => {
       // Sessions still adopted here are alive through whole-application
       // teardown, so capture the marker before the backend quiesces.
-      for (const session of this.adopted) {
-        this.contain(() => {
-          this.deliver(session, { record: this.redact(shutdownRecord(session)) })
+      for (const session of this.#adopted) {
+        this.#contain(() => {
+          this.#deliver(session, { record: this.#redact(shutdownRecord(session)) })
         })
       }
       try {
-        await this.backend.shutdown()
+        await this.#backend.shutdown()
       } catch (error) {
-        this.ctx.logger.warn(`telemetry: backend shutdown failed: ${String(error)}`)
+        this.#ctx.logger.warn(`telemetry: backend shutdown failed: ${String(error)}`)
       }
     }, 'telemetry capture')
   }
@@ -131,9 +127,9 @@ export class SessionTelemetryCoordinator {
     // while the rest of the historical replay proceeds.
     for (const event of session.events) {
       if (throughSeq !== undefined && event.seq > throughSeq) break
-      this.contain(() => {
-        if (event.seq <= cursor) this.track(session, event)
-        else this.captureEvent(session, event)
+      this.#contain(() => {
+        if (event.seq <= cursor) this.#track(session, event)
+        else this.#captureEvent(session, event)
       })
     }
   }
@@ -153,24 +149,24 @@ export class SessionTelemetryCoordinator {
    * backfills records a previous process failed to deliver.
    * @param session - the live session to adopt; a second adoption is a no-op.
    */
-  adopt(session) {
-    if (this.adopted.has(session)) return
-    this.adopted.add(session)
+  #adopt(session) {
+    if (this.#adopted.has(session)) return
+    this.#adopted.add(session)
     this.captureSession(session)
   }
 
   /** Feed the chunk projection without handing off — the ≤cursor half of re-adoption. */
-  track(session, event) {
+  #track(session, event) {
     if (event.type === 'assistant/chunk') {
-      this.seen(session).add(`${event.data.turn}:${event.data.step}`)
+      this.#seen(session).add(`${event.data.turn}:${event.data.step}`)
     }
   }
 
   /** Project, redact, and hand one event to the backend. */
-  captureEvent(session, event) {
+  #captureEvent(session, event) {
     if (event.type === 'assistant/chunk') {
       const key = `${event.data.turn}:${event.data.step}`
-      const seen = this.seen(session)
+      const seen = this.#seen(session)
       // Fixed chunk projection: only the first chunk of each (turn, step)
       // ships — the stream-started signal; content is byte-complete in the
       // step's assembled assistant/message. Dropped chunks do not advance
@@ -178,8 +174,8 @@ export class SessionTelemetryCoordinator {
       if (seen.has(key)) return
       seen.add(key)
     }
-    this.deliver(session, {
-      record: this.redact({
+    this.#deliver(session, {
+      record: this.#redact({
         channel: 'ledger',
         time: event.time,
         severity: severityOf(event),
@@ -196,30 +192,30 @@ export class SessionTelemetryCoordinator {
    * Run the `session-telemetry/record` waterfall at capture time. The innermost `next`
    * passes the record through unchanged — this package ships no rules; exported
    * data is as clean as the listeners a deployment mounts. Callers run inside
-   * {@link contain}, so a throwing rule withholds the record instead of
+   * {@link #contain}, so a throwing rule withholds the record instead of
    * reaching the loop (fail-closed). On-demand capture invokes this waterfall
    * while reading the canonical session log, not when the event was appended.
    */
-  redact(record) {
-    return this.ctx.waterfall('session-telemetry/record', record, () => record)
+  #redact(record) {
+    return this.#ctx.waterfall('session-telemetry/record', record, () => record)
   }
 
   /** Hand one redacted record to the backend, then advance its ledger cursor. */
-  deliver(session, pending) {
-    this.backend.emit(pending.record)
+  #deliver(session, pending) {
+    this.#backend.emit(pending.record)
     if (pending.seq !== undefined) handoffCursor.set(session, pending.seq)
   }
 
   /** Forward the turn-end boundary to the backend's optional flush hint. */
-  hintFlush(session) {
-    if (this.adopted.has(session)) this.backend.flush?.()
+  #hintFlush(session) {
+    if (this.#adopted.has(session)) this.#backend.flush?.()
   }
 
   /** Relay one `agent/error` bus emission as an `agent-error` operational record. */
-  relayAgentError(agent, turn, step, error) {
+  #relayAgentError(agent, turn, step, error) {
     const detail = errorDetail(error)
-    this.deliver(agent.session, {
-      record: this.redact({
+    this.#deliver(agent.session, {
+      record: this.#redact({
         channel: 'ops',
         time: Date.now(),
         severity: 'error',
@@ -237,9 +233,9 @@ export class SessionTelemetryCoordinator {
   }
 
   /** Lazily create the per-session first-chunk tracking set. */
-  seen(session) {
-    let set = this.chunkSeen.get(session)
-    if (!set) this.chunkSeen.set(session, set = new Set())
+  #seen(session) {
+    let set = this.#chunkSeen.get(session)
+    if (!set) this.#chunkSeen.set(session, set = new Set())
     return set
   }
 
@@ -248,11 +244,11 @@ export class SessionTelemetryCoordinator {
    * is stop-on-throw, so a throwing listener would starve every subscriber
    * registered after this plugin — nothing from the backend may escape.
    */
-  contain(step) {
+  #contain(step) {
     try {
       step()
     } catch (error) {
-      this.ctx.logger.warn(`telemetry: capture step failed: ${String(error)}`)
+      this.#ctx.logger.warn(`telemetry: capture step failed: ${String(error)}`)
     }
   }
 }

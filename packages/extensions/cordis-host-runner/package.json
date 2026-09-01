@@ -23,22 +23,16 @@
       "default": "./src/types.js"
     },
     "./typert": {
-      "types": "./lib/typert.host.d.ts",
-      "default": "./lib/typert.host.js"
+      "default": "./src/typert.host.js"
     },
     "./remote": {
-      "types": "./lib/typert.remote-client.d.ts",
-      "default": "./lib/typert.remote-client.js"
+      "default": "./src/typert.remote-client.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "src/*.js",
-    "lib/typert.host.js",
-    "lib/typert.host.d.ts",
-    "lib/typert.remote-client.js",
-    "lib/typert.remote-client.d.ts"
+    "src/*.js"
   ],
   "license": "MIT",
   "dependencies": {

@@ -12,7 +12,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./src/client/index.js"
+      "default": "./lib/client.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"

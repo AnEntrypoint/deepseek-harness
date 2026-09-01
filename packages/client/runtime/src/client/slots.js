@@ -49,7 +49,6 @@ export class SlotRegistry extends Service {
    * arrow property would freeze `this` to the service's own root ctx and
    * silently break per-plugin disposal.
    */
-  register
 
   /**
    * Install an effect for each declaration lifetime of a slot. The callback

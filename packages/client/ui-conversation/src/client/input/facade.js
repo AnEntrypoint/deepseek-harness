@@ -31,6 +31,14 @@ export class SessionInputShell {
   constructor(deps) {
     this.deps = deps
 
+    // Real wall clock: the typing-run merge window must actually expire in
+    // production (the machine's no-clock default is a constant for pure tests).
+    // Constructed before compose()'s first call below, which reads this.core.state.
+    this.core = new InputMachine({ now: () => Date.now() })
+    this.noticeSeq = 0
+    this.lastMirroredDraft = ''
+    this.imageIds = []
+
     /** Published machine state + queue overlay (the InputZone currency source). */
     this.state = createSnapshotStore(this.compose())
     /** Latest surfaced notice (null after clear); the bar renders errors as banners and information inline. */
@@ -56,13 +64,6 @@ export class SessionInputShell {
       getSnapshot: () => this.deps.inputTriggers?.()?.lexicon.getSnapshot() ?? EMPTY_LEXICON,
       subscribe: fn => this.deps.inputTriggers?.()?.lexicon.subscribe(fn) ?? (() => {}),
     }
-
-    // Real wall clock: the typing-run merge window must actually expire in
-    // production (the machine's no-clock default is a constant for pure tests).
-    this.core = new InputMachine({ now: () => Date.now() })
-    this.noticeSeq = 0
-    this.lastMirroredDraft = ''
-    this.imageIds = []
     /** One image-only send at a time: Enter during the Host round-trip is a no-op. */
     this.imageSendInFlight = false
     this.disposed = false

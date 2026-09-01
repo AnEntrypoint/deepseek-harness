@@ -12,12 +12,12 @@ import {
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { structuredPatch } from 'diff'
-import { formatElapsedSeconds, trajectoryRecordId } from './trajectory-record.ts'
+import { formatElapsedSeconds, trajectoryRecordId } from './trajectory-record.js'
 import {
   groupTrajectoryVirtualRows, trajectoryVirtualRecordKey,
-} from './trajectory-virtual-rows.ts'
-import { trajectoryPreviewText } from './trajectory-preview.ts'
-import css from './TrajectoryTable.css.ts'
+} from './trajectory-virtual-rows.js'
+import { trajectoryPreviewText } from './trajectory-preview.js'
+import css from './TrajectoryTable.css.js'
 
 const BOTTOM_FOLLOW_THRESHOLD_PX = 2
 const OLDER_LOAD_THRESHOLD_PX = 48

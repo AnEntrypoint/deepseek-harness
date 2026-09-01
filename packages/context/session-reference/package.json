@@ -23,12 +23,10 @@
       "default": "./src/types.js"
     },
     "./typert": {
-      "types": "./lib/typert.host.d.ts",
-      "default": "./lib/typert.host.js"
+      "default": "./src/typert.host.js"
     },
     "./remote": {
-      "types": "./lib/typert.remote-client.d.ts",
-      "default": "./lib/typert.remote-client.js"
+      "default": "./src/typert.remote-client.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -41,10 +39,8 @@
     "src/serialization.js",
     "src/types.js",
     "src/uri.js",
-    "lib/typert.host.js",
-    "lib/typert.host.d.ts",
-    "lib/typert.remote-client.js",
-    "lib/typert.remote-client.d.ts"
+    "src/typert.host.js",
+    "src/typert.remote-client.js"
   ],
   "license": "MIT",
   "dependencies": {

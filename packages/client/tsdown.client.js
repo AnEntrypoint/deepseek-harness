@@ -11,7 +11,7 @@ import { basename, dirname, isAbsolute, relative, resolve as resolvePath, sep } 
 import { fileURLToPath } from 'node:url'
 import { optionalStringArray } from './modules/src/client/manifest.js'
 import { PLATFORM_MODULES, PRELOADED_CLIENT_EXTERNALS } from './web/src/platform.js'
-import { clientBuildEnvironmentDefines } from '../../scripts/client-build-environment.ts'
+import { clientBuildEnvironmentDefines } from '../../scripts/client-build-environment.js'
 
 /**
  * Wire/type layers a client bundle may inline: browser-safe contracts

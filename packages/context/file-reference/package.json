@@ -25,6 +25,12 @@
     "./types": {
       "default": "./src/types.js"
     },
+    "./typert": {
+      "default": "./src/typert.host.js"
+    },
+    "./remote": {
+      "default": "./src/typert.remote-client.js"
+    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
@@ -32,7 +38,9 @@
     "src/index.js",
     "src/grammar.js",
     "src/invariant.js",
-    "src/types.js"
+    "src/types.js",
+    "src/typert.host.js",
+    "src/typert.remote-client.js"
   ],
   "license": "MIT",
   "peerDependencies": {
