@@ -6,15 +6,16 @@
  * triggers reloads; this script is merely the convenient way to keep them all
  * rebuilt on source change.
  *
- * Three stages, because the compile shell links built lib products rather than
+ * Two stages, because the compile shell links built lib products rather than
  * sources: `tsc -b tsconfig.client.json` emits `lib/types` (the tsdown lib
- * entries are that emit, not `src`), tsdown bundles `lib/index.js` and
- * `lib/client.js`, and `vite build` rewrites `apps/web/dist`, which `dsh web`
- * serves. A missing stage does not fail — it silently shows the previous
- * artifact, so an edit appears to do nothing.
+ * entries are that emit, not `src`), and tsdown bundles `lib/index.js` and
+ * `lib/client.js`. apps/web itself is served buildless, straight from its
+ * own source tree — no watch/build stage needed for it. A missing stage
+ * does not fail — it silently shows the previous artifact, so an edit
+ * appears to do nothing.
  *
  * MUST NOT run concurrently with `pnpm run build`: both write the same
- * `lib/` and `apps/web/dist/` trees.
+ * `lib/` tree.
  *
  * Usage: `pnpm exec tsx scripts/dev-web.ts [--poll[=ms]]`. Requires one prior
  * `pnpm run build`: every stage is incremental over the previous stage's output
@@ -39,9 +40,6 @@ const repoRoot = fileURLToPath(new URL('..', import.meta.url))
 
 /** Client-face type emit feeding every tsdown lib entry in the watch set. */
 const CLIENT_TYPE_PROGRAM = 'tsconfig.client.json'
-
-/** Compile-shell workspace whose dist `dsh web` serves. */
-const SHELL_PACKAGE = '@deepseek-ai/dsh-web-frontend'
 
 /**
  * Test infrastructure builds through the client preset but never enters the
@@ -216,23 +214,13 @@ if (isMain) {
       : [],
   ], true)
 
-  // tsdown's initial builds are awaited before the dist watcher starts so vite's
-  // first build reads current lib bundles rather than whatever the last full
-  // build left. Its own watch then covers later lib rewrites — those files are
-  // in its module graph.
   await watchClientPlugins(repoRoot, [...pluginDirs, ...libraryDirs], pollInterval)
-  // Through the shell's own `watch` script rather than vite's API: vite is not a
-  // repository-root dependency, and more importantly the vite root is its
-  // working directory — `resolve.dedupe` resolves react from that root, so
-  // running vite from anywhere but apps/web silently switches which react copy
-  // the bundle gets.
-  spawnStage('vite build --watch', 'pnpm', ['--filter', SHELL_PACKAGE, 'run', 'watch'], false)
 
   console.log(
     `dev-web: watching ${String(pluginDirs.length)} dsh.client plugin packages`
     + ` and ${String(libraryDirs.length)} statically linked library packages`
     + (pollInterval !== undefined ? ` (polling ${String(pollInterval)}ms)` : '')
-    + `, plus tsc -b ${CLIENT_TYPE_PROGRAM} and the ${SHELL_PACKAGE} dist build:\n  `
+    + `, plus tsc -b ${CLIENT_TYPE_PROGRAM}:\n  `
     + [...pluginDirs, ...libraryDirs].join('\n  '),
   )
 }
