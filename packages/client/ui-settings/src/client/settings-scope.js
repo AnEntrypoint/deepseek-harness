@@ -200,7 +200,7 @@ export class SettingsScopeController {
  * settings transport through this service rather than a shared function: the
  * client bundle purity gate forbids cross-plugin value imports and directs
  * cross-plugin collaboration through cordis services
- * (`packages/client/tsdown.client.ts`).
+ * (`packages/client/tsdown.client.js`).
  */
 export class SettingsScopeBinder extends Service {
   /**

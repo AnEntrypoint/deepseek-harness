@@ -3,12 +3,10 @@ import { defineConfig } from 'tsdown'
 /**
  * acp-agent ships TWO entries: the plugin (`index`) and the CLI `bin` (`bin`),
  * the latter referenced by package.json `bin`/`exports["./bin"]`. The root
- * tsdown builds only `lib/types/index.js`, so this override adds
- * `lib/types/bin.js`. Declarations come from `tsc -b` (dts: false),
- * matching every package.
+ * tsdown builds only `src/index.js`, so this override adds `src/bin.js`.
  */
 export default defineConfig({
-  entry: ['lib/types/index.js', 'lib/types/invariant.js', 'lib/types/bin.js'],
+  entry: ['src/index.js', 'src/invariant.js', 'src/bin.js'],
   outDir: 'lib',
   format: ['esm'],
   platform: 'node',

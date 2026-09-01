@@ -8,7 +8,7 @@ import { defineConfig } from 'tsdown'
  */
 export default defineConfig([
   {
-    entry: ['lib/types/index.js'],
+    entry: ['src/index.js'],
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',
@@ -18,7 +18,7 @@ export default defineConfig([
     clean: false,
   },
   {
-    entry: ['lib/types/invariant.js'],
+    entry: ['src/invariant.js'],
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',

@@ -1,4 +1,4 @@
-import { clientBundle } from '../tsdown.client.ts'
+import { clientBundle } from '../tsdown.client.js'
 
 export default clientBundle(
   '@deepseek-ai/dsh-client-ui-settings-general',

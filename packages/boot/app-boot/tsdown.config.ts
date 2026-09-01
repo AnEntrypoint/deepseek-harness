@@ -5,7 +5,7 @@ import { defineConfig } from 'tsdown'
  * app host bind to one Loader peer.
  */
 export default defineConfig({
-  entry: ['lib/types/index.js', 'lib/types/invariant.js'],
+  entry: ['src/index.js', 'src/invariant.js'],
   outDir: 'lib',
   format: ['esm'],
   platform: 'node',

@@ -258,7 +258,7 @@ const EXACT_EDITS: readonly ExactEdit[] = [
     // namespace, where the gate would reject the library imports client
     // bundles have always inlined, so it needs their names.
     id: 'client-purity-vendored-libraries',
-    file: 'packages/client/tsdown.client.ts',
+    file: 'packages/client/tsdown.client.js',
     find: '/** Generated descriptor/codec contribution with no shared runtime identity. */',
     replace: `/**
  * Vendored framework libraries: rescoped into @deepseek-ai, so the gate below
@@ -273,7 +273,7 @@ const VENDORED_LIBRARY = /^@deepseek-ai\\/(cosmokit|schemastery)(\\/|$)/
   },
   {
     id: 'client-purity-vendored-libraries-predicate',
-    file: 'packages/client/tsdown.client.ts',
+    file: 'packages/client/tsdown.client.js',
     find: '        if (INLINE_SAFE.test(source) || GENERATED_REMOTE.test(source)) return null // wire contribution: inline is the point',
     replace: `        if (VENDORED_LIBRARY.test(source)) return null // vendored library: inline, no shared identity
         if (INLINE_SAFE.test(source) || GENERATED_REMOTE.test(source)) return null // wire contribution: inline is the point`,
