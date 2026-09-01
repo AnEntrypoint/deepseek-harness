@@ -81,8 +81,6 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   { file: 'packages/examples/acp-demo/tests/built-bin.e2e.ts', upstream: ['cordis', 'cosmokit', 'schemastery'] },
   // `Symbol.for('schemastery')` and the `vendor:` metadata field are upstream identifiers.
   { file: 'vendor/schemastery/src/index.ts', upstream: ['schemastery'] },
-  // Asserts the vendored-manifest table, which gains an upstream-name column.
-  { file: 'scripts/gen-third-party-notices.spec.ts', upstream: RENAMES.map(rename => rename.upstream) },
   // `cordis` is also an agent-preset id — the directory name under
   // apps/cli/config/agent-presets/ — so in these files the bare name is
   // product data, not a package reference. Renaming it changed which preset
@@ -101,9 +99,6 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   { file: 'apps/cli/config/agent-presets/cordis/agent.cordis.yml', upstream: ['cordis'] },
   // The preset-roster loop names the `cordis` preset id, not a package.
   { file: 'apps/cli/tests/windows-shell.spec.ts', upstream: ['cordis'] },
-  // GROUP_ORDER holds `packages/<group>/` directory names, not package names.
-  { file: 'scripts/gen-module-graph.ts', upstream: ['cordis'] },
-  { file: 'scripts/gen-doc-graphs.ts', upstream: ['cordis'] },
   // `cordis/*` is the extensions event domain, not a package subpath. The
   // generated catalogs and every producer/consumer must preserve that wire id.
   { file: 'docs/event-producer-consumer.md', upstream: ['cordis'] },
@@ -123,7 +118,6 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   { file: 'packages/extensions/tool-cordis/src/providers.ts', upstream: ['cordis'] },
   { file: 'packages/extensions/ui-cordis/src/client/index.ts', upstream: ['cordis'] },
   { file: 'packages/extensions/ui-cordis/src/client/inventory.ts', upstream: ['cordis'] },
-  { file: 'scripts/gen-cordis-catalog.ts', upstream: ['cordis'] },
   // The UI locale namespace and input-trigger source id are product keys.
   { file: 'packages/client/ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.tsx', upstream: ['cordis'] },
   { file: 'packages/extensions/ui-cordis/src/client/CordisActionRow.tsx', upstream: ['cordis'] },
@@ -145,17 +139,13 @@ const POSTCONDITIONS: readonly PostCondition[] = [
   { file: 'vendor/hmr/package.json', text: '"name": "@deepseek-ai/cordis-plugin-hmr"', count: 1 },
   { file: 'scripts/cordis-walk.ts', text: '@deepseek-ai\\/cordis', count: 1 },
   { file: 'scripts/cordis-walk.ts', text: '!== \'@deepseek-ai/cordis\'', count: 1 },
-  { file: 'scripts/gen-scoped-events.ts', text: '=== \'@deepseek-ai/cordis\'', count: 1 },
   { file: 'packages/typert/generator/src/analyzer.ts', text: '!== \'@deepseek-ai/cordis\'', count: 2 },
-  { file: 'scripts/check-workspace-constraints.ts', text: '?.[\'@deepseek-ai/cordis\']', count: 2 },
   { file: 'packages/boot/app-boot/tsdown.config.ts', text: '[\'@deepseek-ai/cordis-plugin-include\']', count: 1 },
   { file: 'tsconfig.base.json', text: '"@deepseek-ai/cordis-plugin-loader": ["./vendor/loader/src"]', count: 1 },
   // The vendored README owns this required entry; reject its deletion or duplication.
   { file: 'vendor/README.md', text: '17. **`@deepseek-ai` rescope**', count: 1 },
   { file: 'knip.json', text: '@cordisjs', count: 0 },
   { file: 'pnpm-workspace.yaml', text: 'cordis@4.0.0-rc.7', count: 0 },
-  // The preset ids in this table are product data, not package names.
-  { file: 'packages/client/ui-agent-preset/tests/locales.client.spec.ts', text: '[\'cordis\', \'presetCordisName\'', count: 1 },
   // The preset id the shipped composition documents to its own model.
   { file: 'apps/cli/config/agent-presets/cordis/agent.cordis.yml', text: 'The `cordis` agent preset', count: 1 },
   { file: 'apps/cli/config/agent-presets/cordis/agent.cordis.yml', text: 'corrupting the `cordis` preset', count: 1 },
@@ -173,25 +163,6 @@ const EXACT_EDITS: readonly ExactEdit[] = [
     file: 'scripts/cordis-walk.ts',
     find: 'const MERGE_HEAD = /declare module [\'"](?:cordis|\\.\\/context\\.ts)[\'"]/',
     replace: 'const MERGE_HEAD = /declare module [\'"](?:@deepseek-ai\\/cordis|\\.\\/context\\.ts)[\'"]/',
-    expect: 1,
-  },
-  {
-    id: 'constraints-manifest-lookup',
-    file: 'scripts/check-workspace-constraints.ts',
-    find: `    const peer = manifest.peerDependencies?.cordis
-    const dev = manifest.devDependencies?.cordis
-
-    if (!peer) errors.push(\`\${label}: cordis must be a peerDependency\`)
-    if (!dev) errors.push(\`\${label}: cordis must also be a devDependency\`)
-    if (peer && dev && peer !== dev) {
-      errors.push(\`\${label}: cordis peer (\${peer}) and dev (\${dev}) ranges must match\`)`,
-    replace: `    const peer = manifest.peerDependencies?.['@deepseek-ai/cordis']
-    const dev = manifest.devDependencies?.['@deepseek-ai/cordis']
-
-    if (!peer) errors.push(\`\${label}: @deepseek-ai/cordis must be a peerDependency\`)
-    if (!dev) errors.push(\`\${label}: @deepseek-ai/cordis must also be a devDependency\`)
-    if (peer && dev && peer !== dev) {
-      errors.push(\`\${label}: @deepseek-ai/cordis peer (\${peer}) and dev (\${dev}) ranges must match\`)`,
     expect: 1,
   },
   {
@@ -329,14 +300,6 @@ const VENDORED_LIBRARY = /^@deepseek-ai\\/(cosmokit|schemastery)(\\/|$)/
     expect: 1,
   },
   {
-    // The real package references in files whose other `cordis` strings are preset ids.
-    id: 'agent-preset-spec-framework-import',
-    file: 'packages/client/ui-agent-preset/tests/apply.client.spec.ts',
-    find: "import { Context } from 'cordis'",
-    replace: "import { Context } from '@deepseek-ai/cordis'",
-    expect: 1,
-  },
-  {
     id: 'web-agent-presets-e2e-framework-import',
     file: 'apps/cli/tests/web-agent-presets.e2e.ts',
     find: "import { Context } from 'cordis'",
@@ -390,24 +353,6 @@ const VENDORED_LIBRARY = /^@deepseek-ai\\/(cosmokit|schemastery)(\\/|$)/
     replace: `| Package | Upstream name | Upstream | License |
 | --- | --- | --- | --- |
 \${vendored.map(row => \`| \\\`\${row.npmName}\\\` | \\\`\${row.upstreamName}\\\` | [\${row.upstream.replace('https://', '')}](\${row.upstream}) | MIT |\`).join('\\n')}`,
-    expect: 1,
-  },
-  {
-    id: 'notices-spec-row-fixture',
-    file: 'scripts/gen-third-party-notices.spec.ts',
-    find: '    expect(rows).toContainEqual({ npmName: \'cordis\', upstream: \'https://github.com/cordiverse/cordis\' })',
-    replace: `    expect(rows).toContainEqual({
-      npmName: '@deepseek-ai/cordis',
-      upstreamName: 'cordis',
-      upstream: 'https://github.com/cordiverse/cordis',
-    })`,
-    expect: 1,
-  },
-  {
-    id: 'notices-spec-shape-fixture',
-    file: 'scripts/gen-third-party-notices.spec.ts',
-    find: 'parseVendoredRows(\'| `cordis/` | cordis | 4.0.0 | https://example.com | `abc123` |\\n\')',
-    replace: 'parseVendoredRows(\'| `cordis/` | `@deepseek-ai/cordis` | cordis | 4.0.0 | https://example.com | `abc123` |\\n\')',
     expect: 1,
   },
   {
