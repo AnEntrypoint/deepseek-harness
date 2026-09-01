@@ -8,7 +8,7 @@ import { realpathSync } from 'node:fs'
 import { isAbsolute, relative, sep } from 'node:path'
 
 /** Whether `root` is the same canonical directory as `candidate` or contains it. */
-function containsDirectory(root: string, candidate: string): boolean {
+function containsDirectory(root, candidate) {
   const relation = relative(realpathSync.native(root), realpathSync.native(candidate))
   return relation === '' || (!isAbsolute(relation) && relation !== '..' && !relation.startsWith(`..${sep}`))
 }
@@ -19,7 +19,7 @@ function containsDirectory(root: string, candidate: string): boolean {
  * @param workspaceRoot - the canonical workspace root that receives the standing ACE.
  * @param tempRoot - the existing parent beneath which a private temp child would be created.
  */
-export function assertTempRootOutsideWorkspace(workspaceRoot: string, tempRoot: string): void {
+export function assertTempRootOutsideWorkspace(workspaceRoot, tempRoot) {
   if (containsDirectory(workspaceRoot, tempRoot)) {
     throw new Error(`Windows ACL temp root must be outside the workspace: workspace=${workspaceRoot}; temp=${tempRoot}`)
   }
@@ -31,7 +31,7 @@ export function assertTempRootOutsideWorkspace(workspaceRoot: string, tempRoot: 
  * @param writableDirs - directories carrying the standing workspace capability.
  * @param tempDir - the existing directory carrying the revocable temp capability.
  */
-export function assertPrivateTempDisjoint(writableDirs: readonly string[], tempDir: string): void {
+export function assertPrivateTempDisjoint(writableDirs, tempDir) {
   for (const writableDir of writableDirs) {
     if (containsDirectory(writableDir, tempDir) || containsDirectory(tempDir, writableDir)) {
       throw new Error(`AclSandbox private temp directory must be disjoint from writable directories: writable=${writableDir}; temp=${tempDir}`)

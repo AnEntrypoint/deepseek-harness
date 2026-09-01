@@ -258,7 +258,7 @@ export class ToolRuntime extends Service {
   static Config = z.object({
     mode: z.union(['native', 'code', 'both']).default('native'),
     maxParallelSubCalls: z.natural().min(1).default(10),
-  })
+  });
 
   /** Internal staged view consumed by `dsh-agent-loop`'s parallel scheduler. */
   [TOOL_RUNTIME_SCHEDULER] = {

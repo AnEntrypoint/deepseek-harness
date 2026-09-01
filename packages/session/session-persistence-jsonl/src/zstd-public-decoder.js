@@ -8,7 +8,7 @@ import { zstdDecompressSync } from 'node:zlib'
 /** Multi-frame adapter built exclusively from Node's supported one-shot API. */
 export class PublicZstdFrameDecoder {
   started = false
-  closed = false
+  closed = false;
 
   /** @inheritdoc */
   *decode(source, frames) {

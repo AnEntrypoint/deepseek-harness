@@ -32,7 +32,7 @@ import { createHash } from 'node:crypto'
  * @param workspaceRoot - the canonical workspace path.
  * @returns the SDDL string form.
  */
-export function workspaceWriteSid(workspaceRoot: string): string {
+export function workspaceWriteSid(workspaceRoot) {
   const digest = createHash('sha256').update(workspaceRoot, 'utf8').digest()
   const first = (digest.readUInt32LE(0) % (2 ** 30 - 1)) + 1
   const second = (digest.readUInt32LE(4) % (2 ** 30 - 1)) + 1
@@ -46,7 +46,7 @@ export function workspaceWriteSid(workspaceRoot: string): string {
  * @param tempDir - the private temp directory's absolute path.
  * @returns the SDDL string form.
  */
-export function tempWriteSid(tempDir: string): string {
+export function tempWriteSid(tempDir) {
   const digest = createHash('sha256').update('temp\0', 'utf8').update(tempDir, 'utf8').digest()
   const first = (digest.readUInt32LE(0) % (2 ** 30 - 1)) + 1
   const second = (digest.readUInt32LE(4) % (2 ** 30 - 1)) + 1
