@@ -557,10 +557,12 @@ function resyncOutletDiffCache(el: HTMLElement): void {
 class OutletSubscriptions {
   #unsubscribeVersion: (() => void) | null = null
   #unsubscribeLocale: (() => void) | null = null
+  #unsubscribeSession: (() => void) | null = null
 
   connect(bindVersion: () => void, host: () => SlotRendererHost | null, onChange: () => void): void {
     bindVersion()
     this.bindLocale(host, onChange)
+    this.bindSession(host, onChange)
   }
 
   disconnect(): void {
@@ -568,6 +570,8 @@ class OutletSubscriptions {
     this.#unsubscribeVersion = null
     this.#unsubscribeLocale?.()
     this.#unsubscribeLocale = null
+    this.#unsubscribeSession?.()
+    this.#unsubscribeSession = null
   }
 
   bindVersion(unsubscribe: (() => void) | null): void {
@@ -580,6 +584,23 @@ class OutletSubscriptions {
     const face = host()?.locale
     this.#unsubscribeLocale = face === undefined ? null : face.subscribe(onChange)
   }
+
+  /**
+   * Subscribe to the current-session provide projection: switching sessions
+   * (sessions.open) publishes through this source (SessionProvideChannel.
+   * publishCurrent), but nothing else in the outlet's render-trigger set
+   * (slot-registration version, locale) fires on that change — without this,
+   * currentSessionMaybeProvideInfo(host) reads fresh sessionId only on the
+   * NEXT render, which the outlet never schedules on its own for a pure
+   * session switch. Re-bound every connect (host's session source is stable
+   * for the renderer's lifetime, but rebinding here mirrors bindLocale's
+   * defensive re-fetch-per-call contract).
+   */
+  bindSession(host: () => SlotRendererHost | null, onChange: () => void): void {
+    this.#unsubscribeSession?.()
+    const source = host()?.sessions.provideInfo
+    this.#unsubscribeSession = source === undefined ? null : source.subscribe(onChange)
+  }
 }
 
 export class DshSlotOutlet extends HTMLElement {
@@ -589,6 +610,11 @@ export class DshSlotOutlet extends HTMLElement {
   #opts: (RenderOpts & ChainRenderOpts) | undefined
   #subscriptions = new OutletSubscriptions()
   #maybeIncarnation: MaybeIncarnation = FIRST_INCARNATION
+  // Sources currently subscribed from the last-rendered sessionInfo.hooks
+  // roster (e.g. the per-session Session object behind useSession) — see
+  // #bindHookSources below for why this exists.
+  #hookUnsubscribes: (() => void)[] = []
+  #boundHookSources: unknown[] = []
 
   // setProps() runs synchronously inside webjsx's own createDOMElement (via
   // the `ref` callback), i.e. BEFORE this element is inserted into the real
@@ -620,6 +646,7 @@ export class DshSlotOutlet extends HTMLElement {
     this.#opts = props.opts
     this.#bindVersion()
     this.#subscriptions.bindLocale(() => this.#host, () => { this.#render() })
+    this.#subscriptions.bindSession(() => this.#host, () => { this.#render() })
     this.#render()
   }
 
@@ -635,11 +662,48 @@ export class DshSlotOutlet extends HTMLElement {
     )
   }
 
-  disconnectedCallback(): void { this.#subscriptions.disconnect() }
+  disconnectedCallback(): void {
+    this.#subscriptions.disconnect()
+    this.#unbindHookSources()
+  }
 
   #bindVersion(): void {
     const host = this.#host
     this.#subscriptions.bindVersion(host === null ? null : host.subscribe(this.#slotKey, () => { this.#render() }))
+  }
+
+  #unbindHookSources(): void {
+    for (const unsubscribe of this.#hookUnsubscribes) unsubscribe()
+    this.#hookUnsubscribes = []
+    this.#boundHookSources = []
+  }
+
+  /**
+   * Subscribe to every hook source in the current sessionInfo.hooks roster
+   * (e.g. the per-session Session object behind `useSession`). standardKit's
+   * `useSession`/`use<Name>` readers (observableHook -> bindSnapshotSelector)
+   * are pure synchronous `getSnapshot()` wrappers with no subscription of
+   * their own — see bind.ts's own doc comment: "Callers that need change
+   * notification subscribe to source.subscribe directly." The outlet is that
+   * caller: without this, a session's own internal state change (e.g.
+   * Session.openState flipping loading -> open on history load, via
+   * notifier.markDirty()) has nothing in the outlet's render-trigger set to
+   * fire on, so the strict session slot (ChatView et al.) stays rendered
+   * against the stale snapshot it saw at mount — the "stuck on Loading
+   * history..." symptom. Re-bound every render since a session switch swaps
+   * every source's identity (compared by reference against the last-bound
+   * set, so a same-session re-render is a no-op resubscribe, not a churn).
+   */
+  #bindHookSources(sessionInfo: SessionMaybeProvideInfo): void {
+    const sources = Object.values(sessionInfo.hooks).filter(
+      (s): s is HostObservable<unknown> => s !== undefined,
+    )
+    const unchanged = sources.length === this.#boundHookSources.length
+      && sources.every((s, i) => s === this.#boundHookSources[i])
+    if (unchanged) return
+    this.#unbindHookSources()
+    this.#boundHookSources = sources
+    this.#hookUnsubscribes = sources.map(source => source.subscribe(() => { this.#render() }))
   }
 
   #render(): void {
@@ -658,6 +722,7 @@ export class DshSlotOutlet extends HTMLElement {
     // correct baseline regardless of how many renders raced before it.
     resyncOutletDiffCache(this)
     const sessionInfo = currentSessionMaybeProvideInfo(host)
+    this.#bindHookSources(sessionInfo)
     const content = renderOutletContent(host, this.#slotKey, this.#ownerProps, this.#opts, sessionInfo, this.#maybeIncarnation, (next) => {
       this.#maybeIncarnation = next
     })
