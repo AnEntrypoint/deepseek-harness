@@ -159,6 +159,11 @@
     - id: modules
       name: '@deepseek-ai/dsh-client-modules'
 
+    # Static-manifest CSS loader: serves the buildless plain CSS files
+    # (converted off CSS Modules) under /styles and links them into the head.
+    - id: css-manifest
+      name: '@deepseek-ai/dsh-client-css-manifest'
+
     # Owns both ends of the web transport: node half binds the gateway to the
     # webserver under /api; browser half is the fetch/SSE client.
     - id: connection
