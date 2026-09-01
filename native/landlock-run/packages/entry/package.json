@@ -8,25 +8,18 @@
     "url": "git+https://github.com/deepseek-harness/deepseek-harness.git",
     "directory": "native/landlock-run/packages/entry"
   },
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "src/index.js",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./package.json": "./package.json"
   },
   "files": [
     "README.md",
-    "lib/",
-    "!lib/*.tsbuildinfo",
+    "src/index.js",
     "src/main.c"
   ],
-  "scripts": {
-    "build:js": "tsc -b",
-    "prepack": "node ../../scripts/verify-entry-lib.mjs"
-  },
   "engines": {
     "node": ">=20"
   },

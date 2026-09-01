@@ -1,6 +1,0 @@
-const css = {
-  callRow: 'dsh-toolCallTree__callRow',
-  subCalls: 'dsh-toolCallTree__subCalls',
-} as const
-
-export default css

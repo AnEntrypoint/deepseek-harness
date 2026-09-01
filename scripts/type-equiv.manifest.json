@@ -683,7 +683,7 @@
     {
       "doc": "docs/subsystems/session-reference.md",
       "symbol": "SessionReferenceInput",
-      "source": "packages/context/session-reference/src/types.ts"
+      "source": "packages/context/session-reference/src/types.js"
     },
     {
       "doc": "docs/subsystems/session-reference.md",
@@ -693,22 +693,22 @@
     {
       "doc": "docs/subsystems/session-reference.md",
       "symbol": "SessionReferenceCandidate",
-      "source": "packages/context/session-reference/src/types.ts"
+      "source": "packages/context/session-reference/src/types.js"
     },
     {
       "doc": "docs/subsystems/session-reference.md",
       "symbol": "SessionReferenceMentionCandidate",
-      "source": "packages/context/session-reference/src/types.ts"
+      "source": "packages/context/session-reference/src/types.js"
     },
     {
       "doc": "docs/subsystems/session-reference.md",
       "symbol": "PreparedReferencedMessage",
-      "source": "packages/context/session-reference/src/types.ts"
+      "source": "packages/context/session-reference/src/types.js"
     },
     {
       "doc": "docs/subsystems/session-reference.md",
       "symbol": "SessionReferenceErrorCode",
-      "source": "packages/context/session-reference/src/config.ts"
+      "source": "packages/context/session-reference/src/config.js"
     },
     {
       "doc": "docs/subsystems/tools.md",

@@ -11,37 +11,32 @@
     "directory": "packages/examples/jsonrpc-demo"
   },
   "type": "module",
-  "main": "lib/index.js",
-  "types": "lib/types/index.d.ts",
+  "main": "src/index.js",
   "bin": {
-    "dsh-jsonrpc-agent": "lib/bin.js"
+    "dsh-jsonrpc-agent": "src/bin.js"
   },
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
+      "default": "./src/invariant.js"
     },
     "./bin": {
-      "types": "./lib/types/bin.d.ts",
-      "default": "./lib/bin.js"
+      "default": "./src/bin.js"
     },
     "./packaged-bin": {
-      "types": "./lib/types/packaged-bin.d.ts",
-      "default": "./lib/packaged-bin.js"
+      "default": "./src/packaged-bin.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/index.js",
-    "lib/invariant.js",
-    "lib/bin.js",
-    "lib/packaged-bin.js",
-    "lib/types/**/*.d.ts"
+    "src/index.js",
+    "src/invariant.js",
+    "src/bin.js",
+    "src/packaged-bin.js",
+    "src/runner.js"
   ],
   "license": "MIT",
   "dependencies": {

@@ -11,12 +11,12 @@
     "directory": "packages/client/modules"
   },
   "type": "module",
-  "main": "lib/index.js",
+  "main": "src/index.js",
   "types": "lib/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./client": {
       "types": "./lib/types/client/index.d.ts",
@@ -24,7 +24,7 @@
     },
     "./invariant": {
       "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
+      "default": "./src/invariant.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -48,8 +48,8 @@
     "@deepseek-ai/cordis": "workspace:^"
   },
   "files": [
-    "lib/index.js",
-    "lib/invariant.js",
+    "src/*.js",
+    "src/client/*.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
   ],

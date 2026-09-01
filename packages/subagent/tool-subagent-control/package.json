@@ -11,29 +11,24 @@
     "directory": "packages/subagent/tool-subagent-control"
   },
   "type": "module",
-  "main": "lib/index.js",
-  "types": "lib/types/index.d.ts",
+  "main": "src/index.js",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
+      "default": "./src/invariant.js"
     },
     "./list-agents": {
-      "types": "./lib/types/list-agents.d.ts",
-      "default": "./lib/types/list-agents.js"
+      "default": "./src/list-agents.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/index.js",
-    "lib/invariant.js",
-    "lib/types/**/*.js",
-    "lib/types/**/*.d.ts"
+    "src/index.js",
+    "src/invariant.js",
+    "src/list-agents.js"
   ],
   "license": "MIT",
   "peerDependencies": {

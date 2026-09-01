@@ -2,7 +2,7 @@
 
 Host-backed file discovery plus structured cross-session reference requests and prepared message contexts. The [file-reference contract](../../packages/context/file-reference) owns path-only completion records and grammar; the [session-reference contract](../../packages/context/session-reference) defines canonical URIs, current-surface projection, tag-safe JSON and byte retention, stable errors, and the untrusted model prompt. Host adapters use these types instead of passing their UI mention syntax into the agent core.
 
-Sources: [`packages/context/file-reference/src/types.ts`](../../packages/context/file-reference/src/types.ts) · [`packages/context/session-reference/src/types.ts`](../../packages/context/session-reference/src/types.ts)
+Sources: [`packages/context/file-reference/src/types.ts`](../../packages/context/file-reference/src/types.ts) · [`packages/context/session-reference/src/types.js`](../../packages/context/session-reference/src/types.js)
 
 ## File candidates
 
@@ -168,5 +168,5 @@ async prepare( agent: Agent, content: ContentBlock[], references: SessionReferen
 
 Types: [Agent](core.md) · [ContentBlock](llm-streaming.md)
 
-Source: [`packages/context/session-reference/src/index.ts`](../../packages/context/session-reference/src/index.ts)
+Source: [`packages/context/session-reference/src/index.js`](../../packages/context/session-reference/src/index.js)
 <!-- END GENERATED cordis-surface -->

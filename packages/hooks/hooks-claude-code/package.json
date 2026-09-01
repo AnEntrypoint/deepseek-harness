@@ -11,23 +11,22 @@
     "directory": "packages/hooks/hooks-claude-code"
   },
   "type": "module",
-  "main": "lib/index.js",
+  "main": "src/index.js",
   "types": "lib/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./invariant": {
       "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
+      "default": "./src/invariant.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/index.js",
-    "lib/invariant.js",
+    "src/*.js",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",

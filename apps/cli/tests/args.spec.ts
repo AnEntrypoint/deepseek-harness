@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { parseDshArgs } from '../src/args.ts'
+import { parseDshArgs } from '../src/args.js'
 
 const parse = (argv: string[]) => parseDshArgs(argv, '1.2.3')
 

@@ -16,7 +16,7 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import SubagentRuntime from '@deepseek-ai/dsh-subagent'
 import type { SubprocessHandle } from '@deepseek-ai/dsh-subprocess'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import * as claudeCode from '../src/index.ts'
+import * as claudeCode from '../src/index.js'
 
 const execFileAsync = promisify(execFile)
 const OFFICIAL_DEEPSEEK_BASE_URL = 'https://api.deepseek.com'

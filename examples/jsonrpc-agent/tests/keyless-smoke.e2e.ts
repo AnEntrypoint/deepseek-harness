@@ -8,7 +8,7 @@ import { zstdDecompress } from 'node:zlib'
 import { execa } from 'execa'
 import { describe, expect, it } from 'vitest'
 
-const binScript = fileURLToPath(new URL('../../../packages/examples/jsonrpc-demo/src/bin.ts', import.meta.url))
+const binScript = fileURLToPath(new URL('../../../packages/examples/jsonrpc-demo/src/bin.js', import.meta.url))
 const configPath = fileURLToPath(new URL('../cordis.yml', import.meta.url))
 const repoRoot = fileURLToPath(new URL('../../..', import.meta.url))
 const decompress = promisify(zstdDecompress)

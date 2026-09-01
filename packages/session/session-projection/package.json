@@ -11,29 +11,24 @@
     "directory": "packages/session/session-projection"
   },
   "type": "module",
-  "main": "lib/index.js",
-  "types": "lib/types/index.d.ts",
+  "main": "src/index.js",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
+      "default": "./src/invariant.js"
     },
     "./types": {
-      "types": "./lib/types/types.d.ts",
-      "default": "./lib/types/types.js"
+      "default": "./src/types.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/index.js",
-    "lib/invariant.js",
-    "lib/types/**/*.js",
-    "lib/types/**/*.d.ts"
+    "src/index.js",
+    "src/invariant.js",
+    "src/types.js"
   ],
   "license": "MIT",
   "dependencies": {

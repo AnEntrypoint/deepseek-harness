@@ -1,0 +1,27 @@
+const css = {
+  root: 'dsh-sidebarRoot__root',
+  collapsed: 'dsh-sidebarRoot__collapsed',
+  quietBars: 'dsh-sidebarRoot__quietBars',
+  fading: 'dsh-sidebarRoot__fading',
+  wide: 'dsh-sidebarRoot__wide',
+  railIn: 'dsh-sidebarRoot__railIn',
+  logoRow: 'dsh-sidebarRoot__logoRow',
+  brand: 'dsh-sidebarRoot__brand',
+  brandIdentity: 'dsh-sidebarRoot__brandIdentity',
+  brandMark: 'dsh-sidebarRoot__brandMark',
+  brandName: 'dsh-sidebarRoot__brandName',
+  fallbackBrandName: 'dsh-sidebarRoot__fallbackBrandName',
+  iconButton: 'dsh-sidebarRoot__iconButton',
+  toggle: 'dsh-sidebarRoot__toggle',
+  panelIcon: 'dsh-sidebarRoot__panelIcon',
+  railMark: 'dsh-sidebarRoot__railMark',
+  buildRevision: 'dsh-sidebarRoot__buildRevision',
+  newSession: 'dsh-sidebarRoot__newSession',
+  newSessionLabel: 'dsh-sidebarRoot__newSessionLabel',
+  regionArea: 'dsh-sidebarRoot__regionArea',
+  footArea: 'dsh-sidebarRoot__footArea',
+  settingsArea: 'dsh-sidebarRoot__settingsArea',
+  footerActions: 'dsh-sidebarRoot__footerActions',
+}
+
+export default css

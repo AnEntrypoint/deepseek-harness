@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import type { Win32DialogWorkerMessage } from '../src/win32-dialog-worker.ts'
+import type { Win32DialogWorkerMessage } from '../src/win32-dialog-worker.js'
 
 const builtWorker = fileURLToPath(new URL('../lib/worker.cjs', import.meta.url))
 

@@ -524,7 +524,7 @@ Run commands in a persistent bash shell. State, including the current directory 
 }
 ```
 
-Source: [`packages/shell/tool-bash-persistent/src/index.ts`](../packages/shell/tool-bash-persistent/src/index.ts)
+Source: [`packages/shell/tool-bash-persistent/src/index.js`](../packages/shell/tool-bash-persistent/src/index.js)
 
 One owner-isolated persistent bash tool; deployment composition supplies the PTY backend and may override the model-facing environment description.
 

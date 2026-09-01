@@ -37,7 +37,7 @@ const liveConfig = join(testsDir, '..', 'cordis.yml')
 const replayConfig = join(testsDir, '..', 'cordis.snapshot.yml')
 const minimalLiveConfig = join(testsDir, '..', 'minimal.cordis.yml')
 const minimalReplayConfig = join(testsDir, '..', 'minimal.snapshot.cordis.yml')
-const runtimeBin = fileURLToPath(new URL('../../../packages/examples/jsonrpc-demo/src/bin.ts', import.meta.url))
+const runtimeBin = fileURLToPath(new URL('../../../packages/examples/jsonrpc-demo/src/bin.js', import.meta.url))
 const repoTsconfig = fileURLToPath(new URL('../../../tsconfig.json', import.meta.url))
 
 const MINIMAL_SYSTEM_PROMPT = 'You are the environment-selected minimal software engineer.'

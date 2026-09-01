@@ -23,7 +23,7 @@ import {
  * the factory but not the model, so a dummy key is sufficient.
  */
 
-const binScript = fileURLToPath(new URL('../src/bin.ts', import.meta.url))
+const binScript = fileURLToPath(new URL('../src/bin.js', import.meta.url))
 const tsxLoader = fileURLToPath(import.meta.resolve('tsx'))
 // Repo root is four levels up from packages/examples/acp-demo/tests.
 const repoTsconfig = fileURLToPath(new URL('../../../../tsconfig.json', import.meta.url))

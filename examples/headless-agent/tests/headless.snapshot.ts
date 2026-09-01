@@ -18,7 +18,7 @@ import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@deepseek-ai/dsh-l
 import {
   decompressZstdFrame,
   scanZstdFrames,
-} from '@deepseek-ai/dsh-session-persistence-jsonl/src/zstd.ts'
+} from '@deepseek-ai/dsh-session-persistence-jsonl/src/zstd.js'
 import { describe, expect, it } from 'vitest'
 
 const snapshotsDir = join(dirname(fileURLToPath(import.meta.url)), 'snapshots')
@@ -52,7 +52,7 @@ const teamConfigPath = fileURLToPath(new URL('../team.cordis.snapshot.yml', impo
 const startupFailureConfigPath = fileURLToPath(new URL('./fixtures/startup-activation-error/cordis.yml', import.meta.url))
 const startupFailureExpected = join(snapshotsDir, 'startup-activation-error', 'stderr.expected.txt')
 const binScript = fileURLToPath(new URL('./fixtures/headless-driver.ts', import.meta.url))
-const dshBinScript = fileURLToPath(new URL('../../../apps/cli/src/bin.ts', import.meta.url))
+const dshBinScript = fileURLToPath(new URL('../../../apps/cli/src/bin.js', import.meta.url))
 const tsconfigPath = fileURLToPath(new URL('../../../tsconfig.json', import.meta.url))
 const reasoningConfigPath = fileURLToPath(new URL('./fixtures/cli.cordis.yml', import.meta.url))
 const deepseekDefaultsConfigPath = fileURLToPath(new URL('./fixtures/deepseek-defaults.cordis.yml', import.meta.url))

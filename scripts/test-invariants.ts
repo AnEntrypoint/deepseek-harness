@@ -109,7 +109,7 @@ export function usesManualInvariantTree(testPath: string): boolean {
 }
 
 const ALL_COMPANION_TESTS = ['/scripts/test-invariants.spec.ts'] as const
-const ATTACHMENT_COMPANION = '../packages/attachment/attachment-local/src/invariant.ts'
+const ATTACHMENT_COMPANION = '../packages/attachment/attachment-local/src/invariant.js'
 
 class TestAttachmentStore extends AttachmentStore {
   readonly imageLimits: ImageAttachmentLimits = {

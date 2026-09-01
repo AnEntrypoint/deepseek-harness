@@ -1,0 +1,26 @@
+const css = {
+  root: 'dsh-workflowRunPanel__root',
+  runHeader: 'dsh-workflowRunPanel__runHeader',
+  runLeading: 'dsh-workflowRunPanel__runLeading',
+  runTitle: 'dsh-workflowRunPanel__runTitle',
+  runSummary: 'dsh-workflowRunPanel__runSummary',
+  statusTail: 'dsh-workflowRunPanel__statusTail',
+  phaseHeader: 'dsh-workflowRunPanel__phaseHeader',
+  phaseLeading: 'dsh-workflowRunPanel__phaseLeading',
+  phaseTitle: 'dsh-workflowRunPanel__phaseTitle',
+  phaseCount: 'dsh-workflowRunPanel__phaseCount',
+  phaseStatus: 'dsh-workflowRunPanel__phaseStatus',
+  separator: 'dsh-workflowRunPanel__separator',
+  phaseList: 'dsh-workflowRunPanel__phaseList',
+  phase: 'dsh-workflowRunPanel__phase',
+  members: 'dsh-workflowRunPanel__members',
+  memberRow: 'dsh-workflowRunPanel__memberRow',
+  memberButton: 'dsh-workflowRunPanel__memberButton',
+  dotSlot: 'dsh-workflowRunPanel__dotSlot',
+  memberLabelWrap: 'dsh-workflowRunPanel__memberLabelWrap',
+  memberLabel: 'dsh-workflowRunPanel__memberLabel',
+  memberStatus: 'dsh-workflowRunPanel__memberStatus',
+  empty: 'dsh-workflowRunPanel__empty',
+}
+
+export default css

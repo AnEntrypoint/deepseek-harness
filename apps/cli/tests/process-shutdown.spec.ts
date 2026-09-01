@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createProcessShutdown,
   PROCESS_SHUTDOWN_TIMEOUT_MS,
-} from '../src/process-shutdown.ts'
+} from '../src/process-shutdown.js'
 
 function deferred(): { promise: Promise<void>; resolve: () => void; reject: (error: Error) => void } {
   let resolve!: () => void

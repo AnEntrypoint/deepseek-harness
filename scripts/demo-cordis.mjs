@@ -6,8 +6,8 @@ import { spawn } from 'node:child_process'
 const SURFACES = new Map([
   // The browser surface with the cordis toolset layered on: `dsh web --config`
   // applies this overlay over the shipped web composition; it owns port 3081.
-  ['web', ['--import', 'tsx', 'apps/cli/src/bin.ts', 'web', '--patch', 'examples/web-cordis/cordis.yml']],
-  ['acp', ['--import', 'tsx', 'packages/examples/acp-demo/src/bin.ts', '--config', 'examples/acp-agent/cordis-tools.cordis.yml']],
+  ['web', ['--import', 'tsx', 'apps/cli/src/bin.js', 'web', '--patch', 'examples/web-cordis/cordis.yml']],
+  ['acp', ['--import', 'tsx', 'packages/examples/acp-demo/src/bin.js', '--config', 'examples/acp-agent/cordis-tools.cordis.yml']],
 ])
 
 const surface = process.argv[2] ?? 'web'

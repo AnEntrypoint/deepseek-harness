@@ -11,19 +11,15 @@
     "directory": "packages/client/ui-settings"
   },
   "type": "module",
-  "main": "lib/index.js",
-  "types": "lib/types/index.d.ts",
+  "main": "src/index.js",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
+      "default": "./src/invariant.js"
     },
     "./client": {
-      "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
     },
     "./src/*": "./src/*",
@@ -65,9 +61,9 @@
     "@deepseek-ai/dsh-client-connection": "workspace:^"
   },
   "files": [
-    "lib/index.js",
-    "lib/invariant.js",
-    "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "src/*.js",
+    "src/client/*.js",
+    "src/client/contract/*.js",
+    "lib/client.js"
   ]
 }

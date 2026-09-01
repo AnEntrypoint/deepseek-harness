@@ -10,7 +10,7 @@ import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek'
 import SubagentRuntime from '@deepseek-ai/dsh-subagent'
 import * as Spawn from '@deepseek-ai/dsh-subagent-spawn-in-process'
-import WorkerThreadWorkflowEngine from '../src/index.ts'
+import WorkerThreadWorkflowEngine from '../src/index.js'
 
 /**
  * With-key e2e: a REAL script in a REAL worker thread

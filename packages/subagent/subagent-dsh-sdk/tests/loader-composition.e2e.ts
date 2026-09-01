@@ -21,7 +21,7 @@ const fixtureDir = new URL('../../../../examples/jsonrpc-agent/tests/fixtures/su
 const driver = fileURLToPath(new URL('driver.ts', fixtureDir))
 const configPath = fileURLToPath(new URL('cordis.yml', fixtureDir))
 const childConfigPath = fileURLToPath(new URL('child.cordis.yml', fixtureDir))
-const runtimeBin = fileURLToPath(new URL('../../../../packages/examples/jsonrpc-demo/src/bin.ts', import.meta.url))
+const runtimeBin = fileURLToPath(new URL('../../../../packages/examples/jsonrpc-demo/src/bin.js', import.meta.url))
 const repoTsconfig = fileURLToPath(new URL('../../../../tsconfig.json', import.meta.url))
 
 async function jsonlFiles(dir: string): Promise<string[]> {

@@ -11,20 +11,16 @@
     "directory": "packages/client/ui-settings-plugins"
   },
   "type": "module",
-  "main": "lib/index.js",
-  "types": "lib/types/index.d.ts",
+  "main": "src/index.js",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./src/index.js"
     },
     "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
+      "default": "./src/invariant.js"
     },
     "./client": {
-      "types": "./lib/types/client/index.d.ts",
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -67,10 +63,29 @@
     "@deepseek-ai/dsh-invariants": "workspace:^"
   },
   "files": [
-    "lib/index.js",
-    "lib/invariant.js",
-    "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "src/index.js",
+    "src/invariant.js",
+    "src/client/index.js",
+    "src/client/AgentLoopCard.js",
+    "src/client/BashCard.js",
+    "src/client/WebSearchCard.js",
+    "src/client/PluginCard.js",
+    "src/client/PluginCard.css",
+    "src/client/PluginCard.css.js",
+    "src/client/fields.js",
+    "src/client/fields.css",
+    "src/client/fields.css.js",
+    "src/client/PluginsSettingsSection.js",
+    "src/client/PluginsSettingsSection.css",
+    "src/client/PluginsSettingsSection.css.js",
+    "src/client/ConfigurablePluginsTab.js",
+    "src/client/agent-loop-card-controller.js",
+    "src/client/bash-card-controller.js",
+    "src/client/card-form.js",
+    "src/client/locales.js",
+    "src/client/slot-contract.js",
+    "src/client/tab-store.js",
+    "src/client/web-search-card-controller.js"
   ],
   "dependencies": {
     "clsx": "^2.0.0",

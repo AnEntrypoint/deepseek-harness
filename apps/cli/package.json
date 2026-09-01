@@ -12,10 +12,10 @@
   },
   "type": "module",
   "bin": {
-    "dsh": "lib/bin.js"
+    "dsh": "src/bin.js"
   },
   "files": [
-    "lib/*.js",
+    "src/*.js",
     "config"
   ],
   "license": "MIT",

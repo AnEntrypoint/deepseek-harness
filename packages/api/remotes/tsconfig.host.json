@@ -38,9 +38,6 @@
       "path": "../../session/session-persistence"
     },
     {
-      "path": "../../extensions/cordis-host-runner"
-    },
-    {
       "path": "../../settings/settings"
     },
     {

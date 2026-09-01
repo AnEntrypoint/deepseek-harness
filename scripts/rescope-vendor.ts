@@ -85,8 +85,8 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   // apps/cli/config/agent-presets/ — so in these files the bare name is
   // product data, not a package reference. Renaming it changed which preset
   // the creator flow stages and which id the roster reports.
-  { file: 'packages/client/ui-agent-preset/src/client/AgentPresetSection.tsx', upstream: ['cordis'] },
-  { file: 'packages/client/ui-agent-preset/src/client/index.ts', upstream: ['cordis'] },
+  { file: 'packages/client/ui-agent-preset/src/client/AgentPresetSection.js', upstream: ['cordis'] },
+  { file: 'packages/client/ui-agent-preset/src/client/index.js', upstream: ['cordis'] },
   { file: 'packages/client/ui-agent-preset/tests/apply.client.spec.ts', upstream: ['cordis'] },
   { file: 'packages/client/ui-agent-preset/tests/locales.client.spec.ts', upstream: ['cordis'] },
   { file: 'packages/client/ui-agent-preset/tests/section.client.spec.tsx', upstream: ['cordis'] },
@@ -108,22 +108,19 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   { file: 'packages/extensions/cordis-client-runner/src/client/runtime.ts', upstream: ['cordis'] },
   { file: 'packages/extensions/cordis-client-runner/tests/orchestrator.client.spec.ts', upstream: ['cordis'] },
   { file: 'packages/extensions/cordis-client-runner/tests/plugin.client.spec.ts', upstream: ['cordis'] },
-  { file: 'packages/extensions/cordis-host-runner/src/index.ts', upstream: ['cordis'] },
-  { file: 'packages/extensions/cordis-host-runner/src/inspect-registry.ts', upstream: ['cordis'] },
-  { file: 'packages/extensions/cordis-host-runner/src/types.ts', upstream: ['cordis'] },
-  { file: 'packages/extensions/cordis-host-runner/tests/helpers.ts', upstream: ['cordis'] },
-  { file: 'packages/extensions/cordis-host-runner/tests/runner.spec.ts', upstream: ['cordis'] },
-  { file: 'packages/extensions/cordis-host-runner/tests/versioning.spec.ts', upstream: ['cordis'] },
+  { file: 'packages/extensions/cordis-host-runner/src/index.js', upstream: ['cordis'] },
+  { file: 'packages/extensions/cordis-host-runner/src/inspect-registry.js', upstream: ['cordis'] },
+  { file: 'packages/extensions/cordis-host-runner/src/types.js', upstream: ['cordis'] },
   { file: 'packages/extensions/tool-cordis/src/api-catalog.ts', upstream: ['cordis'] },
   { file: 'packages/extensions/tool-cordis/src/providers.ts', upstream: ['cordis'] },
   { file: 'packages/extensions/ui-cordis/src/client/index.ts', upstream: ['cordis'] },
   { file: 'packages/extensions/ui-cordis/src/client/inventory.ts', upstream: ['cordis'] },
   // The UI locale namespace and input-trigger source id are product keys.
-  { file: 'packages/client/ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.tsx', upstream: ['cordis'] },
-  { file: 'packages/extensions/ui-cordis/src/client/CordisActionRow.tsx', upstream: ['cordis'] },
-  { file: 'packages/extensions/ui-cordis/src/client/CordisDefineRow.tsx', upstream: ['cordis'] },
-  { file: 'packages/extensions/ui-cordis/src/client/CordisPanel.tsx', upstream: ['cordis'] },
-  { file: 'packages/extensions/ui-cordis/src/client/CordisRunRow.tsx', upstream: ['cordis'] },
+  { file: 'packages/client/ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.js', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisActionRow.js', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisDefineRow.js', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisPanel.js', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisRunRow.js', upstream: ['cordis'] },
   { file: 'packages/extensions/ui-cordis/src/client/locales.ts', upstream: ['cordis'] },
 ]
 

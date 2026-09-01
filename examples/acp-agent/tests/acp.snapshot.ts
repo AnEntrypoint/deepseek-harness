@@ -33,7 +33,7 @@ import { OFFLOADED_IMAGE_TEXT } from '@deepseek-ai/dsh-llm'
 // the repo-root tsconfig (four levels up from examples/acp-agent/tests) — all
 // ABSOLUTE: the subprocess cwd is a temp dir outside the repo.
 const AGENT = {
-  binScript: fileURLToPath(new URL('../../../packages/examples/acp-demo/src/bin.ts', import.meta.url)),
+  binScript: fileURLToPath(new URL('../../../packages/examples/acp-demo/src/bin.js', import.meta.url)),
   configPath: fileURLToPath(new URL('../cordis.yml', import.meta.url)),
   tsconfigPath: fileURLToPath(new URL('../../../tsconfig.json', import.meta.url)),
 }
