@@ -1,0 +1,16 @@
+.dsh-deepSeekOnboardingDialog__description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dsh-deepSeekOnboardingDialog__editor {
+  margin-top: 24px;
+}
+
+@media (max-width: 560px) {
+  .dsh-deepSeekOnboardingDialog__editor {
+    margin-top: 20px;
+  }
+}

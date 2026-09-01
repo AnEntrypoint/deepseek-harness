@@ -37,7 +37,7 @@ import { ModelListEditor } from './ModelListEditor.tsx'
 import type { ModelDraft } from './ModelListEditor.tsx'
 import { deriveKeyRef, messageOf } from './store.ts'
 import type { en } from './locales.ts'
-import styles from './ModelsSection.module.css'
+import styles from './ModelsSection.css.ts'
 
 /** The settings namespace a hand-declared provider is written into. */
 const NS = 'llm-pi-ai'

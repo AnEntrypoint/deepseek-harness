@@ -4,7 +4,7 @@
 // outage (reconnect backoff in progress) shows the strip.
 
 import type { VNode } from 'webjsx'
-import css from './ConnectionBanner.module.css'
+import css from './ConnectionBanner.css.ts'
 
 /**
  * Render the reconnecting banner.

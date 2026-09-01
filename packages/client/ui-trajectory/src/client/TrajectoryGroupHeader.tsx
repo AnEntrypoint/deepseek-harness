@@ -1,6 +1,6 @@
 // TrajectoryGroupHeader: "Message" or "Step N" row with optional description.
 
-import css from './TrajectoryGroupHeader.module.css'
+import css from './TrajectoryGroupHeader.css.ts'
 
 export interface TrajectoryGroupHeaderProps {
   /** Group title (`Message`, `Step 1`, …). */

@@ -1,7 +1,7 @@
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { IconChevronDownOutline14 } from './icons/index.tsx'
-import css from './DisclosureRow.module.css'
+import css from './DisclosureRow.css.ts'
 
 /** Shared 24px disclosure chrome for compact flow rows. */
 export interface DisclosureRowProps {

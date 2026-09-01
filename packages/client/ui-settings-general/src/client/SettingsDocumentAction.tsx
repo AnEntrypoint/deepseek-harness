@@ -4,7 +4,7 @@ import { applyDiff } from 'webjsx'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SettingsDocumentStore } from './settings-document-store.ts'
-import css from './SettingsDocumentAction.module.css'
+import css from './SettingsDocumentAction.css.ts'
 
 /** Registrant-owned dependencies of {@link SettingsDocumentAction}. */
 export interface SettingsDocumentActionInjected {

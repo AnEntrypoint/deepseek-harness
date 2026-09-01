@@ -19,7 +19,7 @@ import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { IconCheckOutline16 } from './icons/index.tsx'
-import css from './Menu.module.css'
+import css from './Menu.css.ts'
 
 /** Selectable row (optionally with a nested submenu). */
 export interface MenuItem {

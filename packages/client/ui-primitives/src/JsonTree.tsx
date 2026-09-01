@@ -12,7 +12,7 @@ import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { IconCheckOutline16, IconCopyOutline16 } from './icons/index.tsx'
 import { renderMenu, type DshMenu, type MenuEntry } from './Menu.tsx'
-import css from './JsonTree.module.css'
+import css from './JsonTree.css.ts'
 
 const OBJECT_PREVIEW_LIMIT = 4
 const ARRAY_PREVIEW_LIMIT = 5

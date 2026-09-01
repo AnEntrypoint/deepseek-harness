@@ -1,0 +1,12 @@
+.dsh-toolCallTree__callRow {
+  border-radius: 6px;
+}
+
+.dsh-toolCallTree__subCalls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 2px 22px;
+  padding-left: 8px;
+  border-left: 1px solid var(--dsw-alias-border-l2);
+}

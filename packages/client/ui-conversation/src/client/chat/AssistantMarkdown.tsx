@@ -15,7 +15,7 @@ import { JsonBlock, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatNodeOwnerProps, ChatViewSlotProps } from '../contract/slots.ts'
 import { ReasoningRow } from './ReasoningRow.tsx'
-import css from './AssistantMarkdown.module.css'
+import css from './AssistantMarkdown.css.ts'
 
 export interface AssistantMarkdownProps {
   blocks: readonly AssistantBlock[]

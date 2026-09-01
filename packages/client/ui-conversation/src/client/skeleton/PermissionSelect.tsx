@@ -10,7 +10,7 @@ import type { PermissionSelect as PermissionSelectValue } from '@deepseek-ai/dsh
 import { IconChevronDownOutline14, renderMenu, renderRiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { DshMenu, DshModal, MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ComposerBarProps } from '../contract/slots.ts'
-import css from './PermissionSelect.module.css'
+import css from './PermissionSelect.css.ts'
 
 const FULL_ACCESS = 'danger-full-access'
 

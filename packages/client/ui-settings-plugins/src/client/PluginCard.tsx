@@ -24,7 +24,7 @@ import clsx from 'clsx'
 import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { CardShell } from './card-form.ts'
 import type { PluginsSettingsLocaleKey } from './locales.ts'
-import css from './PluginCard.module.css'
+import css from './PluginCard.css.ts'
 
 /** Card chrome shared by every plugin section. */
 export interface PluginCardProps {

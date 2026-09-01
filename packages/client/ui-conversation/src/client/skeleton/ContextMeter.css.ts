@@ -1,0 +1,20 @@
+const css = {
+  root: 'dsh-contextMeter__root',
+  trigger: 'dsh-contextMeter__trigger',
+  track: 'dsh-contextMeter__track',
+  fill: 'dsh-contextMeter__fill',
+  panel: 'dsh-contextMeter__panel',
+  header: 'dsh-contextMeter__header',
+  figures: 'dsh-contextMeter__figures',
+  percent: 'dsh-contextMeter__percent',
+  headline: 'dsh-contextMeter__headline',
+  bar: 'dsh-contextMeter__bar',
+  segment: 'dsh-contextMeter__segment',
+  swatch: 'dsh-contextMeter__swatch',
+  colorSystem: 'dsh-contextMeter__colorSystem',
+  colorTools: 'dsh-contextMeter__colorTools',
+  colorMessages: 'dsh-contextMeter__colorMessages',
+  rows: 'dsh-contextMeter__rows',
+  row: 'dsh-contextMeter__row',
+} as const
+export default css

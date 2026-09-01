@@ -5,7 +5,7 @@ import { IconCloseFill14 } from '@deepseek-ai/dsh-client-ui-primitives'
 // its {locked} owner share).
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { PlanChipInjected } from './index.ts'
-import css from './PlanModeControl.module.css'
+import css from './PlanModeControl.css.ts'
 
 /** Full plan-seat component props: runtime share (standard kit + locked owner prop) & injected share & the locale seat. */
 export type PlanChipProps =

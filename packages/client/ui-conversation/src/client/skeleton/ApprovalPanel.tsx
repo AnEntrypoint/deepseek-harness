@@ -17,7 +17,7 @@ import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { RunningToolCall } from '@deepseek-ai/dsh-client-runtime/client'
 import { PendingApproval, type ApprovalComposerProps } from '../contract/slots.ts'
 import { rootToolCall } from '../chat/tool-node-reader.ts'
-import css from './ApprovalPanel.module.css'
+import css from './ApprovalPanel.css.ts'
 
 /** Extract the shell command from an approval's paired running call (bash-family args carry `command`); undefined hides the line. */
 export function commandOf(call: RunningToolCall | undefined): string | undefined {

@@ -15,7 +15,7 @@ import {
   type QuestionAnswer, type QuestionComposerProps,
 } from './contract/slots.ts'
 import { DshPlanReviewPanel } from './PlanReviewPanel.tsx'
-import css from './QuestionComposer.module.css'
+import css from './QuestionComposer.css.ts'
 
 interface DraftAnswer {
   selected: string[]

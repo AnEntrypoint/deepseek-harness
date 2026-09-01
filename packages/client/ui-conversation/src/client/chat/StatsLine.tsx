@@ -19,7 +19,7 @@ import type { ContextPressureProjection, TokenUsageProjection } from '@deepseek-
 import type { ComposerBarProps } from '../contract/slots.ts'
 import { formatTokensPerSecond } from './message-chrome.ts'
 import { assistantStepReading } from './turn-metrics.ts'
-import css from './StatsLine.module.css'
+import css from './StatsLine.css.ts'
 
 interface WindowStats {
   turns: number

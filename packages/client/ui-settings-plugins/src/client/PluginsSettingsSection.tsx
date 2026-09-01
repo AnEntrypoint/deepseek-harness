@@ -15,7 +15,7 @@ import type {
   HostObservable, InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PluginsSettingsLocaleKey } from './locales.ts'
-import css from './PluginsSettingsSection.module.css'
+import css from './PluginsSettingsSection.css.ts'
 
 /** Cast a renderSlot() RenderOutput result into a webjsx-embeddable child. */
 function asChild(node: unknown): VNode {

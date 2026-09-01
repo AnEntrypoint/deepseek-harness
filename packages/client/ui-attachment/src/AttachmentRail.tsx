@@ -19,7 +19,7 @@ import clsx from 'clsx'
 import {
   IconChevronLeftOutline14, IconChevronRightOutline14, IconCloseFill14,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import css from './AttachmentRail.module.css'
+import css from './AttachmentRail.css.ts'
 
 /** One rail thumbnail; strings arrive resolved (zero-cordis atom). */
 export interface AttachmentRailItem {

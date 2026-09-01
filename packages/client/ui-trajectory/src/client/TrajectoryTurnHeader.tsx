@@ -1,6 +1,6 @@
 // TrajectoryTurnHeader: sticky per-turn bar with Input/Output/Think/Time labels.
 
-import css from './TrajectoryTurnHeader.module.css'
+import css from './TrajectoryTurnHeader.css.ts'
 
 const COLUMN_LABELS = ['Input', 'Output', 'Think', 'Time'] as const
 

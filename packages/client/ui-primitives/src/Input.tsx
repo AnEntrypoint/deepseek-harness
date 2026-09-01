@@ -3,7 +3,7 @@
 
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
-import css from './Input.module.css'
+import css from './Input.css.ts'
 
 /**
  * Render a text input with an optional leading icon.

@@ -30,7 +30,7 @@ import { CHAT_READ_MAX_LINES, type ReadCardModel } from '../models/read-card-mod
 import { CHAT_SEARCH_MAX_LINES, type SearchCardModel } from '../models/search-card-model.ts'
 import { terminalBlockLabels, type TerminalCardModel } from '../models/terminal-card-model.ts'
 import type { ToolRowState, ToolRowVariant } from '../models/tool-call-model.ts'
-import css from './ToolRow.module.css'
+import css from './ToolRow.css.ts'
 
 export interface ToolRowProps {
   /** The render site's conversation locale seat (terminal/code body copy). */

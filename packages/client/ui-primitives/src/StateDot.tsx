@@ -4,7 +4,7 @@
 // up clockwise with a stepped trail. Colors resolve through --dsw-* tokens only.
 
 import clsx from 'clsx'
-import css from './StateDot.module.css'
+import css from './StateDot.css.ts'
 
 /** Four-color state semantic (green done / amber user-attention / blue running ring / red error). */
 export type StateDotState = 'done' | 'warning' | 'ongoing' | 'error'

@@ -1,7 +1,7 @@
 import { applyDiff } from 'webjsx'
 import { IconDownloadOutline16, renderModal, type DshModal } from '@deepseek-ai/dsh-client-ui-primitives'
 import { dialogProps, type SessionLogDownloadDialogProps } from './Dialog.tsx'
-import css from './HeaderAction.module.css'
+import css from './HeaderAction.css.ts'
 
 /**
  * Session Header export capsule custom element, plus its shared result

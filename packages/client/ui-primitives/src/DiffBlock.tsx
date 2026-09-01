@@ -20,7 +20,7 @@ import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { createCopyFeedback, type CopyFeedbackController } from './use-copy-feedback.ts'
-import css from './DiffBlock.module.css'
+import css from './DiffBlock.css.ts'
 
 /**
  * Output lines shown before the height cap collapses the middle. Matches

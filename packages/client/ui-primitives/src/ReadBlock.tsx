@@ -29,7 +29,7 @@ import {
   type HighlightSpan,
 } from './markdown/highlight.ts'
 import { createCopyFeedback, type CopyFeedbackController } from './use-copy-feedback.ts'
-import css from './ReadBlock.module.css'
+import css from './ReadBlock.css.ts'
 
 /**
  * Content lines shown before the height cap collapses the middle. Matches

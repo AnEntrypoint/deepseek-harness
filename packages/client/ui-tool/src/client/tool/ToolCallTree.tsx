@@ -3,7 +3,7 @@ import type { VNode } from 'webjsx'
 import type { ToolCallBlock } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ToolCallOwnerProps, ToolTreeProps } from '../contract/slots.ts'
 import { GenericToolCard } from './toolviews/GenericToolCard.tsx'
-import css from './ToolCallTree.module.css'
+import css from './ToolCallTree.css.ts'
 
 /** Resolve a Tool call's wire name from either lifecycle form. */
 function callName(node: ToolCallBlock): string {

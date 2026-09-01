@@ -27,7 +27,7 @@ import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { draftBlocker, type AgentPresetSectionState } from './section-store.ts'
 import { presetDisplayText, type AgentPresetSettingsKey } from './locales.ts'
-import css from './AgentPresetSection.module.css'
+import css from './AgentPresetSection.css.ts'
 
 /** Registration-side business face for the management section. */
 export interface AgentPresetSectionInjected {

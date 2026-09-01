@@ -19,7 +19,7 @@ import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { headTailCap } from './head-tail-cap.ts'
 import { createCopyFeedback, type CopyFeedbackController } from './use-copy-feedback.ts'
-import css from './SearchBlock.module.css'
+import css from './SearchBlock.css.ts'
 
 /**
  * Result rows shown before the height cap collapses the middle. Matches

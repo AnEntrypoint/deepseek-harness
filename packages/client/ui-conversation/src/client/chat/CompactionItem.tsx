@@ -19,7 +19,7 @@ import {
   MarkdownText,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
-import css from './MessageItem.module.css'
+import css from './MessageItem.css.ts'
 
 export interface CompactionItemProps {
   node: CompactionSummaryNode

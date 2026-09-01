@@ -12,7 +12,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
-import css from './SkillRow.module.css'
+import css from './SkillRow.css.ts'
 
 /** Skill row lifecycle derived solely from the durable call slice. */
 type SkillRowState = 'running' | 'ok' | 'error' | 'stopped'

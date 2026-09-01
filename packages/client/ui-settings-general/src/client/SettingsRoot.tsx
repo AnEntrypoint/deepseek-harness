@@ -24,7 +24,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { VNode } from 'webjsx'
 import type { SettingsRootComponentProps, SettingsSectionRow } from './shell-contract.ts'
-import css from './SettingsRoot.module.css'
+import css from './SettingsRoot.css.ts'
 
 /** Cast a renderSlot() RenderOutput result into a webjsx-embeddable child (matches AppFrame's asChild). */
 function asChild(node: unknown): VNode {

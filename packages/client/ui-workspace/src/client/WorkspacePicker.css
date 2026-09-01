@@ -1,0 +1,20 @@
+/* The adoption error dialog's footer and message styles; the dialog itself is
+ * the shared Modal (same figma dialog family as the browser's own dialogs). */
+.dsh-workspacePicker__modalAction {
+  min-width: 72px;
+}
+
+.dsh-workspacePicker__modalError,
+.dsh-workspacePicker__menuStatus {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.dsh-workspacePicker__modalError {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.dsh-workspacePicker__menuStatus {
+  color: var(--dsw-alias-label-secondary);
+}

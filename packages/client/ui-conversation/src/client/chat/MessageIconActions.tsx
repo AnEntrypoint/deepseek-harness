@@ -15,7 +15,7 @@ import {
 import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { formatLatencySeconds, formatMessageClock, formatRunDuration, formatTokensPerSecond } from './message-chrome.ts'
 import { createCalendarDay } from './use-calendar-day.ts'
-import css from './MessageIconActions.module.css'
+import css from './MessageIconActions.css.ts'
 
 export interface MessageIconActionsProps {
   /** Plain text the copy action writes. */

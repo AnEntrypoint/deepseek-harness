@@ -10,7 +10,7 @@ import type { WorkflowRunKey } from './locales.ts'
 import type {
   WorkflowRunMemberData, WorkflowRunPhaseData, WorkflowRunStatus,
 } from './workflow-definition.ts'
-import css from './WorkflowRunPanel.module.css'
+import css from './WorkflowRunPanel.css.ts'
 
 /** Navigation action injected from the plugin's own SessionRuntime access. */
 export interface WorkflowRunInjected {

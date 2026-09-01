@@ -12,7 +12,7 @@ import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { IconCloseOutline16 } from './icons/index.tsx'
-import css from './Modal.module.css'
+import css from './Modal.css.ts'
 
 export interface ModalProps {
   open: boolean

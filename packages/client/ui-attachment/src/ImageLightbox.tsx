@@ -6,7 +6,7 @@
 
 import { applyDiff } from 'webjsx'
 import { IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
-import css from './ImageLightbox.module.css'
+import css from './ImageLightbox.css.ts'
 
 /** Lightbox strings the owner resolves from its own locale namespace. */
 export interface ImageLightboxLabels {

@@ -15,7 +15,7 @@ import clsx from 'clsx'
 import type { WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConversationSlotProps, InputZone } from '../contract/slots.ts'
 import { HeroShell, WorkspaceChip, workspaceLabel } from './EmptyHero.tsx'
-import css from './ConversationRoot.module.css'
+import css from './ConversationRoot.css.ts'
 
 /** Full props composed from the slot contract. */
 export type ConversationRootProps = ConversationSlotProps

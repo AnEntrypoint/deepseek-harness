@@ -2,7 +2,7 @@
 
 import type { VNode } from 'webjsx'
 import { TrajectoryTurnHeader } from './TrajectoryTurnHeader.tsx'
-import css from './TrajectoryTurn.module.css'
+import css from './TrajectoryTurn.css.ts'
 
 export interface TrajectoryTurnProps {
   /** 1-based turn index for the sticky header. */

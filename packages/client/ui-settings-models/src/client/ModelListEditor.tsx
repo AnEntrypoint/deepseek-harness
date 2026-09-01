@@ -26,7 +26,7 @@ import { formatCapacity, parseCapacity } from './DeepSeekModelsEditor.tsx'
 import type { DeepSeekModelDraft } from './DeepSeekModelsEditor.tsx'
 import { messageOf } from './store.ts'
 import type { en } from './locales.ts'
-import styles from './ModelsSection.module.css'
+import styles from './ModelsSection.css.ts'
 
 /**
  * One configured model row. Structurally open, exactly like the DeepSeek

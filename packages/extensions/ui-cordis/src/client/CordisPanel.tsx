@@ -27,7 +27,7 @@ import type {
   ApprovalRequestId, CordisDynamicPackageId, CordisDynamicPluginId,
 } from './events.ts'
 import { cordisVisibleStatus, packageOf, type CordisVisibleStatus } from './status.ts'
-import css from './CordisPanel.module.css'
+import css from './CordisPanel.css.ts'
 
 /** Full panel props composed by the sidebar footer-action slot. */
 export type CordisPanelProps =

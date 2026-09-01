@@ -17,7 +17,7 @@
 import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
 import { writeClipboard } from './clipboard.ts'
-import css from './HoverCard.module.css'
+import css from './HoverCard.css.ts'
 
 export interface HoverCardProps {
   anchor: VNode | string

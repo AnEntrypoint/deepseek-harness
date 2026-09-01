@@ -16,7 +16,7 @@ import type {
 } from '../contract/slots.ts'
 import type { ViewTab } from '../contract/views.ts'
 import type { InputState } from '../input/contract.ts'
-import css from './ConversationRoot.module.css'
+import css from './ConversationRoot.css.ts'
 
 /** Full props composed from the strict session body contract. */
 export type ConversationSessionProps = ConversationSessionSlotProps

@@ -2,7 +2,7 @@
 
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
-import css from './Pill.module.css'
+import css from './Pill.css.ts'
 
 /**
  * Render a pill chip. Interactive when onclick is supplied (renders a button);

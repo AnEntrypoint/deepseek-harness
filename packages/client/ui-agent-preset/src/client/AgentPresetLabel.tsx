@@ -16,7 +16,7 @@ import { IconAgentPresetOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { AgentPresetSettingsState } from './settings-store.ts'
 import { presetDisplayText } from './locales.ts'
-import css from './AgentPresetLabel.module.css'
+import css from './AgentPresetLabel.css.ts'
 
 /** Registration-side business face for the header label. */
 export interface AgentPresetLabelInjected {

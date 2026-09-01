@@ -26,7 +26,7 @@ import { renderCodeBlock } from './CodeBlock.tsx'
 import type { DshCodeBlock } from './CodeBlock.tsx'
 import { renderTexToVNodes } from './katex.tsx'
 import type { PositionedBlock } from './incremental.ts'
-import css from './MarkdownText.module.css'
+import css from './MarkdownText.css.ts'
 
 /** A rendered node: any webjsx child, including nulls dropped elsewhere. */
 type RNode = JSXChildTypes

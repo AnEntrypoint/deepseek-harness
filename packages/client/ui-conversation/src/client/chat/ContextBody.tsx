@@ -8,7 +8,7 @@ import type { VNode } from 'webjsx'
 import type { ContextMessageNode, KnownContextForm } from '@deepseek-ai/dsh-client-runtime/client'
 import { JsonBlock } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
-import css from './ContextBody.module.css'
+import css from './ContextBody.css.ts'
 
 /** Model-facing text stays bounded at the disclosure, not at the producer. */
 const MAX_CHARS = 20_000

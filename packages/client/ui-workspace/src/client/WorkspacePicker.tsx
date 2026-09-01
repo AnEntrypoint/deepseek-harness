@@ -19,7 +19,7 @@ import type {
 } from '@deepseek-ai/dsh-client-runtime/client'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 import type { DirectoryFlowOwnerProps, WorkspacePickerProps } from './contract/slots.ts'
-import css from './WorkspacePicker.module.css'
+import css from './WorkspacePicker.css.ts'
 
 const ADD_WORKSPACE = '::add-workspace'
 

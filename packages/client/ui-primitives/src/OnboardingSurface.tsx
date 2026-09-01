@@ -13,7 +13,7 @@
 
 import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
-import css from './OnboardingSurface.module.css'
+import css from './OnboardingSurface.css.ts'
 
 export interface OnboardingSurfaceProps {
   children?: VNode | VNode[] | string | null

@@ -19,7 +19,7 @@ import { headTailCap } from './head-tail-cap.ts'
 import { createCopyFeedback, type CopyFeedbackController } from './use-copy-feedback.ts'
 import { Pill } from './Pill.tsx'
 import { StateDot, type StateDotState } from './StateDot.tsx'
-import css from './TerminalBlock.module.css'
+import css from './TerminalBlock.css.ts'
 
 /**
  * Output lines shown before the height cap collapses the middle. Matches the

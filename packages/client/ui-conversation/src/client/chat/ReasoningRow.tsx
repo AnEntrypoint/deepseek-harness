@@ -9,8 +9,8 @@ import { applyDiff } from 'webjsx'
 import { DisclosureRow, IconThinkOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { createThrottledVisualUpdate } from './use-throttled-visual-update.ts'
-import a11yCss from './accessibility.module.css'
-import css from './ReasoningRow.module.css'
+import a11yCss from './accessibility.css.ts'
+import css from './ReasoningRow.css.ts'
 
 function firstLine(text: string): string {
   const newline = text.indexOf('\n')

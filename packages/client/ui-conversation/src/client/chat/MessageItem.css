@@ -1,0 +1,291 @@
+/* User bubble: right-aligned column (bubble + IconActions). Figma
+   User_Bubble/message_container 659:38813 — r22 fill, actions gap 6 below. */
+
+.dsh-messageItem__userRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.dsh-messageItem__userStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(525px, 82%);
+}
+.dsh-messageItem__bubble {
+  /* 525px cap inside the 736 column; percentage keeps narrow windows sane. */
+  max-width: 100%;
+  background: var(--dsw-specific-bubble);
+  border-radius: 22px;
+  /* 44px single-line bubble: 24 line + 10 vertical padding each side. */
+  padding: 10px 16px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.dsh-messageItem__referenceSummary {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+.dsh-messageItem__contextRow {
+  padding: 2px 0;
+}
+
+/* Compaction marker: one dim 24px row with a context icon at rest and a
+   hover/focus disclosure for the summary body. Dimmed title (not
+   label-primary) — the row is a boundary notice, not conversation content. */
+.dsh-messageItem__compactionRow {
+  padding: 2px 0;
+}
+
+.dsh-messageItem__compactionButton {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 24px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.dsh-messageItem__compactionButton:not(:disabled) {
+  cursor: pointer;
+}
+
+.dsh-messageItem__compactionButton:not(:disabled):hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.dsh-messageItem__compactionLeading {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dsh-messageItem__compactionContextIcon,
+.dsh-messageItem__compactionDisclosureIcon {
+  display: inline-flex;
+  grid-area: 1 / 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.dsh-messageItem__compactionDisclosureIcon {
+  opacity: 0;
+}
+
+.dsh-messageItem__compactionButton:not(:disabled):hover .dsh-messageItem__compactionContextIcon,
+.dsh-messageItem__compactionButton:not(:disabled):focus-visible .dsh-messageItem__compactionContextIcon {
+  opacity: 0;
+}
+
+.dsh-messageItem__compactionButton:not(:disabled):hover .dsh-messageItem__compactionDisclosureIcon,
+.dsh-messageItem__compactionButton:not(:disabled):focus-visible .dsh-messageItem__compactionDisclosureIcon {
+  opacity: 1;
+}
+
+.dsh-messageItem__compactionTitle {
+  flex: none;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--dsw-alias-label-primary-dimmed);
+}
+
+.dsh-messageItem__compactionSep {
+  flex: none;
+  width: 2px;
+  height: 2px;
+  margin: 0 8px;
+  border-radius: 1px;
+  background: var(--dsw-alias-label-caption);
+}
+
+.dsh-messageItem__compactionSummary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 14px;
+  line-height: 24px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsh-messageItem__compactionBody {
+  padding: 4px 0 4px 22px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.dsh-messageItem__retryRow {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.dsh-messageItem__retrySummary {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 2px 0;
+  gap: 7px;
+  border-radius: 3px;
+  color: inherit;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.dsh-messageItem__retrySummary::-webkit-details-marker {
+  display: none;
+}
+
+.dsh-messageItem__retrySummary::after {
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  content: '';
+  opacity: 0.8;
+  transform: rotate(-45deg);
+  transition: transform 120ms ease;
+}
+
+.dsh-messageItem__retrySummary:hover {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dsh-messageItem__retrySummary:focus-visible {
+  outline: 1.5px solid var(--dsw-alias-button-info-fill);
+  outline-offset: 2px;
+}
+
+.dsh-messageItem__retryText {
+  color: inherit;
+}
+
+.dsh-messageItem__retryRow[data-active] .dsh-messageItem__retryText {
+  background:
+    linear-gradient(
+      90deg,
+      var(--dsw-alias-label-tertiary) 0%,
+      var(--dsw-alias-label-tertiary) 40%,
+      var(--dsw-alias-label-secondary) 50%,
+      var(--dsw-alias-label-tertiary) 60%,
+      var(--dsw-alias-label-tertiary) 100%
+    );
+  background-position: 100% 50%;
+  background-size: 200% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: dsh-messageItem__retry-shimmer 1.6s ease-in-out infinite;
+}
+
+.dsh-messageItem__retryRow[open] .dsh-messageItem__retrySummary::after {
+  transform: rotate(45deg);
+}
+
+.dsh-messageItem__retryDetails {
+  display: grid;
+  gap: 2px;
+  margin-top: 3px;
+  padding-left: 14px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.dsh-messageItem__retryDetailLabel {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dsh-messageItem__turnErrorRow {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  padding: 2px 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.dsh-messageItem__turnErrorDot {
+  margin-top: 5px;
+}
+
+.dsh-messageItem__turnErrorCopy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dsh-messageItem__turnErrorTitle {
+  margin-right: 6px;
+  color: var(--dsw-alias-state-error-primary);
+  font-weight: 600;
+}
+
+.dsh-messageItem__turnErrorMessage {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dsh-messageItem__turnErrorCode {
+  color: var(--dsw-alias-label-tertiary);
+  font: var(--dsw-font-markdown-code-block-small);
+}
+
+.dsh-messageItem__maxTokensTitle {
+  margin-right: 6px;
+  color: var(--dsw-alias-state-warn-primary);
+  font-weight: 600;
+}
+
+@keyframes dsh-messageItem__retry-shimmer {
+  from {
+    background-position: 100% 50%;
+  }
+
+  to {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dsh-messageItem__retryRow[data-active] .dsh-messageItem__retryText {
+    background: none;
+    color: inherit;
+    animation: none;
+  }
+}
+
+/* Inline references use domain glyphs and business-color text without another
+   container inside the user bubble. */
+.dsh-messageItem__refChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 2px;
+  color: var(--dsw-alias-state-business-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.dsh-messageItem__refIcon {
+  flex: none;
+}

@@ -21,7 +21,7 @@
 
 import clsx from 'clsx'
 import { MarkdownText } from './markdown/MarkdownText.tsx'
-import css from './WebBlock.module.css'
+import css from './WebBlock.css.ts'
 
 /**
  * One citeable source drawn in a search card: the projection of the contract's

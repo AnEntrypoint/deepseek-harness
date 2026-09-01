@@ -6,7 +6,7 @@
  * card's save is the single point where a draft becomes a document mutation.
  */
 
-import css from './fields.module.css'
+import css from './fields.css.ts'
 
 /** What every field control needs regardless of its value type. */
 export interface FieldProps {

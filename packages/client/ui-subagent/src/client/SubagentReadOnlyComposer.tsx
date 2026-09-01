@@ -1,6 +1,6 @@
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { NS } from './locales.ts'
-import css from './SubagentReadOnlyComposer.module.css'
+import css from './SubagentReadOnlyComposer.css.ts'
 
 /** Why a catalog-addressed conversation cannot accept human input. */
 export interface SubagentReadOnlyMatch {

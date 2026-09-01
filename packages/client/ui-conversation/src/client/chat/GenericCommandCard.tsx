@@ -12,8 +12,8 @@ import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
 import { DisclosureRow, IconApiOutline14, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps, CommandRowOwnerProps } from '../contract/slots.ts'
-import a11yCss from './accessibility.module.css'
-import css from './GenericCommandCard.module.css'
+import a11yCss from './accessibility.css.ts'
+import css from './GenericCommandCard.css.ts'
 
 type CommandRowState = 'running' | 'ok' | 'error'
 

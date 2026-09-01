@@ -18,7 +18,7 @@ import { ReferenceIcon } from '../reference/ReferenceIcon.tsx'
 import { CompactionItem } from './CompactionItem.tsx'
 import { ContextInjectionRow } from './ContextInjectionRow.tsx'
 import { MessageIconActions } from './MessageIconActions.tsx'
-import css from './MessageItem.module.css'
+import css from './MessageItem.css.ts'
 
 type UserImage = Extract<UserMessageNode['content'][number], { type: 'image' }>
 

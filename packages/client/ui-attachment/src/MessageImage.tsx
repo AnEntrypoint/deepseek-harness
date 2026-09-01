@@ -9,7 +9,7 @@ import { applyDiff } from 'webjsx'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import { renderImageLightbox } from './ImageLightbox.tsx'
 import type { DshImageLightbox, ImageLightboxLabels } from './ImageLightbox.tsx'
-import css from './MessageImage.module.css'
+import css from './MessageImage.css.ts'
 
 /** Loads a session-authorized durable image URL. */
 export type ImageLoader = (attachment: ImageAttachmentRef) => Promise<string>

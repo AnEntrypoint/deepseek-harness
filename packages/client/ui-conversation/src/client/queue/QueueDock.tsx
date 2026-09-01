@@ -19,7 +19,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { QueueAction, QueueItemId } from '../contract/queue.ts'
 import { NS } from '../locales.ts'
-import css from './QueueDock.module.css'
+import css from './QueueDock.css.ts'
 
 /** Queue operations injected by the session-scoped registration. */
 export interface QueueDockInjected {

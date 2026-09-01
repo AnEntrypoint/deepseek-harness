@@ -1,0 +1,22 @@
+const css = {
+  card: 'dsh-bashSample__card',
+  terminal: 'dsh-bashSample__terminal',
+  ioCard: 'dsh-bashSample__ioCard',
+  ioSection: 'dsh-bashSample__ioSection',
+  ioLabel: 'dsh-bashSample__ioLabel',
+  ioDivider: 'dsh-bashSample__ioDivider',
+  ioText: 'dsh-bashSample__ioText',
+  root: 'dsh-bashSample__root',
+  leading: 'dsh-bashSample__leading',
+  chevron: 'dsh-bashSample__chevron',
+  iconIdle: 'dsh-bashSample__iconIdle',
+  chevronHover: 'dsh-bashSample__chevronHover',
+  title: 'dsh-bashSample__title',
+  sep: 'dsh-bashSample__sep',
+  summary: 'dsh-bashSample__summary',
+  errorSummary: 'dsh-bashSample__errorSummary',
+  bodyWrap: 'dsh-bashSample__bodyWrap',
+  inspectButton: 'dsh-bashSample__inspectButton',
+  visuallyHidden: 'dsh-bashSample__visuallyHidden',
+} as const
+export default css

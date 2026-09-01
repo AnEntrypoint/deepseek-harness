@@ -1,0 +1,27 @@
+const css = {
+  text: 'dsh-contextBody__text',
+  fields: 'dsh-contextBody__fields',
+  field: 'dsh-contextBody__field',
+  fieldKey: 'dsh-contextBody__fieldKey',
+  fieldValue: 'dsh-contextBody__fieldValue',
+  files: 'dsh-contextBody__files',
+  file: 'dsh-contextBody__file',
+  filePath: 'dsh-contextBody__filePath',
+  fileAction: 'dsh-contextBody__fileAction',
+  catalogNotice: 'dsh-contextBody__catalogNotice',
+  entries: 'dsh-contextBody__entries',
+  entry: 'dsh-contextBody__entry',
+  entryName: 'dsh-contextBody__entryName',
+  entryDescription: 'dsh-contextBody__entryDescription',
+  sections: 'dsh-contextBody__sections',
+  section: 'dsh-contextBody__section',
+  sectionName: 'dsh-contextBody__sectionName',
+  sectionText: 'dsh-contextBody__sectionText',
+  relaySender: 'dsh-contextBody__relaySender',
+  recalls: 'dsh-contextBody__recalls',
+  recall: 'dsh-contextBody__recall',
+  recallLabel: 'dsh-contextBody__recallLabel',
+  recallCounts: 'dsh-contextBody__recallCounts',
+} as const
+
+export default css

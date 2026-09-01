@@ -22,7 +22,7 @@ import {
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { GoalActionResult, GoalBarActions } from './slots.ts'
 import type { GoalKey } from './locales.ts'
-import css from './GoalBar.module.css'
+import css from './GoalBar.css.ts'
 
 export interface GoalBarProps extends GoalBarActions {
   /** Current goal snapshot; undefined = capability absent or loading, null = no goal set. */

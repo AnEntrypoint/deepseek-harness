@@ -4,7 +4,7 @@
 // applyDiff(this, vdom) call after each toggle.
 
 import { applyDiff } from 'webjsx'
-import css from './JsonBlock.module.css'
+import css from './JsonBlock.css.ts'
 
 const MAX_CHARS = 20_000
 

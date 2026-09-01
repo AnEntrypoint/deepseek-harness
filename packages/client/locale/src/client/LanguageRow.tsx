@@ -10,7 +10,7 @@ import type { DshMenu } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { createLanguageRowStore } from './settings-store.ts'
-import css from './LanguageRow.module.css'
+import css from './LanguageRow.css.ts'
 
 /** Injected business face: the preference write (t rides the standard locale seat). */
 export interface LanguageRowInjected {

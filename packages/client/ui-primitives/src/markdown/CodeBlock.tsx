@@ -16,7 +16,7 @@ import type { VNode } from 'webjsx'
 import clsx from 'clsx'
 import { writeClipboard } from '../clipboard.ts'
 import { highlightToHtml, subscribeGrammarLoaded } from './highlight.ts'
-import css from './CodeBlock.module.css'
+import css from './CodeBlock.css.ts'
 
 export interface CodeBlockProps {
   /** The source text, rendered verbatim (trailing newline trimmed for display). */

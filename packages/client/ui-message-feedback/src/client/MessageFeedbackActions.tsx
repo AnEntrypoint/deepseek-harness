@@ -25,7 +25,7 @@ import {
 import type { AnchoredPosition } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MessageFeedbackRating } from '@deepseek-ai/dsh-message-feedback/types'
 import type { MessageFeedbackActionProps } from './slots.ts'
-import css from './MessageFeedbackActions.module.css'
+import css from './MessageFeedbackActions.css.ts'
 
 /** Safe distance kept between the panel and the viewport edges (the Menu portal margin). */
 const PANEL_MARGIN = 12

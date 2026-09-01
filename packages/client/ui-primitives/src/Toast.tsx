@@ -7,7 +7,7 @@
 
 import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
-import css from './Toast.module.css'
+import css from './Toast.css.ts'
 
 /** Full-opacity hold before the fade starts. Must agree with the stylesheet's
  * toast-fade delay (Toast.module.css) or the banner unmounts mid-fade. */

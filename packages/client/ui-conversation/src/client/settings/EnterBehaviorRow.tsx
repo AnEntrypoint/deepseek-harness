@@ -9,7 +9,7 @@ import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-cli
 import { IconChevronDownOutline14, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { BusyEnterBehavior } from '../contract/composer-submission.ts'
 import type { ConversationKey } from '../locales.ts'
-import css from './EnterBehaviorRow.module.css'
+import css from './EnterBehaviorRow.css.ts'
 
 /** Registration-side preference face. */
 export interface EnterBehaviorRowInjected {

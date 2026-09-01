@@ -1,0 +1,161 @@
+/* Expanded context bodies: one code-block surface shared by every form, so the
+   disclosure keeps the Figma 10:2482 geometry whichever form renders inside. */
+
+.dsh-contextBody__text {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Source fields beneath the text: dimmer than the content they describe. */
+.dsh-contextBody__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--dsw-alias-line-secondary);
+}
+
+.dsh-contextBody__field {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dsh-contextBody__fieldKey {
+  flex: none;
+  min-width: 96px;
+  color: var(--dsw-alias-label-caption);
+}
+
+.dsh-contextBody__fieldValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  overflow-wrap: anywhere;
+}
+
+/* instructions: the reconciled files, above their text. */
+.dsh-contextBody__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.dsh-contextBody__file {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dsh-contextBody__filePath {
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+}
+
+.dsh-contextBody__fileAction {
+  color: var(--dsw-alias-label-caption);
+}
+
+/* catalog: a replacement notice above one row per published entry. */
+.dsh-contextBody__catalogNotice {
+  margin: 0 0 6px;
+  color: var(--dsw-alias-label-caption);
+}
+
+
+.dsh-contextBody__entries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dsh-contextBody__entry {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dsh-contextBody__entryName {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dsh-contextBody__entryDescription {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* snapshot: one titled block per contributing subsystem. */
+.dsh-contextBody__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.dsh-contextBody__section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dsh-contextBody__sectionName {
+  color: var(--dsw-alias-label-caption);
+}
+
+.dsh-contextBody__sectionText {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* relay: who sent this, above what they said. */
+.dsh-contextBody__relaySender {
+  margin: 0 0 6px;
+  color: var(--dsw-alias-label-caption);
+  overflow-wrap: anywhere;
+}
+
+/* recall: one row per source session, with how much of it survived. */
+.dsh-contextBody__recalls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.dsh-contextBody__recall {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dsh-contextBody__recallLabel {
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+}
+
+.dsh-contextBody__recallCounts {
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+}

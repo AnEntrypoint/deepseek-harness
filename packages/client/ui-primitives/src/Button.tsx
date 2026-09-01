@@ -3,7 +3,7 @@
 
 import type { VNode } from 'webjsx'
 import clsx from 'clsx'
-import css from './Button.module.css'
+import css from './Button.css.ts'
 
 /** Visual variant, each backed by its --dsw-alias-button-* token family. */
 export type ButtonVariant = 'primary' | 'ghost' | 'outline' | 'toolbar'

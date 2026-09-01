@@ -56,7 +56,7 @@ function SessionNodeItem(props: SessionNodeItemProps): JSX.Element {
 }
 import { FLAT_SESSION_ORDER_KEY } from './stores.ts'
 import { WorkspacePickFlow } from './WorkspacePicker.tsx'
-import css from './WorkspaceBrowser.module.css'
+import css from './WorkspaceBrowser.css.ts'
 
 /**
  * Column slide length (--ds-transition-duration-slow): rail-search focus waits it out —

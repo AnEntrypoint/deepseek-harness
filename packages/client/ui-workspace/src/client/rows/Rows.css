@@ -1,0 +1,356 @@
+/* Tree rows: project 34px, session 32px, radius 8, indent step 22px
+   (16px slot + 6px gap). Hover swaps
+   are pure CSS: project folder -> chevron + action buttons; session time ->
+   ellipsis button. */
+
+.dsh-rows__projectRow,
+.dsh-rows__sessionRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 0 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--dsw-alias-label-primary);
+}
+
+.dsh-rows__projectRow:hover,
+.dsh-rows__sessionRow:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.dsh-rows__sessionRow.dsh-rows__selected {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.dsh-rows__searchResultRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--dsw-alias-label-primary);
+}
+
+.dsh-rows__searchResultRow:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.dsh-rows__searchResultRow.dsh-rows__selected {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.dsh-rows__searchResultHeading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.dsh-rows__searchResultTitle {
+  min-width: 0;
+  margin-left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.dsh-rows__searchResultMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-left: 20px;
+}
+
+.dsh-rows__searchResultWorkspace,
+.dsh-rows__searchResultSnippet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.dsh-rows__searchResultWorkspace {
+  flex: none;
+  max-width: 40%;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dsh-rows__searchResultSnippet {
+  flex: 1;
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* Compact one-line Workspace row after removing the session-count subtitle. */
+.dsh-rows__projectRow {
+  height: 34px;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.dsh-rows__projectRow .dsh-rows__rowActions {
+  height: 20px;
+}
+
+/* Session cell (figma): pad 8, a 16px status slot, then a 4px title gap. */
+.dsh-rows__sessionRow {
+  height: 32px;
+  gap: 0;
+  /* Mount fade: session rows appear by unfolding a group (or the tree
+     mounting). Stable row keys keep already-visible rows from replaying it. */
+  animation: dsh-rows__row-in 150ms var(--ds-ease-in-out);
+}
+
+.dsh-rows__sessionRow .dsh-rows__title {
+  margin: 0 6px 0 4px;
+}
+
+.dsh-rows__flatSessionRowWithoutStatus .dsh-rows__title {
+  margin-left: 0;
+}
+
+@keyframes dsh-rows__row-in {
+  from { opacity: 0; }
+}
+
+.dsh-rows__slot {
+  flex: none;
+  width: 16px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dsh-rows__visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.dsh-rows__folderActive {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+
+/* Project leading slot: folder by default, expand arrow on row hover. */
+.dsh-rows__projectRow .dsh-rows__chevron { display: none; }
+.dsh-rows__projectRow:hover .dsh-rows__chevron { display: inline-flex; }
+.dsh-rows__projectRow:hover .dsh-rows__folder { display: none; }
+
+/* Expand arrow (filled triangle): points right closed, rotates to point down open. */
+.dsh-rows__arrow {
+  transition: transform 150ms var(--ds-ease-in-out);
+}
+
+.dsh-rows__arrowOpen {
+  transform: rotate(90deg);
+}
+
+.dsh-rows__projectText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dsh-rows__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.dsh-rows__renameInput {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 0 2px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 4px;
+  background: var(--dsw-alias-button-elevated-fill);
+  color: inherit;
+  outline: none;
+}
+
+.dsh-rows__sessionRow .dsh-rows__title {
+  flex: 1;
+}
+
+.dsh-rows__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dsh-rows__time {
+  flex: none;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dsh-rows__dot {
+  flex: none;
+}
+
+/* Trailing action buttons surface on hover only (figma 27:4668 / 27:4656):
+   bare 16px glyphs, gap 12, tertiary grey. */
+.dsh-rows__rowActions {
+  flex: none;
+  display: none;
+  align-items: center;
+  gap: 12px;
+}
+
+.dsh-rows__projectRow:hover .dsh-rows__rowActions,
+.dsh-rows__sessionRow:hover .dsh-rows__rowActions,
+.dsh-rows__projectRow.dsh-rows__menuOpen .dsh-rows__rowActions,
+.dsh-rows__sessionRow.dsh-rows__menuOpen .dsh-rows__rowActions {
+  display: inline-flex;
+}
+
+.dsh-rows__sessionRow:hover .dsh-rows__time,
+.dsh-rows__sessionRow.dsh-rows__menuOpen .dsh-rows__time {
+  display: none;
+}
+
+/* An open row menu pins the hover affordances (figma: the row keeps its
+   hover fill while its dropdown is up). */
+.dsh-rows__projectRow.dsh-rows__menuOpen,
+.dsh-rows__sessionRow.dsh-rows__menuOpen {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+/* Session drag insert marker: a leading chevron and 2px rule between rows,
+   absolutely positioned so it neither resembles a row border nor changes layout. */
+.dsh-rows__sessionRow.dsh-rows__dropBefore,
+.dsh-rows__sessionRow.dsh-rows__dropAfter {
+  position: relative;
+}
+
+.dsh-rows__sessionRow.dsh-rows__dropBefore::before,
+.dsh-rows__sessionRow.dsh-rows__dropAfter::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 4px;
+  height: 12px;
+  background:
+    linear-gradient(
+      55deg,
+      transparent calc(50% - 1px),
+      var(--dsw-alias-state-business-primary) calc(50% - 1px) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ) 0 0 / 5px 7px no-repeat,
+    linear-gradient(
+      125deg,
+      transparent calc(50% - 1px),
+      var(--dsw-alias-state-business-primary) calc(50% - 1px) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ) 0 5px / 5px 7px no-repeat,
+    linear-gradient(
+      var(--dsw-alias-state-business-primary) 0 0
+    ) 4px 5px / calc(100% - 4px) 2px no-repeat;
+  pointer-events: none;
+}
+
+.dsh-rows__sessionRow.dsh-rows__dropBefore::before {
+  top: -7px;
+}
+
+.dsh-rows__sessionRow.dsh-rows__dropAfter::after {
+  bottom: -7px;
+}
+
+/* Hover-card body (figma 169:16903): dark surface, fixed colors both themes. */
+.dsh-rows__hoverContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dsh-rows__hoverTitle {
+  font-size: 14px;
+  line-height: 20px;
+  color: #FFFFFF;
+  overflow-wrap: break-word;
+}
+
+.dsh-rows__hoverPath {
+  font-size: 12px;
+  line-height: 16px;
+  color: #CFD3D6;
+  word-break: break-all;
+}
+
+.dsh-rows__hoverTime {
+  font-size: 12px;
+  line-height: 16px;
+  color: #CFD3D6;
+}
+
+.dsh-rows__hoverStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 20px;
+  color: #ADB2B8;
+}
+
+.dsh-rows__iconButton {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 4px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dsh-rows__iconButton:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+/* Chevrons ride the caption grey (#ADB2B8); the folder glyph stays one step
+   darker (tertiary, #81858C) per the cell spec. */
+.dsh-rows__chevron {
+  color: var(--dsw-alias-label-caption);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dsh-rows__sessionRow,
+  .dsh-rows__arrow {
+    animation: none;
+    transition: none;
+  }
+}

@@ -19,7 +19,7 @@
 
 import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
-import css from './Tooltip.module.css'
+import css from './Tooltip.css.ts'
 
 /** Bubble placement relative to the anchor. */
 export type TooltipSide = 'right' | 'bottom' | 'top'

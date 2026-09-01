@@ -4,7 +4,7 @@
 
 import { applyDiff } from 'webjsx'
 import type { VNode } from 'webjsx'
-import css from './DropOverlay.module.css'
+import css from './DropOverlay.css.ts'
 
 /** Drop-overlay strings the owner resolves from its own locale namespace. */
 export interface DropOverlayLabels {

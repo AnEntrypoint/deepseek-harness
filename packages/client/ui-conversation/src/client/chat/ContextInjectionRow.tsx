@@ -8,7 +8,7 @@ import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { DisclosureRow, IconBrowseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { ReferenceIcon } from '../reference/ReferenceIcon.tsx'
 import { contextBody } from './ContextBody.tsx'
-import css from './ContextInjectionRow.module.css'
+import css from './ContextInjectionRow.css.ts'
 
 /** Props for the logged non-user message presentation. */
 export interface ContextInjectionRowProps {

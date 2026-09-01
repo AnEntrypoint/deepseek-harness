@@ -37,7 +37,7 @@ import { ContextMeter } from './ContextMeter.tsx'
 import { renderPermissionSelect } from './PermissionSelect.tsx'
 import type { DshPermissionSelect } from './PermissionSelect.tsx'
 import { isSafariBrowser, repairSafariTextareaLayout } from './safari.ts'
-import css from './InputBar.module.css'
+import css from './InputBar.css.ts'
 
 /** Decoration product of the no-session state (no machine, empty draft). */
 const INERT_DECORATIONS: DraftDecorations = { token: null, chips: [], textRefs: [], hint: null }

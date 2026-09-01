@@ -28,7 +28,7 @@ import {
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelSelectInjected } from './slots.ts'
 import type { ModelDirectoryState } from './directory.ts'
-import css from './ModelSelect.module.css'
+import css from './ModelSelect.css.ts'
 
 /** Which pane the dropdown shows: the two-row root or one drilled-in list. */
 type Pane = 'root' | 'model' | 'effort'

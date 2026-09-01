@@ -11,7 +11,7 @@ import type { AgentPresetSettingsState } from './settings-store.ts'
 import { presetDisplayText, type AgentPresetSettingsKey } from './locales.ts'
 import { renderPresetMenu } from './PresetMenu.tsx'
 import type { DshMenu } from '@deepseek-ai/dsh-client-ui-primitives'
-import css from './AgentPresetRow.module.css'
+import css from './AgentPresetRow.css.ts'
 
 /** Registration-side business face for the host-backed preference. */
 export interface AgentPresetRowInjected {

@@ -5,7 +5,7 @@ import {
   type TrajectoryCellKind,
   type TrajectoryCellProps,
 } from './trajectory-record.ts'
-import css from './TrajectoryCell.module.css'
+import css from './TrajectoryCell.css.ts'
 
 export { formatElapsedSeconds }
 export type {

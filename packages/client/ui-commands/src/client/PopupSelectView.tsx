@@ -26,7 +26,7 @@ import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { filterOptions } from './popup.ts'
 import type { PopupSelectController } from './popup.ts'
 import type { PopupState } from './popup.ts'
-import css from './PopupSelectView.module.css'
+import css from './PopupSelectView.css.ts'
 
 /** Design cap on the card height (same MenuDropdown family as the slash menu). */
 const MAX_HEIGHT = 320

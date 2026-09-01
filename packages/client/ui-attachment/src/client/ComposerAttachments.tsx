@@ -16,7 +16,7 @@ import type { DshDropOverlay } from '../DropOverlay.tsx'
 import { renderImageLightbox } from '../ImageLightbox.tsx'
 import type { DshImageLightbox } from '../ImageLightbox.tsx'
 import { attachmentRailLabels, dropOverlayLabels, lightboxLabels } from './labels.ts'
-import css from './ComposerAttachments.module.css'
+import css from './ComposerAttachments.css.ts'
 
 /** Rail item retaining its browser-owned attachment for callbacks. */
 interface ComposerRailItem extends AttachmentRailItem {

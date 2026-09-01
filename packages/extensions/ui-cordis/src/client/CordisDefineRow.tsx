@@ -21,7 +21,7 @@ import { cordisDefineCard, type CordisToolState } from './card-model.ts'
 import type { CordisCardFace } from './slots.ts'
 import { cordisVisibleStatus, type CordisVisibleStatus } from './status.ts'
 import type { CordisKey } from './locales.ts'
-import css from './CordisDefineRow.module.css'
+import css from './CordisDefineRow.css.ts'
 
 /** Full card props composed by the keyed Tool slot. */
 export type CordisDefineRowProps = ToolCallViewProps & InjectFace<CordisCardFace> & PropsLocale<'cordis'>

@@ -1,7 +1,7 @@
 import { MessageText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { GoalCommandInputData } from './goal-command-input.ts'
-import css from './GoalCommandInputView.module.css'
+import css from './GoalCommandInputView.css.ts'
 
 type GoalCommandInputViewProps =
   PropsRuntime<'conversation.chat.node', 'command-input'>

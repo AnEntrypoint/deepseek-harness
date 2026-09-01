@@ -11,7 +11,7 @@
 
 import type { VNode } from 'webjsx'
 import { Modal } from '@deepseek-ai/dsh-client-ui-primitives'
-import css from './OnboardingModal.module.css'
+import css from './OnboardingModal.css.ts'
 
 const ignoreImplicitDismiss = (): void => {}
 

@@ -11,7 +11,7 @@ import {
   type TrajectoryTimelineMode,
   type TrajectoryTimeRange,
 } from './timeline.ts'
-import css from './TrajectoryTimeline.module.css'
+import css from './TrajectoryTimeline.css.ts'
 
 const MINIMUM_DRAG_PX = 3
 const MINIMUM_ZOOM_OPERATIONS = 4

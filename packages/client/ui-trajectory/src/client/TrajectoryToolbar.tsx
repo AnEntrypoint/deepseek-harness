@@ -3,7 +3,7 @@
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { IconSearchOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { NS } from './locales.ts'
-import css from './TrajectoryToolbar.module.css'
+import css from './TrajectoryToolbar.css.ts'
 
 export interface TrajectoryToolbarProps {
   /** Whether timeline blocks use recorded durations instead of equal widths. */

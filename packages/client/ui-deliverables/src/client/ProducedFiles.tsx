@@ -15,7 +15,7 @@ import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { TurnTailOwnerProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import { basename } from './turn-deliverables.ts'
 import type { NS } from './locales.ts'
-import css from './ProducedFiles.module.css'
+import css from './ProducedFiles.css.ts'
 
 /** At most six chips compete for the one-line summary; every other path stays counted. */
 const SHOWN_LIMIT = 6

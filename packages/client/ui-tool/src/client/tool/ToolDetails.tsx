@@ -8,7 +8,7 @@ import { searchCardModel } from './models/search-card-model.ts'
 import { terminalBlockLabels, terminalCardModel } from './models/terminal-card-model.ts'
 import { resultText } from './models/tool-call-model.ts'
 import { webCardModel } from './models/web-card-model.ts'
-import css from './ToolDetails.module.css'
+import css from './ToolDetails.css.ts'
 
 /**
  * Render the selected Tool call's structured output when its presentation

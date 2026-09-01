@@ -18,7 +18,7 @@ import type { DshMenu, DshModal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PermissionSettingsState } from './settings-store.ts'
 import type { PermissionSettingsKey } from './locales.ts'
 import { FULL_ACCESS_PRESET } from './presentation.ts'
-import css from './PermissionRow.module.css'
+import css from './PermissionRow.css.ts'
 
 /** Registration-side business face for the host-backed preference. */
 export interface PermissionRowInjected {

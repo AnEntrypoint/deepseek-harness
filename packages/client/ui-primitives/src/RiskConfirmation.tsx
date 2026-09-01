@@ -18,7 +18,7 @@ import { renderModal } from './Modal.tsx'
 import type { DshModal } from './Modal.tsx'
 import { Button } from './Button.tsx'
 import { IconWarningOutline16 } from './icons/index.tsx'
-import css from './RiskConfirmation.module.css'
+import css from './RiskConfirmation.css.ts'
 
 export interface RiskConfirmationProps {
   open: boolean

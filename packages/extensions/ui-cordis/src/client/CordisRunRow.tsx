@@ -19,7 +19,7 @@ import { cordisToolViewKey } from './run-card-index.ts'
 import type { CordisRunCardFace } from './slots.ts'
 import { cordisVisibleStatus, type CordisVisibleStatus } from './status.ts'
 import type { CordisKey } from './locales.ts'
-import css from './CordisRunRow.module.css'
+import css from './CordisRunRow.css.ts'
 
 /** Full Run-card props including its declared Package business-view child slot. */
 export type CordisRunRowProps = ToolCallViewProps

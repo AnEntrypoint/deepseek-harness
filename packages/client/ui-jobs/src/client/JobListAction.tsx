@@ -4,7 +4,7 @@ import { IconChevronDownOutline14, StateDot, createDismissOnOutsidePointer, type
 import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { NS } from './locales.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import css from './JobListAction.module.css'
+import css from './JobListAction.css.ts'
 
 /** Full props for the session-header background-job action. */
 export type JobListActionProps =

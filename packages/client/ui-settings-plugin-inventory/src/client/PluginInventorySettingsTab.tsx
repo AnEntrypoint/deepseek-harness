@@ -13,7 +13,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PluginInventoryLocaleKey } from './locales.ts'
-import css from './PluginInventorySettingsTab.module.css'
+import css from './PluginInventorySettingsTab.css.ts'
 
 /** Registration-side Remote face used by the section. */
 export interface PluginInventorySettingsTabInjected {

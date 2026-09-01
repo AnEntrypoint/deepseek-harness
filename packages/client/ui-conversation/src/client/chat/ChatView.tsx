@@ -26,7 +26,7 @@ import type { ChatViewSlotProps, RenderMessageImages } from '../contract/slots.t
 import { PendingSteeringBubble } from './MessageItem.tsx'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
 import { formatRunDuration } from './message-chrome.ts'
-import css from './ChatView.module.css'
+import css from './ChatView.css.ts'
 
 const FOLLOW_THRESHOLD = 24
 

@@ -14,7 +14,7 @@
  */
 
 import type { en } from './locales.ts'
-import styles from './ModelsSection.module.css'
+import styles from './ModelsSection.css.ts'
 
 /** Props of {@link EditorFooter}. */
 export interface EditorFooterProps {

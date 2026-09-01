@@ -26,7 +26,7 @@ import {
   FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SidebarRootComponentProps } from './contract/slots.ts'
-import css from './SidebarRoot.module.css'
+import css from './SidebarRoot.css.ts'
 
 /**
  * `renderSlot` is typed for React's ReactNode (the framework hook contract,

@@ -1,0 +1,9 @@
+.dsh-turnTailNodeView__root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dsh-turnTailNodeView__actions {
+  margin-left: -6px;
+}
