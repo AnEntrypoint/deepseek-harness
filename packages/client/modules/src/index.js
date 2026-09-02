@@ -22,39 +22,36 @@
  */
 
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
+import { dirname, join, normalize, relative, resolve, sep } from 'node:path'
 import { Service } from '@freddie/cordis'
 import { optionalStringArray, stripClientSuffix } from './client/manifest.js'
 
 export { stripClientSuffix } from './client/manifest.js'
 
-/** Recovery instruction shared by grouped startup and steady-state bundle diagnostics. */
-const CLIENT_BUNDLE_BUILD_INSTRUCTION = 'run `pnpm run build` before launch'
-
-/** Missing built client export, retained as structured data for activation-error grouping. */
+/** Missing client entry directory, retained as structured data for activation-error grouping. */
 class MissingClientBundleError extends Error {
   constructor(
     packageName,
-    clientPath,
+    clientRoot,
     cause,
   ) {
     super(
       [
-        `client-modules: client bundle not found; ${CLIENT_BUNDLE_BUILD_INSTRUCTION}:`,
+        'client-modules: client entry directory not found (buildless serving expects it on disk as-authored, no build step produces it):',
         `  package: ${packageName}`,
-        `  path: ${clientPath}`,
+        `  path: ${clientRoot}`,
       ].join('\n'),
       { cause },
     )
     this.packageName = packageName
-    this.clientPath = clientPath
+    this.clientRoot = clientRoot
   }
 }
 
-/** Activation failures grouped by actionable package-build errors and unrelated failures. */
+/** Activation failures grouped by actionable missing-entry errors and unrelated failures. */
 class ClientPackageCompositionError extends AggregateError {
   constructor(failures) {
     const missingBundles = failures.filter(error => error instanceof MissingClientBundleError)
@@ -62,9 +59,9 @@ class ClientPackageCompositionError extends AggregateError {
     const packageNoun = failures.length === 1 ? 'package' : 'packages'
     const lines = [`client-modules: ${String(failures.length)} client ${packageNoun} failed to compose:`]
     if (missingBundles.length > 0) {
-      lines.push(`  client bundles not found; ${CLIENT_BUNDLE_BUILD_INSTRUCTION}:`)
+      lines.push('  client entry directories not found on disk:')
       for (const error of missingBundles) {
-        lines.push(`    - package: ${error.packageName}`, `      path: ${error.clientPath}`)
+        lines.push(`    - package: ${error.packageName}`, `      path: ${error.clientRoot}`)
       }
     }
     if (otherFailures.length > 0) {
@@ -113,6 +110,53 @@ function clientExportOf(pkgName, exportsField) {
 /** sha1 content hash shortened to 12 hex chars (bundle rev / graph rev). */
 function shortHash(input) {
   return createHash('sha1').update(input).digest('hex').slice(0, 12)
+}
+
+/**
+ * List every `.js`/`.js.map` file under a directory, recursively, as
+ * `{ relPath, absPath }` pairs (`relPath` uses `/` separators — the URL shape
+ * {@link serveBundle} matches against). Buildless serving mirrors the whole
+ * `src/client/` tree verbatim, so every reachable file needs a route entry,
+ * not just the declared entry point.
+ * @param root - absolute directory to walk.
+ * @returns every servable file under root, root-relative and absolute.
+ */
+function listClientFiles(root) {
+  const files = []
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const absPath = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        walk(absPath)
+        continue
+      }
+      if (!entry.name.endsWith('.js') && !entry.name.endsWith('.js.map')) continue
+      files.push({ relPath: relative(root, absPath).split(sep).join('/'), absPath })
+    }
+  }
+  walk(root)
+  return files
+}
+
+/**
+ * Hash a whole client-entry directory: every file's root-relative path and
+ * content, in a stable (sorted) order so file-system enumeration order never
+ * changes the rev. Throws ENOENT (via {@link listClientFiles}'s `readdirSync`)
+ * when the directory itself is missing, same contract as the old single-file
+ * `readFileSync`.
+ * @param root - absolute directory to hash.
+ * @returns the tree's short hash.
+ */
+function hashClientTree(root) {
+  const files = listClientFiles(root).sort((a, b) => a.relPath.localeCompare(b.relPath))
+  const hash = createHash('sha1')
+  for (const file of files) {
+    hash.update(file.relPath)
+    hash.update('\0')
+    hash.update(readFileSync(file.absPath))
+    hash.update('\0')
+  }
+  return hash.digest('hex').slice(0, 12)
 }
 
 /** Graph row for one bundle rev (url carries the rev as its cache-busting query). */
@@ -174,51 +218,62 @@ export function orderByModuleGraph(entries) {
 /** Bootstrap package whose ordinary client bundle supplies the module-system implementation. */
 const CLIENT_MODULES_ID = '@freddie/freddie-client-modules'
 
-/** Dynamic package whose ordinary client bundle must be registered before plugin boot starts. */
+/** Dynamic package the boot kernel imports early, worth a modulepreload hint. */
 const CLIENT_RUNTIME_ID = '@freddie/freddie-client-runtime'
 
-/** Ordinary dynamic bundles the HTML parser executes before the Vite shell. */
-const PARSER_PRELOAD_IDS = [CLIENT_MODULES_ID, CLIENT_RUNTIME_ID]
+/** Ordinary dynamic bundles the HTML parser hints the browser to fetch early. */
+const MODULEPRELOAD_IDS = [CLIENT_MODULES_ID, CLIENT_RUNTIME_ID]
 
 /**
- * The boot protocol as index injection rows. The inline registration queue
- * precedes blocking classic scripts for modules' and runtime's ordinary
- * `lib/client.js` artifacts. Its `create()` method materializes the modules
- * bundle, delegates construction to that bundle, and leaves the same facade
- * in live-registration mode. The graph global follows before the shell reads
- * it.
+ * Build this package's contribution to the runtime import map: every graph
+ * row's bare package name AND its `<pkg>/client` subpath alias (bundles
+ * import either spelling; both must resolve to the same served URL) both map
+ * to the row's URL, PLUS every row's `dsh.client.external` requests that are
+ * not themselves a graph row — a plain workspace wire layer such as
+ * `@freddie/freddie-session/surface`, resolved live through the
+ * `/workspace/<specifier>` route (see {@link resolveWorkspaceSpecifier})
+ * rather than a `dsh.client` plugin's own served tree. The webserver merges
+ * this with every other package's `importmap-entries` row into the page's
+ * one `<script type="importmap">` (see `webserver/injections.js`) —
+ * vendor-modules contributes third-party npm specifiers the same way. This
+ * is the browser-side mirror of the build-time purity gate — an import map
+ * has no entry for anything not on this list, so an unlisted specifier fails
+ * resolution at import() time exactly where the old build-time resolveId
+ * check used to fail it at bundle time.
  * @param graph - the composed entry graph.
- * @returns head rows in execution order: queue script, preload scripts, graph global.
+ * @returns bare specifier → served URL.
+ */
+export function buildImportMapEntries(graph) {
+  const imports = {}
+  for (const entry of graph.entries) {
+    imports[entry.id] = entry.url
+    imports[`${entry.id}/client`] = entry.url
+  }
+  for (const entry of graph.entries) {
+    for (const specifier of entry.external ?? []) {
+      const id = stripClientSuffix(specifier)
+      if (imports[specifier] !== undefined || imports[id] !== undefined) continue
+      imports[specifier] = `/workspace/${specifier}`
+    }
+  }
+  return imports
+}
+
+/**
+ * The boot protocol as index injection rows: this package's import-map
+ * entries (merged with every other contributor into the page's one map),
+ * modulepreload hints for the bootstrap/runtime bundles, and the graph global
+ * the boot kernel's `<script type="module">` reads to build the module
+ * system before starting the plugin loader.
+ * @param graph - the composed entry graph.
+ * @returns head rows: import-map entries, preload hints, graph global.
  */
 export function bootInjections(graph) {
-  const bootstrapId = JSON.stringify(CLIENT_MODULES_ID)
-  const queue = `(()=>{
-const pendingQueue=[]
-window.__ModuleLoader__={
-  mode:"queue",
-  pendingQueue,
-  load(registration){pendingQueue.push(registration)},
-  create(options){
-    if(this.mode!=="queue")throw new Error("client-modules: window.__ModuleLoader__.create called after module-system boot")
-    const index=pendingQueue.findIndex(registration=>registration.id===${bootstrapId})
-    const registration=pendingQueue[index]
-    if(registration===undefined)throw new Error("client-modules: HTML did not preload ${CLIENT_MODULES_ID}/client.js")
-    pendingQueue.splice(index,1)
-    const exports=registration.factory(specifier=>{
-      throw new Error('client-modules: ${CLIENT_MODULES_ID}/client.js requested external "'+specifier+'" before the module system existed')
-    })
-    if(typeof exports!=="object"||exports===null||typeof exports.createClientModuleSystem!=="function"||typeof exports.apply!=="function"){
-      throw new Error("client-modules: ${CLIENT_MODULES_ID}/client.js did not export the bootstrap module face")
-    }
-    return exports.createClientModuleSystem(this,{id:registration.id,exports},options)
-  }
-}
-})()`
-  const preload = PARSER_PRELOAD_IDS.map(id => graph.entries.find(entry => entry.id === id))
+  const preload = MODULEPRELOAD_IDS.map(id => graph.entries.find(entry => entry.id === id))
     .filter(entry => entry !== undefined)
-    .map((entry) => ({ kind: 'script-src', placement: 'head', src: entry.url }))
+    .map(entry => ({ kind: 'link', placement: 'head', rel: 'modulepreload', href: entry.url }))
   return [
-    { kind: 'script', placement: 'head', text: queue },
+    { kind: 'importmap-entries', imports: buildImportMapEntries(graph) },
     ...preload,
     { kind: 'global', name: '__DSH_BOOT__', value: graph },
   ]
@@ -243,6 +298,7 @@ export class ClientModuleRegistry extends Service {
   graphListeners = new Set()
   dirty = new Set()
   resolvePkgJson
+  resolveSpecifier
   flushQueued = false
   composed
 
@@ -261,6 +317,7 @@ export class ClientModuleRegistry extends Service {
     }
     const require = createRequire(ctx.baseUrl)
     this.resolvePkgJson = spec => require.resolve(`${spec}/package.json`)
+    this.resolveSpecifier = spec => require.resolve(spec)
 
     // Subscribe before seeding so a fiber arriving mid-activation lands in the
     // same dirty set (Set idempotence makes the overlap harmless). An entry-less
@@ -292,6 +349,10 @@ export class ClientModuleRegistry extends Service {
       () => ctx.webServer.register({ kind: 'prefix', path: '/plugins', handler: this.serveBundle }),
       'client-modules: bundle route',
     )
+    ctx.effect(
+      () => ctx.webServer.register({ kind: 'prefix', path: '/workspace', handler: this.serveWorkspaceFile }),
+      'client-modules: workspace file route',
+    )
     ctx.on('webserver/index-inject', (table) => {
       table.push(...bootInjections(this.composed))
     })
@@ -306,7 +367,7 @@ export class ClientModuleRegistry extends Service {
   }
 
   /**
-   * Absolute path of an entry's client bundle.
+   * Absolute path of an entry's client entry file.
    * @param id - entry id (package name).
    * @returns the path, or undefined for an unknown id.
    */
@@ -315,15 +376,26 @@ export class ClientModuleRegistry extends Service {
   }
 
   /**
-   * Re-hash one bundle (the HMR watch's registration hook — the only entry
-   * point through which bundle content changes reach the graph).
+   * Absolute directory served verbatim for an entry (its entry file's own
+   * directory — every file under it is a real reachable route).
+   * @param id - entry id (package name).
+   * @returns the directory, or undefined for an unknown id.
+   */
+  clientRoot(id) {
+    return this.table.get(id)?.meta.clientRoot
+  }
+
+  /**
+   * Re-hash one entry's whole served directory (the HMR watch's registration
+   * hook — the only entry point through which content changes reach the
+   * graph).
    * @param id - entry id (package name).
    * @returns the new rev, or undefined for an unknown id.
    */
   rebuilt(id) {
     const record = this.table.get(id)
     if (record === undefined) return undefined
-    const rev = shortHash(readFileSync(record.meta.clientPath))
+    const rev = hashClientTree(record.meta.clientRoot)
     if (rev === record.entry.rev) return rev
     record.entry = graphRow(id, rev, record.meta)
     this.composed = this.compose()
@@ -338,6 +410,24 @@ export class ClientModuleRegistry extends Service {
     }
     this.notifyGraphChanged()
     return rev
+  }
+
+  /**
+   * Resolve a `/workspace/<pkg>[/<subpath>]` request to an on-disk `.js`/
+   * `.js.map`/`.css` file, entirely through Node's own package resolution —
+   * whatever `<pkg>`'s `exports` map actually publishes for that subpath is
+   * what a real `import` of the same specifier would receive, so there is no
+   * separate allow-list to keep in sync with each package's own `exports`.
+   * @param specifier - the request path with the `/workspace/` prefix removed.
+   * @returns the absolute file path.
+   * @throws when the specifier does not resolve, or resolves to a file kind this route does not serve.
+   */
+  resolveWorkspaceSpecifier(specifier) {
+    const path = this.resolveSpecifier(specifier)
+    if (!path.endsWith('.js') && !path.endsWith('.js.map') && !path.endsWith('.css')) {
+      throw new Error(`client-modules: /workspace resolved "${specifier}" to a non-servable file kind`)
+    }
+    return path
   }
 
   /**
@@ -402,10 +492,16 @@ export class ClientModuleRegistry extends Service {
     }
     const clientRel = clientExportOf(pkgName, pkg.exports)
     if (clientRel === undefined) {
-      throw new Error(`client-modules: ${pkgName} declares dsh.client but exports no "./client" bundle`)
+      throw new Error(`client-modules: ${pkgName} declares dsh.client but exports no "./client" entry`)
     }
+    // Buildless serving mirrors the whole entry-owning directory (src/client/
+    // in every real package) verbatim, so relative imports inside it resolve
+    // as real sibling-file fetches — clientRoot is that directory, clientPath
+    // its entry file within it (served at /plugins/<id>/client.js).
+    const clientPath = join(dirname(pkgPath), clientRel)
     const meta = {
-      clientPath: join(dirname(pkgPath), clientRel),
+      clientPath,
+      clientRoot: dirname(clientPath),
       ...(decl.inject !== undefined ? { inject: decl.inject } : {}),
       external: decl.external ?? [],
       immediately: decl.immediately === true,
@@ -415,18 +511,21 @@ export class ClientModuleRegistry extends Service {
   }
 
   /**
-   * Read the activation-time bundle revision.
-   * @param pkgName - package that declares the client bundle.
-   * @param clientPath - absolute path of the built client artifact.
-   * @returns the bundle content's short hash for use as its revision.
-   * @throws {MissingClientBundleError} when the read fails with `ENOENT`; other filesystem errors are rethrown unchanged.
+   * Read the activation-time bundle revision: a hash over every file's
+   * content under the entry's directory, so a change anywhere in the served
+   * tree (not just the entry file itself) produces a new rev and a new
+   * cache-busting URL.
+   * @param pkgName - package that declares the client entry.
+   * @param clientRoot - absolute directory served verbatim for this package.
+   * @returns the tree content's short hash for use as its revision.
+   * @throws {MissingClientBundleError} when the directory or entry file is missing.
    */
-  initialBundleRevision(pkgName, clientPath) {
+  initialBundleRevision(pkgName, clientRoot) {
     try {
-      return shortHash(readFileSync(clientPath))
+      return hashClientTree(clientRoot)
     } catch (error) {
       if (error.code !== 'ENOENT') throw error
-      throw new MissingClientBundleError(pkgName, clientPath, error)
+      throw new MissingClientBundleError(pkgName, clientRoot, error)
     }
   }
 
@@ -445,7 +544,7 @@ export class ClientModuleRegistry extends Service {
     if (meta === null) return false
     // The rev rides the row from here on: a fiber restart reuses the row (and
     // its rev) untouched; only rebuilt() re-reads the bundle.
-    const rev = this.initialBundleRevision(entryName, meta.clientPath)
+    const rev = this.initialBundleRevision(entryName, meta.clientRoot)
     this.table.set(entryName, { entry: graphRow(entryName, rev, meta), meta })
     return true
   }
@@ -478,6 +577,90 @@ export class ClientModuleRegistry extends Service {
     this.notifyGraphChanged()
   }
 
+  /**
+   * Resolve a request path under `/plugins/` to an on-disk file: `<id>` may
+   * itself contain a scope slash (`@scope/name`), so the split point is
+   * found by matching the longest registered id that prefixes the pathname
+   * — the same ambiguity `clientPath`'s old exact-suffix match sidestepped
+   * by only ever recognizing `/client.js`(.map); serving the whole tree
+   * means the remainder after the id is an arbitrary relative path instead
+   * of one fixed suffix.
+   * @param pathname - decoded request pathname (still carrying the `/plugins/` prefix).
+   * @returns the absolute file path, or undefined when no registered id prefixes it.
+   */
+  resolveBundlePath(pathname) {
+    const prefix = '/plugins/'
+    if (!pathname.startsWith(prefix)) return undefined
+    const rest = pathname.slice(prefix.length)
+    let best
+    for (const [id, record] of this.table) {
+      const idPrefix = `${id}/`
+      if (!rest.startsWith(idPrefix)) continue
+      if (best === undefined || id.length > best.id.length) best = { id, record }
+    }
+    if (best === undefined) return undefined
+    const relPath = rest.slice(best.id.length + 1)
+    // Entry alias: the graph's own URL names the entry file `client.js`
+    // regardless of its real on-disk basename (e.g. `index.js`), so that
+    // fixed name resolves straight to the known entry path (and its
+    // `.map` companion) rather than a literal same-named sibling file.
+    if (relPath === 'client.js') return best.record.meta.clientPath
+    if (relPath === 'client.js.map') return `${best.record.meta.clientPath}.map`
+    const clientRoot = best.record.meta.clientRoot
+    const target = resolve(normalize(join(clientRoot, ...relPath.split('/'))))
+    // Traversal rejection, same shape as frontend-static's: the target must
+    // stay under clientRoot (never equal to it — that's a directory, not a
+    // servable file).
+    if (!target.startsWith(clientRoot + sep)) return undefined
+    return target
+  }
+
+  /**
+   * Serve `/workspace/<pkg>[/<subpath>]` by resolving `<pkg>[/<subpath>]`
+   * through the same workspace resolver the plugin scan uses, so only a
+   * specifier the package's own `exports` map actually publishes can ever be
+   * read — Node's real resolution algorithm is the security boundary here,
+   * not hand-rolled pattern matching against `exports`, which real bare
+   * imports resolve the same way (workspace wire-layer imports such as
+   * `@freddie/freddie-session/surface`, browser-safe but not themselves a
+   * `dsh.client` plugin, land here rather than under `/plugins/`).
+   */
+  serveWorkspaceFile = async (req, res) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      res.writeHead(405)
+      res.end()
+      return
+    }
+    /* v8 ignore next -- `?? '/'` arm: node:http always sets url on server requests. */
+    const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname)
+    const prefix = '/workspace/'
+    if (!pathname.startsWith(prefix)) {
+      res.writeHead(404)
+      res.end()
+      return
+    }
+    const specifier = pathname.slice(prefix.length)
+    let path
+    try {
+      path = this.resolveWorkspaceSpecifier(specifier)
+    } catch {
+      res.writeHead(404)
+      res.end()
+      return
+    }
+    try {
+      const body = await readFile(path)
+      res.writeHead(200, {
+        'content-type': path.endsWith('.map') ? 'application/json; charset=utf-8' : 'text/javascript; charset=utf-8',
+        'cache-control': 'no-cache',
+      })
+      res.end(body)
+    } catch {
+      res.writeHead(404)
+      res.end()
+    }
+  }
+
   serveBundle = async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       res.writeHead(405)
@@ -486,17 +669,7 @@ export class ClientModuleRegistry extends Service {
     }
     /* v8 ignore next -- `?? '/'` arm: node:http always sets url on server requests. */
     const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname)
-    // The id may contain a scope slash. Anything else under /plugins (including
-    // /plugins/events when the HMR row is absent) is an unknown resource.
-    const prefix = '/plugins/'
-    const mapSuffix = '/client.js.map'
-    const bundleSuffix = '/client.js'
-    const isSourceMap = pathname.startsWith(prefix) && pathname.endsWith(mapSuffix)
-    const suffix = isSourceMap ? mapSuffix : bundleSuffix
-    const clientPath = pathname.startsWith(prefix) && pathname.endsWith(suffix)
-      ? this.clientPath(pathname.slice(prefix.length, -suffix.length))
-      : undefined
-    const path = clientPath === undefined ? undefined : `${clientPath}${isSourceMap ? '.map' : ''}`
+    const path = this.resolveBundlePath(pathname)
     if (path === undefined) {
       res.writeHead(404)
       res.end()
@@ -505,12 +678,12 @@ export class ClientModuleRegistry extends Service {
     try {
       const body = await readFile(path)
       res.writeHead(200, {
-        'content-type': isSourceMap ? 'application/json; charset=utf-8' : 'text/javascript; charset=utf-8',
+        'content-type': path.endsWith('.map') ? 'application/json; charset=utf-8' : 'text/javascript; charset=utf-8',
         'cache-control': 'no-cache',
       })
       res.end(body)
     } catch {
-      // Registered but unreadable (bundle not built yet): loud 404 beats a silent SPA-fallback HTML page.
+      // Registered but unreadable: loud 404 beats a silent SPA-fallback HTML page.
       res.writeHead(404)
       res.end()
     }

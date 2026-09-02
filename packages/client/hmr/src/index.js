@@ -1,15 +1,19 @@
 /**
  * HMR plugin, node half: the host end of the dev reload chain. One interval
- * stat-polls every graph row's client bundle (polling by design: network
- * mounts deliver no inotify events), reports content changes through
+ * stat-polls every graph row's whole served src/client/ tree (polling by
+ * design: network mounts deliver no inotify events; the whole tree, not
+ * just the entry file, since buildless serving mirrors it verbatim and a
+ * change to any file under it — including one only reachable through a
+ * relative import — must trigger a rebuild), reports content changes through
  * `clientModuleHost.rebuilt(id)`, and serves the `/plugins/events` SSE channel
  * broadcasting graph/rebuilt frames to the browser half (src/client/).
  * The web bundle mounts this row unconditionally: without a rebuild
- * watcher rewriting client bundles, the poll observes no changes and the
- * chain stays idle.
+ * watcher noticing edits, the poll observes no changes and the chain stays
+ * idle.
  */
-import { statSync } from 'node:fs'
+import { readdirSync, statSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { join, relative, sep } from 'node:path'
 import z from '@freddie/schemastery'
 import { EVENTS_ENDPOINT } from './events.js'
 
@@ -61,75 +65,95 @@ export function apply(ctx, config) {
   // schemastery's .default() guarantees the field is set after validation.
   const pollIntervalMs = config.pollIntervalMs
 
-  // --- bundle watch: one HMR-owned stat poll ------------------------------
-  const watched = new Map()
+  // --- bundle watch: one HMR-owned stat poll over each row's whole served
+  // tree (buildless serving mirrors src/client/ verbatim, so a change to any
+  // file under it — not just the entry file — must trigger a rebuild) ------
+  const watchedRoots = new Map()
 
-  const rehash = (id, watch, current) => {
-    try {
-      // rebuilt() re-hashes; an unchanged hash stays silent (clientModuleHost
-      // fires onRebuilt only on a real rev change).
-      ctx.clientModules.rebuilt(id)
-    } catch (error) {
-      const code = error.code
-      if (code === 'ENOENT') {
-        watch.dirty = true
-        return
+  /** List every file under `root`, recursively, as absolute paths. */
+  function listTreeFiles(root) {
+    const files = []
+    const walk = (dir) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const absPath = join(dir, entry.name)
+        if (entry.isDirectory()) walk(absPath)
+        else files.push(absPath)
       }
-      ctx.logger.warn(error)
     }
-    watch.mtimeMs = current.mtimeMs
-    watch.size = current.size
-    watch.dirty = false
+    walk(root)
+    return files
   }
 
-  const watchRow = (id, path) => {
-    let baseline
+  const rehash = (id, root) => {
     try {
-      baseline = statSync(path)
+      // rebuilt() re-hashes the whole tree; an unchanged hash stays silent
+      // (clientModuleHost fires onRebuilt only on a real rev change).
+      ctx.clientModules.rebuilt(id)
     } catch (error) {
-      watched.set(id, { path, mtimeMs: 0, size: 0, dirty: true })
       if (error.code !== 'ENOENT') ctx.logger.warn(error)
-      return
+      return true
     }
-    const watch = { path, mtimeMs: baseline.mtimeMs, size: baseline.size, dirty: false }
-    watched.set(id, watch)
+    return false
+  }
+
+  /** Snapshot every file's mtime/size under `root`, keyed by relative path. */
+  const snapshot = (root) => {
+    const files = new Map()
+    let dirty = false
+    try {
+      for (const absPath of listTreeFiles(root)) {
+        const stat = statSync(absPath)
+        files.set(relative(root, absPath).split(sep).join('/'), { mtimeMs: stat.mtimeMs, size: stat.size })
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') ctx.logger.warn(error)
+      dirty = true
+    }
+    return { files, dirty }
+  }
+
+  const watchRow = (id, root) => {
+    const watch = { root, ...snapshot(root) }
+    watchedRoots.set(id, watch)
     // The module host hashed before publishing the graph. Re-hash immediately
     // after capturing this baseline so a write in between cannot become an
     // already-current baseline paired with a stale graph rev.
-    rehash(id, watch, baseline)
+    watch.dirty = rehash(id, root) || watch.dirty
+  }
+
+  /** Whether two file snapshots differ (added/removed/changed entries). */
+  const snapshotsDiffer = (before, after) => {
+    if (before.size !== after.size) return true
+    for (const [relPath, prior] of before) {
+      const current = after.get(relPath)
+      if (current === undefined || current.mtimeMs !== prior.mtimeMs || current.size !== prior.size) return true
+    }
+    return false
   }
 
   const pollWatches = () => {
-    for (const [id, watch] of watched) {
-      let current
-      try {
-        current = statSync(watch.path)
-      } catch (error) {
-        watch.dirty = true
-        if (error.code !== 'ENOENT') ctx.logger.warn(error)
-        continue
-      }
-      if (!watch.dirty && current.mtimeMs === watch.mtimeMs && current.size === watch.size) continue
-      // Stat-before-hash preserves a detectable older baseline for writes that
-      // land during hashing. Repeated stat changes heal a torn read.
-      rehash(id, watch, current)
+    for (const [id, watch] of watchedRoots) {
+      const next = snapshot(watch.root)
+      if (!watch.dirty && !snapshotsDiffer(watch.files, next.files)) continue
+      watch.files = next.files
+      watch.dirty = rehash(id, watch.root) || next.dirty
     }
   }
 
   // Diff the watch set against the current graph: drop watches for removed
-  // rows (or rows whose bundle path moved), add watches for new rows.
+  // rows (or rows whose served root moved), add watches for new rows.
   const syncWatches = () => {
     const rows = new Map()
     for (const row of ctx.clientModules.graph().entries) {
-      const path = ctx.clientModules.clientPath(row.id)
-      if (path !== undefined) rows.set(row.id, path)
+      const root = ctx.clientModules.clientRoot(row.id)
+      if (root !== undefined) rows.set(row.id, root)
     }
-    for (const [id, watch] of watched) {
-      if (rows.get(id) === watch.path) continue
-      watched.delete(id)
+    for (const [id, watch] of watchedRoots) {
+      if (rows.get(id) === watch.root) continue
+      watchedRoots.delete(id)
     }
-    for (const [id, path] of rows) {
-      if (!watched.has(id)) watchRow(id, path)
+    for (const [id, root] of rows) {
+      if (!watchedRoots.has(id)) watchRow(id, root)
     }
   }
 

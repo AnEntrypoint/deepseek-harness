@@ -1,31 +1,32 @@
 /**
  * ClientModuleSystem — the implementation behind the {@link ClientModuleLoader}
- * contract. The conceptual contract (lazy CJS model, resolution branch order) is
- * documented on the public interfaces in `./manifest.js`; this file owns the
- * state tables and the load/materialize machinery.
+ * contract. The conceptual contract (resolution branch order) is documented on
+ * the public interfaces in `./manifest.js`; this file owns state the browser's
+ * own ESM module cache does not: the seed table (platform-singleton statics)
+ * and the graph-row lookup a dynamic `import()` needs before it can run.
+ *
+ * Native ESM, not lazy CJS: a graph entry's bundle is real `export`s, loaded
+ * through a real `import()` against its served URL (an import map resolves
+ * every bare specifier the bundle itself imports — externals, platform seed
+ * words, and cross-plugin module-table rows all resolve the same way, at
+ * the browser's own module-graph layer). The browser's module cache is the
+ * memoization; import() is natively idempotent per URL, native cycle
+ * detection applies, and there is no synchronous require to hand a factory —
+ * a module body runs at import time, which the browser already sequences
+ * correctly relative to its static imports.
+ *
+ * HMR reload without a native "invalidate a cached module" primitive: a
+ * changed bundle gets a NEW url (`?rev=<hash>` from the graph row), so
+ * `prefetch()` importing the fresh URL is a genuinely new module in the
+ * browser's cache, never a stale hit — {@link invalidate} only needs to
+ * drop this system's own row/record bookkeeping, not touch import()'s cache.
  */
 import { stripClientSuffix } from './manifest.js'
 
-/** Default bundle-load hook: same-origin external classic script. */
-const defaultLoadBundle = url => new Promise((resolve, reject) => {
-  const el = document.createElement('script')
-  el.async = true
-  el.src = url
-  el.addEventListener('load', () => {
-    el.remove()
-    resolve()
-  }, { once: true })
-  el.addEventListener('error', () => {
-    el.remove()
-    reject(new Error(`client-modules: bundle script ${url} failed to load`))
-  }, { once: true })
-  document.head.append(el)
-})
-
 /**
- * Claim and inventory the <style> tags a factory injected during
- * materialization: preset-emitted tags arrive pre-tagged with data-plugin;
- * any untagged tag is claimed for the materializing plugin (HMR bookkeeping).
+ * Claim and inventory the <style> tags a module injected during import:
+ * preset-emitted tags arrive pre-tagged with data-plugin; any untagged tag is
+ * claimed for the importing plugin (HMR bookkeeping).
  */
 const claimStyles = (id) => {
   if (typeof document === 'undefined') return []
@@ -40,177 +41,110 @@ const claimStyles = (id) => {
 }
 
 /**
- * The client module system: state tables plus the arrival/materialization
- * machinery implementing {@link ClientModuleLoader} (whose members carry the
- * contract documentation). Construction indexes the boot rows, retains the
- * already-materialized bootstrap module, and switches the HTML-installed
- * loader facade from its pending queue to live registration.
+ * The client module system: the seed table, the graph-row lookup, and the
+ * thin bookkeeping around native `import()` implementing
+ * {@link ClientModuleLoader} (whose members carry the contract documentation).
  */
 export class ClientModuleSystem {
   version = 'client'
   manifest
-  loadCache = new Map()
 
   seed
-  factories = new Map()
-  bootstrapIds = new Set()
-  /** In-flight prefetch (script load) per id; concurrent callers share it. */
-  pendingArrival = new Map()
-  /** Materialization re-entrancy guard: factory-form CJS cannot deliver partial exports, so a cycle is fatal. */
-  materializing = new Set()
   graphRows = new Map()
-  loadBundle
+  /** Materialized-module records, keyed by stripped id: exports + claimed styles. */
+  records = new Map()
+  /** In-flight import per id; concurrent callers share it. */
+  pending = new Map()
+  importModule
 
   /**
    * Build the module system over the parsed boot rows.
-   * @param options - Parsed graph, platform seed, bootstrap module, registration facade, and transport.
+   * @param options - Parsed graph, platform seed, and optional dynamic-import replacement.
    */
   constructor(options) {
     this.manifest = options.manifest
     this.seed = new Map(Object.entries(options.staticModules))
-    this.loadBundle = options.loadBundle ?? defaultLoadBundle
+    this.importModule = options.importModule ?? (url => import(/* @vite-ignore */ url))
 
     for (const row of options.manifest.modules) {
       if (this.graphRows.has(row.id)) throw new Error(`client-modules: duplicate graph entry "${row.id}"`)
       this.graphRows.set(row.id, row)
     }
 
-    const bootstrapId = stripClientSuffix(options.bootstrapModule.id)
-    this.bootstrapIds.add(bootstrapId)
-    this.loadCache.set(bootstrapId, {
-      id: bootstrapId,
-      exports: options.bootstrapModule.exports,
-      styles: [],
-      edges: new Set(),
-    })
-
-    const target = options.registrationTarget
-    if (target.mode !== 'queue') {
-      throw new Error('client-modules: window.__ModuleLoader__.create called after module-system boot')
-    }
-    const pending = target.pendingQueue.splice(0)
-    // Switch first: a bundle that executes while pending registrations drain
-    // must register live rather than append behind the drain.
-    target.mode = 'live'
-    target.load = (registration) => { this.register(registration) }
-    for (const registration of pending) target.load(registration)
-  }
-
-  /** Register one bundle factory, rejecting a script that executes twice without invalidation. */
-  register(registration) {
-    const id = stripClientSuffix(registration.id)
-    if (this.bootstrapIds.has(id) || this.factories.has(id)) {
-      throw new Error(`client-modules: duplicate factory registration for "${registration.id}" (bundle executed twice without invalidate?)`)
-    }
-    this.factories.set(id, registration.factory)
-  }
-
-  /** Load one graph row so its factory is registered (idempotent per in-flight arrival). */
-  arrive(row) {
-    const { id, url } = row
-    const pending = this.pendingArrival.get(id)
-    if (pending !== undefined) return pending
-    if (this.loadCache.has(id) || this.factories.has(id)) return Promise.resolve()
-    const task = this.loadBundle(url).then(() => {
-      if (!this.factories.has(id)) {
-        throw new Error(`client-modules: bundle ${url} loaded without registering "${id}" via __ModuleLoader__.load`)
-      }
-    }).finally(() => { this.pendingArrival.delete(id) })
-    this.pendingArrival.set(id, task)
-    return task
-  }
-
-  /** Register each unresolved dynamic request before registering its consumer. */
-  async arriveGraphRow(row, open = []) {
-    const cycleStart = open.indexOf(row.id)
-    if (cycleStart !== -1) {
-      throw new Error(
-        `client-modules: module arrival cycle ${[...open.slice(cycleStart), row.id].join(' -> ')} `
-        + '(the host must reject this graph before serving it)',
-      )
-    }
-    const next = [...open, row.id]
-    for (const request of row.external) {
-      const id = stripClientSuffix(request)
-      if (this.seed.has(request) || this.loadCache.has(id)) continue
-      const dependency = this.graphRows.get(id)
-      if (dependency !== undefined) await this.arriveGraphRow(dependency, next)
-    }
-    await this.arrive(row)
-  }
-
-  /** Materialize a registered factory (synchronous; memoized in loadCache). */
-  materialize(id) {
-    const existing = this.loadCache.get(id)
-    if (existing !== undefined) return existing
-    const registered = this.factories.get(id)
-    /* v8 ignore next -- callers check the factory branch before dispatching here. */
-    if (registered === undefined) throw new Error(`client-modules: no registered factory for "${id}"`)
-    if (this.materializing.has(id)) {
-      throw new Error(`client-modules: require cycle through "${id}" (factory-form CJS cannot deliver partial exports)`)
-    }
-    this.materializing.add(id)
-    try {
-      const edges = new Set()
-      const exports = registered(this.makeRequire(edges))
-      const record = { id, exports, styles: claimStyles(id), edges }
-      this.loadCache.set(id, record)
-      return record
-    } finally {
-      this.materializing.delete(id)
+    if (options.bootstrapModule !== undefined) {
+      const bootstrapId = stripClientSuffix(options.bootstrapModule.id)
+      this.records.set(bootstrapId, {
+        id: bootstrapId,
+        exports: options.bootstrapModule.exports,
+        styles: [],
+      })
     }
   }
 
   /**
-   * The synchronous require answered to factories: seed → memoized record →
-   * registered factory. Fetching is async and therefore unreachable
-   * from here; an external dynamic package must have arrived before its
-   * consumer materializes.
+   * Import one graph row's module (idempotent per in-flight/completed import).
+   * @param row - the graph row to import.
+   * @returns the materialized record.
    */
-  makeRequire(edges) {
-    return (spec) => {
-      edges.add(spec)
-      if (this.seed.has(spec)) return this.seed.get(spec)
-      const id = stripClientSuffix(spec)
-      const record = this.loadCache.get(id)
-      if (record !== undefined) return record.exports
-      if (this.factories.has(id)) return this.materialize(id).exports
-      throw new Error(
-        `client-modules: require("${spec}") missed the module table — not a platform seed word, not a materialized module, `
-        + 'and no registered package factory (a build-time externals drift, or a dynamic dependency that did not arrive)',
-      )
-    }
+  async importRow(row) {
+    const { id, url } = row
+    const existing = this.records.get(id)
+    if (existing !== undefined) return existing
+    const pending = this.pending.get(id)
+    if (pending !== undefined) return pending
+    const task = this.importModule(url).then((exports) => {
+      const record = { id, exports, styles: claimStyles(id) }
+      this.records.set(id, record)
+      return record
+    }).finally(() => { this.pending.delete(id) })
+    this.pending.set(id, task)
+    return task
   }
 
   async import(specifier) {
     if (this.seed.has(specifier)) return this.seed.get(specifier)
     const id = stripClientSuffix(specifier)
-    const existing = this.loadCache.get(id)
+    const existing = this.records.get(id)
     if (existing !== undefined) return existing.exports
     const row = this.graphRows.get(id)
-    if (row !== undefined) {
-      await this.arriveGraphRow(row)
-    } else if (!this.factories.has(id)) {
+    if (row === undefined) {
       throw new Error(
         `client-modules: cannot resolve "${specifier}" — not a seed word, not a materialized module, `
         + 'and not a row in the boot graph (the runtime mirror of the bundle purity gate)',
       )
     }
-    return this.materialize(id).exports
+    const record = await this.importRow(row)
+    return record.exports
   }
 
   async prefetch(id) {
     const normalized = stripClientSuffix(id)
-    if (this.loadCache.has(normalized)) return
+    if (this.records.has(normalized)) return
     const row = this.graphRows.get(normalized)
     if (row === undefined) throw new Error(`client-modules: prefetch("${id}") — not a graph entry`)
-    await this.arriveGraphRow(row)
+    await this.importRow(row)
   }
 
   invalidate(id) {
     const normalized = stripClientSuffix(id)
-    if (this.bootstrapIds.has(normalized)) return
-    this.factories.delete(normalized)
-    this.loadCache.delete(normalized)
+    this.records.delete(normalized)
+    this.pending.delete(normalized)
+  }
+
+  /**
+   * Directly seat an already-materialized module — the escape hatch for a
+   * module with no URL to `import()` from (e.g. cordis-client-runner's
+   * dynamically evaluated packages, whose exports are a live in-memory
+   * object, not bundle bytes on disk). Rejects a duplicate id the same way a
+   * script that executed twice would, mirroring the graph-row path's
+   * idempotence guarantee.
+   * @param id - module id (never `<pkg>/client` — call sites pass the bare id).
+   * @param exports - the already-evaluated module exports.
+   */
+  register(id, exports) {
+    if (this.records.has(id) || this.pending.has(id)) {
+      throw new Error(`client-modules: duplicate registration for "${id}" (registered twice without invalidate?)`)
+    }
+    this.records.set(id, { id, exports, styles: claimStyles(id) })
   }
 }

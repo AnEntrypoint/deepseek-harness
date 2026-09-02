@@ -1,28 +1,88 @@
 /**
- * Snapshot store engine (zustand vanilla + immer + subscribeWithSelector +
- * rafFlush middleware + opt-in persist + dev freeze) plus the declarative
- * shell over it: {@link defineStore} bakes an init/persist/actions literal
- * into a {@link StoreHandle}, the registration-side store seat of slot
- * terminals. Lives in the React-free runtime (the data layer owns its
- * engine; ui-renderer is shell-only React
- * glue): engine products are bare observables — subscribe/getSnapshot/
- * update/set, NO selector hook. Hook synthesis is ui-renderer's (the one
- * uSES bridge, cached per source at the binding site).
+ * Snapshot store engine (hand-rolled state+notify store + rafFlush
+ * middleware + opt-in persist + dev freeze) plus the declarative shell over
+ * it: {@link defineStore} bakes an init/persist/actions literal into a
+ * {@link StoreHandle}, the registration-side store seat of slot terminals.
+ * Lives in the React-free runtime (the data layer owns its engine;
+ * ui-renderer is shell-only React glue): engine products are bare
+ * observables — subscribe/getSnapshot/update/set, NO selector hook. Hook
+ * synthesis is ui-renderer's (the one uSES bridge, cached per source at the
+ * binding site).
+ *
+ * No zustand/immer dependency: the store surface this file needs is a
+ * three-method observable (getState/setState/subscribe with plain listeners,
+ * no selector overload — every call site here subscribes with a plain
+ * function) plus a draft-mutation helper, both small enough to own directly.
  */
-import { createStore } from 'zustand/vanilla'
-import { subscribeWithSelector } from 'zustand/middleware'
-import { shallow } from 'zustand/shallow'
-import { produce } from 'immer'
+
+/** Minimal observable store: state + notify, mirrors zustand/vanilla's createStore(). */
+function createStore(init) {
+  let state = init
+  const listeners = new Set()
+  return {
+    getState: () => state,
+    setState: (partial, replace) => {
+      const next = typeof partial === 'function' ? partial(state) : partial
+      if (Object.is(next, state)) return
+      const previous = state
+      state = replace === true || typeof next !== 'object' || next === null
+        ? next
+        : Object.assign({}, state, next)
+      for (const listener of listeners) listener(state, previous)
+    },
+    subscribe: (listener) => {
+      listeners.add(listener)
+      return () => { listeners.delete(listener) }
+    },
+  }
+}
 
 /**
- * Shallow equality for selector slices (zustand/shallow semantics; travels
- * with the engine so hook consumers need no zustand dependency).
+ * Minimal immer replacement: clone the current state, hand the clone to the
+ * mutator as a plain writable draft, freeze it in dev (mirrors immer's own
+ * dev-mode freeze), and return it. No Proxy-based change tracking — every
+ * action in this codebase writes plain property assignments, never relies on
+ * immer's unchanged-reference short-circuit, so a clone-then-mutate draft is
+ * behaviorally equivalent for this store engine's actual usage.
+ */
+function produce(base, mutator) {
+  const draft = structuredClone(base)
+  mutator(draft)
+  return devFreeze(draft)
+}
+
+/**
+ * Shallow equality for selector slices (matches zustand/shallow semantics —
+ * Map/Set size+entry comparison, else own-key Object.is comparison — so
+ * existing callers see identical results). Travels with the engine so hook
+ * consumers need no zustand dependency.
  * @param a - left value.
  * @param b - right value.
  * @returns whether the values are shallowly equal.
  */
 export function shallowEqual(a, b) {
-  return shallow(a, b)
+  if (Object.is(a, b)) return true
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false
+  if (a instanceof Map && b instanceof Map) {
+    if (a.size !== b.size) return false
+    for (const [key, value] of a) {
+      if (!Object.is(value, b.get(key))) return false
+    }
+    return true
+  }
+  if (a instanceof Set && b instanceof Set) {
+    if (a.size !== b.size) return false
+    for (const value of a) {
+      if (!b.has(value)) return false
+    }
+    return true
+  }
+  const keysA = Object.keys(a)
+  if (keysA.length !== Object.keys(b).length) return false
+  for (const key of keysA) {
+    if (!Object.prototype.hasOwnProperty.call(b, key) || !Object.is(a[key], b[key])) return false
+  }
+  return true
 }
 
 /** Batches subscriber notification into one flush per animation frame. */
@@ -58,10 +118,7 @@ function rafBatch(notify) {
  * @returns the store.
  */
 export function createSnapshotStore(init, opts) {
-  // Immer enters through produce() in update() below (identical semantics to
-  // the immer middleware without its setState-signature mutator generics).
-  const withSelector = subscribeWithSelector(() => init)
-  const api = createStore()(withSelector)
+  const api = createStore(init)
   if (opts?.persist) attachPersistence(api, opts.persist.name)
 
   let subscribe = fn => api.subscribe(fn)
@@ -119,9 +176,9 @@ function attachPersistence(api, name) {
   })
 }
 
-/** Deep-freeze wholesale-set state outside production: set() bypasses immer's freeze. */
+/** Deep-freeze wholesale-set state outside production: set() bypasses produce()'s freeze. */
 function devFreeze(value) {
-  if (process.env.NODE_ENV === 'production') return value
+  if ((typeof import.meta.env === 'object' && import.meta.env?.MODE) === 'production') return value
   deepFreeze(value)
   return value
 }

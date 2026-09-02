@@ -40,8 +40,6 @@
   "dependencies": {
     "webjsx": "^0.0.73",
     "clsx": "^2.1.1",
-    "immer": "^10.1.1",
-    "zustand": "~4.4.7",
     "anser": "^2.3.5",
     "diff": "^9.0.0",
     "katex": "^0.16.47",

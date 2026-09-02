@@ -213,13 +213,9 @@ export class DynamicCordisPackageRunner {
     const surface = this.guardedSurface(pkg, half.agentId, plugin, ledger)
     const moduleId = moduleIdOf(half.pluginId)
     // Invalidate-then-register keeps re-loading legal: the module table throws
-    // loudly on a duplicate factory registration.
+    // loudly on a duplicate registration.
     this.env.modules.invalidate(moduleId)
-    const sink = globalThis.__ModuleLoader__
-    if (sink === undefined) {
-      throw new Error('cordis-client-runner: window.__ModuleLoader__ is missing (booted outside the web shell?)')
-    }
-    sink.load({ id: moduleId, factory: () => surface })
+    this.env.modules.register(moduleId, surface)
 
     const entryId = await this.env.loader.create({ name: moduleId })
     const fiber = this.env.loader.resolve(entryId).fiber

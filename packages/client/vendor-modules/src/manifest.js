@@ -11,14 +11,6 @@ export const vendorPackages = [
     "version": "2.1.1"
   },
   {
-    "name": "immer",
-    "version": "10.2.0"
-  },
-  {
-    "name": "zustand",
-    "version": "4.4.7"
-  },
-  {
     "name": "anser",
     "version": "2.3.5"
   },
@@ -360,10 +352,6 @@ export const importMapExact = {
   "webjsx": "/vendor/webjsx@0.0.73/dist/index.js",
   "webjsx/jsx-runtime": "/vendor/webjsx@0.0.73/dist/jsx-runtime.js",
   "clsx": "/vendor/clsx@2.1.1/dist/clsx.mjs",
-  "immer": "/vendor/immer@10.2.0/dist/immer.mjs",
-  "zustand/vanilla": "/vendor/zustand@4.4.7/esm/vanilla.mjs",
-  "zustand/middleware": "/vendor/zustand@4.4.7/esm/middleware.mjs",
-  "zustand/shallow": "/vendor/zustand@4.4.7/esm/shallow.mjs",
   "anser": "/vendor/anser@2.3.5/lib/index.js",
   "diff": "/vendor/diff@9.0.0/libesm/index.js",
   "katex": "/vendor/katex@0.16.47/dist/katex.mjs",

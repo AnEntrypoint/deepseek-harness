@@ -38,20 +38,20 @@ export class AppWebEntry {
   async run() {
     try {
       const win = globalThis
-      const moduleLoader = win.__ModuleLoader__
-      if (moduleLoader === undefined) {
-        throw new Error('web boot: window.__ModuleLoader__ bootstrap facade is missing')
+      if (win.__DSH_BOOT__ === undefined) {
+        throw new Error('web boot: window.__DSH_BOOT__ boot graph is missing')
       }
       // A pre-injected transport (the worker preview page) owns bundle bytes;
-      // its loadBundle is the default and explicit seams still win. The global
-      // is `ClientTransportHooks`, owned by @freddie/freddie-client-connection;
-      // this structural slice reads one optional member without adding a
-      // package edge.
+      // its importModule is the default and explicit seams still win. The
+      // global is `ClientTransportHooks`, owned by
+      // @freddie/freddie-client-connection; this structural slice reads one
+      // optional member without adding a package edge.
       const transport = globalThis.__DSH_TRANSPORT__
-      this.modules = moduleLoader.create({
+      const { createClientModuleSystem } = await import('@freddie/freddie-client-modules/client')
+      this.modules = createClientModuleSystem({
         boot: win.__DSH_BOOT__,
         staticModules: getStaticModules(),
-        ...transport?.loadBundle === undefined ? {} : { loadBundle: transport.loadBundle },
+        ...transport?.importModule === undefined ? {} : { importModule: transport.importModule },
         ...this.seams,
       })
       this.manifest = this.modules.manifest

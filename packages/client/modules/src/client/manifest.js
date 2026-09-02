@@ -1,27 +1,20 @@
 /**
- * Client module system: the browser peer of Node's internal ESM loader, built
- * as a lazy CJS table. The vendored cordis Loader consumes this object
- * through its `internal` contract (the only call site is `EntryTree.import` →
- * `internal.import`), which keeps entry governance (fiber lifecycle, inject
- * waiting, update/refresh) entirely on the vendored side while this package
- * owns code arrival.
+ * Client module system: the browser peer of Node's internal ESM loader. The
+ * vendored cordis Loader consumes this object through its `internal` contract
+ * (the only call site is `EntryTree.import` → `internal.import`), which keeps
+ * entry governance (fiber lifecycle, inject waiting, update/refresh) entirely
+ * on the vendored side while this package owns code arrival.
  *
- * Lazy CJS model: executing a plugin bundle only REGISTERS its
- * factory (`window.__ModuleLoader__.load({id, factory})`); every module body
- * side effect — including CSS injection — lives inside the factory closure
- * and runs at materialization, not at script execution. Materialization
- * (factory(require) → exports) happens on first import/require and is
- * memoized in {@link ClientModuleLoader.loadCache}; a factory that requires
- * another registered-but-unmaterialized module materializes it recursively,
- * so load order needs no external sequencing.
+ * Native ESM model: a plugin bundle is real `export`s, loaded through a real
+ * `import()` against its served URL; an import map (generated from this same
+ * graph) resolves every bare specifier the bundle itself imports. Module body
+ * side effects — CSS injection included — run at `import()` time, exactly as
+ * native ESM already sequences them; there is no separate registration step
+ * and no synchronous require to answer.
  *
  * Resolution branch order (import): seed word → shell instance; memoized
- * record → exports; graph row → register its dependency factories and own
- * factory; registered factory → materialize; anything else → throw (loud —
- * the runtime mirror of the build-time bundle purity gate).
- * The synchronous `require` handed to factories walks the same order minus
- * the load branch. Loading is async, so a requested dynamic package must have
- * registered its factory before a consumer materializes.
+ * record → exports; graph row → import() its served URL; anything else →
+ * throw (loud — the runtime mirror of the import-map externals list).
  *
  * This file is the browser-safe contract face (zero node imports): the
  * `__DSH_BOOT__` wire types, the boot-manifest parser, and the boundaries around

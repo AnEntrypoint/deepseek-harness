@@ -1,8 +1,11 @@
 /**
  * @freddie/freddie-client-vendor-modules — serves the vendored ESM copies of
  * every bare-specifier npm package the client bundle imports at runtime, and
- * injects the `<script type="importmap">` row that resolves those specifiers
- * to their `/vendor/` URLs.
+ * contributes those specifiers' `/vendor/` URLs as import-map entries. The
+ * webserver merges this package's entries with every other contributor's
+ * (see @freddie/freddie-client-modules' `bootInjections`) into the page's one
+ * `<script type="importmap">` — a document can carry only one, so no package
+ * here renders its own tag.
  * @module @freddie/freddie-client-vendor-modules
  */
 
@@ -81,12 +84,6 @@ function escapeHtmlAttribute(value) {
     .replaceAll('>', '&gt;')
 }
 
-function renderImportMap() {
-  const imports = { ...importMapExact, ...importMapPrefix }
-  const json = JSON.stringify({ imports }).replaceAll('<', '\\u003c')
-  return `<script type="importmap">${json}</script>`
-}
-
 // @freddie/cordis-plugin-loader (vendored, host-oriented) reads
 // `process.env.CORDIS_SHARED`, `process.execArgv`, and
 // `process.versions.node` unconditionally in module-level or
@@ -105,8 +102,8 @@ function renderTitle() {
 }
 
 /**
- * Claim the /vendor prefix route and push the import-map script tag into
- * the index injection table.
+ * Claim the /vendor prefix route and contribute this package's import-map
+ * entries and other head rows to the index injection table.
  * @param ctx - plugin context carrying the webServer service.
  */
 export function apply(ctx) {
@@ -123,9 +120,8 @@ export function apply(ctx) {
       html: PROCESS_SHIM,
     })
     table.push({
-      kind: 'html',
-      placement: 'head',
-      html: renderImportMap(),
+      kind: 'importmap-entries',
+      imports: { ...importMapExact, ...importMapPrefix },
     })
     for (const href of cssLinks) {
       table.push({

@@ -20,7 +20,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -33,14 +33,14 @@
         "@freddie/freddie-api-remotes"
       ],
       "platform": "web",
-      "immediately": true
+      "immediately": true,
+      "external": [
+        "@freddie/freddie-session/surface",
+        "@freddie/freddie-host-apiproxy/api"
+      ]
     }
   },
   "license": "MIT",
-  "dependencies": {
-    "immer": "^10.1.1",
-    "zustand": "~4.4.7"
-  },
   "peerDependencies": {
     "@freddie/cordis": "workspace:^",
     "@freddie/freddie-api-remotes": "workspace:^",

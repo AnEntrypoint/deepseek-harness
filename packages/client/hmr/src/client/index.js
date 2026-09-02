@@ -13,19 +13,20 @@
  * re-cascades natively — reloading a data-layer plugin (connection/runtime)
  * cascades into its UI dependents with no HMR-side bookkeeping.
  *
- * Reload order (lazy CJS table): invalidate (drop the stale factory and
- * materialized record) → prefetch (load and register the fresh
- * factory) → registry-first teardown → drain old fiber unload → remove
- * owned `<style data-plugin>` tags → `entry.refresh()` materializes the new
- * factory. Invalidate MUST precede prefetch: a live factory makes prefetch
- * a no-op, and re-executing a bundle over an undeleted registration is a
- * loud duplicate. The swap is safe because execution is pure registration
- * under the lazy model — every module side effect (CSS injection included)
- * lives in the factory closure and runs at materialization, inside
- * refresh(). That also keeps the CSS ordering guarantee: owned styles are
- * removed after the old fiber's disposers drained (SlotCore one-owner
- * unregister) and before materialization re-injects tags under the same
- * stable tag ids.
+ * Reload order (native ESM import()): invalidate (drop the stale record —
+ * the module graph carries the rebuilt entry's new `?rev=` URL already, so
+ * the next import() is a genuinely fresh module, never a stale browser
+ * module-cache hit) → prefetch (import() the fresh URL) → registry-first
+ * teardown → drain old fiber unload → remove owned `<style data-plugin>`
+ * tags → `entry.refresh()` re-imports and re-applies the new module.
+ * Invalidate MUST precede prefetch: a live record makes prefetch a no-op,
+ * and importing a URL already in this system's record table is a loud
+ * duplicate reject. The swap is safe because import() runs a module's top-
+ * level side effects (CSS injection included) exactly once, at import time —
+ * which is also when refresh() re-applies. That keeps the CSS ordering
+ * guarantee: owned styles are removed after the old fiber's disposers
+ * drained (SlotCore one-owner unregister) and before the fresh import
+ * re-injects tags under the same stable tag ids.
  *
  * Failure window: if prefetch rejects after invalidate, the module is left
  * unregistered while the OLD fiber keeps running untouched (teardown never
