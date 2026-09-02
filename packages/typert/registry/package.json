@@ -20,7 +20,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -31,10 +31,6 @@
       "platform": "web",
       "immediately": true
     }
-  },
-  "scripts": {
-    "bundle": "tsdown",
-    "watch": "tsdown --watch"
   },
   "files": [
     "src/*.js",

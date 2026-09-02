@@ -20,7 +20,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -31,14 +31,22 @@
         "@freddie/freddie-api-gateway"
       ],
       "platform": "web",
-      "immediately": true
+      "immediately": true,
+      "external": [
+        "@freddie/freddie-commands/remote",
+        "@freddie/freddie-goal/remote",
+        "@freddie/freddie-cordis-host-runner/remote",
+        "@freddie/freddie-file-reference/remote",
+        "@freddie/freddie-host-plugin-inventory/remote",
+        "@freddie/freddie-message-feedback/remote",
+        "@freddie/freddie-session-reference/remote"
+      ]
     }
   },
   "license": "MIT",
   "files": [
     "src/*.js",
-    "src/client/*.js",
-    "lib/client.js"
+    "src/client/*.js"
   ],
   "dependencies": {
     "@freddie/freddie-typert-protocol": "workspace:^"

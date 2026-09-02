@@ -20,7 +20,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -29,7 +29,14 @@
     "client": {
       "inject": [],
       "platform": "web",
-      "immediately": true
+      "immediately": true,
+      "external": [
+        "@freddie/freddie-host-apiproxy/api/events.schema",
+        "@freddie/freddie-host-apiproxy/api/rpc.schema",
+        "@freddie/freddie-host-apiproxy/client",
+        "@freddie/freddie-llm/brand",
+        "@freddie/freddie-session/surface"
+      ]
     }
   },
   "license": "MIT",

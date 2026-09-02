@@ -20,7 +20,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -39,10 +39,6 @@
       ],
       "platform": "web"
     }
-  },
-  "scripts": {
-    "bundle": "tsdown",
-    "watch": "tsdown --watch"
   },
   "license": "MIT",
   "peerDependencies": {

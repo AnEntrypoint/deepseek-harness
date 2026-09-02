@@ -20,7 +20,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -33,12 +33,11 @@
         "@freddie/freddie-client-locale",
         "@freddie/freddie-client-ui-input-trigger"
       ],
-      "platform": "web"
+      "platform": "web",
+      "external": [
+        "@freddie/freddie-file-reference/grammar"
+      ]
     }
-  },
-  "scripts": {
-    "bundle": "tsdown",
-    "watch": "tsdown --watch"
   },
   "license": "MIT",
   "peerDependencies": {

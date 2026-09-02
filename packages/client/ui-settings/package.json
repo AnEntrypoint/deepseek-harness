@@ -20,7 +20,7 @@
       "default": "./src/invariant.js"
     },
     "./client": {
-      "default": "./lib/client.js"
+      "default": "./src/client/index.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -32,12 +32,11 @@
         "@freddie/freddie-client-runtime",
         "@freddie/freddie-api-remotes"
       ],
-      "platform": "web"
+      "platform": "web",
+      "external": [
+        "@freddie/schemastery"
+      ]
     }
-  },
-  "scripts": {
-    "bundle": "tsdown",
-    "watch": "tsdown --watch"
   },
   "license": "MIT",
   "dependencies": {
@@ -63,7 +62,6 @@
   "files": [
     "src/*.js",
     "src/client/*.js",
-    "src/client/contract/*.js",
-    "lib/client.js"
+    "src/client/contract/*.js"
   ]
 }
