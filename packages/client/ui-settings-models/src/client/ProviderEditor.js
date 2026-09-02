@@ -1,16 +1,11 @@
 /**
- * One provider's editor card, hand-written per adapter family: the primary
- * field is a single write-only **API key** input (the page never asks for an
- * environment-variable name — a typed key stores through `credentials.set`
- * under the profile's reference, deriving `<ROUTE>_API_KEY` when the profile
- * has none. The pi-ai profile records that derivation as `apiKeyEnv` only when
- * a key is entered; a blank key materializes a reference-free profile for
- * provider-native authentication);
- * the collapsed 自定义设置 area carries the per-family extras (`baseURL` for
- * both families, DeepSeek's id/name/context-window model catalog, and the
- * display name and wire protocol of a pi-ai route the adapter does not ship —
- * the two fields the create card asked that route for, editable here for the
- * same reason).
+ * One provider's editor card, hand-written for the DeepSeek adapter: the
+ * primary field is a single write-only **API key** input (the page never
+ * asks for an environment-variable name — a typed key stores through
+ * `credentials.set` under the profile's reference, deriving `<ROUTE>_API_KEY`
+ * when the profile has none); the collapsed 自定义设置 area carries the
+ * curated extras (`baseURL`, DeepSeek's id/name/context-window model
+ * catalog).
  * Reasoning effort is deliberately absent: it is a per-MODEL capability, and
  * the models under one provider disagree about it, so a provider-scoped
  * control can only be set to a value some of them reject. The composer's
@@ -34,8 +29,7 @@ import {
 } from './DeepSeekModelsEditor.js'
 import { apiKeyFailure } from './apiKey.js'
 import { EditorFooter } from './EditorFooter.js'
-import { ModelListEditor } from './ModelListEditor.js'
-import { deriveKeyRef, messageOf, protocolChoices } from './store.js'
+import { deriveKeyRef, messageOf } from './store.js'
 import styles from './ModelsSection.css.js'
 
 /** The public DeepSeek endpoint shown as the deepseek base-URL placeholder. */
@@ -84,7 +78,6 @@ export function pathOps(
 /** The editor layout the owning namespace selects. */
 function layoutOf(ns) {
   if (ns === 'llm-deepseek') return 'deepseek'
-  if (ns === 'llm-pi-ai') return 'pi-ai'
   return 'unknown'
 }
 
@@ -194,16 +187,9 @@ export class DshProviderEditor extends HTMLElement {
   async #applyOnce() {
     const { schema, namespace, settingsPath, api, provider, t } = this.#props
     const ns = namespace.ns
-    const layout = layoutOf(namespace.ns)
     const keyRef = refFor(schema, namespace, settingsPath, provider)
-    const fallback = schema.getPath(namespace.value, settingsPath)
     const keyValue = this.#keyDraft.trim()
-    // A pi-ai profile names the conventional reference only when this page is
-    // about to store a key. Otherwise the provider keeps its native auth path.
-    const next = layout === 'pi-ai' && this.#stringAt(this.#draft, 'apiKeyEnv') === undefined
-      && this.#stringAt(fallback, 'apiKeyEnv') === undefined && keyValue.length > 0
-      ? schema.setPath(this.#draft, ['apiKeyEnv'], keyRef)
-      : this.#draft
+    const next = this.#draft
     const root = this.#root ?? schema.rehydrate(namespace.schema)
     const node = schema.nodeAtPath(root, settingsPath)
     if (this.#props.credentialOnly !== true) {
@@ -222,15 +208,9 @@ export class DshProviderEditor extends HTMLElement {
       const sectionError = schema.validate(node, next)
       if (sectionError !== undefined) return sectionError
     }
-    const materializesNativeProfile = layout === 'pi-ai'
-      && fallback === undefined
-      && this.#committedOriginal === undefined
-      && Object.keys(next).length === 0
     const ops = this.#props.credentialOnly === true
       ? []
-      : materializesNativeProfile
-        ? [{ op: 'set', path: [...settingsPath], value: {} }]
-        : pathOps(settingsPath, this.#committedOriginal, next)
+      : pathOps(settingsPath, this.#committedOriginal, next)
     if (ops.length > 0) {
       const response = await api.settings.mutate({ ns, ops, expectedRevision: this.#expectedRevision })
       if (!response.result.ok) {
@@ -291,18 +271,12 @@ export class DshProviderEditor extends HTMLElement {
    * narrowed so the per-family branches below are total: an unknown namespace
    * renders the hint instead and never reaches this body.
    */
-  #curatedFields(family) {
+  #curatedFields() {
     const props = this.#props
     const { schema, namespace, settingsPath, t } = props
     const disabled = props.readOnly || this.#busy
     const fallback = schema.getPath(namespace.value, settingsPath)
-    const protocols = family === 'pi-ai' ? protocolChoices(namespace, schema) : []
-    const probeApi = this.#stringAt(this.#draft, 'api') ?? this.#stringAt(fallback, 'api')
     const keyLocked = this.#keyState?.writable === false
-    // What a hand-declared route names for itself and nothing else can supply.
-    // A whole-section `llm-deepseek` profile is a composition fact with no
-    // per-route identity for its schema to carry, hence the family test.
-    const ownsIdentity = family === 'pi-ai' && props.declared === true
     const customModels = schema.getPath(this.#draft, ['models'])
     const modelsOverridden = schema.hasPath(this.#draft, ['models'])
     const models = modelDrafts(modelsOverridden ? customModels : this.#inheritedModels())
@@ -312,7 +286,7 @@ export class DshProviderEditor extends HTMLElement {
       ? t('keyEnvLocked')
       : this.#keyState?.configured === true && props.credentialRequired !== true
         ? t('keyStored')
-        : family === 'pi-ai' ? t('keyPlaceholderNative') : t('keyPlaceholder')
+        : t('keyPlaceholder')
     const keyFailure = apiKeyFailure(this.#keyDraft)
     const keyValue = this.#keyDraft.trim()
     const credentialRequiredFailure = props.credentialRequired === true
@@ -320,17 +294,6 @@ export class DshProviderEditor extends HTMLElement {
       ? 'keyRequired'
       : undefined
     const shownKeyFailure = credentialRequiredFailure ?? keyFailure
-    const probeBaseURL = this.#stringAt(this.#draft, 'baseURL') ?? this.#stringAt(fallback, 'baseURL')
-    const probe = {
-      settingsNs: namespace.ns,
-      // Naming the route lets an adapter that already describes it answer from
-      // its own registry — better metadata, no network call, no endpoint needed.
-      provider: props.provider,
-      ...probeBaseURL === undefined ? {} : { baseURL: probeBaseURL },
-      ...probeApi === undefined ? {} : { api: probeApi },
-      ...keyValue.length === 0 ? {} : { apiKey: keyValue },
-    }
-    /** What both family editors take: the rows, whose layer owns them, and the two writes. */
     const catalogProps = {
       models,
       overridden: modelsOverridden,
@@ -366,40 +329,13 @@ export class DshProviderEditor extends HTMLElement {
       props.credentialOnly === true ? null : h('details', { class: styles['customized'] ?? '' },
         h('summary', { class: styles['customizedSummary'] ?? '' }, t('customized')),
         h('div', { class: styles['customizedBody'] ?? '' },
-          // The name and the protocol are the create card's two remaining
-          // profile fields; a route the adapter ships defaults both from
-          // its catalog entry and neither belongs on its card.
-          ownsIdentity
-            ? h('div', { class: styles['field'] ?? '' },
-              h('span', { class: styles['fieldLabel'] ?? '' }, t('customDisplayName')),
-              h('input', {
-                class: styles['input'] ?? '',
-                type: 'text',
-                value: this.#stringAt(this.#draft, 'displayName') ?? '',
-                // What this route is called the moment the field is
-                // cleared, which is the layer beneath the one this field
-                // edits: a `cordis.yml` may pin a name for a route the
-                // catalog does not ship, and only when nothing does is
-                // the answer the route id. Reading the effective value
-                // instead would echo the stored override back as the
-                // thing clearing restores.
-                placeholder: this.#stringAt(schema.getPath(namespace.base, settingsPath), 'displayName')
-                  ?? props.provider,
-                'aria-label': t('customDisplayName'),
-                disabled,
-                onchange: (event) => { this.#setField('displayName', event.target.value); this.#render() },
-              }),
-            )
-            : null,
           h('div', { class: styles['field'] ?? '' },
             h('span', { class: styles['fieldLabel'] ?? '' }, t('baseUrl')),
             h('input', {
               class: styles['input'] ?? '',
               type: 'text',
               value: this.#stringAt(this.#draft, 'baseURL') ?? '',
-              placeholder: family === 'deepseek'
-                ? DEEPSEEK_PUBLIC_BASE_URL
-                : this.#stringAt(fallback, 'baseURL') ?? t('baseUrlDefault'),
+              placeholder: DEEPSEEK_PUBLIC_BASE_URL,
               'aria-label': t('baseUrl'),
               disabled,
               onchange: (event) => {
@@ -409,41 +345,13 @@ export class DshProviderEditor extends HTMLElement {
               },
             }),
           ),
-          // The protocol sits beside the endpoint it describes, as it does
-          // on the create card.
-          ownsIdentity
-            ? h('div', { class: styles['field'] ?? '' },
-              h('span', { class: styles['fieldLabel'] ?? '' }, t('customApi')),
-              h('select', {
-                class: `${styles['input'] ?? ''} ${styles['selectInput'] ?? ''}`,
-                value: probeApi ?? '',
-                'aria-label': t('customApi'),
-                disabled,
-                onchange: (event) => { this.#setField('api', event.target.value); this.#render() },
-              },
-              // A profile naming no protocol — hand-written into
-              // settings.yaml with no model to need one — selects
-              // nothing rather than reading as if it had picked the
-              // first choice. The option is named because a screen
-              // reader announces it either way, and an empty one is
-              // announced as a choice with no identity.
-              probeApi === undefined ? h('option', { value: '' }, t('customApiUnset')) : null,
-              protocols.map(choice => h('option', { key: choice, value: choice }, choice)),
-              ),
-            )
-            : null,
-          // Both families edit the same rows through the same contract; only
-          // the extras differ — DeepSeek's inherited capacities, pi-ai's
-          // endpoint interrogation.
-          family === 'deepseek'
-            ? h(DeepSeekModelsEditor, {
-              ...catalogProps,
-              defaultContextWindow: typeof defaultContextWindow === 'number'
-                ? defaultContextWindow
-                : undefined,
-              defaultMaxTokens: typeof defaultMaxTokens === 'number' ? defaultMaxTokens : undefined,
-            })
-            : h(ModelListEditor, { ...catalogProps, probe, probeBlocked: keyFailure, api: props.api }),
+          h(DeepSeekModelsEditor, {
+            ...catalogProps,
+            defaultContextWindow: typeof defaultContextWindow === 'number'
+              ? defaultContextWindow
+              : undefined,
+            defaultMaxTokens: typeof defaultMaxTokens === 'number' ? defaultMaxTokens : undefined,
+          }),
         ),
       ),
     )
@@ -488,7 +396,7 @@ export class DshProviderEditor extends HTMLElement {
         ),
       layout === 'unknown'
         ? h('p', { class: styles['advancedHint'] ?? '' }, `${t('advancedHint')} (${namespace.ns})`)
-        : this.#curatedFields(layout),
+        : this.#curatedFields(),
       this.#failure !== undefined ? h('p', { class: styles['error'] ?? '' }, this.#failure) : null,
       props.credentialOnly === true || modelFailure === undefined
         ? null

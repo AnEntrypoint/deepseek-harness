@@ -21,8 +21,7 @@
 
 import { applyDiff, createElement as h } from 'webjsx'
 import { Button, IconPlusOutline16, Modal } from '@freddie/freddie-client-ui-primitives'
-import { CustomProviderCard } from './CustomProviderCard.js'
-import { deriveKeyRef, messageOf, protocolChoices, providerUsable } from './store.js'
+import { deriveKeyRef, messageOf, providerUsable } from './store.js'
 import { ProviderEditor } from './ProviderEditor.js'
 import styles from './ModelsSection.css.js'
 
@@ -144,7 +143,6 @@ export class DshModelsSectionLoaded extends HTMLElement {
   #deleting = false
   #deleteFailure = undefined
   #savedTarget = undefined
-  #declaring = false
   #dismissedSetup = new Set()
 
   setProps(injected) {
@@ -166,7 +164,6 @@ export class DshModelsSectionLoaded extends HTMLElement {
   #closeEditor(changed, target) {
     this.#editing = undefined
     this.#adding = false
-    this.#declaring = false
     if (changed) this.#announceSaved(target)
     this.#render()
   }
@@ -247,10 +244,6 @@ export class DshModelsSectionLoaded extends HTMLElement {
     const addable = state.rows.filter(row => !row.configured && row.entry.settingsNs !== '')
     const addTarget = this.#adding ? this.#editing : undefined
     const addNamespace = addTarget === undefined ? undefined : state.namespaces.get(addTarget.settingsNs)
-    // Hand-declared routes live in the pi-ai namespace, which is also the only
-    // one whose schema names the protocols one may speak; without it mounted
-    // there is nothing to declare and the entry point stays disabled.
-    const protocols = protocolChoices(state.namespaces.get('llm-pi-ai'), schema)
 
     const vdom = h('div', { class: styles['section'] ?? '' },
       h('h2', { class: styles['title'] ?? '' }, t('title')),
@@ -319,10 +312,6 @@ export class DshModelsSectionLoaded extends HTMLElement {
                   'aria-label': providerCopy(t('editProvider'), target),
                   onclick: () => {
                     this.#savedTarget = undefined
-                    // One card at a time: leaving `declaring` set would show
-                    // the create card beside this editor, and closing either
-                    // one discards the other's draft.
-                    this.#declaring = false
                     this.#adding = false
                     this.#editing = open ? undefined : target
                     this.#render()
@@ -395,63 +384,26 @@ export class DshModelsSectionLoaded extends HTMLElement {
               onClose: (changed) => { this.#closeEditor(changed, addTarget) },
             }),
           )
-          : this.#declaring
-            ? h('div', { class: styles['addCard'] ?? '' },
-              h(CustomProviderCard, {
-                taken: state.rows.map(row => row.entry.provider),
-                protocols,
-                /* v8 ignore next -- the card only opens from a button disabled without this namespace */
-                revision: state.namespaces.get('llm-pi-ai')?.revision ?? 0,
-                api,
-                t,
-                readOnly: !state.writable,
-                onClose: (changed) => {
-                  this.#declaring = false
-                  if (changed) void controller.load()
-                  this.#render()
-                },
-              }),
-            )
-            // One row for the two ways to gain a provider: adopt one the
-            // adapter already knows, or declare one it does not. Side by side
-            // and equal-width so they read as siblings and line up with the
-            // rows above, rather than two pills of different lengths.
-            : h('div', { class: styles['addActions'] ?? '' },
-              h('button', {
-                type: 'button',
-                class: styles['addButton'] ?? '',
-                disabled: addable.length === 0 || !state.writable,
-                onclick: () => {
-                  const first = addable[0]
-                  /* v8 ignore next -- the button is disabled while nothing is addable */
-                  if (first === undefined) return
-                  this.#savedTarget = undefined
-                  this.#declaring = false
-                  this.#adding = true
-                  this.#editing = targetOf(first)
-                  this.#render()
-                },
+          : h('div', { class: styles['addActions'] ?? '' },
+            h('button', {
+              type: 'button',
+              class: styles['addButton'] ?? '',
+              disabled: addable.length === 0 || !state.writable,
+              onclick: () => {
+                const first = addable[0]
+                /* v8 ignore next -- the button is disabled while nothing is addable */
+                if (first === undefined) return
+                this.#savedTarget = undefined
+                this.#adding = true
+                this.#editing = targetOf(first)
+                this.#render()
               },
-              // Same glyph as the composer's attach button.
-              h(IconPlusOutline16, { size: 14 }),
-              t('add'),
-              ),
-              h('button', {
-                type: 'button',
-                class: styles['addButton'] ?? '',
-                disabled: protocols.length === 0 || !state.writable,
-                onclick: () => {
-                  this.#savedTarget = undefined
-                  this.#adding = false
-                  this.#editing = undefined
-                  this.#declaring = true
-                  this.#render()
-                },
-              },
-              h(IconPlusOutline16, { size: 14 }),
-              t('customAdd'),
-              ),
+            },
+            // Same glyph as the composer's attach button.
+            h(IconPlusOutline16, { size: 14 }),
+            t('add'),
             ),
+          ),
       ),
       h(Modal, {
         open: this.#deleteTarget !== undefined,
