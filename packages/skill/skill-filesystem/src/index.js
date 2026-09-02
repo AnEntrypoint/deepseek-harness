@@ -15,7 +15,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { homedir } from 'node:os'
 import chokidar from 'chokidar'
 import z from '@deepseek-ai/schemastery'
-import { parse as parseYaml } from 'yaml'
+import { load as parseYaml } from 'js-yaml'
 import { canonicalizeWatchPath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import {
   BUNDLED_SKILL_RANK,

@@ -88,7 +88,7 @@
     "src/client/web-search-card-controller.js"
   ],
   "dependencies": {
-    "clsx": "^2.0.0",
+    "clsx": "^2.1.1",
     "webjsx": "^0.0.73"
   }
 }
