@@ -21,7 +21,6 @@ The project is pre-1.0. Prefer the correct public API over compatibility shims: 
 packages/entry/     Published entry package: JavaScript API (resolve/probe/grants) + the C source.
 packages/linux-*/   Published per-platform packages: one prebuilt static binary, no JavaScript.
 scripts/            Build, matrix derivation, prepack gates, and release orchestration.
-test/               Plain-node behavioral tests (entry API + real-kernel launcher proofs).
 docs/               Architecture, packaging, CLI contract, release, support matrix, naming.
 ```
 
@@ -29,10 +28,7 @@ docs/               Architecture, packaging, CLI contract, release, support matr
 
 ```sh
 pnpm install
-pnpm build:ts        # entry packages → lib/
 pnpm build:native    # this Linux architecture's binaries (needs musl-tools); fails fast elsewhere
-pnpm typecheck
-pnpm test            # entry tests everywhere; launcher tests need linux + built binary
 ```
 
 ## Packaging invariants
@@ -41,7 +37,7 @@ pnpm test            # entry tests everywhere; launcher tests need linux + built
 - Platform package names contain platform only (`-linux-x64`), never tool variants — those stay inside `prebuilds.json`. Static musl linking is why there is no libc suffix: one binary serves glibc and musl distros.
 - Platform packages ship no JavaScript; the entry package resolves them to file paths. Backends prove themselves at runtime through the functional probe, never through metadata trust.
 - Builds are native-only: each architecture compiles its own binary on its own runner (CI is the builder of record); no cross toolchain enters the repo.
-- Every tarball is gated at pack time: platform packages refuse to pack without their declared binaries present, executable, and in the right ELF architecture (`verify-launcher-binary.mjs`), entry packages without built `lib/` (`verify-entry-lib.mjs`), and the release pipeline byte-pins installed binaries against the workspace builds (`verify-packed-install.mjs`).
+- Every tarball is gated at pack time: platform packages refuse to pack without their declared binaries present, executable, and in the right ELF architecture (`verify-launcher-binary.mjs`), and the release pipeline byte-pins installed binaries against the workspace builds (`verify-packed-install.mjs`).
 - Platform tarballs are packed with `npm pack`, never `pnpm pack`: pnpm's pack path strips the executable bit (observed on 11.7.0), shipping a launcher no consumer can spawn. `pack-release.mjs` encodes the split; the rehearsal asserts executability of the installed copy so a regression fails loudly instead of masquerading as a non-enforcing kernel.
 - Generated artifacts stay out of git: `packages/*/bin/`, `packages/*/lib/`, `dist/`, `.release/`, `*.tsbuildinfo`. Ignore rules live in the ROOT `.gitignore` only — a package-nested ignore file can silently drop payload from tarballs.
 

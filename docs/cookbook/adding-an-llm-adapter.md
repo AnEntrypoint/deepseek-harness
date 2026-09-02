@@ -38,4 +38,4 @@ Keep wire types, request serialization, transport parsing, chunk translation, an
 
 ## Verification
 
-Follow the [repository testing policy](../testing.md), which owns adapter coverage, real-provider checks, and published-entry requirements.
+Verify live against the real provider: drive a real request/response round trip through the adapter and read the actual output, including the published entry path (`lib/index.js` under plain `node`, no build-time-only syntax).

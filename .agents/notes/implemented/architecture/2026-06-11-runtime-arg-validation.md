@@ -15,7 +15,7 @@ The validator and compiler therefore share exact semantics: the implicit paramet
 ## Consequences
 
 - The model gets actionable feedback on its own malformed calls instead of an opaque crash, closing the gap between `InferArgs`'s promise and runtime reality.
-- The validator and `InferArgs` must stay in agreement; [a property test](../testing/2026-06-11-property-based-testing.md) generates args satisfying a spec and asserts they pass `validateArgs` (with targeted corruptions rejected), closing that drift risk mechanically.
+- The validator and `InferArgs` must stay in agreement, previously proven mechanically by a property test generating args satisfying a spec and asserting they pass `validateArgs` (with targeted corruptions rejected); that property suite is gone — see [drop-automated-test-suite-testing-notes](../testing/2026-09-02-drop-automated-test-suite-testing-notes.md).
 - `ToolArgsError` subclasses `HarnessError` from the [structured error taxonomy](2026-06-11-structured-error-taxonomy.md), keeping its `code` field; callers that read `.message` are unaffected by the hierarchy.
 - Validation cost is negligible next to a model call.
 

@@ -2,6 +2,8 @@
 
 Status: implemented
 
+> The opt-in browser stress lane (`pnpm run test:web:stress`) this note describes for validation is gone — see [drop-automated-test-suite-testing-notes](2026-09-02-drop-automated-test-suite-testing-notes.md) for why there is no automated performance regression check anymore. The `Notifier.markFrameDirty()` rAF-coalesced publication architecture itself is real, currently-shipped client code, so this note stays active for that fact; treat the "Consequences" and stress-lane sections below as historical validation evidence rather than a live gate.
+
 ## Problem
 
 Long reasoning streams continuously produce large numbers of `assistant/chunk` events. Each raw event must be ordered, logged, and folded into `PartialAccumulator` to preserve replay fidelity and the completeness of the final content; React, however, needs only the current accumulated result, not every intermediate state within one browser frame.

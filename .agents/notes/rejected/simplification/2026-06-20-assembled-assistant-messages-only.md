@@ -29,6 +29,6 @@ The canonical user session no longer reconstructs the exact token stream of an o
 
 ## Related
 
-This supersedes the chunk-persistence choice in [session persistence](../../implemented/architecture/2026-06-14-session-persistence.md) and affects [ACP snapshot tests](../../implemented/testing/2026-06-19-acp-snapshot-tests.md), whose current replay plugin derives its script from `assistant/chunk` events.
+This supersedes the chunk-persistence choice in [session persistence](../../implemented/architecture/2026-06-14-session-persistence.md). The ACP snapshot tier that once derived its replay script from `assistant/chunk` events is gone; see [drop-automated-test-suite-testing-notes](../../implemented/testing/2026-09-02-drop-automated-test-suite-testing-notes.md).
 
 <!-- agent-note-format: alternatives-not-recorded (pre-format Agent Note) -->

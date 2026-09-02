@@ -2,6 +2,8 @@
 
 Status: implemented
 
+> The replay-harness mechanics this note originally centered on (`dsh-llm-replay`, the ACP snapshot tier) are gone — see [drop-automated-test-suite-testing-notes](2026-09-02-drop-automated-test-suite-testing-notes.md) for why there is no test to verify fork-child replay routing anymore. The `seedLength`/`seed_length` field itself is real, currently-shipped product state (session header + SQLite schema column, schema version 4) independent of any test harness, so this note stays active for that fact.
+
 ## Problem
 
 The [per-session snapshot replay Agent Note](2026-06-22-subagent-snapshot-replay.md) made the snapshot tier express a nested-agent shape: a parent plus one recorded log per in-process subagent, each replayed as its own script keyed by calling session. It noted (§ Scope, final bullet) that a fork snapshot was "a trivial future addition, not a gap in the keying." That was wrong about a fork child specifically — not the keying, but the *script derivation*.

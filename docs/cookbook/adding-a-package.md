@@ -108,9 +108,9 @@ A package with no context effect or one consumer-owned path uses the audited `No
 
 ```sh
 pnpm install        # registers the workspace
-pnpm run doc-sync
-pnpm run constraints && pnpm run typecheck && pnpm run lint
-pnpm run build && pnpm run hygiene
+pnpm run build
+pnpm run knip
+pnpm run publint
 ```
 
-Follow the [repository testing policy](../testing.md) for the behavior-specific checks and coverage required by the new package.
+Verify the new package live: boot the real composition that mounts it and drive the behavior it adds, per the root [verification policy](../../AGENTS.md#conventions).

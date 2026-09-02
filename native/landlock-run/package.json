@@ -7,9 +7,6 @@
   "packageManager": "pnpm@11.7.0",
   "scripts": {
     "build:native": "node ./scripts/build.js",
-    "test": "node ./test/entry.test.js && node ./test/launcher.test.js",
-    "test:entry": "node ./test/entry.test.js",
-    "test:launcher": "node ./test/launcher.test.js",
     "gha:matrix": "node ./scripts/github-matrix.mjs",
     "release:bump": "node ./scripts/bump-release.mjs",
     "release:commit": "node ./scripts/commit-release.mjs",

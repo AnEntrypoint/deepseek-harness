@@ -2,6 +2,8 @@
 
 Status: implemented
 
+> The snapshot-tier mechanics this note describes (`dsh-llm-replay`, `pnpm run test:snapshot`, the ACP snapshot harness) are gone — see [drop-automated-test-suite-testing-notes](2026-09-02-drop-automated-test-suite-testing-notes.md) for why there is no test to verify nested-agent replay routing anymore. `GenerateOptions.sessionId` itself is real, currently-shipped core API state, so this note stays active for that fact.
+
 ## Problem
 
 The snapshot tier (`pnpm run test:snapshot`) boots the real `acp-agent` subprocess, replays a recorded session through [`dsh-llm-replay`](../../../../packages/test-support/llm-replay), and diffs the normalized automation wire + re-persisted session log against committed expected outputs. Most scenarios exercise assembled backend behavior through that real process boundary.

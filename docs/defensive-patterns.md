@@ -1,6 +1,6 @@
 # Defensive patterns
 
-Hard-won bug-class rules: each pattern below is a class of defect that actually shipped or nearly shipped here, stated as the rule that prevents its recurrence. Read this before writing lifecycle, concurrency, subprocess, or teardown code. Test-tier counterparts (real entry path, world-verification, resource ownership) are in [testing.md](testing.md).
+Hard-won bug-class rules: each pattern below is a class of defect that actually shipped or nearly shipped here, stated as the rule that prevents its recurrence. Read this before writing lifecycle, concurrency, subprocess, or teardown code. Verify against the real entry path and real running system, per the root [verification policy](../AGENTS.md#conventions).
 
 ## Report orthogonal outcomes independently
 

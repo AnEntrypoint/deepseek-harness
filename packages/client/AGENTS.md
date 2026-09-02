@@ -108,15 +108,11 @@ One UI feature = one plugin package (`src/client/` browser half). A multi-domain
 
 ## Styling
 
-[docs/web-styling.md](../../docs/web-styling.md) is authoritative. Shared `--dsw-*` tokens and global sheets live in `ui-theme/src/styles/`; feature components consume semantic aliases through CSS Modules and `clsx`, with no literal colors, component library, or Tailwind. Product copy is Chinese; code comments are English.
+[docs/web-styling.md](../../docs/web-styling.md) is authoritative. Shared `--dsw-*` tokens and global sheets live in `ui-theme/src/styles/`; feature components consume semantic aliases through CSS Modules and `clsx`, with no literal colors, component library, or Tailwind. Product copy and code comments are English.
 
 ## Testing and coverage
 
-The GUI test structure (three tiers, lane map) is settled in the [GUI testing system note](../../.agents/notes/implemented/process/2026-07-20-gui-testing-system.md); repo-wide policy in [docs/testing.md](../../docs/testing.md).
-
-- Client source packages are inside the per-file 100% coverage gate (`pnpm run test:coverage`). Genuinely unreachable defensive arms take a `/* v8 ignore -- <reason> */` comment with a real reason, never a bare ignore.
-- Component specs render with realistic props or a driven fixture runtime and assert user-visible behavior, not class names, hook internals, or render counts.
-- The jsdom environment comes from a per-file `// @vitest-environment jsdom` pragma on the spec's first line; the shared config stays node-env.
+There is no automated test suite or coverage gate — see [drop-automated-test-suite-testing-notes](../../.agents/notes/implemented/testing/2026-09-02-drop-automated-test-suite-testing-notes.md) and [buildless-workspace-no-transformation-at-launch](../../.agents/notes/implemented/architecture/2026-09-02-buildless-workspace-no-transformation-at-launch.md). Verify GUI changes with live execution against the real running system in the same change.
 - Each tier asserts its own layer. Data-layer semantics belong to the runtime and host suites; component specs cover presentation behavior.
 
 ## Before you push: the local check ladder

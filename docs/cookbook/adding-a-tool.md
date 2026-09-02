@@ -89,4 +89,4 @@ The neutral vocabulary lives in `dsh-tools`; tools never import a UI or transpor
 
 ## Verification
 
-Follow the [repository testing policy](../testing.md) and the owning package's test documentation. A shipped model- or UI-visible change requires the assembled coverage specified there.
+Verify live: boot the real composition that mounts the tool, drive a real model or scripted call through it, and read the real output — per the root [verification policy](../../AGENTS.md#conventions).

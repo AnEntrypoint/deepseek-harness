@@ -50,7 +50,7 @@ Adopt the following dependency swaps. Rejected — per-item evidence below; a fu
 
 **Servers and HTTP:**
 
-- **`msw` for llm-mock-server**: the server exists to fault the wire — socket destroy, mid-SSE disconnect, stall, pre-listen refusal — for real HTTP adapters and subprocesses; in-process interception can express none of that. [Wire-fault-server note](../../implemented/testing/2026-07-25-scriptable-llm-wire-fault-server.md) owns the design.
+- **`msw` for llm-mock-server**: the server existed to fault the wire — socket destroy, mid-SSE disconnect, stall, pre-listen refusal — for real HTTP adapters and subprocesses; in-process interception can express none of that. The `dsh-llm-mock-server` package and the test suite that used it are gone; see [drop-automated-test-suite-testing-notes](../../implemented/testing/2026-09-02-drop-automated-test-suite-testing-notes.md) for the design rationale this note previously pointed to.
 - **`hono`/`sirv` for host/webserver**: the core is a disposer-based dynamic route registry (registrations-are-effects contract, HMR unregistration) plus index-HTML transform taps; hono routers are add-only, and static middleware cannot serve the transformed index. ~244 lines total, genuinely small.
 - **`@mozilla/readability`/`iconv-lite` for web-fetch-http**: the provider returns raw HTML; charset handling is already the builtin `TextDecoder`; MIME parsing is ~11 lines; redirect following is same-origin security policy.
 

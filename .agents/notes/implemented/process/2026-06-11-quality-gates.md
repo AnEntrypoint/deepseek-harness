@@ -2,27 +2,27 @@
 
 Status: implemented
 
-The hook/CI symmetry in this record is superseded by [Fast local Git hooks](2026-07-22-fast-local-git-hooks.md); CI remains the exhaustive enforcement path.
+The hook/CI symmetry in this record is superseded by [Fast local Git hooks](2026-07-22-fast-local-git-hooks.md); CI remains the exhaustive enforcement path. The TypeScript-strictness, coverage, and vitest-dependent gates this note originally described are gone: the workspace is buildless plain JavaScript and there is no automated test suite ([why](../architecture/2026-09-02-buildless-workspace-no-transformation-at-launch.md)).
 
 ## Problem
 
-This codebase is developed primarily by coding agents. Agents follow enforced gates far more reliably than prose conventions, and "a lot of work" is not a cost argument when agents do the labor. Early evidence: tests that didn't typecheck shipped (vitest doesn't typecheck) and were only caught by a review.
+This codebase is developed primarily by coding agents. Agents follow enforced gates far more reliably than prose conventions, and "a lot of work" is not a cost argument when agents do the labor.
 
 ## Decision
 
-Every mechanically checkable AGENTS.md promise gets a command that exits non-zero. CI invokes the exhaustive set, while Git hooks reserve their latency budget for cheap local defects:
+Every mechanically checkable AGENTS.md promise that can still be checked without a build or test step gets a command that exits non-zero:
 
-- Max-strict TypeScript (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …); examples, tests, and scripts typecheck in CI via the root no-emit `tsconfig.json` while package/vendor code stays behind its own project-reference boundary.
-- [Oxlint](2026-07-29-oxlint-linter.md) with type-aware TypeScript rules plus the @stylistic and SonarJS compatibility plugins, enforcing the house style and file-local duplicated-logic checks; vendored code excluded.
-- jscpd detects cross-file clones in package production TypeScript and repository scripts; narrow source-range exceptions document deliberately parallel implementations.
-- Per-file 100% coverage on `packages/*/*/src` (v8); unreachable defensive guards carry `/* v8 ignore */ ` with stated reasons instead of deletion.
-- knip (dead code/deps), publint (package correctness), workspace constraints (workspace rules: private, cordis peer+dev, uniform version, ESM), and a NodeNext consumer typecheck for built package declarations.
-- lefthook pre-commit applies project-free Oxlint validation and [safe fixes with a bounded retry](2026-08-09-oxlint-only-fix-workflow.md), rejects staged whitespace, and checks the vendor manifest; pre-push runs incremental typecheck. CI runs the full matrix on node 22.19/24/26 plus built application smokes for the Headless, TUI, ACP, JSON-RPC, workflow, and code-runtime entry paths.
+- [Oxlint](2026-07-29-oxlint-linter.md) with the @stylistic and SonarJS compatibility plugins, enforcing house style and file-local duplicated-logic checks; vendored code excluded.
+- jscpd detects cross-file clones in package production source and repository scripts; narrow source-range exceptions document deliberately parallel implementations.
+- knip (dead code/deps) and publint (package correctness).
+- lefthook pre-commit applies project-free Oxlint validation and [safe fixes with a bounded retry](2026-08-09-oxlint-only-fix-workflow.md), and rejects staged whitespace.
+
+Everything else — behavior correctness, published-entry-path regressions, model- and UI-visible changes — is verified live in the same change, per the root `AGENTS.md` verification-policy convention.
 
 ## Consequences
 
-- Conventions survive agent turnover; cheap commit/push defects fail locally and exhaustive violations fail in CI.
+- Conventions survive agent turnover for what remains mechanically checkable; cheap commit-time defects fail locally.
 - The gates themselves are code to maintain; config changes are reviewed like any change.
-- 100%-coverage pressure can produce assertion-free tests — mutation testing is the planned counterweight (see [the mutation-testing proposal](../../proposed/testing/2026-06-11-mutation-testing.md)).
+- There is no coverage gate, no execution-without-assertion failure mode to counterweight, and no mutation-testing proposal to pursue — that whole axis of enforcement is gone along with the test suite it gated.
 
 <!-- agent-note-format: alternatives-not-recorded (pre-format Agent Note) -->
