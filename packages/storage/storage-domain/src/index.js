@@ -51,9 +51,9 @@ export class DomainFacility {
    * name that is already open (`already-open`); resolve the backend route
    * (`backend-not-found` passes through from the hub); require its `kv` facet
    * (`facet-unsupported`); open the unit projected from the spec (backend
-   * `version-mismatch`/`malformed-medium` pass through); load and validate
-   * every stored record against the spec's zod schemas (`invalid-record`
-   * with the offending table and key); construct the domain.
+   * `version-mismatch`/`malformed-medium` pass through); load every stored
+   * record as-is (no schema validation — a stored value is trusted); construct
+   * the domain.
    *
    * Lifecycle: the CALLER owns the returned handle and closes it via
    * `Domain.close()` (typically as its own `ctx.effect` disposer) — the
@@ -80,10 +80,10 @@ export class DomainFacility {
       try {
         const snapshot = await unit.loadAll()
         const tables = new Map()
-        for (const [table, tableSpec] of Object.entries(spec.tables)) {
+        for (const table of Object.keys(spec.tables)) {
           const records = new Map()
           for (const [key, raw] of Object.entries(snapshot.tables[table] ?? {})) {
-            records.set(key, parseRecord(spec.name, table, key, () => tableSpec.valueSchema.parse(raw)))
+            records.set(key, raw)
           }
           tables.set(table, records)
         }
@@ -94,7 +94,7 @@ export class DomainFacility {
           ? undefined
           : snapshot.global === null
             ? globalSpec.initial
-            : parseRecord(spec.name, '', '', () => globalSpec.schema.parse(snapshot.global))
+            : snapshot.global
         // The onClosed hook runs strictly after teardown completes: writes
         // landing during the drain still emit domain/changed, and the domain
         // stays resolvable (the package invariant cross-checks each event)
@@ -139,19 +139,6 @@ export class DomainFacility {
   }
 }
 
-/** Run one zod parse, translating failure to `invalid-record` with its location. */
-function parseRecord(domain, table, key, parse) {
-  try {
-    return parse()
-  } catch (error) {
-    const slot = table === '' ? 'global' : `record '${key}' in table '${table}'`
-    throw new DomainError(
-      'invalid-record',
-      `domain '${domain}': stored ${slot} does not match its schema`,
-      { detail: { table, key }, cause: error },
-    )
-  }
-}
 
 /**
  * Mount the domain data form on the storage hub.

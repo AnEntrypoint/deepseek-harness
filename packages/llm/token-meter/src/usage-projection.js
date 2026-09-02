@@ -2,7 +2,6 @@
  * Pure folds for durable provider-reported token usage and context occupancy.
  */
 
-import { z } from 'zod'
 import { foldSurfaceProjection } from './surface-projection.js'
 
 const zeroBuckets = () => ({
@@ -32,36 +31,6 @@ const addReplacing = (totals, previous, next) => ({
   cacheWriteTokens: totals.cacheWriteTokens - (previous?.cacheWriteTokens ?? 0) + next.cacheWriteTokens,
 })
 
-const projectionSchema = z.object({
-  uncachedInputTokens: z.number().int().nonnegative(),
-  outputTokens: z.number().int().nonnegative(),
-  cacheReadTokens: z.number().int().nonnegative(),
-  cacheWriteTokens: z.number().int().nonnegative(),
-}).strict()
-
-/**
- * The token-usage unit's state schema — the one definition of the state
- * shape; the state type is inferred from it.
- */
-const tokenUsageStateSchema = z.object({
-  totals: projectionSchema,
-  last: z.object({
-    turn: z.number().int().nonnegative(),
-    step: z.number().int().nonnegative(),
-    buckets: projectionSchema,
-  }).nullable(),
-}).strict()
-
-const pressureSchema = z.object({
-  pressureTokens: z.number().int().nonnegative().optional(),
-  projectedTokens: z.number().int().nonnegative().optional(),
-  contextWindow: z.number().int().positive().optional(),
-}).strict().transform(({ pressureTokens, projectedTokens, contextWindow }) => ({
-  ...pressureTokens === undefined ? {} : { pressureTokens },
-  ...projectedTokens === undefined ? {} : { projectedTokens },
-  ...contextWindow === undefined ? {} : { contextWindow },
-}))
-
 /** Prompt-side pressure of one request: input plus cache traffic, no output. */
 const pressureFrom = usage =>
   usage.inputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
@@ -73,19 +42,6 @@ const usageOf = event =>
     : event.type === 'assistant/message'
       ? event.data.usage
       : undefined
-
-/** The context-pressure state schema and source of its inferred type. */
-const contextPressureStateSchema = z.object({
-  contextWindow: z.number().int().positive().optional(),
-  pressureTokens: z.number().int().nonnegative().optional(),
-  surfaceTokens: z.number().int().nonnegative(),
-  sampledSurfaceTokens: z.number().int().nonnegative().optional(),
-  claim: z.object({
-    start: z.number().int().nonnegative(),
-    end: z.number().int().nonnegative(),
-    tokens: z.number().int().nonnegative(),
-  }).optional(),
-}).strict()
 
 /**
  * Token-meter's session projection unit.
@@ -100,7 +56,6 @@ const contextPressureStateSchema = z.object({
 export const tokenUsageProjectionDefinition = {
   key: 'tokenUsage',
   stateVersion: 1,
-  stateSchema: tokenUsageStateSchema,
   init: () => ({ totals: zeroBuckets(), last: null }),
   apply: (state, event) => {
     let turn
@@ -128,7 +83,7 @@ export const tokenUsageProjectionDefinition = {
       last: { turn, step, buckets },
     }
   },
-  wire: { viewSchema: projectionSchema, view: state => state.totals },
+  wire: { view: state => state.totals },
 }
 
 /**
@@ -155,7 +110,6 @@ export const tokenUsageProjectionDefinition = {
 export const contextPressureProjectionDefinition = {
   key: 'contextPressure',
   stateVersion: 4,
-  stateSchema: contextPressureStateSchema,
   init: () => ({ surfaceTokens: 0 }),
   apply: (state, event) => {
     const fold = foldSurfaceProjection(state.claim, event)
@@ -188,7 +142,6 @@ export const contextPressureProjectionDefinition = {
     return fold.claim === undefined ? withoutClaim : { ...withoutClaim, claim: fold.claim }
   },
   wire: {
-    viewSchema: pressureSchema,
     view: ({ contextWindow, pressureTokens, surfaceTokens, sampledSurfaceTokens }) => ({
       ...contextWindow === undefined ? {} : { contextWindow },
       ...pressureTokens === undefined ? {} : { pressureTokens },

@@ -17,7 +17,7 @@ import z from '@freddie/schemastery'
 import { snapshotJsonValue } from '@freddie/freddie-session'
 import { projectionCacheDomainSpec } from './spec.js'
 
-export { checkpointIdentity, checkpointRecord, checkpointRow, projectionCacheDomainSpec } from './spec.js'
+export { projectionCacheDomainSpec } from './spec.js'
 
 /**
  * Plugin config. Both throttle triggers are deployment choices with no

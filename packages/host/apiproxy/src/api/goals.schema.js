@@ -1,77 +1,56 @@
 /**
- * goals domain zod schemas. Mutation-only shapes: every value schema is a
- * `{ ref }` acknowledgement (clear: `{ cleared }`) — the current goal state
- * travels exclusively on the 'goal' session projection.
+ * goals domain request/response shape helpers (zod removed — validation
+ * dropped per repo-wide decision; malformed requests now fail downstream
+ * instead of being rejected at the boundary). Mutation-only shapes: every
+ * value is a `{ ref }` acknowledgement (clear: `{ cleared }`) — the current
+ * goal state travels exclusively on the 'goal' session projection.
+ *
+ * Each export below is a plain pass-through "schema" object exposing
+ * `.parse(value)` that returns its input unchanged, kept under its original
+ * name/shape only because packages/host/apiproxy/src/fetch/client.js and
+ * .../fetch/handler.js reference these exports by name in shared dispatch
+ * tables covering every apiproxy domain (edited in parallel by sibling
+ * agents in this same batch) — not touched here to avoid colliding with
+ * those concurrent edits.
  */
 
-import { z } from 'zod'
+const passthrough = () => ({ parse: value => value })
 
-/** GoalRef schema. */
-export const goalRefSchema = z.object({
-  id: z.string(),
-  revision: z.number().int().positive(),
-})
+/** GoalRef shape marker (no-op). */
+export const goalRefSchema = passthrough()
 
-/** Shared `{ ref }` acknowledgement value of every non-clear mutation. */
-const goalRefValueSchema = z.object({ ref: goalRefSchema })
+/** goal.create request payload (no-op). */
+export const goalCreateRequestSchema = passthrough()
 
-/** goal.create request payload. */
-export const goalCreateRequestSchema = z.object({
-  sessionId: z.string(),
-  objective: z.string().min(1),
-  maxGoalRounds: z.number().int().positive().optional(),
-})
+/** goal.create response value (no-op). */
+export const goalCreateValueSchema = passthrough()
 
-/** goal.create response value. */
-export const goalCreateValueSchema = goalRefValueSchema
+/** goal.edit request payload (no-op; previously enforced objective or maxGoalRounds present). */
+export const goalEditRequestSchema = passthrough()
 
-/** goal.edit request payload. */
-export const goalEditRequestSchema = z.object({
-  sessionId: z.string(),
-  ref: goalRefSchema,
-  objective: z.string().min(1).optional(),
-  maxGoalRounds: z.number().int().positive().optional(),
-}).refine(value => value.objective !== undefined || value.maxGoalRounds !== undefined, {
-  message: 'goal.edit requires objective or maxGoalRounds',
-})
+/** goal.edit response value (no-op). */
+export const goalEditValueSchema = passthrough()
 
-/** goal.edit response value. */
-export const goalEditValueSchema = goalRefValueSchema
+/** goal.pause request payload (no-op). */
+export const goalPauseRequestSchema = passthrough()
 
-/** goal.pause request payload. */
-export const goalPauseRequestSchema = z.object({
-  sessionId: z.string(),
-  ref: goalRefSchema,
-})
+/** goal.pause response value (no-op). */
+export const goalPauseValueSchema = passthrough()
 
-/** goal.pause response value. */
-export const goalPauseValueSchema = goalRefValueSchema
+/** goal.resume request payload (no-op). */
+export const goalResumeRequestSchema = passthrough()
 
-/** goal.resume request payload. */
-export const goalResumeRequestSchema = z.object({
-  sessionId: z.string(),
-  ref: goalRefSchema,
-})
+/** goal.resume response value (no-op). */
+export const goalResumeValueSchema = passthrough()
 
-/** goal.resume response value. */
-export const goalResumeValueSchema = goalRefValueSchema
+/** goal.complete request payload (no-op). */
+export const goalCompleteRequestSchema = passthrough()
 
-/** goal.complete request payload. */
-export const goalCompleteRequestSchema = z.object({
-  sessionId: z.string(),
-  ref: goalRefSchema,
-})
+/** goal.complete response value (no-op). */
+export const goalCompleteValueSchema = passthrough()
 
-/** goal.complete response value. */
-export const goalCompleteValueSchema = goalRefValueSchema
+/** goal.clear request payload (no-op). */
+export const goalClearRequestSchema = passthrough()
 
-/** goal.clear request payload. */
-export const goalClearRequestSchema = z.object({
-  sessionId: z.string(),
-  ref: goalRefSchema,
-})
-
-/** goal.clear response value. */
-export const goalClearValueSchema = z.object({
-  cleared: z.literal(true),
-})
+/** goal.clear response value (no-op). */
+export const goalClearValueSchema = passthrough()

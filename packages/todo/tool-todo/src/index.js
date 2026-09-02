@@ -6,7 +6,6 @@
  */
 
 import z from '@freddie/schemastery'
-import { z as zod } from 'zod'
 import { defineTool } from '@freddie/freddie-tools'
 // The `todos` projection-key declaration lived in src/types.ts (its one home);
 // src/types.js is now a pure-type-dropped module (nothing runtime-visible
@@ -91,15 +90,6 @@ function toTodoList(raw, allowParallel) {
   return todos
 }
 
-/** Wire payload schema of the `todos` projection (whole list or pre-first-write null). */
-const todosProjectionSchema = zod.union([
-  zod.array(zod.object({
-    content: zod.string(),
-    status: zod.union([zod.literal('pending'), zod.literal('in_progress'), zod.literal('completed')]),
-  })),
-  zod.null(),
-])
-
 /**
  * Register the `todo_write` tool on `ctx.tools` and, when the session-projection seam is composed,
  * the `todos` unit.
@@ -116,14 +106,13 @@ export function apply(ctx, config) {
   ctx.inject(['sessionProjections'], (projectionCtx) => {
     projectionCtx.sessionProjections.register({
       key: 'todos',
-      stateSchema: todosProjectionSchema,
       init: () => null,
       apply: (state, event) => {
         if (event.type === 'todo/write') return event.data.todos
         if (event.type === 'turn/start') return null
         return state
       },
-      wire: { viewSchema: todosProjectionSchema, view: state => state },
+      wire: { view: state => state },
       stateVersion: 2,
     })
   })

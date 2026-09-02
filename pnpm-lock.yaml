@@ -709,9 +709,6 @@ importers:
       '@freddie/freddie-typert-registry':
         specifier: workspace:^
         version: link:../../typert/registry
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
 
   packages/api/remotes:
     dependencies:
@@ -3794,9 +3791,6 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -4701,9 +4695,6 @@ importers:
       fflate:
         specifier: ^0.8.2
         version: 0.8.3
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -4915,9 +4906,6 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -5237,9 +5225,6 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -5402,10 +5387,6 @@ importers:
         version: 2026.7.10(zod@4.4.3)
 
   packages/plan/plan-mode:
-    dependencies:
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -6000,9 +5981,6 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -6027,10 +6005,6 @@ importers:
         version: link:../../storage/storage-domain
 
   packages/session/session-stats:
-    dependencies:
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -6120,9 +6094,6 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -6849,9 +6820,6 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -6896,10 +6864,6 @@ importers:
         version: link:../storage
 
   packages/subagent/subagent:
-    dependencies:
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -7459,9 +7423,6 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -7521,9 +7482,6 @@ importers:
       '@freddie/freddie-typert-registry':
         specifier: workspace:^
         version: link:../registry
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
 
   packages/typert/protocol:
     devDependencies:
@@ -7920,10 +7878,6 @@ importers:
         version: link:../workflow
 
   packages/workspace/workspace:
-    dependencies:
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^

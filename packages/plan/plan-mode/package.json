@@ -52,9 +52,6 @@
       "optional": true
     }
   },
-  "dependencies": {
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
     "@freddie/freddie-agent": "workspace:^",
     "@freddie/freddie-agent-loop": "workspace:^",

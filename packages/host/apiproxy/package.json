@@ -61,8 +61,7 @@
     "@freddie/freddie-user-questions": "workspace:^",
     "@freddie/freddie-workspace": "workspace:^",
     "@freddie/schemastery": "workspace:^",
-    "fflate": "^0.8.2",
-    "zod": "^4.4.3"
+    "fflate": "^0.8.2"
   },
   "peerDependencies": {
     "@freddie/cordis": "workspace:^",

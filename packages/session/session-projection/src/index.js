@@ -56,19 +56,18 @@ export class SessionProjectionRegistry extends Service {
    * context's fiber: disposing the fiber (or calling the returned disposer)
    * removes the key — and the unit's cached cells — from subsequent drives
    * and snapshots.
-   * @param definition - key, state schema, pure unit functions, and stateVersion.
+   * @param definition - key, pure unit functions, and stateVersion.
    * @returns the exact disposer that unregisters this unit.
    */
   register(definition) {
     const wire = definition.wire
     const erased = {
       key: definition.key,
-      stateSchema: definition.stateSchema,
       init: () => definition.init(),
       apply: (state, event) => definition.apply(state, event),
       wire: wire === undefined
         ? undefined
-        : { viewSchema: wire.viewSchema, view: state => wire.view(state) },
+        : { view: state => wire.view(state) },
       stateVersion: definition.stateVersion,
     }
     if (!Number.isSafeInteger(definition.stateVersion) || definition.stateVersion < 0) {
@@ -129,7 +128,7 @@ export class SessionProjectionRegistry extends Service {
    * One consistent cut over every registered client-visible unit for one session, read from
    * the watermark cache (missing cells fold lazily over the in-memory log).
    * Fully synchronous — every value and `asOfSeq` reflect the same log
-   * position. Each value passes its unit's `viewSchema` before leaving.
+   * position.
    * @param session - the session whose projection values are read.
    * @returns the snapshot; `values` is empty when no client-visible unit is registered.
    */
@@ -138,7 +137,7 @@ export class SessionProjectionRegistry extends Service {
     for (const registration of this.registrations.values()) {
       if (registration.def.wire === undefined) continue
       const cell = this.cellFor(registration, session)
-      values[registration.def.key] = registration.def.wire.viewSchema.parse(registration.def.wire.view(cell.state))
+      values[registration.def.key] = registration.def.wire.view(cell.state)
     }
     return { asOfSeq: session.seq - 1, values }
   }
@@ -215,13 +214,7 @@ export class SessionProjectionRegistry extends Service {
       if (def.wire === undefined) continue
       const row = checkpoint[def.key]
       if (row === undefined || row.ver !== def.stateVersion) continue
-      let state
-      try {
-        state = def.stateSchema.parse(row.val)
-      } catch {
-        continue
-      }
-      values[def.key] = def.wire.viewSchema.parse(def.wire.view(state))
+      values[def.key] = def.wire.view(row.val)
     }
     return values
   }
@@ -265,12 +258,12 @@ export class SessionProjectionRegistry extends Service {
           + 'its checkpoint row is missing, version-mismatched, or beyond the supplied log end; re-read from seq 0',
         )
       }
-      let state = usable ? def.stateSchema.parse(row.val) : def.init()
+      let state = usable ? row.val : def.init()
       const from = usable ? row.seq : baseSeq - 1
       for (const event of events) {
         if (event.seq > from) state = def.apply(state, event)
       }
-      if (def.wire !== undefined) values[def.key] = def.wire.viewSchema.parse(def.wire.view(state))
+      if (def.wire !== undefined) values[def.key] = def.wire.view(state)
       refreshed[def.key] = { ver: def.stateVersion, seq: endSeq, val: state }
     }
     return {
@@ -311,7 +304,7 @@ export class SessionProjectionRegistry extends Service {
       cell.state = next
       cell.observedSeq = event.seq
       if (changed && registration.def.wire !== undefined && this.listeners.size > 0) {
-        const value = registration.def.wire.viewSchema.parse(registration.def.wire.view(next))
+        const value = registration.def.wire.view(next)
         for (const listener of this.listeners) {
           listener(session, registration.def.key, value, event.seq)
         }

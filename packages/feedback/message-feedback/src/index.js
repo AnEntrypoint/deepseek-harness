@@ -11,14 +11,7 @@ import { deriveEventMessage, isAppendSurfaceEvent } from '@freddie/freddie-sessi
 import { TypertRemoteService, Remote } from '@freddie/freddie-typert-protocol'
 import { messageFeedbackDomainSpec } from './spec.js'
 
-export {
-  messageFeedbackDomainSpec,
-  messageFeedbackItemSchema,
-  messageFeedbackRatingSchema,
-  messageFeedbackRowSchema,
-  messageFeedbackSessionIdentitySchema,
-  messageFeedbackVersionSchema,
-} from './spec.js'
+export { messageFeedbackDomainSpec } from './spec.js'
 
 /** Immutable empty list reused only as an input to caller-owned copying. */
 const EMPTY_ITEMS = Object.freeze([])

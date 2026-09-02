@@ -7,7 +7,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { sessionLogQuerySchema } from '../api/downloads.schema.js'
+import { parseSessionLogQuery } from '../api/downloads.schema.js'
 import { RpcId } from '../api/rpc.js'
 import { clientRequestSchema, clientResponseSchema } from '../api/rpc.schema.js'
 import {
@@ -232,13 +232,11 @@ export function toFetchHandler(api) {
         return sseResponse(api.events.host({ rpcId: RpcId(randomUUID()), payload: {} }, req.signal))
       }
       if (path === '/api/session.export' && (req.method === 'GET' || req.method === 'HEAD')) {
-        // Query params are a different boundary from the POST envelope, but
-        // the request still casts its brands only through the domain schema.
-        const parsed = sessionLogQuerySchema.safeParse(Object.fromEntries(url.searchParams))
-        if (!parsed.success) {
-          return new Response('missing or invalid sessionId query parameter', { status: 400 })
-        }
-        const response = await api.downloads.sessionLog(parsed.data, req.signal)
+        // Query params are a different boundary from the POST envelope.
+        // No validation here — malformed input fails downstream instead of
+        // being rejected at this boundary (schema validation removed).
+        const parsed = parseSessionLogQuery(Object.fromEntries(url.searchParams))
+        const response = await api.downloads.sessionLog(parsed, req.signal)
         if (req.method === 'GET') return response
         await response.body?.cancel()
         return new Response(null, { status: response.status, headers: response.headers })

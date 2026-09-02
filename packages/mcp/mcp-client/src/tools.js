@@ -31,7 +31,12 @@ const INVALID_NAME_CHARS = /[^A-Za-z0-9_-]/g
 /** Hex chars of the SHA-256 identity hash appended on lossy normalization. */
 const HASH_LENGTH = 12
 
-/** Raw result record: the bridge owns JSON-value validation after transport. */
+/**
+ * Raw result record. `client.request` (MCP SDK) requires a zod schema
+ * argument that it `.parse`s internally — this is the SDK's own external
+ * contract, not validation this bridge performs, so the schema here is kept
+ * maximally permissive (any string-keyed object) rather than removed.
+ */
 const RawCallToolResultSchema = z.record(z.string(), z.unknown())
 
 /** Raster formats supported by the durable attachment vocabulary. */

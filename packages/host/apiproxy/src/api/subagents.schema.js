@@ -1,86 +1,55 @@
-/** Zod schemas for the browser-safe subagent domain. */
+/**
+ * Browser-safe subagent domain shapes (validation removed).
+ *
+ * These were previously zod schemas performing pure shape validation (no
+ * transform/default logic) for the subagent.* RPC methods. Per the
+ * project-wide decision to drop schema validation, they are no longer zod
+ * objects — malformed requests/responses now fail downstream instead of
+ * being rejected at this boundary.
+ *
+ * NOTE: packages/host/apiproxy/src/fetch/handler.js still calls
+ * `route.schema.safeParse(...)` and packages/host/apiproxy/src/fetch/client.js
+ * still calls `UNARY_VALUE_SCHEMAS[method].parse(...)` — those are shared
+ * carrier files touched by many schema modules at once (handler.js already
+ * has a "schema validation removed" note for its other no-validation path),
+ * so rather than break their live call sites from this single-file pass,
+ * each export below is kept as a trivial pass-through object exposing
+ * `.parse`/`.safeParse` that always succeeds and returns the input
+ * unchanged. A later cross-cutting pass can simplify handler.js/client.js
+ * to call these directly as plain identity functions and drop this shim.
+ */
 
-import { z } from 'zod'
-import {
-  contentBlockSchema, historyEntrySchema, sessionIdSchema, sessionProjectionsBlockSchema,
-} from './sessions.schema.js'
+/** Trivial always-succeeds stand-in for a removed zod schema. */
+function passthroughSchema() {
+  return {
+    parse: (value) => value,
+    safeParse: (value) => ({ success: true, data: value }),
+  }
+}
 
 /** Healthy and diagnostic durable catalog rows. */
-export const subagentListEntrySchema = z.union([
-  z.object({
-    kind: z.literal('child'),
-    id: sessionIdSchema,
-    mode: z.literal('one-shot'),
-    activity: z.union([z.literal('running'), z.literal('inactive')]),
-    hasChildren: z.boolean(),
-    label: z.string().optional(),
-  }),
-  z.object({
-    kind: z.literal('child'),
-    id: sessionIdSchema,
-    mode: z.literal('continuable'),
-    activity: z.union([z.literal('running'), z.literal('inactive')]),
-    hasChildren: z.boolean(),
-    label: z.string(),
-  }),
-  z.object({
-    kind: z.literal('diagnostic'),
-    id: sessionIdSchema,
-    reason: z.union([z.literal('corrupt'), z.literal('unsupported'), z.literal('unavailable')]),
-  }),
-])
+export const subagentListEntrySchema = passthroughSchema()
 
 /** subagent.list request payload. */
-export const subagentListRequestSchema = z.object({
-  parentSessionId: sessionIdSchema,
-})
+export const subagentListRequestSchema = passthroughSchema()
 
 /** subagent.list response value. */
-export const subagentListValueSchema = z.object({
-  entries: z.array(subagentListEntrySchema),
-  parentAvailable: z.boolean(),
-})
+export const subagentListValueSchema = passthroughSchema()
 
 /** subagent.history request payload. */
-export const subagentHistoryRequestSchema = z.object({
-  parentSessionId: sessionIdSchema,
-  childSessionId: sessionIdSchema,
-  mode: z.union([z.literal('one-shot'), z.literal('continuable')]),
-  beforeSeq: z.number().int().nonnegative().optional(),
-  maxMessages: z.number().int().positive().optional(),
-})
+export const subagentHistoryRequestSchema = passthroughSchema()
 
 /** subagent.history response value. */
-export const subagentHistoryValueSchema = z.object({
-  events: z.array(historyEntrySchema),
-  hasMore: z.boolean(),
-  projections: sessionProjectionsBlockSchema.optional(),
-})
+export const subagentHistoryValueSchema = passthroughSchema()
 
 /** subagent.prompt request payload. */
-export const subagentPromptRequestSchema = z.object({
-  parentSessionId: sessionIdSchema,
-  childSessionId: sessionIdSchema,
-  mode: z.literal('continuable'),
-  content: z.array(contentBlockSchema),
-  clientTimeZone: z.string().optional(),
-})
+export const subagentPromptRequestSchema = passthroughSchema()
 
 /** subagent.interrupt request payload. */
-export const subagentInterruptRequestSchema = z.object({
-  parentSessionId: sessionIdSchema,
-  childSessionId: sessionIdSchema,
-  mode: z.literal('continuable'),
-})
+export const subagentInterruptRequestSchema = passthroughSchema()
 
 /** subagent.interrupt response value. */
-export const subagentInterruptValueSchema = z.object({
-  accepted: z.literal(true),
-})
-
-const messageIdSchema = z.string()
+export const subagentInterruptValueSchema = passthroughSchema()
 
 /** subagent.prompt response value. */
-export const subagentPromptValueSchema = z.object({
-  messageId: messageIdSchema,
-})
+export const subagentPromptValueSchema = passthroughSchema()

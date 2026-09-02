@@ -24,7 +24,6 @@
  */
 
 import { Service } from '@freddie/cordis'
-import { z as zod } from 'zod'
 import { createUserMessage } from '@freddie/freddie-llm'
 import { defineTool } from '@freddie/freddie-tools'
 import { UserQuestionError } from '@freddie/freddie-user-questions'
@@ -106,21 +105,6 @@ export function foldPlanMode(events, end = events.length) {
  * paired `command/done` has not settled. Plain JSON (persisted-cache
  * precondition).
  */
-
-const planUnitStateSchema = zod.object({
-  active: zod.boolean(),
-  wanted: zod.boolean().nullable(),
-  running: zod.object({
-    commandId: zod.string(),
-    wanted: zod.boolean(),
-  }).strict().nullable(),
-}).strict()
-
-/** Wire payload schema of the `plan` projection. */
-const planProjectionSchema = zod.object({
-  active: zod.boolean(),
-  pending: zod.boolean(),
-})
 
 /** Whether the log holds an opened turn without its closing `turn/end`. */
 function hasOpenTurn(events) {
@@ -211,7 +195,6 @@ export class PlanModeController extends Service {
     ctx.inject(['sessionProjections'], (projectionCtx) => {
       projectionCtx.sessionProjections.register({
         key: 'plan',
-        stateSchema: planUnitStateSchema,
         init: () => ({ active: false, wanted: null, running: null }),
         apply: (state, event) => {
           if (event.type === 'command/run' && event.data.name === 'plan') {
@@ -231,7 +214,6 @@ export class PlanModeController extends Service {
           return state
         },
         wire: {
-          viewSchema: planProjectionSchema,
           view: (state) => {
             const wanted = state.running?.wanted ?? state.wanted
             return { active: state.active, pending: wanted !== null && wanted !== state.active }

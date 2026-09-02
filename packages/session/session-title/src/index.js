@@ -5,7 +5,6 @@
 
 import { Service } from '@freddie/cordis'
 import z from '@freddie/schemastery'
-import { z as zod } from 'zod'
 import { assertNever, deepFreeze, isAgentLoopRequest } from '@freddie/freddie-llm'
 import { fallbackSessionTitle, normalizeSessionTitle } from './normalize.js'
 
@@ -143,13 +142,11 @@ export class SessionTitleService extends Service {
     // string clients list rows read. The unit child activates only when a
     // projection registry is composed (headless assemblies stay unaffected).
     ctx.inject(['sessionProjections'], (projectionCtx) => {
-      const titleSchema = zod.union([zod.string().min(1), zod.null()])
       projectionCtx.sessionProjections.register({
         key: 'title',
-        stateSchema: titleSchema,
         init: () => null,
         apply: (state, event) => (event.type === 'session/title' ? event.data.title : state),
-        wire: { viewSchema: titleSchema, view: state => state },
+        wire: { view: state => state },
         stateVersion: 1,
       })
     })

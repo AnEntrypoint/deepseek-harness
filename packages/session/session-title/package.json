@@ -45,8 +45,7 @@
     "@freddie/cordis": "workspace:^"
   },
   "dependencies": {
-    "@freddie/schemastery": "workspace:^",
-    "zod": "^4.4.3"
+    "@freddie/schemastery": "workspace:^"
   },
   "devDependencies": {
     "@freddie/freddie-brand": "workspace:^",

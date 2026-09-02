@@ -23,36 +23,7 @@
  * @module @freddie/freddie-session-stats/projection
  */
 
-import { z } from 'zod'
 import { isTokenDelta } from '@freddie/freddie-llm/message'
-
-const sessionStatsSchema = z.object({
-  turns: z.number().int().nonnegative(),
-  steps: z.number().int().nonnegative(),
-  llmMs: z.number().nonnegative(),
-  toolMs: z.number().nonnegative(),
-  ttftMs: z.number().nonnegative(),
-  ttftSteps: z.number().int().nonnegative(),
-  decodeMs: z.number().nonnegative(),
-  decodeTokens: z.number().nonnegative(),
-}).strict()
-
-/**
- * The fold state's shape (totals plus in-flight boundaries), validated on
- * persisted-cache rows after their `ver` gate — the unit's input boundary.
- * The view is a strict subset of the state, so this schema extends
- * `sessionStatsSchema` (the wire output boundary) with the boundary fields.
- */
-const sessionStatsStateSchema = sessionStatsSchema.extend({
-  lastTurn: z.number().int().nonnegative().nullable(),
-  openStep: z.object({
-    turn: z.number().int().nonnegative(),
-    step: z.number().int().nonnegative(),
-    startTime: z.number().nonnegative(),
-    firstTokenTime: z.number().nonnegative().nullable(),
-  }).nullable(),
-  pendingCalls: z.record(z.string(), z.number().nonnegative()),
-})
 
 /**
  * Provider-reported completion tokens, guarded the way the window fold guards
@@ -70,7 +41,6 @@ function usageOutputTokens(usage) {
 export const sessionStatsProjectionDefinition = {
   key: 'sessionStats',
   stateVersion: 1,
-  stateSchema: sessionStatsStateSchema,
   init: () => ({
     turns: 0,
     steps: 0,
@@ -152,7 +122,6 @@ export const sessionStatsProjectionDefinition = {
     }
   },
   wire: {
-    viewSchema: sessionStatsSchema,
     view: state => ({
       turns: state.turns,
       steps: state.steps,

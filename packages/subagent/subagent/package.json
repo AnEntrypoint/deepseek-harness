@@ -29,9 +29,6 @@
     "src/*.js"
   ],
   "license": "MIT",
-  "dependencies": {
-    "zod": "^4.4.3"
-  },
   "peerDependencies": {
     "@freddie/freddie-agent": "workspace:^",
     "@freddie/freddie-agent-presets": "workspace:^",

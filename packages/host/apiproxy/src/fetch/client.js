@@ -7,7 +7,6 @@
 
 import { RpcId } from '../api/rpc.js'
 import { rpcReceiptSchema, serverRequestSchema, serverResponseSchema } from '../api/rpc.schema.js'
-import { hostFrameSchema, muxFrameSchema } from '../api/events.schema.js'
 import {
   hostCreateDirectoryValueSchema, hostDescribeValueSchema,
   hostListDirectoryValueSchema, hostOpenPathValueSchema, hostPickDirectoryValueSchema,
@@ -233,12 +232,12 @@ export class AbstractApiClient {
 
   /** Mux stream opener; virtual for the same override reason as callUnary. */
   openMux(_payload, signal, onOpen) {
-    return this.readSse('/api/events.mux', signal, muxFrameSchema, onOpen)
+    return this.readSse('/api/events.mux', signal, onOpen)
   }
 
   /** Host stream opener; virtual. */
   openHost(_payload, signal, onOpen) {
-    return this.readSse('/api/events.host', signal, hostFrameSchema, onOpen)
+    return this.readSse('/api/events.host', signal, onOpen)
   }
 
   /**
@@ -248,7 +247,7 @@ export class AbstractApiClient {
    * either parse level is reported and skipped (one corrupt frame must not kill the stream; the
    * client's gap detection covers whatever the frame carried).
    */
-  async *readSse(path, signal, frameSchema, onOpen) {
+  async *readSse(path, signal, onOpen) {
     const response = await this.doFetch(new URL(path, this.resolveBase()), { signal })
     if (!response.ok || response.body === null) throw new Error(`transport failure for ${path}: HTTP ${response.status}`)
     onOpen?.()
@@ -267,16 +266,14 @@ export class AbstractApiClient {
           const data = chunk.split('\n').filter(line => line.startsWith('data: ')).map(line => line.slice(6)).join('')
           if (data === '') continue
           let full
-          let frame
           try {
             full = serverRequestSchema.parse(JSON.parse(data))
-            frame = frameSchema.parse(full.payload)
           } catch (error) {
             console.error(`[apiproxy] dropping malformed SSE frame on ${path}:`, error)
             continue
           }
           this.onEnvelope(full)
-          yield { rpcId: full.rpcId, payload: frame }
+          yield { rpcId: full.rpcId, payload: full.payload }
         }
       }
     } finally {

@@ -43,9 +43,6 @@
     "@freddie/freddie-session-projection": "workspace:^",
     "@freddie/cordis": "workspace:^"
   },
-  "dependencies": {
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
     "@freddie/cordis-plugin-include": "workspace:^",
     "@freddie/cordis-plugin-loader": "workspace:^",

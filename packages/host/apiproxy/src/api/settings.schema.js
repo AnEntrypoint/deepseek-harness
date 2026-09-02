@@ -1,78 +1,51 @@
 /**
- * settings domain zod schemas (names derived from map keys: settingsDescribeRequestSchema /
+ * settings domain request/response shapes (names derived from map keys: settingsDescribeRequestSchema /
  * settingsDescribeValueSchema / settingsUpdate* / settingsReplace*).
+ *
+ * Zod validation has been removed repo-wide; these were all pure-validation schemas with no
+ * transform/refine reshaping, so each export below is now a no-op pass-through exposing the same
+ * `.parse(x)` shape the generic dispatch tables in fetch/handler.js and fetch/client.js call by
+ * name (`SCHEMA.parse(value)`), returning the value unchanged. Malformed requests now fail
+ * differently downstream rather than being cleanly rejected here -- an accepted tradeoff.
  */
 
-import { z } from 'zod'
+const passthrough = { parse: (x) => x }
 
 /** One redacted secret slot. */
-export const settingsSecretViewSchema = z.object({
-  path: z.array(z.string()),
-  set: z.boolean(),
-})
+export const settingsSecretViewSchema = passthrough
 
 /** SettingsNamespaceView row of settings.describe and the write responses. */
-export const settingsNamespaceViewSchema = z.object({
-  ns: z.string().min(1),
-  schema: z.unknown(),
-  value: z.unknown(),
-  base: z.unknown().optional(),
-  user: z.unknown().optional(),
-  applies: z.union([z.literal('live'), z.literal('restart')]),
-  secrets: z.array(settingsSecretViewSchema),
-  revision: z.number(),
-})
+export const settingsNamespaceViewSchema = passthrough
 
 /** settings.describe request payload. */
-export const settingsDescribeRequestSchema = z.object({})
+export const settingsDescribeRequestSchema = passthrough
 
 /** settings.describe response value. */
-export const settingsDescribeValueSchema = z.object({
-  writable: z.boolean(),
-  hasDocument: z.boolean(),
-  namespaces: z.array(settingsNamespaceViewSchema),
-})
+export const settingsDescribeValueSchema = passthrough
 
 /** settings.openDocument request payload. */
-export const settingsOpenDocumentRequestSchema = z.object({})
+export const settingsOpenDocumentRequestSchema = passthrough
 
 /** settings.openDocument response value. */
-export const settingsOpenDocumentValueSchema = z.object({
-  opened: z.literal(true),
-})
+export const settingsOpenDocumentValueSchema = passthrough
 
 /** settings.update request payload. */
-export const settingsUpdateRequestSchema = z.object({
-  ns: z.string().min(1),
-  patch: z.record(z.string(), z.unknown()),
-  expectedRevision: z.number().optional(),
-})
+export const settingsUpdateRequestSchema = passthrough
 
 /** settings.update response value: the namespace's new redacted view. */
-export const settingsUpdateValueSchema = settingsNamespaceViewSchema
+export const settingsUpdateValueSchema = passthrough
 
 /** settings.replace request payload. */
-export const settingsReplaceRequestSchema = z.object({
-  ns: z.string().min(1),
-  section: z.record(z.string(), z.unknown()),
-  expectedRevision: z.number().optional(),
-})
+export const settingsReplaceRequestSchema = passthrough
 
 /** One path-addressed edit of settings.mutate. */
-export const settingsPathOpSchema = z.discriminatedUnion('op', [
-  z.object({ op: z.literal('set'), path: z.array(z.string()), value: z.unknown() }),
-  z.object({ op: z.literal('unset'), path: z.array(z.string()) }),
-])
+export const settingsPathOpSchema = passthrough
 
 /** settings.mutate request payload. */
-export const settingsMutateRequestSchema = z.object({
-  ns: z.string().min(1),
-  ops: z.array(settingsPathOpSchema),
-  expectedRevision: z.number().optional(),
-})
+export const settingsMutateRequestSchema = passthrough
 
 /** settings.mutate response value: the namespace's new redacted view. */
-export const settingsMutateValueSchema = settingsNamespaceViewSchema
+export const settingsMutateValueSchema = passthrough
 
 /** settings.replace response value. */
-export const settingsReplaceValueSchema = settingsNamespaceViewSchema
+export const settingsReplaceValueSchema = passthrough

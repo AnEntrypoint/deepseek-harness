@@ -39,9 +39,6 @@
     "@freddie/freddie-storage": "workspace:^",
     "@freddie/cordis": "workspace:^"
   },
-  "dependencies": {
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
     "@freddie/freddie-brand": "workspace:^",
     "@freddie/freddie-storage-domain": "workspace:^",

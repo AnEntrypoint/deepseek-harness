@@ -1,10 +1,9 @@
 /**
  * Domain declaration vocabulary. A spec object is the single source of a
- * domain's identity, layout, and record schemas: the owning package defines
- * it once with {@link defineDomain} and both the type surface and the runtime
- * (validation, descriptor projection) derive from it. Record schemas are zod
- * (`z.infer` keeps types un-duplicated and the same schemas later project to
- * RPC wire schemas); plugin `Config` stays schemastery.
+ * domain's identity and layout: the owning package defines it once with
+ * {@link defineDomain} and the runtime (descriptor projection) derives from
+ * it. Record shapes are documented, not runtime-validated — a stored record
+ * is trusted as written.
  * @module @freddie/freddie-storage-domain/src/spec
  */
 
@@ -12,11 +11,10 @@ import { UNIT_NAME_RE } from '@freddie/freddie-storage'
 
 /**
  * Declare one table.
- * @param schema - zod schema validating every stored record of this table.
  * @returns the table declaration, key-typed by `K`.
  */
-export function domainTable(schema) {
-  return { valueSchema: schema }
+export function domainTable() {
+  return {}
 }
 
 /**

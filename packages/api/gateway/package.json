@@ -54,7 +54,6 @@
     "@freddie/freddie-host-webserver": "workspace:^",
     "@freddie/freddie-invariants": "workspace:^",
     "@freddie/freddie-typert-registry": "workspace:^",
-    "@freddie/cordis": "workspace:^",
-    "zod": "^4.4.3"
+    "@freddie/cordis": "workspace:^"
   }
 }

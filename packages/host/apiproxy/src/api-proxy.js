@@ -7,7 +7,6 @@ import { randomUUID } from 'node:crypto'
 import { mkdir, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname } from 'node:path'
-import { z as zod } from 'zod'
 import { installModelSelection } from '@freddie/freddie-agent'
 import { AttachmentError, admitEncodedImages } from '@freddie/freddie-attachment'
 import { createUserMessage, freezeMessage, ReasoningEffortId } from '@freddie/freddie-llm'
@@ -45,9 +44,7 @@ import { SettingsConflictError, settingsNamespace } from '@freddie/freddie-setti
 import { credentialRef } from '@freddie/freddie-credentials'
 // Value edge: the rename impl narrows the title service's validation failure; the import also resolves `ctx.get('sessionTitle')`.
 import { SessionTitleInvalidError } from '@freddie/freddie-session-title'
-import { approvalResponsePayloadSchema } from './api/approvals.schema.js'
-import { imageLimitsProjectionSchema, sessionListMetadataProjectionSchema } from './api/sessions.schema.js'
-import { questionResponsePayloadSchema } from './api/questions.schema.js'
+import { toApprovalResponsePayload } from './api/approvals.schema.js'
 import { RpcId } from './api/rpc.js'
 import { UserQuestionError } from '@freddie/freddie-user-questions'
 import { DirectoryPickerError } from '@freddie/freddie-host-directory-picker'
@@ -1004,10 +1001,9 @@ export function createApiProxy(ctx, defaults) {
   ctx.inject(['sessionProjections'], (projectionCtx) => {
     projectionCtx.sessionProjections.register({
       key: 'sessionListMetadata',
-      stateSchema: sessionListMetadataProjectionSchema,
       init: () => ({ blank: true, lastPromptAt: null }),
       apply: applySessionListMetadata,
-      wire: { viewSchema: sessionListMetadataProjectionSchema, view: state => state },
+      wire: { view: state => state },
       stateVersion: 1,
     })
   })
@@ -1028,10 +1024,9 @@ export function createApiProxy(ctx, defaults) {
   ctx.inject(['sessionProjections', 'attachments'], (projectionCtx) => {
     projectionCtx.sessionProjections.register({
       key: 'imageLimits',
-      stateSchema: zod.null(),
       init: () => null,
       apply: state => state,
-      wire: { viewSchema: imageLimitsProjectionSchema, view: () => projectionCtx.attachments.imageLimits },
+      wire: { view: () => projectionCtx.attachments.imageLimits },
       stateVersion: 1,
     })
   })
@@ -3323,13 +3318,13 @@ export function createApiProxy(ctx, defaults) {
       const approval = pendingApprovals.get(message.rpcId)
       if (approval !== undefined) {
         if (!message.result.ok) return Promise.resolve({ accepted: false, reason: 'bad-response' })
-        const parsed = approvalResponsePayloadSchema.safeParse(message.result.value)
+        const parsed = toApprovalResponsePayload(message.result.value)
         // The payload's audit correlation must match the entry the rpcId routed
         // to — a mismatched answer is malformed, not merely late.
-        if (!parsed.success || parsed.data.approvalId !== approval.approvalId || parsed.data.sessionId !== approval.sessionId) {
+        if (!parsed || parsed.approvalId !== approval.approvalId || parsed.sessionId !== approval.sessionId) {
           return Promise.resolve({ accepted: false, reason: 'bad-response' })
         }
-        approval.resolve(parsed.data.outcome)
+        approval.resolve(parsed.outcome)
         return Promise.resolve({ accepted: true })
       }
       const pending = pendingQuestions.get(message.rpcId)
@@ -3343,14 +3338,11 @@ export function createApiProxy(ctx, defaults) {
           'the user cancelled ask_user_question', 'ASK_CANCELLED'))
         return Promise.resolve({ accepted: true })
       }
-      const parsed = questionResponsePayloadSchema.safeParse(message.result.value)
-      if (!parsed.success) {
-        return Promise.resolve({ accepted: false, reason: 'bad-response' })
-      }
+      const value = message.result.value
       const payload = {
-        sessionId: parsed.data.sessionId,
+        sessionId: value.sessionId,
         answer: {
-          answers: parsed.data.answer.answers.map(answer => ({
+          answers: value.answer.answers.map(answer => ({
             id: answer.id,
             selected: answer.selected,
             ...(answer.custom === undefined ? {} : { custom: answer.custom }),

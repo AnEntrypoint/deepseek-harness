@@ -1,7 +1,6 @@
 /** Browser API carrier: HTTP upstream plus one WebSocket per downstream event stream. */
 
 import { AbstractApiClient } from './api.js'
-import { hostFrameSchema, muxFrameSchema } from '@freddie/freddie-host-apiproxy/api/events.schema'
 import { serverRequestSchema } from '@freddie/freddie-host-apiproxy/api/rpc.schema'
 import { HOST_EVENTS_PATH, MUX_EVENTS_PATH } from '../api-path.js'
 
@@ -16,7 +15,7 @@ export class WebApiClient extends AbstractApiClient {
     signal,
     onOpen,
   ) {
-    return this.readWebSocket(MUX_EVENTS_PATH, signal, muxFrameSchema, onOpen)
+    return this.readWebSocket(MUX_EVENTS_PATH, signal, onOpen)
   }
 
   openHost(
@@ -24,13 +23,12 @@ export class WebApiClient extends AbstractApiClient {
     signal,
     onOpen,
   ) {
-    return this.readWebSocket(HOST_EVENTS_PATH, signal, hostFrameSchema, onOpen)
+    return this.readWebSocket(HOST_EVENTS_PATH, signal, onOpen)
   }
 
   async *readWebSocket(
     path,
     signal,
-    frameSchema,
     onOpen,
   ) {
     const url = new URL(path, this.resolveBase())
@@ -46,17 +44,15 @@ export class WebApiClient extends AbstractApiClient {
     const handleOpen = () => { onOpen?.() }
     const handleMessage = (event) => {
       let full
-      let frame
       try {
         if (typeof event.data !== 'string') throw new Error('binary WebSocket frame')
         full = serverRequestSchema.parse(JSON.parse(event.data))
-        frame = frameSchema.parse(full.payload)
       } catch (error) {
         console.error(`[client-connection] dropping malformed WebSocket frame on ${path}:`, error)
         return
       }
       this.onEnvelope(full)
-      enqueue({ kind: 'frame', envelope: { rpcId: full.rpcId, payload: frame } })
+      enqueue({ kind: 'frame', envelope: { rpcId: full.rpcId, payload: full.payload } })
     }
     const handleClose = () => { enqueue({ kind: 'end' }) }
     const handleAbort = () => {

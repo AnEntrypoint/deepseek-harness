@@ -5,30 +5,9 @@
  * @module @freddie/freddie-subagent/projection
  */
 
-import { z } from 'zod'
 import { foldSubagentDescriptor } from './descriptor.js'
 
 /** Fold state for a subagent's latest timing snapshot. */
-
-const activeIntervalSchema = z.object({
-  since: z.number().int().nonnegative(),
-  through: z.number().int().nonnegative(),
-}).strict()
-
-const projectionSchema = z.object({
-  settledMs: z.number().int().nonnegative(),
-  active: activeIntervalSchema.optional(),
-}).strict().transform(({ settledMs, active }) => ({
-  settledMs,
-  ...active === undefined ? {} : { active },
-}))
-
-const timingStateSchema = z.object({
-  settledMs: z.number().int().nonnegative(),
-  active: activeIntervalSchema.optional(),
-  pendingTurnStart: z.number().int().nonnegative().optional(),
-  descriptorSeen: z.boolean(),
-}).strict()
 
 /**
  * Fold turn boundaries around the child's own durable descriptor.
@@ -40,7 +19,6 @@ const timingStateSchema = z.object({
  */
 export const subagentTimingProjectionDefinition = {
   key: 'subagentTiming',
-  stateSchema: timingStateSchema,
   init: () => ({ descriptorSeen: false, settledMs: 0 }),
   apply: (state, event) => {
     if (event.type === 'turn/start') {
@@ -75,7 +53,6 @@ export const subagentTimingProjectionDefinition = {
     return { ...state, active: { ...state.active, through: event.time } }
   },
   wire: {
-    viewSchema: projectionSchema,
     view: state => ({
       settledMs: state.settledMs,
       ...(state.active === undefined ? {} : { active: state.active }),
@@ -85,30 +62,6 @@ export const subagentTimingProjectionDefinition = {
 }
 
 /** Identity from the last valid descriptor; absent before one, and after an invalid one. */
-
-// The cast bridges only the optional-label arm: Zod's optional output
-// includes explicit `undefined`, which exactOptionalPropertyTypes excludes
-// from the public interface. The no-value state itself is the serializable
-// `null` arm — never `undefined` — so every registry read and push frame
-// survives JSON.stringify losslessly.
-const identityValueSchema = z.discriminatedUnion('mode', [
-  z.object({
-    mode: z.literal('one-shot'),
-    label: z.string().optional(),
-    seq: z.number().int().nonnegative(),
-  }).strict(),
-  z.object({
-    mode: z.literal('continuable'),
-    label: z.string(),
-    seq: z.number().int().nonnegative(),
-  }).strict(),
-])
-
-const identitySchema = identityValueSchema.nullable()
-
-const identityStateSchema = z.object({
-  identity: identityValueSchema.optional(),
-}).strict()
 
 /** Interpret one `subagent/descriptor` event's identity; no value when the payload cannot be trusted. */
 function descriptorIdentity(event) {
@@ -143,15 +96,14 @@ function descriptorIdentity(event) {
  */
 export const subagentIdentityProjectionDefinition = {
   key: 'subagent',
-  stateSchema: identityStateSchema,
   init: () => ({}),
   apply: (state, event) => {
     if (event.type !== 'subagent/descriptor') return state
     const identity = descriptorIdentity(event)
     return identity === undefined ? {} : { identity }
   },
-  wire: { viewSchema: identitySchema, view: state => state.identity ?? null },
+  wire: { view: state => state.identity ?? null },
   // Bumped when the identity gained its `seq` field: an older checkpoint row
-  // would replay into a value the schema rejects, so it must refold instead.
+  // predates that shape, so it must refold instead of replaying as-is.
   stateVersion: 2,
 }

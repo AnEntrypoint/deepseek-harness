@@ -6,7 +6,6 @@
 
 import { randomUUID } from 'node:crypto'
 import z from '@freddie/schemastery'
-import { z as zod } from 'zod'
 import { agentEvents } from '@freddie/freddie-agent'
 import { TypertRemoteService, Remote } from '@freddie/freddie-typert-protocol'
 import {
@@ -29,24 +28,6 @@ export * from './types.js'
 export * from './domain.js'
 export { GOAL_CHANGE_VERSION, GoalError, GoalId } from './runtime.js'
 export { decodeGoalChange, foldGoal, goalChangeRef } from './fold.js'
-
-/** Wire payload schema of the `goal` projection (whole current goal or pre-create/cleared null). */
-const goalProjectionSchema = zod.union([
-  zod.object({
-    goal: zod.object({
-      id: zod.string().min(1),
-      revision: zod.number().int().positive(),
-      objective: zod.string().min(1),
-      phase: zod.union([zod.literal('active'), zod.literal('paused'), zod.literal('blocked'), zod.literal('complete')]),
-      blockedReason: zod.object({ code: zod.string(), message: zod.string() }).optional(),
-      maxGoalRounds: zod.number().int().positive(),
-    }),
-    roundsStarted: zod.number().int().nonnegative(),
-    createdAt: zod.number(),
-    updatedAt: zod.number(),
-  }),
-  zod.null(),
-])
 
 /**
  * Light last-wins fold of the `goal` projection unit. Unlike the strict
@@ -146,10 +127,9 @@ export class GoalService extends TypertRemoteService {
     ctx.inject(['sessionProjections'], (projectionCtx) => {
       projectionCtx.sessionProjections.register({
         key: 'goal',
-        stateSchema: goalProjectionSchema,
         init: () => null,
         apply: applyGoalProjection,
-        wire: { viewSchema: goalProjectionSchema, view: state => state },
+        wire: { view: state => state },
         stateVersion: 4,
       })
     })

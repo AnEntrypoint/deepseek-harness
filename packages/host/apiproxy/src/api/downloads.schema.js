@@ -1,25 +1,21 @@
 /**
- * downloads domain zod schemas. The download surface has no wire
- * envelope: the request arrives as query parameters (all strings), so its
- * request schema parses the raw query-parameter object into the method's
- * exact request shape. SessionId brand cast point: sessionIdSchema, and only
- * there (hosted in sessions.schema like every other cast).
+ * downloads domain query parsing. The download surface has no wire
+ * envelope: the request arrives as query parameters (all strings), so
+ * parseSessionLogQuery normalizes the raw query-parameter object into the
+ * method's exact request shape. No validation is performed here — malformed
+ * input (missing sessionId, garbage includeDescendants value) is passed
+ * through as-is and fails downstream rather than being rejected at this
+ * boundary.
  */
-
-import { z } from 'zod'
-import { sessionIdSchema } from './sessions.schema.js'
 
 /**
  * session.export query params → the sessionLog request. `includeDescendants`
- * accepts exactly `true`/`false`/absent; any other value is rejected (400) so
- * a misspelled flag cannot silently under-export.
+ * is treated as true only when it is exactly the string `'true'`; any other
+ * value (including absent) is treated as false/omitted.
  */
-export const sessionLogQuerySchema = z
-  .object({
-    sessionId: sessionIdSchema,
-    includeDescendants: z.union([z.literal('true'), z.literal('false')]).optional(),
-  })
-  .transform(query => ({
+export function parseSessionLogQuery(query) {
+  return {
     sessionId: query.sessionId,
     ...(query.includeDescendants === 'true' ? { includeDescendants: true } : {}),
-  }))
+  }
+}

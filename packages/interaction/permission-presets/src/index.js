@@ -12,7 +12,6 @@
 
 import { Service } from '@freddie/cordis'
 import z from '@freddie/schemastery'
-import { z as zod } from 'zod'
 import { SANDBOX_MODES, effectiveSandboxMode, setSandboxMode } from '@freddie/freddie-sandbox-policy'
 import { APPROVAL_POLICIES, effectiveApprovalPolicy, setApprovalPolicy } from '@freddie/freddie-user-approval'
 import { installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
@@ -37,16 +36,6 @@ export const CUSTOM_PRESET = 'custom'
 
 /** Settings namespace carrying the default for future sessions. */
 export const PERMISSION_SETTINGS_NAMESPACE = settingsNamespace('permission')
-
-const knobStateSchema = zod.object({
-  preset: zod.string().nullable(),
-  sandbox: zod.union([
-    zod.literal('read-only'),
-    zod.literal('workspace-write'),
-    zod.literal('danger-full-access'),
-  ]).nullable(),
-  approval: zod.union([zod.literal('ask'), zod.literal('never')]).nullable(),
-}).strict()
 
 /** State for the empty log: every knob at its composition default. */
 const EMPTY_KNOBS = { preset: null, sandbox: null, approval: null }
@@ -155,25 +144,12 @@ export class PermissionPresetService extends Service {
     // events; view derives the select over the composition defaults this
     // service already owns. The unit child activates only when a projection
     // registry is composed (headless assemblies stay unaffected).
-    // zod `.optional()` types the key `string | undefined` while the domain
-    // says `description?: string`; on the JSON wire the two serialize
-    // identically (absent), so the cast records exactly that
-    // exactOptionalPropertyTypes widening (the Wire<T> precedent).
-    const selectSchema = zod.object({
-      options: zod.array(zod.object({
-        value: zod.string().min(1),
-        name: zod.string().min(1),
-        description: zod.string().optional(),
-      })),
-      currentValue: zod.string().min(1),
-    })
     ctx.inject(['sessionProjections'], (projectionCtx) => {
       projectionCtx.sessionProjections.register({
         key: 'permissions',
-        stateSchema: knobStateSchema,
         init: () => EMPTY_KNOBS,
         apply: applyKnobEvent,
-        wire: { viewSchema: selectSchema, view: state => this.selectFor(state) },
+        wire: { view: state => this.selectFor(state) },
         stateVersion: 1,
       })
     })

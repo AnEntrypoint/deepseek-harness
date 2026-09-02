@@ -1,85 +1,53 @@
 /**
- * agent-presets domain zod schemas (names derived from map keys:
+ * agent-presets domain request/response shape markers (names derived from map keys:
  * agentPresetListRequestSchema / agentPresetListValueSchema).
+ *
+ * Zod validation has been removed repo-wide: these are no longer zod schemas.
+ * None of this file's schemas did any transform/reshaping (pure validation only),
+ * so each export is now a plain pass-through object exposing the same `.parse(x)`
+ * call shape that fetch/client.js and fetch/handler.js already call generically
+ * across every apiproxy schema file. Malformed requests/responses now fail
+ * differently downstream instead of being rejected here — an accepted tradeoff.
  */
 
-import { z } from 'zod'
-import { sessionIdSchema } from './sessions.schema.js'
+/** Pass-through "schema": returns the value unchanged, no validation. */
+const passthrough = () => ({ parse: (x) => x })
 
 /** AgentPresetEntry row of agentPreset.list. */
-export const agentPresetEntrySchema = z.object({
-  id: z.string().min(1),
-  trust: z.union([z.literal('system'), z.literal('user')]),
-  isDefault: z.boolean(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  broken: z.string().min(1).optional(),
-})
+export const agentPresetEntrySchema = passthrough()
 
 /** agentPreset.list request payload. */
-export const agentPresetListRequestSchema = z.object({
-})
+export const agentPresetListRequestSchema = passthrough()
 
 /** agentPreset.list response value. */
-export const agentPresetListValueSchema = z.object({
-  presets: z.array(agentPresetEntrySchema),
-  authorable: z.boolean(),
-  hasDocument: z.boolean(),
-})
+export const agentPresetListValueSchema = passthrough()
 
 /** agentPreset.select request payload. */
-export const agentPresetSelectRequestSchema = z.object({
-  sessionId: sessionIdSchema,
-  agentPreset: z.string().min(1),
-})
+export const agentPresetSelectRequestSchema = passthrough()
 
 /** agentPreset.select response value. */
-export const agentPresetSelectValueSchema = z.object({
-  agentPreset: z.string(),
-})
+export const agentPresetSelectValueSchema = passthrough()
 
 /** agentPreset.read request payload. */
-export const agentPresetReadRequestSchema = z.object({
-  agentPreset: z.string().min(1),
-})
+export const agentPresetReadRequestSchema = passthrough()
 
 /** agentPreset.read response value. */
-export const agentPresetReadValueSchema = z.object({
-  agentPreset: z.string(),
-  trust: z.union([z.literal('system'), z.literal('user')]),
-  content: z.string(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-})
+export const agentPresetReadValueSchema = passthrough()
 
 /** agentPreset.copy request payload. */
-export const agentPresetCopyRequestSchema = z.object({
-  from: z.string().min(1),
-  agentPreset: z.string().min(1),
-  name: z.string().optional(),
-})
+export const agentPresetCopyRequestSchema = passthrough()
 
 /** agentPreset.copy response value. */
-export const agentPresetCopyValueSchema = z.object({
-  agentPreset: z.string(),
-})
+export const agentPresetCopyValueSchema = passthrough()
 
 /** agentPreset.openDocument request payload. */
-export const agentPresetOpenDocumentRequestSchema = z.object({
-  agentPreset: z.string().min(1),
-})
+export const agentPresetOpenDocumentRequestSchema = passthrough()
 
 /** agentPreset.openDocument response value. */
-export const agentPresetOpenDocumentValueSchema = z.union([
-  z.object({ opened: z.literal(true) }),
-  z.object({ opened: z.literal(false), path: z.string() }),
-])
+export const agentPresetOpenDocumentValueSchema = passthrough()
 
 /** agentPreset.remove request payload. */
-export const agentPresetRemoveRequestSchema = z.object({
-  agentPreset: z.string().min(1),
-})
+export const agentPresetRemoveRequestSchema = passthrough()
 
 /** agentPreset.remove response value. */
-export const agentPresetRemoveValueSchema = z.object({
-})
+export const agentPresetRemoveValueSchema = passthrough()
