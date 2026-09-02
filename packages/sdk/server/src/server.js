@@ -10,6 +10,7 @@ import { createUserMessage } from '@freddie/freddie-llm'
 import { carrierKeyOf } from '@freddie/freddie-scope'
 import { SessionId } from '@freddie/freddie-session'
 import * as LlmDeepSeek from '@freddie/freddie-llm-deepseek'
+import { setTurnContext } from './turn-context.js'
 
 /** Recover the delegating parent from the service-owned scoped carrier. */
 function subagentParentOf(carrier) {
@@ -101,11 +102,15 @@ export class HarnessSdkJsonRpcServer {
 
   /**
    * Queue one identified prompt without assigning later activity to it.
-   * @param params - target session, user content, and optional per-turn tool
-   *   scoping (`enabledTools`/`disabledTools`, tool-name allow/deny lists —
-   *   see `ctx.tools.restrict()` in `@freddie/freddie-tools`). A given list
-   *   REPLACES this session's current scope from this turn onward; omitting
-   *   both leaves the existing scope (or the deployment default) unchanged.
+   * @param params - target session, user content, and optional per-turn
+   *   scoping: `enabledTools`/`disabledTools` (tool-name allow/deny lists —
+   *   see `ctx.tools.restrict()` in `@freddie/freddie-tools`; a given list
+   *   REPLACES this session's current scope from this turn onward, omitting
+   *   both leaves the existing scope unchanged) and `turnContext` (an opaque
+   *   deployer-defined value a tool package reads via
+   *   `turnContextFor(exec.agent)`, see `./turn-context.js`; a call carrying
+   *   it REPLACES the session's context, omitting it leaves the existing
+   *   context — or absence of one — unchanged).
    * @returns the durable message identity.
    */
   async prompt(params) {
@@ -117,6 +122,7 @@ export class HarnessSdkJsonRpcServer {
       throw new Error(`session agent was disposed outside the server: ${params.sessionId}`)
     }
     this.applyToolScope(rec, params)
+    if ('turnContext' in params) setTurnContext(rec.handle.agent, params.turnContext)
     const message = createUserMessage({ content: params.contentBlocks, source: { kind: 'user' } })
     rec.handle.agent.followup(message)
     return { messageId: message.id }

@@ -248,12 +248,16 @@ export class HarnessClient {
    * Queue one prompt and return its durable inbox identity.
    * @param sessionId - target session; an unknown id creates it.
    * @param contentBlocks - the user message, sent verbatim.
-   * @param options - optional per-turn tool scoping.
+   * @param options - optional per-turn tool scoping and context.
    * @param options.enabledTools - allow-list of tool names visible to this
    *   turn (and every later turn on this session, until overridden); omitted
    *   leaves the session's current scope unchanged.
    * @param options.disabledTools - deny-list of tool names hidden from this
    *   turn onward; composes with `enabledTools` (both may be given together).
+   * @param options.turnContext - opaque deployer-defined value a server-side
+   *   tool package reads via `turnContextFor(exec.agent)`
+   *   (`@freddie/freddie-sdk-jsonrpc-server`); replaces the session's current
+   *   context, and stays in effect on every later turn until overridden.
    * @returns the queued message id.
    */
   async prompt(sessionId, contentBlocks, options) {
@@ -262,6 +266,7 @@ export class HarnessClient {
       contentBlocks,
       ...options?.enabledTools === undefined ? {} : { enabledTools: options.enabledTools },
       ...options?.disabledTools === undefined ? {} : { disabledTools: options.disabledTools },
+      ...options !== undefined && 'turnContext' in options ? { turnContext: options.turnContext } : {},
     }
     const result = await this.request('session/prompt', { ...params })
     if (!isRecord(result) || typeof result.messageId !== 'string') {

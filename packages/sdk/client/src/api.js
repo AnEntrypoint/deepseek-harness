@@ -133,7 +133,8 @@ export class HarnessSession {
    * Queue one prompt, then observe the whole session through its next idle.
    * @param input - prompt text, or content blocks sent verbatim.
    * @param options - optional per-notification observer, plus per-turn tool
-   *   scoping (`enabledTools`/`disabledTools`, see {@link HarnessClient#prompt}).
+   *   scoping and context (`enabledTools`/`disabledTools`/`turnContext`, see
+   *   {@link HarnessClient#prompt}).
    * @returns the owned activity interval; rejects on transport loss, timeout,
    * or a protocol error.
    */
@@ -163,6 +164,7 @@ export class HarnessSession {
       const messageId = await client.prompt(this.id, contentBlocks, {
         enabledTools: options?.enabledTools,
         disabledTools: options?.disabledTools,
+        ...options !== undefined && 'turnContext' in options ? { turnContext: options.turnContext } : {},
       })
       let received = false
       while (true) {

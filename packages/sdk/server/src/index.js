@@ -14,6 +14,7 @@ import { JsonRpcLineTransport } from '@freddie/freddie-sdk-protocol'
 import { HarnessSdkJsonRpcServer } from './server.js'
 
 export * from './server.js'
+export { turnContextFor } from './turn-context.js'
 
 export const name = 'sdk-jsonrpc-server'
 // Only the agent factory is required; initialize reads the optional LLM seam with ctx.get().
