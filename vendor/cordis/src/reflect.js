@@ -1,77 +1,9 @@
 import { defineProperty, isNullable } from '@freddie/cosmokit'
-import type { Dict } from '@freddie/cosmokit'
-import { Context } from './context.ts'
-import { getTraceable, symbols, withProps } from './utils.ts'
-import { Fiber, FiberState } from './fiber.ts'
+import { getTraceable, symbols, withProps } from './utils.js'
+import { FiberState } from './fiber.js'
 
-declare module './context.ts' {
-  interface Context {
-    /**
-     * Read a service from the store without the inject requirement.
-     *
-     * @param name — the service name.
-     * @param strict — when `true` (default), only return implementations
-     * whose providing fiber is currently active.
-     * @returns the service value, or `undefined` when not (yet) provided.
-     */
-    get<K extends string & keyof this>(name: K, strict?: boolean): undefined | this[K]
-    /** Same as above for service names outside the typed `Context` surface. */
-    get(name: string, strict?: boolean): any
-    /**
-     * Overwrite a provided service's value.
-     *
-     * Only the fiber that provided the service may set it; setting an
-     * unprovided name throws.
-     *
-     * @param name — the service name.
-     * @param value — the new service value.
-     */
-    set<K extends string & keyof this>(name: K, value: undefined | this[K]): void
-    /** Same as above for service names outside the typed `Context` surface. */
-    set(name: string, value: any): void
-    /**
-     * Register a service implementation owned by the current fiber.
-     *
-     * The service becomes visible to dependents in the same isolation scope
-     * once the fiber is active; it is unregistered (waking dependents) when
-     * the returned disposer runs or the fiber unloads. Throws if the name is
-     * already provided in this scope or declared as an accessor.
-     *
-     * @param name — the service name.
-     * @param value — the service value.
-     * @returns a disposer that unregisters the service.
-     */
-    provide<K extends string & keyof this>(name: K, value: undefined | this[K]): () => void
-    /** Same as above for service names outside the typed `Context` surface. */
-    provide(name: string, value?: any): () => void
-    /**
-     * Define a computed context property backed by get/set hooks.
-     *
-     * The accessor is removed when the current fiber unloads. Throws if the
-     * name is already declared.
-     *
-     * @param name — the context property name.
-     * @param options — the `get` hook and optional `set` hook.
-     */
-    accessor(name: string, options: Omit<Property.Accessor, 'type'>): void
-    /**
-     * Expose selected members of a service directly on `ctx`.
-     *
-     * Each mixed-in key becomes an accessor that forwards to the service
-     * (binding methods to it), so e.g. `ctx.on` forwards to `ctx.events.on`.
-     * Mixins are removed when the current fiber unloads.
-     *
-     * @param name — the context property holding the source service.
-     * @param mixins — keys to forward, or a source-key → ctx-key map.
-     */
-    mixin<K extends string & keyof this>(name: K, mixins: (keyof this & keyof this[K])[] | Dict<string>): void
-    /** Same as above with a source object instead of a context property name. */
-    mixin<T extends {}>(source: T, mixins: (keyof this & keyof T)[] | Dict<string>): void
-  }
-}
-
-function enhanceError(error: Error) {
-  const lines = error.stack!.split('\n')
+function enhanceError(error) {
+  const lines = error.stack.split('\n')
   lines.splice(0, 2, `Error: ${error.message}`)
   error.stack = lines.join('\n')
   return error
@@ -83,45 +15,11 @@ const RESERVED_WORDS = ['prototype', 'then']
 // - is a reserved word (prototype, then)
 // - is a number string (0, 1, 2, ...)
 // - starts with `_`
-function isSpecialProperty(prop: string | symbol): prop is symbol {
+function isSpecialProperty(prop) {
   return typeof prop === 'symbol'
     || RESERVED_WORDS.includes(prop)
     || parseInt(prop).toString() === prop
     || prop.startsWith('_')
-}
-
-/** Context property definition known by the reflection service. */
-export type Property = Property.Service | Property.Accessor
-
-/** Property definition variants understood by `ReflectService`. */
-export namespace Property {
-  /** Service property backed by a provided implementation. */
-  export interface Service {
-    /** Discriminator. */
-    type: 'service'
-  }
-
-  /** Computed context property backed by custom get/set hooks. */
-  export interface Accessor {
-    /** Discriminator. */
-    type: 'accessor'
-    /** Compute the property value; `error` carries the caller stack for diagnostics. */
-    get: (this: Context, receiver: any, error: Error) => any
-    /** Optional setter; return `false` to reject the write. */
-    set?: (this: Context, value: any, receiver: any, error: Error) => boolean
-  }
-}
-
-/** Concrete service implementation record stored in the root reflect service. */
-export interface Impl {
-  /** The service name. */
-  name: string
-  /** The fiber that provided the service (owns its lifetime). */
-  fiber: Fiber
-  /** The current service value. */
-  value?: any
-  /** Optional availability predicate consulted before dependents may load. */
-  check?: () => boolean
 }
 
 /**
@@ -132,8 +30,8 @@ export interface Impl {
  */
 export class ReflectService {
   /** Proxy traps implementing service resolution for every context object. */
-  static handler: ProxyHandler<Context> = {
-    get: (target, prop, ctx: Context) => {
+  static handler = {
+    get: (target, prop, ctx) => {
       if (isSpecialProperty(prop)) {
         return Reflect.get(target, prop, ctx)
       }
@@ -152,7 +50,7 @@ export class ReflectService {
         if (!ctx.fiber.runtime) return ctx.reflect.get(prop, false)
         return ctx.events.waterfall('internal/get', ctx, prop, error, () => {
           const key = target[symbols.isolate][prop]
-          let fiber = (ctx[symbols.shadow] as Context ?? ctx).fiber
+          let fiber = (ctx[symbols.shadow] ?? ctx).fiber
           while (true) {
             const impl = fiber.store?.[prop]
             if (impl) return getTraceable(ctx, impl.value)
@@ -165,12 +63,12 @@ export class ReflectService {
             fiber = fiber.parent.fiber
           }
         })
-      } catch (e: any) {
+      } catch (e) {
         throw e === error ? enhanceError(e) : e
       }
     },
 
-    set: (target, prop, value, ctx: Context) => {
+    set: (target, prop, value, ctx) => {
       if (isSpecialProperty(prop)) {
         return Reflect.set(target, prop, value, ctx)
       }
@@ -191,7 +89,7 @@ export class ReflectService {
         return ctx.events.waterfall('internal/set', ctx, prop, value, error, () => {
           return ctx.reflect.set(prop, value, error)
         })
-      } catch (e: any) {
+      } catch (e) {
         throw e === error ? enhanceError(e) : e
       }
     },
@@ -206,11 +104,13 @@ export class ReflectService {
   }
 
   /** Service implementations, keyed by isolation label. */
-  public store: Dict<Impl, symbol> = Object.create(null)
+  store = Object.create(null)
   /** Declared context properties (services and accessors), by name. */
-  public props: Dict<Property> = Object.create(null)
+  props = Object.create(null)
+  ctx
 
-  constructor(public ctx: Context) {
+  constructor(ctx) {
+    this.ctx = ctx
     defineProperty(this, symbols.tracker, {
       property: 'ctx',
       noShadow: true,
@@ -230,11 +130,11 @@ export class ReflectService {
    * fiber is currently active.
    * @returns the service value, or `undefined` when not (yet) provided.
    */
-  get(name: string, strict = true) {
+  get(name, strict = true) {
     return getTraceable(this.ctx, this._getImpl(name, strict)?.value)
   }
 
-  _getImpl(name: string, strict = true) {
+  _getImpl(name, strict = true) {
     const key = this.ctx[symbols.isolate][name]
     const impl = key && this.store[key]
     if (!impl) return
@@ -251,7 +151,7 @@ export class ReflectService {
    * @returns `true` on success.
    * @throws when `name` was never provided, or was provided by another fiber.
    */
-  set(name: string, value: any, error?: Error) {
+  set(name, value, error) {
     const key = this.ctx[symbols.isolate][name]
     const impl = this.store[key]
     if (!impl) {
@@ -274,7 +174,7 @@ export class ReflectService {
    * @param check — optional availability predicate for dependents.
    * @returns a disposer that unregisters the service.
    */
-  provide(name: string, value?: any, check?: () => boolean) {
+  provide(name, value, check) {
     return this.ctx.fiber.effect(() => {
       if (!this.props[name]) {
         this.props[name] ??= { type: 'service' }
@@ -285,12 +185,12 @@ export class ReflectService {
 
       this.ctx.root[symbols.isolate][name] ??= Symbol(name)
       const key = this.ctx[symbols.isolate][name]
-      const impl: Impl = { name, value, fiber: this.ctx.fiber, check }
+      const impl = { name, value, fiber: this.ctx.fiber, check }
       if (this.store[key]) {
         throw new Error(`service "${name}" has been registered at <${this.store[key].fiber.name}>`)
       }
       this.store[key] = impl
-      this.ctx.fiber.store![name] = impl
+      this.ctx.fiber.store[name] = impl
       if (this.ctx.fiber.state === FiberState.ACTIVE) {
         this.notify([name])
       }
@@ -299,7 +199,7 @@ export class ReflectService {
         const fibers = this.notify([name])
         await Promise.allSettled(fibers.map(fiber => fiber.await()))
         // ensure self access before dependencies cleanup
-        delete this.ctx.fiber.store![name]
+        delete this.ctx.fiber.store[name]
       }
     }, `ctx.provide(${JSON.stringify(name)})`)
   }
@@ -311,8 +211,8 @@ export class ReflectService {
    * @param filter — restricts notification to matching isolation scopes.
    * @returns the fibers whose dependency state was refreshed.
    */
-  notify(names: string[], filter = (ctx: Context, name: string) => ctx[symbols.isolate][name] === this.ctx[symbols.isolate][name]) {
-    const fibers: Fiber[] = []
+  notify(names, filter = (ctx, name) => ctx[symbols.isolate][name] === this.ctx[symbols.isolate][name]) {
+    const fibers = []
     for (const runtime of this.ctx.registry.values()) {
       for (const fiber of runtime.fibers) {
         let hasUpdate = false
@@ -328,8 +228,8 @@ export class ReflectService {
       }
     }
     for (const name of names) {
-      const self: Context = Object.create(this.ctx)
-      self[symbols.filter] = (target: Context) => filter(target, name)
+      const self = Object.create(this.ctx)
+      self[symbols.filter] = (target) => filter(target, name)
       this.ctx.events.emit(self, 'internal/service', name, this._getImpl(name, false)?.value)
     }
     return fibers
@@ -342,7 +242,7 @@ export class ReflectService {
    * @param options — the `get` hook and optional `set` hook.
    * @returns a disposer that removes the accessor.
    */
-  accessor(name: string, options: Omit<Property.Accessor, 'type'>) {
+  accessor(name, options) {
     return this.ctx.fiber.effect(() => {
       if (name in this.props) {
         throw new Error(`property "${name}" is already declared as ${this.props[name].type}`)
@@ -361,11 +261,11 @@ export class ReflectService {
    * @param mixins — keys to forward, or a source-key → ctx-key map.
    * @returns a disposer that removes all created accessors.
    */
-  mixin(source: any, mixins: string[] | Dict<string>) {
+  mixin(source, mixins) {
     const self = this
     return this.ctx.fiber.effect(function* () {
       const entries = Array.isArray(mixins) ? mixins.map(key => [key, key]) : Object.entries(mixins)
-      const getTarget = (ctx: Context, error: Error) => {
+      const getTarget = (ctx, error) => {
         // TODO enhance error message
         return ctx[source]
       }
@@ -395,7 +295,7 @@ export class ReflectService {
    * @param value — the value to wrap.
    * @returns the traceable wrapper (or the value itself when not applicable).
    */
-  trace<T>(value: T) {
+  trace(value) {
     return getTraceable(this.ctx, value)
   }
 
@@ -405,7 +305,7 @@ export class ReflectService {
    * @param callback — the function to wrap.
    * @returns a proxy delegating to `callback` with traced values.
    */
-  bind<T extends Function>(callback: T) {
+  bind(callback) {
     return new Proxy(callback, {
       apply: (target, thisArg, args) => {
         return Reflect.apply(target, this.trace(thisArg), args.map(arg => this.trace(arg)))

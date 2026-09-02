@@ -1,6 +1,6 @@
 import { defineProperty } from '@freddie/cosmokit'
-import { Context } from './context.ts'
-import { createCallable, joinPrototype, symbols, type Tracker } from './utils.ts'
+import { Context } from './context.js'
+import { createCallable, joinPrototype, symbols } from './utils.js'
 
 /**
  * Base class for services that expose a named API on `ctx`.
@@ -8,26 +8,26 @@ import { createCallable, joinPrototype, symbols, type Tracker } from './utils.ts
  * Subclasses call `super(ctx, name)` from their constructor. The service is
  * registered immediately and is automatically removed with the owning fiber.
  */
-export abstract class Service<out T = never> {
+export class Service {
   /** Symbol key of an instance method run after construction (class plugins). */
-  static readonly init: unique symbol = symbols.init
+  static init = symbols.init
   /** Symbol key of the availability predicate passed to `ctx.provide()`. */
-  static readonly check: unique symbol = symbols.check
+  static check = symbols.check
   /** Symbol key of the phantom intercept-config type parameter. */
-  static readonly config: unique symbol = symbols.config
+  static config = symbols.config
   /** Symbol key of the call body making a service callable (e.g. `ctx.logger()`). */
-  static readonly invoke: unique symbol = symbols.invoke
+  static invoke = symbols.invoke
   /** Symbol key of the helper deriving an extended service instance. */
-  static readonly extend: unique symbol = symbols.extend
+  static extend = symbols.extend
   /** Symbol key of the tracker metadata used for context tracing. */
-  static readonly tracker: unique symbol = symbols.tracker
+  static tracker = symbols.tracker
   /** Symbol key of the intercept-config resolution helper below. */
-  static readonly resolveConfig: unique symbol = symbols.resolveConfig
-
-  declare [symbols.config]: T
+  static resolveConfig = symbols.resolveConfig
 
   /** The service name this instance is registered under. */
-  public name!: string
+  name
+
+  ctx
 
   /**
    * Register this instance as `name` in the current context.
@@ -39,11 +39,11 @@ export abstract class Service<out T = never> {
    * @param ctx — the context to register in (stored as `this.ctx`).
    * @param name — the service name; defaults to the static `provide` field.
    */
-  constructor(protected ctx: Context, name: string) {
-    name ??= this.constructor['provide'] as string
+  constructor(ctx, name) {
+    name ??= this.constructor['provide']
 
     let self = this
-    const tracker: Tracker = {
+    const tracker = {
       associate: name,
       property: 'ctx',
     }
@@ -58,12 +58,12 @@ export abstract class Service<out T = never> {
     return self
   }
 
-  protected [symbols.filter](ctx: Context) {
+  [symbols.filter](ctx) {
     return ctx[symbols.isolate][this.name] === this.ctx[symbols.isolate][this.name]
   }
 
-  protected [symbols.extend](props?: any) {
-    let self: any
+  [symbols.extend](props) {
+    let self
     if (this[Service.invoke]) {
       self = createCallable(this.name, this, this[symbols.tracker])
     } else {
@@ -83,9 +83,9 @@ export abstract class Service<out T = never> {
    * @param head — highest-precedence config merged after all intercepts.
    * @returns the merged config.
    */
-  [symbols.resolveConfig](base?: T, head?: T): T {
+  [symbols.resolveConfig](base, head) {
     let intercept = this.ctx[Context.intercept]
-    const configs: any[] = []
+    const configs = []
     while (this.name in intercept) {
       if (Object.hasOwn(intercept, this.name)) {
         configs.unshift(intercept[this.name])
@@ -101,7 +101,7 @@ export abstract class Service<out T = never> {
     }
   }
 
-  static [Symbol.hasInstance](instance: any) {
+  static [Symbol.hasInstance](instance) {
     if (!instance) return false
     let constructor = instance.constructor
     while (constructor) {

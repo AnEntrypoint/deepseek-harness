@@ -1,53 +1,16 @@
 import { defineProperty, hyphenate } from '@freddie/cosmokit'
-import { Context } from './context.ts'
-import { Fiber } from './fiber.ts'
-import { createCallable, joinPrototype, symbols, type Tracker } from './utils.ts'
-
-declare module './context.ts' {
-  interface Intercept {
-    logger: LoggerService.Intercept
-  }
-}
-
-/** Logger method name and severity category. */
-export type LoggerType = 'error' | 'info' | 'warn' | 'debug'
-
-/** Callable shape for one logger severity method. */
-export type LoggerMethod = (format: any, ...param: any[]) => void
-
-/** Formatter used to resolve a printf-style placeholder. */
-export type Formatter = (value: any, exporter: Exporter, message: Message) => any
+import { createCallable, joinPrototype, symbols } from './utils.js'
 
 /** Numeric severity used when exporters decide whether to emit a message. */
-export const enum LoggerLevel {
-  ERROR = 0,
-  INFO = 1,
-  WARN = 2,
-  DEBUG = 3,
-}
-
-/** Structured log record delivered to exporters. */
-export interface Message {
-  sn: number
-  ts: number
-  name: string
-  type: LoggerType
-  level: number
-  args: any[]
-  fiber?: WeakRef<Fiber>
-}
-
-/** Sink that receives structured log messages. */
-export interface Exporter {
-  colors?: number | false
-  maxLength?: number
-  levels?: Record<string, number>
-  formatters?: Record<string, Formatter>
-  export(message: Message): void
+export const LoggerLevel = {
+  ERROR: 0,
+  INFO: 1,
+  WARN: 2,
+  DEBUG: 3,
 }
 
 /** Built-in placeholder formatters used by `Logger.format()`. */
-export const defaultFormatters: Record<string, Formatter> = {
+export const defaultFormatters = {
   s: (value) => String(value),
   d: (value) => Math.trunc(Number(value)),
   i: (value) => Math.trunc(Number(value)),
@@ -60,33 +23,18 @@ export const defaultFormatters: Record<string, Formatter> = {
   },
 }
 
-/** Options used when creating a named logger facade. */
-export interface LoggerOptions {
-  /** The logger name shown with each message. */
-  name: string
-  /** Message fields merged into every record from this logger. */
-  meta?: Partial<Message>
-  /** Default maximum level exported when an exporter has no own threshold. */
-  level?: number
-}
-
-/** Logger facade identity, inherited message metadata, and optional minimum level. */
-export interface Logger extends LoggerOptions {}
-/** Logger facade severity methods. */
-export interface Logger extends Record<LoggerType, LoggerMethod> {}
-
-function isAggregateError(error: any): error is Error & { errors: Error[] } {
+function isAggregateError(error) {
   return error instanceof Error && Array.isArray(error['errors'])
 }
 
 /** Logger facade for one named subsystem. */
 export class Logger {
-  static color(exporter: Exporter, code: number, value: any, decoration = '') {
+  static color(exporter, code, value, decoration = '') {
     if (!exporter.colors) return '' + value
-    return `\u001b[3${code < 8 ? code : '8;5;' + code}${exporter.colors >= 2 ? decoration : ''}m${value}\u001b[0m`
+    return `[3${code < 8 ? code : '8;5;' + code}${exporter.colors >= 2 ? decoration : ''}m${value}[0m`
   }
 
-  static code(name: string, level?: false | number) {
+  static code(name, level) {
     let hash = 0
     for (let i = 0; i < name.length; i++) {
       hash = ((hash << 3) - hash) + name.charCodeAt(i) + 13
@@ -96,7 +44,7 @@ export class Logger {
     return colors[Math.abs(hash) % colors.length]
   }
 
-  static format(exporter: Exporter, message: Message): string {
+  static format(exporter, message) {
     const args = message.args.slice()
     if (args[0] instanceof Error) {
       args[0] = args[0].stack || args[0].message
@@ -105,7 +53,7 @@ export class Logger {
       args.unshift('%o')
     }
 
-    let format: string = args.shift()
+    let format = args.shift()
     format = format.replace(/%([a-zA-Z%])/g, (match, char) => {
       if (match === '%%') return '%'
       const formatter = exporter.formatters?.[char] ?? defaultFormatters[char]
@@ -130,7 +78,10 @@ export class Logger {
     }).join('\n')
   }
 
-  constructor(options: LoggerOptions, private service: LoggerService) {
+  service
+
+  constructor(options, service) {
+    this.service = service
     Object.assign(this, options)
     this.error = this._method('error', LoggerLevel.ERROR)
     this.info = this._method('info', LoggerLevel.INFO)
@@ -138,8 +89,8 @@ export class Logger {
     this.debug = this._method('debug', LoggerLevel.DEBUG)
   }
 
-  private _method(type: LoggerType, level: number): LoggerMethod {
-    return (...args: any[]) => {
+  _method(type, level) {
+    return (...args) => {
       if (args.length === 1 && args[0] instanceof Error) {
         if (args[0].cause) {
           this[type](args[0].cause)
@@ -154,7 +105,7 @@ export class Logger {
       for (const exporter of this.service.exporters.values()) {
         const targetLevel = exporter.levels?.[this.name] ?? exporter.levels?.default ?? this.level ?? LoggerLevel.INFO
         if (targetLevel < level) continue
-        const message: Message = { sn, ts, type, level, name: this.name, ...this.meta, args }
+        const message = { sn, ts, type, level, name: this.name, ...this.meta, args }
         exporter.export(message)
       }
     }
@@ -172,19 +123,6 @@ export const c256 = [
   201, 202, 203, 204, 205, 206, 207, 208, 209, 214, 215, 220, 221,
 ]
 
-/** Logger service configuration merged from context intercepts. */
-export namespace LoggerService {
-  export interface Intercept {
-    name?: string
-    level?: number
-  }
-}
-
-/** Callable `ctx.logger` service shape. */
-export interface LoggerService extends Record<LoggerType, LoggerMethod> {
-  (name?: string): Logger
-}
-
 /**
  * Built-in logging service.
  *
@@ -193,19 +131,19 @@ export interface LoggerService extends Record<LoggerType, LoggerMethod> {
  */
 export class LoggerService {
   bufferSize = 1000
-  buffer: Message[] = []
-  ctx!: Context
+  buffer = []
+  ctx
 
   _snMessage = 0
   _snExporter = 0
-  exporters = new Map<number, Exporter>()
+  exporters = new Map()
 
-  constructor(ctx: Context) {
-    const tracker: Tracker = {
+  constructor(ctx) {
+    const tracker = {
       property: 'ctx',
       noShadow: true,
     }
-    const self = createCallable('logger', joinPrototype(Object.getPrototypeOf(this), Function.prototype), tracker) as unknown as LoggerService
+    const self = createCallable('logger', joinPrototype(Object.getPrototypeOf(this), Function.prototype), tracker)
     Object.assign(self, this)
     self.ctx = ctx
     defineProperty(self, symbols.tracker, tracker)
@@ -229,16 +167,16 @@ export class LoggerService {
    * @param exporter — the sink that receives structured log messages.
    * @returns a disposer that removes the exporter.
    */
-  exporter(exporter: Exporter) {
+  exporter(exporter) {
     return this.ctx.effect(() => {
       this.exporters.set(++this._snExporter, exporter)
       return () => this.exporters.delete(this._snExporter)
     }, 'ctx.logger.exporter()')
   }
 
-  private _resolveConfig(): LoggerService.Intercept {
+  _resolveConfig() {
     let intercept = this.ctx[symbols.intercept]
-    const configs: LoggerService.Intercept[] = []
+    const configs = []
     while ('logger' in intercept) {
       if (Object.hasOwn(intercept, 'logger')) {
         configs.unshift(intercept['logger'])
@@ -248,9 +186,9 @@ export class LoggerService {
     return Object.assign({}, ...configs)
   }
 
-  [symbols.invoke](name?: string): Logger {
+  [symbols.invoke](name) {
     const config = this._resolveConfig()
-    const fiber = ((this.ctx as any)[symbols.shadow] ?? this.ctx).fiber
+    const fiber = (this.ctx[symbols.shadow] ?? this.ctx).fiber
     name ??= config.name
     name ??= hyphenate(fiber.name)
     return new Logger({
@@ -261,9 +199,9 @@ export class LoggerService {
   }
 
   static {
-    for (const type of ['error', 'info', 'warn', 'debug'] as const) {
-      ;(LoggerService.prototype as any)[type] = function (this: LoggerService, ...args: any[]) {
-        return (this as any)()[type](...args)
+    for (const type of ['error', 'info', 'warn', 'debug']) {
+      LoggerService.prototype[type] = function (...args) {
+        return this()[type](...args)
       }
     }
   }

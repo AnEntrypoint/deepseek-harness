@@ -1,17 +1,6 @@
 import { defineProperty, isNullable } from '@freddie/cosmokit'
-import type { Awaitable, Dict } from '@freddie/cosmokit'
-import { Context } from './context.ts'
-import type { Plugin } from './registry.ts'
-import { buildOuterStack, composeError, DisposableList, getTraceable, isConstructor, isObject, symbols } from './utils.ts'
-import type { Impl } from './reflect.ts'
-import type { StandardSchemaV1 } from '@standard-schema/spec'
-
-declare module './context.ts' {
-  export interface Context extends Pick<Fiber, 'effect'> {
-    /** The fiber (plugin runtime instance) that owns this context. */
-    fiber: Fiber
-  }
-}
+import { Context } from './context.js'
+import { buildOuterStack, composeError, DisposableList, getTraceable, isConstructor, isObject, symbols } from './utils.js'
 
 const kValidationError = Symbol.for('ValidationError')
 
@@ -24,7 +13,7 @@ export class ValidationError extends TypeError {
    *
    * @param issues — the standard-schema issues, one message line each.
    */
-  constructor(issues: readonly StandardSchemaV1.Issue[]) {
+  constructor(issues) {
     super(`invalid config:\n` + issues.map(issue => {
       if (issue.path) {
         return `  - ${issue.message} (at ${issue.path.join('.')})`
@@ -47,7 +36,7 @@ Object.defineProperty(ValidationError.prototype, kValidationError, {
  * @returns the validated config, or `config` unchanged if the runtime has no schema.
  * @throws {ValidationError} when validation reports issues.
  */
-export function resolveConfig(runtime: Plugin.Runtime, config: any) {
+export function resolveConfig(runtime, config) {
   if (!runtime.Config) return config
   // TODO: async validation
   const result = runtime.Config['~standard'].validate(config)
@@ -61,65 +50,20 @@ export function resolveConfig(runtime: Plugin.Runtime, config: any) {
   }
 }
 
-interface AsyncDisposable<T extends Awaitable<void> = Awaitable<void>> extends PromiseLike<() => T> {
-  (): T
-}
-
-/**
- * Function returned by an effect to release resources during disposal.
- *
- * Disposers run in reverse registration order when the owning fiber unloads;
- * they may be async, in which case unloading awaits them.
- */
-export type Disposable<T = any> = () => T
-
-/**
- * Effect body result accepted by `ctx.effect()` and plugin startup.
- *
- * Either a single disposer, a promise of one, or a (possibly async) iterable
- * yielding several — generator effects register each yielded disposer as it
- * is produced.
- */
-export type Effect<T = any> =
-  | SyncEffect<T>
-  | AsyncEffect<T>
-
-type SyncEffect<T = any> =
-  | Disposable<T>
-  | Iterable<Disposable<T>, void, void>
-
-type AsyncEffect<T = any> =
-  | Promise<Disposable<T>>
-  | AsyncIterable<Disposable<T>, void, void>
-
-/** Tree node used to expose nested effect labels for diagnostics. */
-export interface EffectMeta {
-  /** Human-readable effect label, e.g. `ctx.on("event")` or `ctx.provide("name")`. */
-  label: string
-  /** Metadata of nested effects registered while this effect ran. */
-  children: EffectMeta[]
-}
-
-interface EffectRunner<T> {
-  epoch: T
-  execute: () => any
-  collect: (dispose: Disposable) => void
-  getOuterStack: () => string[]
-}
-
+// Same as `this.ctx`, but with a more specific type.
 // Public effect disposers remain single-shot, but structural owners and outer
 // effects must still be able to join a cleanup that another caller started.
-const effectInertia = new WeakMap<Disposable, () => void | Promise<void>>()
+const effectInertia = new WeakMap()
 
-function runDisposable(dispose: Disposable) {
+function runDisposable(dispose) {
   const result = dispose()
   return effectInertia.get(dispose)?.() ?? result
 }
 
 /** Notify plugin teardown without allowing one observer to break ownership cleanup. */
-function emitPluginDisposed(context: Context, fiber: Fiber) {
-  const args: any[] = ['internal/plugin', fiber]
-  let callbacks: Function[]
+function emitPluginDisposed(context, fiber) {
+  const args = ['internal/plugin', fiber]
+  let callbacks
   try {
     callbacks = context.events.dispatch('emit', args)
   } catch (error) {
@@ -144,33 +88,34 @@ function emitPluginDisposed(context: Context, fiber: Fiber) {
  * config threw; `UNLOADING` — disposers are running; `DISPOSED` — the fiber
  * was removed and cannot restart.
  */
-export const enum FiberState {
-  PENDING,
-  LOADING,
-  ACTIVE,
-  FAILED,
-  DISPOSED,
-  UNLOADING,
+export const FiberState = {
+  PENDING: 0,
+  LOADING: 1,
+  ACTIVE: 2,
+  FAILED: 3,
+  DISPOSED: 4,
+  UNLOADING: 5,
+}
+
+/** Cordis error code definitions. */
+const CordisErrorCode = {
+  INACTIVE_EFFECT: 'cannot create effect on inactive context',
 }
 
 /** Framework error with a stable machine-readable code. */
 export class CordisError extends Error {
+  static Code = CordisErrorCode
+
+  code
+
   /**
    * @param code — the stable error code; also the default message.
    * @param message — optional human-readable override.
    */
-  constructor(public code: CordisError.Code, message?: string) {
-    super(message ?? CordisError.Code[code])
+  constructor(code, message) {
+    super(message ?? CordisErrorCode[code])
+    this.code = code
   }
-}
-
-/** Cordis error code definitions. */
-export namespace CordisError {
-  export type Code = keyof typeof Code
-
-  export const Code = {
-    INACTIVE_EFFECT: 'cannot create effect on inactive context',
-  } as const
 }
 
 const INACTIVE = '__INACTIVE__'
@@ -183,31 +128,34 @@ const INACTIVE = '__INACTIVE__'
  */
 export class Fiber {
   /** Unique id within the registry; 0 for the root fiber, `null` once disposed. */
-  public uid: number | null
+  uid
   /** The context this fiber's plugin runs in (extends the parent context). */
-  public readonly ctx: Context
+  ctx
   /** The validated plugin config (updated by `update()`). */
-  public config: any
+  config
   /** The raw plugin config, re-resolved before each activation. */
-  public _config: any
+  _config
   /** Current lifecycle state; transitions emit `internal/status`. */
-  public state = FiberState.PENDING
+  state = FiberState.PENDING
   /** Dispose this fiber: unload the plugin, then settle once cleanup finished. */
-  public readonly dispose: () => Promise<void>
+  dispose
   /** Snapshot of required service implementations while loaded; `undefined` otherwise. */
-  public store: Dict<Impl> | undefined
+  store
   /** The in-flight load/unload transition, if one is currently running. */
-  public inertia: Promise<void> | undefined
+  inertia
 
-  public readonly _hooks: Dict<DisposableList<Function>> = Object.create(null)
-  public readonly _disposables = new DisposableList<Disposable>()
+  _hooks = Object.create(null)
+  _disposables = new DisposableList()
 
-  // Same as `this.ctx`, but with a more specific type.
-  protected context: Context
+  context
 
-  private _error: any
-  private _runner: EffectRunner<string>
-  private _store: Dict<Impl> = Object.create(null)
+  _error
+  _runner
+  _store = Object.create(null)
+
+  parent
+  inject
+  runtime
 
   /**
    * Create a fiber. Plugin authors normally obtain fibers from `ctx.plugin()`
@@ -220,14 +168,17 @@ export class Fiber {
    * @param getOuterStack — captures the caller stack for effect diagnostics.
    */
   constructor(
-    public parent: Context,
-    config: any,
-    public inject: Dict<any>,
-    public runtime: Plugin.Runtime | null,
-    getOuterStack: () => string[],
+    parent,
+    config,
+    inject,
+    runtime,
+    getOuterStack,
   ) {
+    this.parent = parent
+    this.inject = inject
+    this.runtime = runtime
     this._config = config
-    const collect = (dispose: Disposable) => {
+    const collect = (dispose) => {
       this._disposables.push(dispose)
     }
 
@@ -334,7 +285,7 @@ export class Fiber {
 
   /** The plugin's display name, inherited from the nearest named ancestor, else `'root'`. */
   get name() {
-    let fiber: Fiber = this
+    let fiber = this
     do {
       if (fiber.runtime?.name) return fiber.runtime.name
       fiber = fiber.parent.fiber
@@ -353,17 +304,17 @@ export class Fiber {
     throw new CordisError('INACTIVE_EFFECT')
   }
 
-  private _execute<T>(runner: EffectRunner<T>) {
+  _execute(runner) {
     const oldEpoch = runner.epoch
     return composeError((info) => {
-      const safeCollect = (dispose: void | Disposable) => {
+      const safeCollect = (dispose) => {
         if (typeof dispose === 'function') {
           runner.collect(dispose)
         } else if (!isNullable(dispose)) {
           throw new TypeError('Invalid effect')
         }
       }
-      const effect: Effect = runner.execute.call(this)
+      const effect = runner.execute.call(this)
       if (typeof effect === 'function') {
         return runner.collect(effect)
       } else if (isNullable(effect)) {
@@ -408,41 +359,39 @@ export class Fiber {
    * is a no-op. Throws `CordisError('INACTIVE_EFFECT')` if the fiber is
    * already disposed, and `TypeError` if `execute` returns an invalid shape.
    *
-   * @param execute — the effect body; see {@link Effect} for accepted shapes.
+   * @param execute — the effect body; accepts a disposer, a promise of one, or
+   *   a (possibly async) iterable yielding several.
    * @param label — effect label shown in `getEffects()` diagnostics.
    * @returns a disposer that tears the effect down and settles once done.
    */
-  effect(execute: () => SyncEffect, label?: string): Disposable<Promise<void>>
-  /** Same as above for async effects; the disposer is also awaitable. */
-  effect(execute: () => Effect, label?: string): AsyncDisposable<Promise<void>>
-  effect(execute: () => Effect, label = 'anonymous'): any {
+  effect(execute, label = 'anonymous') {
     this.assertActive()
     if (this.state === FiberState.UNLOADING) {
       throw new CordisError('INACTIVE_EFFECT')
     }
 
-    const disposables: Disposable[] = []
+    const disposables = []
     let disposing = false
-    let disposalTask: void | Promise<void>
+    let disposalTask
     const dispose = () => {
       if (disposing) return disposalTask
       disposing = true
-      let task!: void | Promise<void>
+      let task
       for (const disposable of disposables.splice(0).reverse()) {
         if (task) {
           task = task.then(() => runDisposable(disposable))
         } else {
           const result = runDisposable(disposable)
           if (isObject(result) && 'then' in result) {
-            task = result as any
+            task = result
           }
         }
       }
       return disposalTask = task
     }
 
-    const meta: EffectMeta = { label, children: [] }
-    const runner: EffectRunner<boolean> = {
+    const meta = { label, children: [] }
+    const runner = {
       execute,
       epoch: true,
       collect: (dispose) => {
@@ -455,24 +404,24 @@ export class Fiber {
       getOuterStack: buildOuterStack(),
     }
 
-    let task: void | Promise<void>
+    let task
     let executing = true
-    let resolveSetup: (() => void) | undefined
-    let rejectSetup: ((reason: unknown) => void) | undefined
-    let setupBarrier: Promise<void> | undefined
+    let resolveSetup
+    let rejectSetup
+    let setupBarrier
     let setupFailed = false
-    let inFlight: void | Promise<void>
+    let inFlight
     let removeWrapper = () => false
 
     const waitForSetup = () => {
-      setupBarrier ??= new Promise<void>((resolve, reject) => {
+      setupBarrier ??= new Promise((resolve, reject) => {
         resolveSetup = resolve
         rejectSetup = reject
       })
       return setupBarrier
     }
 
-    const disposeAfter = (setup: PromiseLike<void>) => {
+    const disposeAfter = (setup) => {
       return Promise.resolve(setup).then(
         () => dispose(),
         async (reason) => {
@@ -482,8 +431,8 @@ export class Fiber {
       )
     }
 
-    const finalizeDisposal = (callback: () => void | Promise<void>) => {
-      let result: void | Promise<void>
+    const finalizeDisposal = (callback) => {
+      let result
       try {
         result = callback()
       } catch (error) {
@@ -511,7 +460,7 @@ export class Fiber {
         if (executing) return disposeAfter(waitForSetup())
         return task ? disposeAfter(task) : dispose()
       })
-    }, symbols.effect, meta) as AsyncDisposable
+    }, symbols.effect, meta)
     effectInertia.set(wrapper, () => inFlight)
 
     // Make the effect visible to a reentrant owner unload before execute()
@@ -524,7 +473,7 @@ export class Fiber {
       executing = false
       setupFailed = true
       runner.epoch = false
-      let cleanup: void | Promise<void>
+      let cleanup
       try {
         cleanup = finalizeDisposal(dispose)
       } finally {
@@ -563,22 +512,22 @@ export class Fiber {
   /**
    * Return metadata for currently registered effects.
    *
-   * @returns one {@link EffectMeta} tree per labeled live effect.
+   * @returns one effect-meta tree per labeled live effect.
    */
   getEffects() {
     return [...this._disposables]
-      .map<EffectMeta>(dispose => dispose[symbols.effect])
+      .map(dispose => dispose[symbols.effect])
       .filter(Boolean)
   }
 
-  private _getState() {
+  _getState() {
     if (this.uid === null) return FiberState.DISPOSED
     if (this._error) return FiberState.FAILED
     if (this._runner.epoch !== INACTIVE) return FiberState.ACTIVE
     return FiberState.PENDING
   }
 
-  private _updateState(callback: () => void | FiberState) {
+  _updateState(callback) {
     const oldState = this.state
     this.state = callback() ?? this._getState()
     if (oldState === this.state) return
@@ -588,13 +537,13 @@ export class Fiber {
     // only notify changes between ACTIVE and NON-ACTIVE states
     if (oldState !== FiberState.ACTIVE && this.state !== FiberState.ACTIVE) return
     for (const key of Reflect.ownKeys(this.ctx.reflect.store)) {
-      const impl = this.ctx.reflect.store[key as symbol]
+      const impl = this.ctx.reflect.store[key]
       if (impl.fiber !== this) continue
       this.ctx.reflect.notify([impl.name])
     }
   }
 
-  _checkImpl(name: string) {
+  _checkImpl(name) {
     const impl = this.ctx.reflect._getImpl(name, true)
     if (!impl) return delete this._store[name]
     try {
@@ -609,7 +558,7 @@ export class Fiber {
   }
 
   _refresh() {
-    let epoch: string | boolean = false
+    let epoch = false
     epoch = ''
     for (const name of Object.keys(this.inject)) {
       const impl = this._store[name]
@@ -622,7 +571,7 @@ export class Fiber {
     this._setEpoch(epoch)
   }
 
-  private _setEpoch(epoch: string) {
+  _setEpoch(epoch) {
     const oldEpoch = this._runner.epoch
     if (epoch === oldEpoch) return
     this._runner.epoch = epoch
@@ -638,12 +587,12 @@ export class Fiber {
     })
   }
 
-  private _resolveConfig(config: any) {
+  _resolveConfig(config) {
     config = this.context.waterfall(this, 'internal/config', config, () => config)
     return this.runtime ? resolveConfig(this.runtime, config) : config
   }
 
-  private async _reload() {
+  async _reload() {
     this.store = { ...this._store }
     const oldEpoch = this._runner.epoch
     try {
@@ -672,7 +621,7 @@ export class Fiber {
     })
   }
 
-  private async _unload() {
+  async _unload() {
     await Promise.all(this._disposables.clear().map(async (dispose) => {
       try {
         await composeError(async (info) => {
@@ -733,7 +682,7 @@ export class Fiber {
    * @returns the update waterfall result; the default restart returns a promise.
    * @throws when validation, an update listener, or the restarted plugin fails.
    */
-  update(config: any, noSave = false) {
+  update(config, noSave = false) {
     this.assertActive()
     this._config = config
     if (this.state !== FiberState.ACTIVE) {
