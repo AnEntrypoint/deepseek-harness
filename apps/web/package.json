@@ -29,9 +29,7 @@
     "@deepseek-ai/dsh-client-web": "workspace:^",
     "@deepseek-ai/dsh-cmdline": "workspace:^",
     "@deepseek-ai/dsh-pwsh-local": "workspace:^",
-    "@types/node": "^22.0.0",
     "webjsx": "^0.0.73",
-    "typescript": "^6.0.3",
     "fflate": "^0.8.2"
   }
 }
