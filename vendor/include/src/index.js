@@ -1,4 +1,4 @@
-import { EntryGroup, EntryTree, isJsExpr, type EntryOptions } from '@freddie/cordis-plugin-loader'
+import { EntryGroup, EntryTree, isJsExpr } from '@freddie/cordis-plugin-loader'
 import { Context, Service } from '@freddie/cordis'
 import { extname } from 'node:path'
 import { access, constants, readFile, rename, writeFile } from 'node:fs/promises'
@@ -6,11 +6,9 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as yaml from 'js-yaml'
 
-const JsExpr = new yaml.Type('tag:yaml.org,2002:js', {
-  kind: 'scalar',
-  resolve: (data) => typeof data === 'string',
-  construct: (data) => ({ __jsExpr: data }),
-  predicate: isJsExpr,
+const JsExpr = yaml.defineScalarTag('tag:yaml.org,2002:js', {
+  resolve: (data) => typeof data === 'string' ? { __jsExpr: data } : yaml.NOT_RESOLVED,
+  identify: isJsExpr,
   represent: (data) => data['__jsExpr'],
 })
 
@@ -20,11 +18,11 @@ const JsExpr = new yaml.Type('tag:yaml.org,2002:js', {
  * (`dsh --dump-config`) parses and prints exactly the dialect this include
  * mounts.
  */
-export const entryListSchema = yaml.JSON_SCHEMA.extend(JsExpr)
+export const entryListSchema = new yaml.Schema([...yaml.JSON_SCHEMA.tags, JsExpr])
 
 const schema = entryListSchema
 
-const writable: Record<string, string> = {
+const writable = {
   '.json': 'application/json',
   '.yaml': 'application/yaml',
   '.yml': 'application/yaml',
@@ -35,8 +33,8 @@ const supported = new Set(Object.keys(writable))
 const WRITE_RETRY_LIMIT = 10
 const WRITE_RETRY_DELAY_MS = 50
 
-function retryableWriteError(error: unknown): boolean {
-  const code = (error as NodeJS.ErrnoException | null)?.code
+function retryableWriteError(error) {
+  const code = error?.code
   return code === 'EACCES' || code === 'EBUSY' || code === 'EPERM'
 }
 
@@ -55,16 +53,12 @@ function retryableWriteError(error: unknown): boolean {
  * @param warn - sink for skipped-patch diagnostics (printf-style, `%C` = code).
  * @returns a detached entry list with every applicable patch applied.
  */
-export function applyEntryPatches(
-  data: EntryOptions[],
-  patches: PatchOptions[] | undefined,
-  warn: (message: string, ...args: any[]) => void,
-): EntryOptions[] {
+export function applyEntryPatches(data, patches, warn) {
   data = structuredClone(data)
   if (!patches?.length) return data
 
-  const entryMap = new Map<string, EntryOptions>()
-  const buildMap = (entries: EntryOptions[]) => {
+  const entryMap = new Map()
+  const buildMap = (entries) => {
     for (const entry of entries) {
       if (entry.id) entryMap.set(entry.id, entry)
       if (entry.group && Array.isArray(entry.config)) {
@@ -127,46 +121,13 @@ export function applyEntryPatches(
   return data
 }
 
-type ConfigUpdateStage = 'read' | 'parse' | 'validate'
-
-interface ReadCandidate {
-  content: string
-  data: EntryOptions[]
-}
-
 class ConfigFileError extends Error {
-  constructor(public readonly stage: ConfigUpdateStage, path: string, cause: unknown) {
+  stage
+
+  constructor(stage, path, cause) {
     super(`failed to ${stage} config file ${path}`, { cause })
+    this.stage = stage
     this.name = 'ConfigFileError'
-  }
-}
-
-/** Runtime patch applied to entries loaded from an included config file. */
-export interface PatchOptions {
-  id?: string
-  insert?: EntryOptions[]
-  name?: string
-  config?: any
-  group?: boolean | null
-  disabled?: boolean | null
-  inject?: any
-  intercept?: any
-  isolate?: any
-  [key: string]: any
-}
-
-/** Config namespace for the file-backed include loader. */
-export namespace Include {
-  /** Config for a file-backed loader subtree. */
-  export interface Config {
-    /** YAML or JSON path resolved from `ctx.baseUrl`. */
-    path: string
-    /** Entry list written when the file does not already exist. */
-    initial?: any[]
-    /** Runtime patches applied after reading the file. */
-    patches?: PatchOptions[]
-    /** Enables loader apply/reload/unload logs for this subtree. */
-    enableLogs?: boolean
   }
 }
 
@@ -179,20 +140,23 @@ export class Include extends EntryTree {
   // keeps it literal — a `!!js` expression inside a nested row's config
   // belongs to that row's fiber, resolving lazily in the row's own context.
   // Include's own fields (`path`, `enableLogs`) therefore stay literal too.
-  static readonly [EntryGroup.key] = true
+  static [EntryGroup.key] = true
 
-  public filename: string
-  private type?: string
-  private readonly: boolean
-  private content?: string
-  private data?: EntryOptions[]
-  private writeTask?: NodeJS.Timeout | undefined
-  private pendingWrite?: EntryOptions[]
-  private writeQueue: Promise<void> = Promise.resolve()
-  private applyQueue: Promise<unknown> = Promise.resolve()
+  filename
+  type
+  readonly
+  content
+  data
+  writeTask
+  pendingWrite
+  writeQueue = Promise.resolve()
+  applyQueue = Promise.resolve()
 
-  constructor(ctx: Context, public config: Include.Config) {
+  config
+
+  constructor(ctx, config) {
     super(ctx)
+    this.config = config
     this.enableLogs = config.enableLogs ?? ctx.fiber.entry?.parent.tree.enableLogs ?? false
     this.filename = fileURLToPath(new URL(this.config.path, this.ctx.baseUrl))
     const ext = extname(this.filename)
@@ -206,7 +170,7 @@ export class Include extends EntryTree {
     ctx.on('internal/update', async (config, _, next) => {
       if (config.path !== this.config.path) return next()
       await this.enqueue(async () => {
-        const data = this.applyPatches(this.data!, config.patches)
+        const data = this.applyPatches(this.data, config.patches)
         await this.root.update(data)
         this.config = config
       })
@@ -222,13 +186,13 @@ export class Include extends EntryTree {
    * A predecessor's failure is its own caller's outcome and never gates the
    * next task.
    */
-  private enqueue<T>(task: () => Promise<T>): Promise<T> {
+  enqueue(task) {
     const run = this.applyQueue.then(task, task)
     this.applyQueue = run.then(() => {}, () => {})
     return run
   }
 
-  private async checkAccess() {
+  async checkAccess() {
     if (!this.type) return
     try {
       await access(this.filename, constants.W_OK)
@@ -237,15 +201,15 @@ export class Include extends EntryTree {
     }
   }
 
-  private async read(forced = false): Promise<ReadCandidate | undefined> {
-    let content: string
+  async read(forced = false) {
+    let content
     try {
       content = await readFile(this.filename, 'utf8')
     } catch (error) {
       throw new ConfigFileError('read', this.filename, error)
     }
     if (!forced && this.content === content) return
-    let data: any
+    let data
     try {
       if (this.type === 'application/yaml') {
         data = yaml.load(content, { schema })
@@ -264,21 +228,21 @@ export class Include extends EntryTree {
     return { content, data }
   }
 
-  private applyPatches(data: EntryOptions[], patches?: PatchOptions[]): EntryOptions[] {
+  applyPatches(data, patches) {
     return applyEntryPatches(data, patches, (message, ...args) => {
       this.ctx.root.logger?.('loader').warn(message, ...args)
     })
   }
 
   async* [Service.init]() {
-    let candidate: ReadCandidate
+    let candidate
     try {
-      candidate = (await this.read(true))!
+      candidate = await this.read(true)
     } catch (error) {
-      if (!(error instanceof ConfigFileError) || error.stage !== 'read' || (error.cause as NodeJS.ErrnoException)?.code !== 'ENOENT') throw error
+      if (!(error instanceof ConfigFileError) || error.stage !== 'read' || error.cause?.code !== 'ENOENT') throw error
       if (this.config.initial) {
-        await this._writeFile(this.config.initial as any)
-        candidate = (await this.read(true))!
+        await this._writeFile(this.config.initial)
+        candidate = await this.read(true)
       } else {
         throw new Error(`config file not found: ${this.filename}`)
       }
@@ -308,11 +272,11 @@ export class Include extends EntryTree {
     })
   }
 
-  private apply(candidate: ReadCandidate) {
+  apply(candidate) {
     return this.enqueue(() => this._apply(candidate))
   }
 
-  private async _apply(candidate: ReadCandidate) {
+  async _apply(candidate) {
     const data = this.applyPatches(candidate.data, this.config.patches)
     await this.root.update(data)
     this.content = candidate.content
@@ -320,7 +284,7 @@ export class Include extends EntryTree {
     await this.checkAccess()
   }
 
-  private async _writeFile(config: EntryOptions[]) {
+  async _writeFile(config) {
     if (this.readonly) {
       throw new Error(`cannot overwrite readonly config`)
     }
@@ -329,7 +293,7 @@ export class Include extends EntryTree {
     } else if (this.type === 'application/json') {
       this.content = JSON.stringify(config, null, 2)
     }
-    await writeFile(this.filename + '.tmp', this.content!)
+    await writeFile(this.filename + '.tmp', this.content)
     for (let retry = 0; ; retry++) {
       try {
         await rename(this.filename + '.tmp', this.filename)
@@ -341,7 +305,7 @@ export class Include extends EntryTree {
     }
   }
 
-  private writeFile(config: EntryOptions[]) {
+  writeFile(config) {
     clearTimeout(this.writeTask)
     this.pendingWrite = config
     this.writeTask = setTimeout(() => {
@@ -349,7 +313,7 @@ export class Include extends EntryTree {
     }, 0)
   }
 
-  private flushWrite(): Promise<void> {
+  flushWrite() {
     clearTimeout(this.writeTask)
     this.writeTask = undefined
     const config = this.pendingWrite

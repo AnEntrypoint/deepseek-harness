@@ -35,6 +35,6 @@
   },
   "dependencies": {
     "@freddie/cosmokit": "workspace:^",
-    "js-yaml": "^4.2.0"
+    "js-yaml": "^5.4.1"
   }
 }
