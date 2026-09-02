@@ -12,10 +12,8 @@
   },
   "type": "module",
   "main": "src/index.js",
-  "types": "lib/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
       "default": "./src/index.js"
     },
     "./src/*": "./src/*",
@@ -23,8 +21,7 @@
   },
   "files": [
     "src/*.js",
-    "vendor/**/*",
-    "lib/types/**/*.d.ts"
+    "vendor/**/*"
   ],
   "license": "MIT",
   "scripts": {

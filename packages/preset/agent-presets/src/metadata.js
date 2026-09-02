@@ -19,7 +19,7 @@
 
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import yaml from 'js-yaml'
+import { load, dump } from 'js-yaml'
 
 /** The optional display-metadata file beside a preset's composition. */
 export const METADATA_FILE = 'preset.yml'
@@ -50,7 +50,7 @@ export async function readPresetMetadata(directory) {
   }
   let parsed
   try {
-    parsed = yaml.load(raw)
+    parsed = load(raw)
   } catch {
     // Malformed display text is not worth failing discovery over; the picker
     // falls back to the id, and the composition still mounts.
@@ -83,7 +83,7 @@ export function renderPresetMetadata(metadata) {
   const description = text(metadata.description)
   const { order } = metadata
   if (name === undefined && description === undefined && order === undefined) return undefined
-  return yaml.dump({
+  return dump({
     ...name === undefined ? {} : { name },
     ...description === undefined ? {} : { description },
     ...order === undefined ? {} : { order },

@@ -12,22 +12,18 @@
   },
   "type": "module",
   "main": "src/index.js",
-  "types": "lib/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
       "default": "./src/index.js"
     },
     "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
       "default": "./src/invariant.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "src/*.js",
-    "lib/types/**/*.d.ts"
+    "src/*.js"
   ],
   "license": "MIT",
   "peerDependencies": {

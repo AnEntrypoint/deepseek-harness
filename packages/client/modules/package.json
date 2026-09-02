@@ -12,18 +12,14 @@
   },
   "type": "module",
   "main": "src/index.js",
-  "types": "lib/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
       "default": "./src/index.js"
     },
     "./client": {
-      "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
     },
     "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
       "default": "./src/invariant.js"
     },
     "./src/*": "./src/*",
@@ -50,8 +46,7 @@
   "files": [
     "src/*.js",
     "src/client/*.js",
-    "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/client.js"
   ],
   "peerDependencies": {
     "@freddie/freddie-invariants": "workspace:^",

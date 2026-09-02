@@ -10,9 +10,9 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { releaseFamily, tarballName } from './families.ts'
-import { isEntry, run } from './process.ts'
-import { PUBLISH_ORDER_FILE, tarballFiles } from './tarball.ts'
+import { releaseFamily, tarballName } from './families.js'
+import { isEntry, run } from './process.js'
+import { PUBLISH_ORDER_FILE, tarballFiles } from './tarball.js'
 
 /** Where pack output lands when `--out` is omitted. */
 const DEFAULT_OUTPUT = 'dist/npm'

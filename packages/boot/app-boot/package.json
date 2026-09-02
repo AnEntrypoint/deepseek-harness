@@ -55,7 +55,6 @@
     "@freddie/freddie-invariants": "workspace:^",
     "@freddie/freddie-home-paths": "workspace:^",
     "@freddie/freddie-system-prompt": "workspace:^",
-    "@types/js-yaml": "^4.0.9",
     "@freddie/cordis": "workspace:^"
   }
 }

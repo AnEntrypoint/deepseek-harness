@@ -9,7 +9,7 @@
 
 import { parseArgs } from 'node:util'
 import { isEntry } from './process.js'
-import { releaseFamily } from './families.ts'
+import { releaseFamily } from './families.js'
 
 /**
  * Print the publish order the release will follow, and the peer declarations it

@@ -93,8 +93,6 @@
     "@freddie/freddie-settings": "workspace:^",
     "@freddie/freddie-subagent": "workspace:^",
     "@freddie/freddie-system-prompt": "workspace:^",
-    "@freddie/freddie-tools": "workspace:^",
-    "@types/js-yaml": "^4.0.9",
-    "execa": "^10.0.0"
+    "@freddie/freddie-tools": "workspace:^"
   }
 }
