@@ -2,56 +2,50 @@
 
 When the harness needs another upstream Cordis package (e.g. `@cordisjs/plugin-http`), it is **vendored** as pinned source under `vendor/`, not added as an npm dependency — see [the vendoring decision](../../.agents/notes/implemented/process/2026-06-11-vendor-cordis-as-source.md) for why. [vendor/README.md](../../vendor/README.md) covers *updating* an already-vendored package; this guide is the file-by-file checklist for adding a **new** one. (Verified against the existing vendored set; if it drifts, fix it here.)
 
+Every vendored package ships as plain buildless JS — no TypeScript, no `tsconfig.json`, no per-package build config, no `lib/` output. `package.json` `main`/`exports` resolve directly to `src/index.js`.
+
 ## 1. Copy the source in
 
 ```
 vendor/<dir>/
   package.json     # from upstream; set "private": true, rescope the name, keep exports/type
-  tsconfig.json    # extends ../../tsconfig.base.json (see configuration below)
-  src/             # the upstream src/ verbatim
+  src/              # the upstream src/, converted to plain JS (see below)
   README.md LICENSE # if upstream ships them
 ```
 
-`tsconfig.json` mirrors the other vendored packages — `rootDir: src`, `outDir: lib/types`, the strictness relaxations upstream code needs, and a `references` entry for every other vendored package it imports:
+If upstream's source is TypeScript (the normal case — every package vendored here started that way), convert it to plain JS before it's usable in this repo:
 
-```jsonc
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "src", "outDir": "lib/types",
-    "noUncheckedIndexedAccess": false, "exactOptionalPropertyTypes": false,
-    "noImplicitOverride": false, "noUnusedLocals": false, "noUnusedParameters": false
-  },
-  "include": ["src"],
-  "references": [{ "path": "../cordis" }, { "path": "../cosmokit" }]
-}
-```
+- Delete type-only syntax entirely: `interface`/`type` declarations, `declare module`/`declare global` blocks, type-only imports/exports.
+- Strip inline type annotations from parameters, return types, variables, and class fields; drop generic type parameters, type assertions (`as X`, `<X>`, `!`), and `satisfies` clauses.
+- Convert `const enum`/`enum` declarations to plain frozen-shape objects with the same numeric values.
+- Convert constructor parameter properties (`constructor(public x: X)`) to an explicit field declaration plus a `this.x = x` assignment at the correct point in the constructor body (before any other code that reads it; after `super()` in a derived class).
+- Convert TypeScript declaration-merging (a namespace merging with a same-named class/function) into either a hoisted-function-then-attach pattern or a `static` class field, depending on whether the merge target is a function or a class; a namespace merging only with a type alias has no runtime target and converts as a standalone object instead.
+- A namespace whose every member is a type (no `const`/`let`/`function`/`class`) disappears whole — nothing runtime-visible depended on it.
+- Abstract classes keep their abstract methods as real methods that throw `not implemented`, relying on every concrete subclass to override them.
 
-`package.json` invariants: `"private": true` (vendored packages are never published), rescope the `name` ([mapping](../rescope.md)) while keeping upstream's `version`/`exports`/`type`, point declaration metadata at `lib/types`, publish `.d.ts` and `.d.ts.map` declaration outputs, and list its cordis deps in `peerDependencies` (matching the upstream manifest). Transitive upstream deps must themselves be vendored or already present — vendoring one package often means vendoring its dependency tree (e.g. `@cordisjs/plugin-http` pulls `@cordisjs/fetch-file`).
+`vendor/README.md`'s local-modification entry 19 documents this conversion in full, with the exact patterns applied across the current vendored set — reference it directly rather than re-deriving the rules.
 
-Local relative imports/exports in vendored TypeScript source use explicit `.ts` specifiers after copying. This is a repo-local build difference from upstream: `rewriteRelativeImportExtensions` emits `.js` runtime imports while declarations keep explicit `.ts` specifiers that NodeNext/Node16 TypeScript consumers can resolve.
+`package.json` invariants: `"private": true` (vendored packages are never published outside this monorepo), rescope the `name` ([mapping](../rescope.md)) while keeping upstream's `version`/`type`, point `main`/`exports` at `src/index.js` (a package needing a browser-vs-node split, like `logger-console`, uses a conditional `exports` map pointing each condition at its own `src/*.js` file — no separate build config), and list its cordis deps in `peerDependencies` (matching the upstream manifest). Transitive upstream deps must themselves be vendored or already present — vendoring one package often means vendoring its dependency tree (e.g. `@cordisjs/plugin-http` pulls `@cordisjs/fetch-file`).
+
+Local relative imports/exports in the converted JS source use explicit `.js` specifiers (this repo's ESM convention for every workspace package, not vendor-specific).
 
 ## 2. Register it in the root configs
 
 | File | Change |
 |---|---|
-| `tsconfig.base.json` | add `"<npm-name>": ["./vendor/<dir>/src"]` to `paths` |
-| `tsconfig.host.json` | add `{ "path": "./vendor/<dir>" }` to `references` (before the `packages/*` entries; vendored code enters the graph through the host aggregate only) |
-| `vendor/README.md` | add a manifest table row (dir, npm name, version, upstream repo, commit SHA) and log any local modifications |
-| `scripts/publint-all.ts` | only if the vendored package is itself published from here (vendored deps normally are not — skip) |
+| `vendor/README.md` | add a manifest table row (dir, npm name, version, upstream repo, commit SHA) and log any local modifications, including the TS→JS conversion itself if this is the package's first vendoring pass |
+| `tsdown-resolver-paths.json` | add `"<npm-name>": ["./vendor/<dir>/src"]` if any `packages/*` consumer needs this vendored package resolvable for that build's own resolver-path facade |
 
-Covered automatically by globs — no edits needed: root `package.json` workspaces (`vendor/*`), `tsdown.config.ts`, `vitest.config.ts`, `.oxlintrc.json`. A per-package `vendor/<dir>/tsdown.config.ts` is needed ONLY if the build configuration differs from the root default (dual ESM/CJS or multiple entries — see `vendor/schemastery` and `vendor/logger-console`); its entry should read the JS emitted under `lib/types`.
+Covered automatically by the `vendor/*` glob in `pnpm-workspace.yaml`'s `packages` list — no edit needed there for a new directory.
 
-## 3. Mind the manifest guard
+## 3. Mind the manifest log
 
-`scripts/check-vendor-manifest.sh` (a pre-commit hook) fails if anything under `vendor/*/src` is staged without `vendor/README.md` also staged. Stage the manifest update alongside the source so the commit passes.
+`vendor/README.md`'s "Local modifications" section must stay exhaustive — log every divergence from upstream there, including the TS→JS conversion, in the same commit that adds the source.
 
 ## 4. Verify
 
 ```sh
 pnpm install        # registers the workspace
-pnpm run typecheck
-pnpm run build
 ```
 
-Verify live: boot the real composition that depends on the vendored package and drive its behavior. The important isolation boundary is the project-reference graph: vendored source must be referenced through its own `vendor/<dir>/tsconfig.json`, not pulled into an aggregate's strict program.
+Verify live: boot the real composition that depends on the vendored package and drive its behavior — e.g. `node apps/cli/src/bin.js --profile web --dump-config` exercises the full Loader/Include/cordis.yml chain end to end, or construct a real `Context` (`import { Context } from '@freddie/cordis'`), mount the new package as a plugin, and exercise its actual API with real inputs. No test files; this live-execution check is the whole verification step.

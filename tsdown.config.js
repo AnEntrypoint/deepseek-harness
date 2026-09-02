@@ -22,15 +22,16 @@ function isBuildFaceClient(value) {
  * generated one -- typert-loader and typert-registry (the real runtime RPC
  * dispatch machinery) are unaffected and keep reading whichever module the
  * package's own ./typert export points at.
+ *
+ * vendor/* is excluded from this build: it is buildless plain JS too now
+ * (package.json main/exports resolve straight to src/index.js, no lib/
+ * output), so there is nothing left for this build to produce there.
  */
 export default defineConfig(({ env }) => {
   const client = isBuildFaceClient(env?.FREDDIE_BUILD_FACE)
   return {
-    workspace: ['vendor/*', 'packages/*/*', 'apps/cli'],
-    // Most packages ship plain buildless src/*.js directly; vendor/* stays
-    // TypeScript-authored (out of scope for the buildless conversion, its
-    // own build stack per vendor/AGENTS.md), so the glob covers both.
-    entry: client ? '' : ['src/{index,invariant,startup}.{js,ts}'],
+    workspace: ['packages/*/*', 'apps/cli'],
+    entry: client ? '' : ['src/{index,invariant,startup}.js'],
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',

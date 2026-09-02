@@ -11,22 +11,16 @@
     "directory": "vendor/logger-console"
   },
   "type": "module",
-  "main": "lib/index.js",
-  "types": "lib/types/shared.d.ts",
+  "main": "src/index.js",
   "exports": {
     ".": {
-      "types": "./lib/types/shared.d.ts",
-      "node": "./lib/index.js",
-      "default": "./lib/browser.js"
+      "node": "./src/index.js",
+      "default": "./src/browser.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/index.js",
-    "lib/browser.js",
-    "lib/types/**/*.d.ts",
-    "lib/types/**/*.d.ts.map",
     "src"
   ],
   "author": "Shigma <shigma10826@gmail.com>",

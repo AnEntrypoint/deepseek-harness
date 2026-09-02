@@ -27,7 +27,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "js-yaml": "^4.2.0"
+    "js-yaml": "^5.4.1"
   },
   "peerDependencies": {
     "@freddie/cordis-plugin-group": "workspace:^",
