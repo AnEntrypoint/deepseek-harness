@@ -1,77 +1,74 @@
-import { isNullable } from './misc.ts'
-
-type GlobalConstructorNames = keyof {
-  [K in keyof typeof globalThis as typeof globalThis[K] extends abstract new (...args: any) => any ? K : never]: K
-}
+import { isNullable } from './misc.js'
 
 /** Create a predicate for a global constructor name. */
-export function is<K extends GlobalConstructorNames>(type: K): (value: any) => value is InstanceType<typeof globalThis[K]>
 /** Test whether a value matches a global constructor name. */
-export function is<K extends GlobalConstructorNames>(type: K, value: any): value is InstanceType<typeof globalThis[K]>
 /** Test values using `instanceof` with a `toStringTag` fallback. */
-export function is<K extends GlobalConstructorNames>(type: K, value?: any): any {
-  if (arguments.length === 1) return (value: any) => is(type, value)
-  return type in globalThis && value instanceof (globalThis[type] as any)
+export function is(type, value) {
+  if (arguments.length === 1) return (value) => is(type, value)
+  return type in globalThis && value instanceof globalThis[type]
     || Object.prototype.toString.call(value).slice(8, -1) === type
 }
 
-function isArrayBufferLike(value: any): value is ArrayBufferLike {
+function isArrayBufferLike(value) {
   return is('ArrayBuffer', value) || is('SharedArrayBuffer', value)
 }
 
-function isArrayBufferSource(value: any): value is Binary.Source {
+function isArrayBufferSource(value) {
   return isArrayBufferLike(value) || ArrayBuffer.isView(value)
 }
 
+function fromSource(source) {
+  if (ArrayBuffer.isView(source)) {
+    // https://stackoverflow.com/questions/8609289/convert-a-binary-nodejs-buffer-to-javascript-arraybuffer#answer-31394257
+    return source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength)
+  } else {
+    return source
+  }
+}
+
+function toBase64(source) {
+  source = fromSource(source)
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(source).toString('base64')
+  }
+  let binary = ''
+  const bytes = new Uint8Array(source)
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
+}
+
+function fromBase64(source) {
+  if (typeof Buffer !== 'undefined') return fromSource(Buffer.from(source, 'base64'))
+  return Uint8Array.from(atob(source), c => c.charCodeAt(0))
+}
+
+function toHex(source) {
+  source = fromSource(source)
+  if (typeof Buffer !== 'undefined') return Buffer.from(source).toString('hex')
+  return Array.from(new Uint8Array(source), byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function fromHex(source) {
+  if (typeof Buffer !== 'undefined') return fromSource(Buffer.from(source, 'hex'))
+  const hex = source.length % 2 === 0 ? source : source.slice(0, source.length - 1)
+  const buffer = []
+  for (let i = 0; i < hex.length; i += 2) {
+    buffer.push(parseInt(`${hex[i]}${hex[i + 1]}`, 16))
+  }
+  return Uint8Array.from(buffer).buffer
+}
+
 /** Binary source detection and base64/hex conversion helpers. */
-export namespace Binary {
-  export type Source<T extends ArrayBufferLike = ArrayBufferLike> = T | ArrayBufferView<T>
-
-  export const is = isArrayBufferLike
-  export const isSource = isArrayBufferSource
-
-  export function fromSource<T extends ArrayBufferLike>(source: Source<T>): T {
-    if (ArrayBuffer.isView(source)) {
-      // https://stackoverflow.com/questions/8609289/convert-a-binary-nodejs-buffer-to-javascript-arraybuffer#answer-31394257
-      return source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength) as T
-    } else {
-      return source
-    }
-  }
-
-  export function toBase64(source: Source) {
-    source = fromSource(source)
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(source).toString('base64')
-    }
-    let binary = ''
-    const bytes = new Uint8Array(source)
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return btoa(binary)
-  }
-
-  export function fromBase64(source: string) {
-    if (typeof Buffer !== 'undefined') return fromSource(Buffer.from(source, 'base64'))
-    return Uint8Array.from(atob(source), c => c.charCodeAt(0))
-  }
-
-  export function toHex(source: Source) {
-    source = fromSource(source)
-    if (typeof Buffer !== 'undefined') return Buffer.from(source).toString('hex')
-    return Array.from(new Uint8Array(source), byte => byte.toString(16).padStart(2, '0')).join('')
-  }
-
-  export function fromHex(source: string) {
-    if (typeof Buffer !== 'undefined') return fromSource(Buffer.from(source, 'hex'))
-    const hex = source.length % 2 === 0 ? source : source.slice(0, source.length - 1)
-    const buffer: number[] = []
-    for (let i = 0; i < hex.length; i += 2) {
-      buffer.push(parseInt(`${hex[i]}${hex[i + 1]}`, 16))
-    }
-    return Uint8Array.from(buffer).buffer
-  }
+export const Binary = {
+  is: isArrayBufferLike,
+  isSource: isArrayBufferSource,
+  fromSource,
+  toBase64,
+  fromBase64,
+  toHex,
+  fromHex,
 }
 
 /** Decode a base64 string into binary data. */
@@ -84,9 +81,8 @@ export const hexToArrayBuffer = Binary.fromHex
 export const arrayBufferToHex = Binary.toHex
 
 /** Deep-clone common JavaScript values while preserving prototypes. */
-export function clone<T>(source: T): T
 /** Deep-clone common JavaScript values while preserving prototypes and cycles. */
-export function clone(source: any, refs = new Map<any, any>()) {
+export function clone(source, refs = new Map()) {
   if (!source || typeof source !== 'object') return source
   if (is('Date', source)) return new Date(source.valueOf())
   if (is('RegExp', source)) return new RegExp(source.source, source.flags)
@@ -95,7 +91,7 @@ export function clone(source: any, refs = new Map<any, any>()) {
   const cached = refs.get(source)
   if (cached) return cached
   if (Array.isArray(source)) {
-    const result: any[] = []
+    const result = []
     refs.set(source, result)
     source.forEach((value, index) => {
       result[index] = Reflect.apply(clone, null, [value, refs])
@@ -115,14 +111,14 @@ export function clone(source: any, refs = new Map<any, any>()) {
 }
 
 /** Deeply compare arrays, dates, regexps, buffers, and plain object fields. */
-export function deepEqual(a: any, b: any, strict?: boolean): boolean {
+export function deepEqual(a, b, strict) {
   if (a === b) return true
   if (!strict && isNullable(a) && isNullable(b)) return true
   if (typeof a !== typeof b) return false
   if (typeof a !== 'object') return false
   if (!a || !b) return false
 
-  function check<T>(test: (x: any) => x is T, then: (a: T, b: T) => boolean) {
+  function check(test, then) {
     return test(a) ? test(b) ? then(a, b) : false : test(b) ? false : undefined
   }
 
