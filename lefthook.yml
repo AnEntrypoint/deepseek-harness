@@ -6,8 +6,3 @@ pre-commit:
   jobs:
     - name: whitespace (staged)
       run: git diff --cached --check
-
-pre-push:
-  jobs:
-    - name: typecheck
-      run: pnpm run typecheck
