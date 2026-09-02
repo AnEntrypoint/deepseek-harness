@@ -80,7 +80,6 @@
     "@freddie/freddie-agent-instructions": "workspace:^",
     "commander": "^15.0.0",
     "@freddie/cordis": "workspace:^",
-    "js-yaml": "^5.4.1",
     "node-addon-require-builtin": "^0.1.4"
   },
   "devDependencies": {

@@ -31,9 +31,6 @@
     "src/types.js"
   ],
   "license": "MIT",
-  "dependencies": {
-    "zod": "^4.4.3"
-  },
   "peerDependencies": {
     "@freddie/freddie-invariants": "workspace:^",
     "@freddie/freddie-session": "workspace:^",

@@ -38,7 +38,6 @@
   "dependencies": {
     "@freddie/freddie-attachment": "workspace:^",
     "@freddie/freddie-agent": "workspace:^",
-    "@freddie/freddie-agent-default-model": "workspace:^",
     "@freddie/freddie-api-remotes": "workspace:^",
     "@freddie/freddie-brand": "workspace:^",
     "@freddie/freddie-commands": "workspace:^",

@@ -261,9 +261,6 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
-      js-yaml:
-        specifier: ^5.4.1
-        version: 5.4.1
       node-addon-require-builtin:
         specifier: ^0.1.4
         version: 0.1.4
@@ -4678,9 +4675,6 @@ importers:
       '@freddie/freddie-agent':
         specifier: workspace:^
         version: link:../../core/agent
-      '@freddie/freddie-agent-default-model':
-        specifier: workspace:^
-        version: link:../../core/agent-default-model
       '@freddie/freddie-api-remotes':
         specifier: workspace:^
         version: link:../../api/remotes
@@ -6082,10 +6076,6 @@ importers:
         version: link:../session-persistence
 
   packages/session/session-projection:
-    dependencies:
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -6183,9 +6173,6 @@ importers:
         specifier: ^0.220.0
         version: 0.220.0
       '@opentelemetry/exporter-logs-otlp-http':
-        specifier: ^0.220.0
-        version: 0.220.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/otlp-exporter-base':
         specifier: ^0.220.0
         version: 0.220.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources':
@@ -7730,9 +7717,6 @@ importers:
 
   packages/typert/registry:
     dependencies:
-      '@freddie/freddie-typert-protocol':
-        specifier: workspace:^
-        version: link:../protocol
       zod:
         specifier: ^4.4.3
         version: 4.4.3
