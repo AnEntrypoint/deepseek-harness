@@ -470,6 +470,9 @@ importers:
       '@freddie/freddie-scope':
         specifier: workspace:*
         version: link:../packages/core/scope
+      '@freddie/freddie-scoped-tool-turn-context-demo':
+        specifier: workspace:*
+        version: link:../packages/examples/scoped-tool-turn-context
       '@freddie/freddie-sdk-jsonrpc-server':
         specifier: workspace:*
         version: link:../packages/sdk/server
@@ -3813,6 +3816,28 @@ importers:
       '@freddie/freddie-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
+
+  packages/examples/scoped-tool-turn-context:
+    dependencies:
+      '@freddie/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@freddie/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@freddie/freddie-scope':
+        specifier: workspace:^
+        version: link:../../core/scope
+      '@freddie/freddie-sdk-jsonrpc-server':
+        specifier: workspace:^
+        version: link:../../sdk/server
+      '@freddie/freddie-system-prompt':
+        specifier: workspace:^
+        version: link:../../core/system-prompt
+      '@freddie/freddie-tools':
+        specifier: workspace:^
+        version: link:../../core/tools
 
   packages/experimental/agent-team:
     dependencies:

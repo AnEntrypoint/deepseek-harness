@@ -39,6 +39,7 @@
     "@freddie/freddie-cordis-host-runner": "workspace:*",
     "@freddie/freddie-invariants": "workspace:*",
     "@freddie/freddie-sdk-jsonrpc-server": "workspace:*",
+    "@freddie/freddie-scoped-tool-turn-context-demo": "workspace:*",
     "@freddie/freddie-llm": "workspace:*",
     "@freddie/freddie-llm-deepseek": "workspace:*",
     "@freddie/freddie-llm-pi-ai": "workspace:*",
