@@ -101,7 +101,11 @@ export class HarnessSdkJsonRpcServer {
 
   /**
    * Queue one identified prompt without assigning later activity to it.
-   * @param params - target session and user content.
+   * @param params - target session, user content, and optional per-turn tool
+   *   scoping (`enabledTools`/`disabledTools`, tool-name allow/deny lists —
+   *   see `ctx.tools.restrict()` in `@freddie/freddie-tools`). A given list
+   *   REPLACES this session's current scope from this turn onward; omitting
+   *   both leaves the existing scope (or the deployment default) unchanged.
    * @returns the durable message identity.
    */
   async prompt(params) {
@@ -112,9 +116,31 @@ export class HarnessSdkJsonRpcServer {
     if (this.ctx.agents.get(rec.handle.agent.id) !== rec.handle.agent) {
       throw new Error(`session agent was disposed outside the server: ${params.sessionId}`)
     }
+    this.applyToolScope(rec, params)
     const message = createUserMessage({ content: params.contentBlocks, source: { kind: 'user' } })
     rec.handle.agent.followup(message)
     return { messageId: message.id }
+  }
+
+  /**
+   * Replace this session's tool-visibility restriction for the caller-given
+   * `enabledTools`/`disabledTools`. A fresh disposer replaces the prior one on
+   * every call carrying either list, so a later turn's scope always wins over
+   * an earlier one rather than stacking indefinitely; a call carrying neither
+   * key is a no-op (the session's existing scope, or the deployment default
+   * with no restriction at all, stays in effect).
+   * @param rec - this session's record (created by {@link createSession}).
+   * @param params - the incoming `session/prompt` params.
+   */
+  applyToolScope(rec, params) {
+    const allow = params.enabledTools
+    const deny = params.disabledTools
+    if (allow === undefined && deny === undefined) return
+    rec.disposeToolScope?.()
+    rec.disposeToolScope = rec.handle.agent.ctx.tools.restrict({
+      ...allow === undefined ? {} : { allow },
+      ...deny === undefined ? {} : { deny },
+    })
   }
 
   /**

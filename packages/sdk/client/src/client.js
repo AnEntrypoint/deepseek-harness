@@ -248,10 +248,21 @@ export class HarnessClient {
    * Queue one prompt and return its durable inbox identity.
    * @param sessionId - target session; an unknown id creates it.
    * @param contentBlocks - the user message, sent verbatim.
+   * @param options - optional per-turn tool scoping.
+   * @param options.enabledTools - allow-list of tool names visible to this
+   *   turn (and every later turn on this session, until overridden); omitted
+   *   leaves the session's current scope unchanged.
+   * @param options.disabledTools - deny-list of tool names hidden from this
+   *   turn onward; composes with `enabledTools` (both may be given together).
    * @returns the queued message id.
    */
-  async prompt(sessionId, contentBlocks) {
-    const params = { sessionId, contentBlocks }
+  async prompt(sessionId, contentBlocks, options) {
+    const params = {
+      sessionId,
+      contentBlocks,
+      ...options?.enabledTools === undefined ? {} : { enabledTools: options.enabledTools },
+      ...options?.disabledTools === undefined ? {} : { disabledTools: options.disabledTools },
+    }
     const result = await this.request('session/prompt', { ...params })
     if (!isRecord(result) || typeof result.messageId !== 'string') {
       throw new SdkProtocolError(`session/prompt returned no message id: ${JSON.stringify(result)}`)
