@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-message-feedback",
+  "name": "@freddie/freddie-client-ui-message-feedback",
   "description": "Per-message feedback controls contributed to the assistant-message action strip, backed by the messageFeedback Host Remote",
   "version": "0.1.1-rc.2",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/client/ui-message-feedback"
   },
   "type": "module",
@@ -28,10 +28,10 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-ui-conversation"
+        "@freddie/freddie-client-runtime",
+        "@freddie/freddie-api-remotes",
+        "@freddie/freddie-client-locale",
+        "@freddie/freddie-client-ui-conversation"
       ],
       "platform": "web"
     }
@@ -42,28 +42,28 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-message-feedback": "workspace:^",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-api-remotes": "workspace:^",
+    "@freddie/freddie-client-connection": "workspace:^",
+    "@freddie/freddie-client-locale": "workspace:^",
+    "@freddie/freddie-client-runtime": "workspace:^",
+    "@freddie/freddie-client-ui-conversation": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-message-feedback": "workspace:^",
+    "@freddie/freddie-typert-protocol": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-message-feedback": "workspace:^",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-api-remotes": "workspace:^",
+    "@freddie/freddie-client-connection": "workspace:^",
+    "@freddie/freddie-client-locale": "workspace:^",
+    "@freddie/freddie-client-runtime": "workspace:^",
+    "@freddie/freddie-client-ui-conversation": "workspace:^",
+    "@freddie/freddie-client-ui-primitives": "workspace:^",
+    "@freddie/freddie-client-ui-slots": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-message-feedback": "workspace:^",
+    "@freddie/freddie-typert-protocol": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "dependencies": {
     "webjsx": "^0.0.73"

@@ -6,23 +6,23 @@
   flex: none;
   width: calc(
     100% -
-    var(--dsh-composer-side-clearance) -
-    var(--dsh-composer-side-clearance) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset)
+    var(--freddie-composer-side-clearance) -
+    var(--freddie-composer-side-clearance) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset)
   );
   max-width: calc(
-    var(--dsh-composer-card-max-width) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset)
+    var(--freddie-composer-card-max-width) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset)
   );
   /* Cancel the stack gap after this item and tuck 3px under the input card
      (square bottom), reading as one attached surface. */
-  margin: 0 auto calc(0px - var(--dsh-composer-stack-gap) - 3px);
+  margin: 0 auto calc(0px - var(--freddie-composer-stack-gap) - 3px);
   /* Horizontal padding completes the shared dock inset (this wrapper only
      subtracts two insets from its width); no vertical padding, so the visual
      gap above the panel stays the uniform stack gap. */
-  padding: 0 var(--dsh-composer-dock-inset);
+  padding: 0 var(--freddie-composer-dock-inset);
 }
 
 .dsh-queueDock__panel {
@@ -32,14 +32,14 @@
   padding: 2px 0;
   border-radius: 12px 12px 0 0;
   background: var(--dsw-specific-tip);
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 }
 
 .dsh-queueDock__panel::after {
   position: absolute;
   inset: 0;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 1px solid var(--freddie-alias-border-l1);
   /* The input card's own top border closes the shape below. */
   border-bottom: none;
   border-radius: inherit;
@@ -60,13 +60,13 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   text-align: left;
   cursor: pointer;
 }
 
 .dsh-queueDock__header:focus-visible {
-  outline: 2px solid var(--dsw-alias-label-tertiary);
+  outline: 2px solid var(--freddie-alias-label-tertiary);
   outline-offset: -2px;
 }
 
@@ -78,7 +78,7 @@
   display: grid;
   flex: none;
   place-items: center;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-queueDock__count {
@@ -96,7 +96,7 @@
   place-items: center;
   width: 14px;
   height: 14px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-queueDock__list {
@@ -119,7 +119,7 @@
 }
 
 .dsh-queueDock__row + .dsh-queueDock__row {
-  box-shadow: inset 0 1px 0 var(--dsw-alias-border-l1);
+  box-shadow: inset 0 1px 0 var(--freddie-alias-border-l1);
 }
 
 .dsh-queueDock__preview,
@@ -132,7 +132,7 @@
 
 .dsh-queueDock__preview {
   overflow: hidden;
-  color: var(--dsw-alias-label-primary-dimmed);
+  color: var(--freddie-alias-label-primary-dimmed);
   text-overflow: ellipsis;
   white-space: nowrap;
   word-break: break-word;
@@ -142,15 +142,15 @@
   box-sizing: border-box;
   height: 28px;
   padding: 0 8px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 6px;
   outline: none;
-  background: var(--dsw-alias-bg-base);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-bg-base);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-queueDock__editor:focus {
-  border-color: var(--dsw-alias-state-business-primary);
+  border-color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-queueDock__actions {
@@ -170,16 +170,16 @@
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
 }
 
 .dsh-queueDock__action:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-queueDock__action:focus-visible {
-  outline: 2px solid var(--dsw-alias-label-tertiary);
+  outline: 2px solid var(--freddie-alias-label-tertiary);
   outline-offset: -2px;
 }
 

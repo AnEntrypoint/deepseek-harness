@@ -8,7 +8,7 @@ import {
   Button, IconCheckOutline14, IconChevronDownOutline14, IconChevronLeftOutline14,
   IconChevronRightOutline14, IconChevronUpOutline14, IconCloseOutline16,
   IconEditOutline16, MarkdownText,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { PendingQuestion, planReviewOf } from './contract/slots.js'
 import { DshPlanReviewPanel } from './PlanReviewPanel.js'
 import css from './QuestionComposer.css.js'

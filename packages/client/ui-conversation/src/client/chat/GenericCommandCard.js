@@ -9,7 +9,7 @@
 // applyDiff(this, vdom) call.
 
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
-import { DisclosureRow, IconApiOutline14, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
+import { DisclosureRow, IconApiOutline14, StateDot } from '@freddie/freddie-client-ui-primitives'
 import a11yCss from './accessibility.css.js'
 import css from './GenericCommandCard.css.js'
 

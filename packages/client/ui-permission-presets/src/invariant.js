@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-ui-permission-presets`.
- * @module @deepseek-ai/dsh-client-ui-permission-presets/invariant
+ * Package-owned invariant companion for `@freddie/freddie-client-ui-permission-presets`.
+ * @module @freddie/freddie-client-ui-permission-presets/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-ui-permission-presets'
+const PACKAGE_NAME = '@freddie/freddie-client-ui-permission-presets'
 
 /** Cordis companion plugin name. */
 export const name = 'client-ui-permission-presets-invariant'

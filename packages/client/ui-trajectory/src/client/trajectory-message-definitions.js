@@ -1,6 +1,6 @@
 import {
   contextForm, contextProvenance,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-runtime/client'
 import { trajectoryNode } from './trajectory-definition-common.js'
 
 /* jscpd:ignore-start -- Target-owned Definitions intentionally keep their event

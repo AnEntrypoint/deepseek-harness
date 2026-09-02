@@ -1,7 +1,7 @@
 /**
  * Types shared by job producers, the registry, and controllers. The
  * service implementation lives in `./index.js`.
- * @module @deepseek-ai/dsh-jobs/types
+ * @module @freddie/freddie-jobs/types
  */
 
 export { JobId } from './brand.js'

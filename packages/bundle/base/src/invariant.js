@@ -1,9 +1,9 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-base`.
- * @module @deepseek-ai/dsh-base/invariant
+ * Package-owned invariant companion for `@freddie/freddie-base`.
+ * @module @freddie/freddie-base/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-base'
+const PACKAGE_NAME = '@freddie/freddie-base'
 
 /** Cordis companion plugin name. */
 export const name = 'base-bundle-invariant'

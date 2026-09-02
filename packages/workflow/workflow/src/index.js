@@ -1,11 +1,11 @@
 /**
  * Service Definition for the workflow capability seam. Service Providers execute orchestration scripts;
  * observe-only lifecycle events never expose run control.
- * @module @deepseek-ai/dsh-workflow
+ * @module @freddie/freddie-workflow
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { HarnessError } from '@deepseek-ai/dsh-llm'
+import { Service } from '@freddie/cordis'
+import { HarnessError } from '@freddie/freddie-llm'
 
 export { WorkflowRunId } from './types.js'
 

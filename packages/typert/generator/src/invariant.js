@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-typert-generator`.
- * @module @deepseek-ai/dsh-typert-generator/invariant
+ * Package-owned invariant companion for `@freddie/freddie-typert-generator`.
+ * @module @freddie/freddie-typert-generator/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-typert-generator'
+const PACKAGE_NAME = '@freddie/freddie-typert-generator'
 
 /** Cordis companion plugin name. */
 export const name = 'typert-generator-invariant'

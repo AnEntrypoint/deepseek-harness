@@ -8,5 +8,5 @@
  * TypeScript-only type, interface, or module augmentation with zero
  * runtime value.
  *
- * @module @deepseek-ai/dsh-commands/types
+ * @module @freddie/freddie-commands/types
  */

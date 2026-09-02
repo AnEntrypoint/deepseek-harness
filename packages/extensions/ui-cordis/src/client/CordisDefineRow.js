@@ -12,7 +12,7 @@
 
 import {
   CodeBlock, DisclosureRow, IconCodeOutline16, IconInspectOutline12, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import { cordisDefineCard } from './card-model.js'
 import { cordisVisibleStatus } from './status.js'

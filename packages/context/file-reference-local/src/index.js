@@ -1,13 +1,13 @@
 /**
  * Local-filesystem implementation of `ctx.fileReferences`.
  *
- * @module @deepseek-ai/dsh-file-reference-local
+ * @module @freddie/freddie-file-reference-local
  */
 
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import FileReferenceService, {
   FILE_REFERENCE_PROMPT,
-} from '@deepseek-ai/dsh-file-reference'
+} from '@freddie/freddie-file-reference'
 import {
   DEFAULT_FILE_SEARCH_EXCLUDED_DIRECTORIES,
   DEFAULT_FILE_SEARCH_MAX_ENTRIES,
@@ -21,8 +21,8 @@ export {
   DEFAULT_FILE_SEARCH_MAX_RESULTS,
   WorkspaceFileSearch,
 } from './search.js'
-export { FILE_REFERENCE_PROMPT } from '@deepseek-ai/dsh-file-reference'
-export { activeAtToken, formatFileMention } from '@deepseek-ai/dsh-file-reference/grammar'
+export { FILE_REFERENCE_PROMPT } from '@freddie/freddie-file-reference'
+export { activeAtToken, formatFileMention } from '@freddie/freddie-file-reference/grammar'
 
 /** Local-filesystem owner of the file-reference discovery service. */
 export class LocalFileReferenceService extends FileReferenceService {

@@ -100,14 +100,14 @@ The example composition remains opt-in and safe by default:
 
 ```yaml
 plugins:
-  '@deepseek-ai/dsh-sandbox-local':
-  '@deepseek-ai/dsh-sandbox-policy':
+  '@freddie/freddie-sandbox-local':
+  '@freddie/freddie-sandbox-policy':
     config:
       mode: workspace-write
       workspaceRoot: .
-  '@deepseek-ai/dsh-terminal':
-  '@deepseek-ai/dsh-subprocess-local':
-  '@deepseek-ai/dsh-terminal-bash':
+  '@freddie/freddie-terminal':
+  '@freddie/freddie-subprocess-local':
+  '@freddie/freddie-terminal-bash':
     config:
       scrollbackLines: 10000
       scrollbackMaxBytes: 4194304
@@ -118,7 +118,7 @@ plugins:
       handoffGraceMs: 500
       timeoutMs: 30000
       disposeGraceMs: 3000
-  '@deepseek-ai/dsh-tool-terminal':
+  '@freddie/freddie-tool-terminal':
     config:
       enableRunInBackground: true
       maxResultBytes: 262144

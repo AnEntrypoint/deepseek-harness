@@ -3,7 +3,7 @@
  * process-group cancellation, and timeout machinery. The bridge supplies the
  * trusted stdin payload and dialect environment, then this module decodes the
  * captured outcome.
- * @module @deepseek-ai/dsh-hook-protocol/runner
+ * @module @freddie/freddie-hook-protocol/runner
  */
 
 import { parseHookOutput } from './codec.js'

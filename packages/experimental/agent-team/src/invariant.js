@@ -2,7 +2,7 @@
 
 import { applyTeamEvent, foldTeam, isTeamEvent } from './fold.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-experimental-agent-team'
+const PACKAGE_NAME = '@freddie/freddie-experimental-agent-team'
 
 /** Cordis companion plugin name. */
 export const name = 'team-invariant'

@@ -5,14 +5,14 @@
  * TODO(acp-subagent-replay): add snapshot-tier coverage with a separate replay fixture and
  * sessions root inside each child process. Current keyless coverage uses a scripted ACP child;
  * with-key coverage drives the real ACP example.
- * @module @deepseek-ai/dsh-subagent-acp/run
+ * @module @freddie/freddie-subagent-acp/run
  */
 
 import { randomUUID } from 'node:crypto'
 import { Readable as NodeReadable, Writable as NodeWritable } from 'node:stream'
 import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { AssistantOutputFold } from '@deepseek-ai/dsh-subagent'
+import { SessionId } from '@freddie/freddie-session'
+import { AssistantOutputFold } from '@freddie/freddie-subagent'
 
 /** EOF grace for child flush and nested-process teardown; wider than the signal grace below. */
 export const DEFAULT_DISPOSE_EOF_GRACE_MS = 6_000
@@ -133,7 +133,7 @@ export async function startAcpRun(request, spec) {
   const id = SessionId(randomUUID())
 
   // Keep diagnostics on parent stderr ('inherit'); only ACP output contributes
-  // to the result. The seam's scrub drops ambient credentials and DSH_* names
+  // to the result. The seam's scrub drops ambient credentials and FREDDIE_* names
   // while spec.env (the child's own key, its deployment facts) merges after it.
   const child = spec.spawn({
     argv: [spec.command, ...spec.args],

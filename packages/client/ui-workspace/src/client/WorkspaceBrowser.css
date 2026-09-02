@@ -4,15 +4,15 @@
    rail state renders only the two 36x36 icon controls. */
 
 .dsh-workspaceBrowser__root {
-  --dsh-session-list-edge-inset: var(--dsh-sidebar-inline-padding);
-  --dsh-session-list-scrollbar-width: 8px;
-  --dsh-session-list-scrollbar-offset: 2px;
+  --freddie-session-list-edge-inset: var(--freddie-sidebar-inline-padding);
+  --freddie-session-list-scrollbar-width: 8px;
+  --freddie-session-list-scrollbar-offset: 2px;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-right: var(--dsh-session-list-edge-inset);
+  padding-right: var(--freddie-session-list-edge-inset);
 }
 
 .dsh-workspaceBrowser__root.dsh-workspaceBrowser__rail {
@@ -31,11 +31,11 @@
   padding: 0;
   background: transparent;
   cursor: pointer;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-workspaceBrowser__iconButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 /* Section header: title, an inline search control, and the two trailing
@@ -52,7 +52,7 @@
   box-sizing: border-box;
   border-radius: 12px;
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-workspaceBrowser__root:not(.dsh-workspaceBrowser__rail) .dsh-workspaceBrowser__sectionHeader {
@@ -146,7 +146,7 @@
   border-radius: 50%;
   background: transparent;
   cursor: text;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   overflow: hidden;
   transition:
     width 180ms var(--ds-ease-in-out),
@@ -160,10 +160,10 @@
   height: 30px;
   margin-inline: -2px;
   padding: 0 4px 0 0;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 10px;
   background: transparent;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-workspaceBrowser__searchButton {
@@ -187,7 +187,7 @@
 }
 
 .dsh-workspaceBrowser__searchButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-workspaceBrowser__searchExpanded .dsh-workspaceBrowser__searchButton:hover {
@@ -205,7 +205,7 @@
   pointer-events: none;
   font-size: 13px;
   line-height: 18px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   transition: opacity 120ms var(--ds-ease-in-out);
 }
 
@@ -216,7 +216,7 @@
 }
 
 .dsh-workspaceBrowser__searchInput::placeholder {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-workspaceBrowser__clearButton {
@@ -231,11 +231,11 @@
   padding: 0;
   background: transparent;
   cursor: pointer;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-workspaceBrowser__clearButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 /* Rail variant (own .rail class from the wide owner prop — the region never
@@ -256,7 +256,7 @@
 .dsh-workspaceBrowser__rail .dsh-workspaceBrowser__iconButton {
   width: 36px;
   height: 36px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-workspaceBrowser__rail .dsh-workspaceBrowser__search {
@@ -272,11 +272,11 @@
 .dsh-workspaceBrowser__rail .dsh-workspaceBrowser__searchButton {
   width: 36px;
   height: 36px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-workspaceBrowser__rail .dsh-workspaceBrowser__searchButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 /* List seat: always mounted so the shell foot never moves. */
@@ -286,7 +286,7 @@
   display: flex;
   flex-direction: column;
   margin-left: -4px;
-  margin-right: calc(-1 * var(--dsh-session-list-edge-inset));
+  margin-right: calc(-1 * var(--freddie-session-list-edge-inset));
   padding-left: 4px;
   /* The list remains the scroll clip. This seat stays visible so the
      absolutely positioned first-boundary marker can occupy the header gap. */
@@ -313,7 +313,7 @@
 .dsh-workspaceBrowser__fade {
   position: absolute;
   left: 0;
-  right: var(--dsh-session-list-edge-inset);
+  right: var(--freddie-session-list-edge-inset);
   bottom: 0;
   height: 24px;
   background: linear-gradient(to bottom, transparent, var(--dsw-specific-sidebar-fill));
@@ -338,12 +338,12 @@
   min-height: 0;
   overflow-y: auto;
   margin-left: -4px;
-  margin-right: var(--dsh-session-list-scrollbar-offset);
+  margin-right: var(--freddie-session-list-scrollbar-offset);
   padding-left: 4px;
   padding-right: calc(
-    var(--dsh-session-list-edge-inset)
-    - var(--dsh-session-list-scrollbar-width)
-    - var(--dsh-session-list-scrollbar-offset)
+    var(--freddie-session-list-edge-inset)
+    - var(--freddie-session-list-scrollbar-width)
+    - var(--freddie-session-list-scrollbar-offset)
   );
   /* Clears the compact bottom fade overlay: at scroll end the last row sits
      above the gradient instead of under it. */
@@ -362,11 +362,11 @@
   padding: 10px 12px;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-workspaceBrowser__searchWarning {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 /* One workspace section: header row + a compact expanded session run. */
@@ -391,17 +391,17 @@
     linear-gradient(
       55deg,
       transparent calc(50% - 1px),
-      var(--dsw-alias-state-business-primary) calc(50% - 1px) calc(50% + 1px),
+      var(--freddie-alias-state-business-primary) calc(50% - 1px) calc(50% + 1px),
       transparent calc(50% + 1px)
     ) 0 0 / 5px 7px no-repeat,
     linear-gradient(
       125deg,
       transparent calc(50% - 1px),
-      var(--dsw-alias-state-business-primary) calc(50% - 1px) calc(50% + 1px),
+      var(--freddie-alias-state-business-primary) calc(50% - 1px) calc(50% + 1px),
       transparent calc(50% + 1px)
     ) 0 5px / 5px 7px no-repeat,
     linear-gradient(
-      var(--dsw-alias-state-business-primary) 0 0
+      var(--freddie-alias-state-business-primary) 0 0
     ) 4px 5px / calc(100% - 4px) 2px no-repeat;
   pointer-events: none;
 }
@@ -411,7 +411,7 @@
 .dsh-workspaceBrowser__listTopDropIndicator {
   top: -8px;
   left: 0;
-  right: var(--dsh-session-list-edge-inset);
+  right: var(--freddie-session-list-edge-inset);
 }
 
 .dsh-workspaceBrowser__listTopDropActive > .dsh-workspaceBrowser__workspaceDropBefore:first-child::before {
@@ -436,7 +436,7 @@
   cursor: pointer;
   text-align: left;
   font-size: 12px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-workspaceBrowser__groupSection > .dsh-workspaceBrowser__sessionOverflowButton {
@@ -445,12 +445,12 @@
 
 .dsh-workspaceBrowser__sessionOverflowButton:hover {
   background: transparent;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-workspaceBrowser__empty {
   padding: 16px 12px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 13px;
 }
 
@@ -460,35 +460,35 @@
   width: 100%;
   height: 44px;
   padding: 7px 14px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 22px;
   outline: none;
   background: transparent;
   font-size: 14px;
   font-weight: 400;
   line-height: 22px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-workspaceBrowser__renameInput:disabled {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--freddie-alias-label-dimmed);
 }
 
 .dsh-workspaceBrowser__renameError {
   margin-top: 8px;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-workspaceBrowser__deleteAction:not(:disabled) {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-workspaceBrowser__deleteStatus {
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 @media (prefers-reduced-motion: reduce) {

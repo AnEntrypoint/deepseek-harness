@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-brand-official",
-  "description": "Official DeepSeek Harness brand occupants for the Web client's sidebar and conversation Hero slots",
+  "name": "@freddie/freddie-client-ui-brand-official",
+  "description": "Official Freddie brand occupants for the Web client's sidebar and conversation Hero slots",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/client/ui-brand-official"
   },
   "type": "module",
@@ -28,9 +28,9 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-conversation",
-        "@deepseek-ai/dsh-client-ui-sidebar"
+        "@freddie/freddie-client-runtime",
+        "@freddie/freddie-client-ui-conversation",
+        "@freddie/freddie-client-ui-sidebar"
       ],
       "platform": "web"
     }
@@ -41,22 +41,22 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-sidebar": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-client-runtime": "workspace:^",
+    "@freddie/freddie-client-ui-conversation": "workspace:^",
+    "@freddie/freddie-client-ui-sidebar": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "dependencies": {
     "webjsx": "^0.0.73"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-sidebar": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-client-runtime": "workspace:^",
+    "@freddie/freddie-client-ui-conversation": "workspace:^",
+    "@freddie/freddie-client-ui-primitives": "workspace:^",
+    "@freddie/freddie-client-ui-sidebar": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "files": [
     "src/index.js",

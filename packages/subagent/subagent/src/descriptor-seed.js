@@ -3,10 +3,10 @@
  * record of the child's declared composition before its first request, so a
  * later cold resume can reconstruct it from its own log.
  *
- * @module @deepseek-ai/dsh-subagent/descriptor-seed
+ * @module @freddie/freddie-subagent/descriptor-seed
  */
 
-import { Session } from '@deepseek-ai/dsh-session'
+import { Session } from '@freddie/freddie-session'
 
 /**
  * Build the child's creation seed: any inherited parent-history prefix followed

@@ -1,9 +1,9 @@
 /**
  * Agent-scoped Schedule management tools over the durable session fold.
- * @module @deepseek-ai/dsh-schedule
+ * @module @freddie/freddie-schedule
  */
 
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@freddie/freddie-tools'
 import {
   allocateScheduleId,
   createAfterScheduleRecord,

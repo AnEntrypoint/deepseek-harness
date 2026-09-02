@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-typert-registry",
+  "name": "@freddie/freddie-typert-registry",
   "description": "Runtime registry for generated package reflection and Zod schemas",
   "version": "0.1.1-rc.2",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/typert/registry"
   },
   "type": "module",
@@ -42,15 +42,15 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
+    "@freddie/freddie-typert-protocol": "workspace:^",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   }
 }

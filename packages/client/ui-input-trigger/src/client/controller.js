@@ -7,7 +7,7 @@
  * only the source roster. One controller per session scope; the service
  * disposes it with the scope fiber.
  */
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 import { detectTrigger } from '../core/detect.js'
 import { MENU_CLOSED, menuReduce, seedGroups } from '../core/menu.js'
 

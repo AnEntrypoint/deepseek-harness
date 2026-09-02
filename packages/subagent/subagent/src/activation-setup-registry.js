@@ -8,10 +8,10 @@
  * Activation disposal, so no installation outlives either owner and no removed
  * contribution can be installed after revocation reports completion.
  *
- * @module @deepseek-ai/dsh-subagent/activation-setup-registry
+ * @module @freddie/freddie-subagent/activation-setup-registry
  */
 
-import { errorChain } from '@deepseek-ai/dsh-llm'
+import { errorChain } from '@freddie/freddie-llm'
 import { SubagentError } from './error.js'
 
 /**

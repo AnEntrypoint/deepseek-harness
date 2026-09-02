@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-credentials-local`.
- * @module @deepseek-ai/dsh-credentials-local/invariant
+ * Package-owned invariant companion for `@freddie/freddie-credentials-local`.
+ * @module @freddie/freddie-credentials-local/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-credentials-local'
+const PACKAGE_NAME = '@freddie/freddie-credentials-local'
 
 /** Cordis companion plugin name. */
 export const name = 'credentials-local-invariant'

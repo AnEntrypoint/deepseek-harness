@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-shell-env`.
- * @module @deepseek-ai/dsh-shell-env/invariant
+ * Package-owned invariant companion for `@freddie/freddie-shell-env`.
+ * @module @freddie/freddie-shell-env/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-shell-env'
+const PACKAGE_NAME = '@freddie/freddie-shell-env'
 
 /** Cordis companion plugin name. */
 export const name = 'shell-env-invariant'

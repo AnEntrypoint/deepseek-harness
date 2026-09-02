@@ -8,7 +8,7 @@
   box-sizing: border-box;
   width: 100%;
   height: 44px;
-  background: var(--dsw-alias-button-ghost-active-fill);
+  background: var(--freddie-alias-button-ghost-active-fill);
 }
 
 .dsh-trajectoryTurnHeader__inner {
@@ -26,7 +26,7 @@
 .dsh-trajectoryTurnHeader__title {
   flex: none;
   font: var(--dsw-font-xs-strong-13);
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTurnHeader__columns {
@@ -44,5 +44,5 @@
   width: 71px;
   text-align: left;
   font: var(--dsw-font-xs-13);
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }

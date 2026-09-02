@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-ui-message-feedback`.
- * @module @deepseek-ai/dsh-client-ui-message-feedback/invariant
+ * Package-owned invariant companion for `@freddie/freddie-client-ui-message-feedback`.
+ * @module @freddie/freddie-client-ui-message-feedback/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-ui-message-feedback'
+const PACKAGE_NAME = '@freddie/freddie-client-ui-message-feedback'
 
 /** Cordis companion plugin name. */
 export const name = 'client-ui-feedback-invariant'

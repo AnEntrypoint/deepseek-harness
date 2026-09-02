@@ -10,9 +10,9 @@ import {
   createToolResultMessage,
   createUserMessage,
   isTokenDelta,
-} from '@deepseek-ai/dsh-llm/message'
-import { CallId } from '@deepseek-ai/dsh-llm/brand'
-import { deriveEventMessage, foldSurface } from '@deepseek-ai/dsh-session/surface'
+} from '@freddie/freddie-llm/message'
+import { CallId } from '@freddie/freddie-llm/brand'
+import { deriveEventMessage, foldSurface } from '@freddie/freddie-session/surface'
 import { AbstractApiClient, RpcId, SESSION_SEARCH_RESULT_LIMIT } from './api.js'
 import { randomUuid } from './random-uuid.js'
 
@@ -228,11 +228,11 @@ const READ_SAMPLE_TEXT = READ_SAMPLE_SOURCE.map((text, index) => `${READ_SAMPLE_
  * search view minus its wire discriminants.
  */
 const WEB_SEARCH_RESULT = {
-  answer: 'DeepSeek Harness is a plugin-based agent harness on vendored Cordis where **every capability is a plugin**.',
+  answer: 'Freddie is a plugin-based agent harness on vendored Cordis where **every capability is a plugin**.',
   sources: [
     {
-      url: 'https://github.com/deepseek-ai/deepseek-harness',
-      title: 'DeepSeek Harness — plugin-based agent harness',
+      url: 'https://github.com/lanmower/freddie',
+      title: 'Freddie — plugin-based agent harness',
       snippet: 'Everything is a plugin: session, tools, agent-loop, and LLM adapters all mount on the same Cordis context.',
       publishedAt: '2026-07-01',
     },
@@ -1390,9 +1390,9 @@ function createFixtureWorld(options) {
    * roster a GUI journey sees after writing is the text it wrote.
    */
   const fixturePresets = new Map([
-    ['standard', { trust: 'system', content: "- id: tool-bash\n  name: '@deepseek-ai/dsh-tool-bash'\n" }],
-    ['minimal', { trust: 'system', content: "- id: tool-web-search\n  name: '@deepseek-ai/dsh-tool-web-search'\n" }],
-    ['my-agent', { trust: 'user', content: "- id: tool-read\n  name: '@deepseek-ai/dsh-tool-read'\n" }],
+    ['standard', { trust: 'system', content: "- id: tool-bash\n  name: '@freddie/freddie-tool-bash'\n" }],
+    ['minimal', { trust: 'system', content: "- id: tool-web-search\n  name: '@freddie/freddie-tool-web-search'\n" }],
+    ['my-agent', { trust: 'user', content: "- id: tool-read\n  name: '@freddie/freddie-tool-read'\n" }],
   ])
   let fixtureDefaultPreset = 'standard'
   const nextTurn = new Map([[sid('fx-alpha'), 75]])
@@ -1434,7 +1434,7 @@ function createFixtureWorld(options) {
     [FIXTURE_HOME, ['Documents', 'Downloads', '.config']],
     [`${FIXTURE_HOME}/Documents`, [
       'project', 'deepseek-iOS', 'deepseek-android', 'deepseek-platform',
-      'deepseek-web', 'deepseek-harness', 'deepseek-app', 'deepseek-landing-blog',
+      'deepseek-web', 'freddie', 'deepseek-app', 'deepseek-landing-blog',
     ]],
   ])
   const childrenOf = (path) => {

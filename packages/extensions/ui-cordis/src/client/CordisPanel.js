@@ -14,7 +14,7 @@ import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
   IconCheckOutline16, IconCloseOutline16, IconCordisPluginOutline14, IconPlayOutline16,
   IconStopFill16, IconTrashOutline16, Tooltip, createDismissOnOutsidePointer,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { cordisVisibleStatus, packageOf } from './status.js'
 import css from './CordisPanel.css.js'
 

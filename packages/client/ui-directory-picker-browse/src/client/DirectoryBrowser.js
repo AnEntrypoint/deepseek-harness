@@ -49,8 +49,8 @@ import clsx from 'clsx'
 import {
   Button, IconCheckOutline16, IconChevronRightOutline14, IconEditOutline16, IconFolderClose16, IconFolderOpen16,
   IconPlusOutline16, renderModal,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import { DirectoryBrowseError } from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-ui-primitives'
+import { DirectoryBrowseError } from '@freddie/freddie-client-runtime/client'
 import css from './DirectoryBrowser.css.js'
 
 /** Failure text: the Host business message when typed, else the throw's text. */

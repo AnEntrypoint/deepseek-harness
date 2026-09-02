@@ -5,7 +5,7 @@
  * Browser-safe: web clients consume this subpath export, so it must stay free
  * of `node:` imports (they break the vite bundle).
  *
- * @module @deepseek-ai/dsh-session/surface
+ * @module @freddie/freddie-session/surface
  */
 
 /** Runtime counterpart of the message-producing event union. */

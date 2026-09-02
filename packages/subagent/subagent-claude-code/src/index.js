@@ -3,16 +3,16 @@
  * invokes the official Agent SDK in the delegating Session's workspace and
  * places the SDK-spawned real CLI under the shared subprocess owner.
  *
- * @module @deepseek-ai/dsh-subagent-claude-code
+ * @module @freddie/freddie-subagent-claude-code
  */
 
-import z from '@deepseek-ai/schemastery'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import z from '@freddie/schemastery'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import {
   assertPositiveFinite,
   NO_START_CAPABILITIES,
   resolveChildCwd,
-} from '@deepseek-ai/dsh-subagent'
+} from '@freddie/freddie-subagent'
 import {
   CLAUDE_CODE_PERMISSION_MODES,
   DEFAULT_CLAUDE_CODE_PERMISSION_MODE,

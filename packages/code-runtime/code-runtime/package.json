@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-code-runtime",
-  "description": "Abstract code-execution seam (ctx.codeRuntime) for the DeepSeek Harness",
+  "name": "@freddie/freddie-code-runtime",
+  "description": "Abstract code-execution seam (ctx.codeRuntime) for the Freddie",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/code-runtime/code-runtime"
   },
   "type": "module",
@@ -28,11 +28,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   }
 }

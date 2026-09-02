@@ -6,21 +6,21 @@
  * and one-shot permission decisions; presentation and human-interaction
  * features stay with the harness's UI modules.
  *
- * @module @deepseek-ai/dsh-acp
+ * @module @freddie/freddie-acp
  */
 
 import { randomUUID } from 'node:crypto'
 import { isAbsolute } from 'node:path'
 import { Readable, Writable } from 'node:stream'
-import Schema from '@deepseek-ai/schemastery'
-import { createUserMessage, errorChain } from '@deepseek-ai/dsh-llm'
+import Schema from '@freddie/schemastery'
+import { createUserMessage, errorChain } from '@freddie/freddie-llm'
 import {
   AgentSideConnection,
   ndJsonStream,
   PROTOCOL_VERSION,
   RequestError,
 } from '@agentclientprotocol/sdk'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { SessionId } from '@freddie/freddie-session'
 import { AcpContentError, admitAcpPrompt, assistantBlockToAcp, supportsAcpImagePrompts } from './content.js'
 import { turnEndToStopReason } from './codec.js'
 
@@ -223,7 +223,7 @@ export function apply(ctx, config) {
         imagePromptEnabled = await supportsAcpImagePrompts(ctx, config.provider, config.model)
         return {
           protocolVersion: PROTOCOL_VERSION,
-          agentInfo: { name: 'deepseek-harness-acp', version: '0.0.1' },
+          agentInfo: { name: 'freddie-acp', version: '0.0.1' },
           agentCapabilities: {
             promptCapabilities: { image: imagePromptEnabled, audio: false, embeddedContext: false },
           },
@@ -242,7 +242,7 @@ export function apply(ctx, config) {
         // No preset composition: the ACP bundle keeps the model-facing rows in
         // the host plane, so this agent reads them from the global layer. A
         // deployment that configures a roster has to join one here first
-        // (@deepseek-ai/dsh-agent-presets README, "Composing a child agent").
+        // (@freddie/freddie-agent-presets README, "Composing a child agent").
         const handle = await agents.create({
           sessionId,
           meta: { cwd: params.cwd },

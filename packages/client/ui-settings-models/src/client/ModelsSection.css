@@ -3,7 +3,7 @@
  * 32px fields, and `border-l2` hairlines — the vocabulary GeneralSection and
  * the Button/Input primitives already use.
  *
- * Every color resolves through a `--dsw-alias-*` token. Bare `--border` /
+ * Every color resolves through a `--freddie-alias-*` token. Bare `--border` /
  * `--surface` / `--text-*` names, which nothing in this app defines, would
  * render the light-mode literals written as their fallbacks and stay light
  * under the dark theme. */
@@ -13,7 +13,7 @@
   flex-direction: column;
   gap: 12px;
   max-width: 720px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-modelsSection__title {
@@ -21,28 +21,28 @@
   font-size: 16px;
   line-height: 24px;
   font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-modelsSection__intro {
   margin: 0;
   font-size: 14px;
   line-height: 22px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-modelsSection__notice {
   margin: 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-state-warn-label);
+  color: var(--freddie-alias-state-warn-label);
 }
 
 .dsh-modelsSection__savedNotice {
   margin: 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-state-success-primary);
+  color: var(--freddie-alias-state-success-primary);
 }
 
 .dsh-modelsSection__rows {
@@ -58,7 +58,7 @@
 /* A configured provider: outlined on the panel fill, so the filled editor
    card it expands into reads as the nested object. */
 .dsh-modelsSection__rowCard {
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
@@ -83,7 +83,7 @@
   font-size: 14px;
   line-height: 22px;
   font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 /* Reads as an annotation on the name, not as a second name: caption size and
@@ -93,11 +93,11 @@
 .dsh-modelsSection__rowTag {
   flex: none;
   padding: 1px 6px;
-  border: 1px solid var(--dsw-alias-border-l3);
+  border: 1px solid var(--freddie-alias-border-l3);
   border-radius: 4px;
   font-size: 11px;
   line-height: 16px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-modelsSection__credentialDot {
@@ -110,11 +110,11 @@
 }
 
 .dsh-modelsSection__credentialDotConfigured {
-  background: var(--dsw-alias-state-success-primary);
+  background: var(--freddie-alias-state-success-primary);
 }
 
 .dsh-modelsSection__credentialDotMissing {
-  background: var(--dsw-alias-state-error-primary);
+  background: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-modelsSection__rowActions {
@@ -146,28 +146,28 @@
 }
 
 .dsh-modelsSection__primaryButton {
-  background: var(--dsw-alias-button-primary-fill);
-  color: var(--dsw-alias-label-primary-foreground);
+  background: var(--freddie-alias-button-primary-fill);
+  color: var(--freddie-alias-label-primary-foreground);
 }
 
 .dsh-modelsSection__primaryButton:hover:not(:disabled) {
-  background: var(--dsw-alias-button-primary-hover);
+  background: var(--freddie-alias-button-primary-hover);
 }
 
 .dsh-modelsSection__secondaryButton,
 .dsh-modelsSection__addButton {
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-modelsSection__secondaryButton:hover:not(:disabled),
 .dsh-modelsSection__addButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-modelsSection__secondaryButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover-solid);
+  background: var(--freddie-alias-interactive-bg-hover-solid);
 }
 
 .dsh-modelsSection__dangerButton {
@@ -180,7 +180,7 @@
   border: none;
   border-radius: 18px;
   background: transparent;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
   font: inherit;
   font-size: 14px;
   line-height: 22px;
@@ -188,7 +188,7 @@
 }
 
 .dsh-modelsSection__dangerButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover-danger);
+  background: var(--freddie-alias-interactive-bg-hover-danger);
 }
 
 /* Provider-row controls take the dense capsule (Button `.sm`). */
@@ -220,14 +220,14 @@
 .dsh-modelsSection__iconButton:focus-visible,
 .dsh-modelsSection__customizedSummary:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--dsw-alias-border-l3);
+  box-shadow: 0 0 0 2px var(--freddie-alias-border-l3);
 }
 
 /* Editing surface: a filled module on the panel, matching the settings
    selector fill rather than adding another outline inside the row. */
 .dsh-modelsSection__editor {
   border-radius: 12px;
-  background: var(--dsw-alias-bg-module-platform);
+  background: var(--freddie-alias-bg-module-platform);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -244,13 +244,13 @@
   font-size: 14px;
   line-height: 22px;
   font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-modelsSection__editorRoute {
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-modelsSection__field {
@@ -266,7 +266,7 @@
   font-size: 12px;
   line-height: 18px;
   font-weight: 500;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-modelsSection__linkButton {
@@ -278,7 +278,7 @@
   border: none;
   border-radius: 14px;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: inherit;
   font-size: 12px;
   line-height: 18px;
@@ -286,15 +286,15 @@
 }
 
 .dsh-modelsSection__linkButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-interactive-bg-hover);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-modelsSection__advancedHint {
   margin: 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-modelsSection__editorActions {
@@ -327,14 +327,14 @@
   min-width: 180px;
   gap: 6px;
   height: 44px;
-  border: 1px dashed var(--dsw-alias-border-l3);
+  border: 1px dashed var(--freddie-alias-border-l3);
   border-radius: 12px;
 }
 
 .dsh-modelsSection__addCard,
 .dsh-modelsSection__setupCard {
   border-radius: 12px;
-  background: var(--dsw-alias-bg-module-platform);
+  background: var(--freddie-alias-bg-module-platform);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -350,7 +350,7 @@
 }
 
 .dsh-modelsSection__customized {
-  border-top: 1px solid var(--dsw-alias-border-l2);
+  border-top: 1px solid var(--freddie-alias-border-l2);
   padding-top: 10px;
 }
 
@@ -368,7 +368,7 @@
   font-size: 12px;
   line-height: 18px;
   font-weight: 500;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   list-style: none;
 }
 
@@ -391,7 +391,7 @@
 }
 
 .dsh-modelsSection__customizedSummary:hover {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-modelsSection__customizedBody {
@@ -411,7 +411,7 @@
   flex-direction: column;
   gap: 10px;
   padding-top: 12px;
-  border-top: 1px solid var(--dsw-alias-border-l2);
+  border-top: 1px solid var(--freddie-alias-border-l2);
 }
 
 .dsh-modelsSection__modelCatalogHeading {
@@ -424,13 +424,13 @@
   font-size: 12px;
   line-height: 18px;
   font-weight: 500;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-modelsSection__modelCatalogMeta,
 .dsh-modelsSection__modelEmpty {
   margin: 0;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
 }
@@ -438,8 +438,8 @@
 /* Model list, shared with the pi-ai provider form: one bordered
    entry per model, id and display name on the row, capacities behind the
    row's own disclosure. The rules use this stylesheet's token vocabulary —
-   `--dsw-alias-border-subtle`, `--dsw-alias-text-tertiary`, and
-   `--dsw-alias-text-primary` are undefined here and would resolve to their
+   `--freddie-alias-border-subtle`, `--freddie-alias-text-tertiary`, and
+   `--freddie-alias-text-primary` are undefined here and would resolve to their
    light-mode literals. */
 .dsh-modelsSection__modelList {
   display: flex;
@@ -455,7 +455,7 @@
 }
 
 .dsh-modelsSection__modelEntry {
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 8px;
   padding: 6px;
 }
@@ -479,13 +479,13 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
 }
 
 .dsh-modelsSection__iconButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-modelsSection__iconButton:disabled {
@@ -495,8 +495,8 @@
 
 /* The delete glyph keeps the danger tint the rest of the section uses. */
 .dsh-modelsSection__iconButtonDanger:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover-danger);
-  color: var(--dsw-alias-state-error-primary);
+  background: var(--freddie-alias-interactive-bg-hover-danger);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-modelsSection__modelAdvanced {
@@ -513,14 +513,14 @@
 }
 
 .dsh-modelsSection__modelFieldLabel {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
 }
 
 .dsh-modelsSection__modelEmpty {
   padding: 12px;
-  border: 1px dashed var(--dsw-alias-border-l3);
+  border: 1px dashed var(--freddie-alias-border-l3);
   border-radius: 8px;
   text-align: center;
 }
@@ -533,10 +533,10 @@
   gap: 4px;
   height: 28px;
   padding: 0 10px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 14px;
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font: inherit;
   font-size: 12px;
   line-height: 18px;
@@ -544,7 +544,7 @@
 }
 
 .dsh-modelsSection__addModelButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-modelsSection__input {
@@ -552,13 +552,13 @@
   width: 100%;
   height: 32px;
   padding: 0 10px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 8px;
   font: inherit;
   font-size: 14px;
   line-height: 22px;
-  background: var(--dsw-alias-bg-layer-1);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-bg-layer-1);
+  color: var(--freddie-alias-label-primary);
 }
 
 /* Enum pickers hold a handful of short options; a field-width dropdown reads
@@ -570,11 +570,11 @@ select.dsh-modelsSection__input {
 
 .dsh-modelsSection__input:focus {
   outline: none;
-  border-color: var(--dsw-alias-brand-primary);
+  border-color: var(--freddie-alias-brand-primary);
 }
 
 .dsh-modelsSection__input::placeholder {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--freddie-alias-label-dimmed);
 }
 
 .dsh-modelsSection__input:disabled {
@@ -600,7 +600,7 @@ select.dsh-modelsSection__input {
   margin: 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-modelsSection__deleteDialog {
@@ -608,12 +608,12 @@ select.dsh-modelsSection__input {
 }
 
 .dsh-modelsSection__deleteConfirm:not(:disabled) {
-  border-color: var(--dsw-alias-state-error-primary);
-  color: var(--dsw-alias-state-error-primary);
+  border-color: var(--freddie-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-modelsSection__deleteConfirm:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover-danger);
+  background: var(--freddie-alias-interactive-bg-hover-danger);
 }
 
 /* Icon-button label seat: named for assistive tech and for the tests that
@@ -640,8 +640,8 @@ select.dsh-modelsSection__input {
      scrollbar indirection is rebound here rather than on the scrolling child:
      the elevation choice belongs with the surface and inherits down (see
      ui-theme styles/scrollbar.css for the contract). */
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 }
 
 .dsh-modelsSection__candidateActions {

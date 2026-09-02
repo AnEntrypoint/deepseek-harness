@@ -2,7 +2,7 @@
  * Profile discovery, initialization, and patch-layer composition for the
  * `dsh --profile` launcher family.
  *
- * A profile is a directory under `$DSH_HOME/profiles/<name>` holding a
+ * A profile is a directory under `$FREDDIE_HOME/profiles/<name>` holding a
  * `package.json` (out-of-tree plugin dependencies plus the profile manifest
  * `dsh.profile` with its ordered `bundles` list) and a `cordis.patch.yml`
  * (the user's own patch layer, applied after every bundle layer). Bundles are
@@ -16,10 +16,10 @@
  * first from the dsh installation (the launcher's own package), then from the
  * profile directory. The Loader's `baseUrl` is the profile directory, whose
  * `node_modules` pnpm manages for out-of-tree plugins, while the maintained
- * flat fallback directory `$DSH_HOME/profiles/node_modules` (one symlink per
+ * flat fallback directory `$FREDDIE_HOME/profiles/node_modules` (one symlink per
  * package the installation's app and bundles depend on) makes every in-box
  * plugin Node-resolvable from any profile through the ordinary parent-walk.
- * @module @deepseek-ai/dsh-app-boot/profile
+ * @module @freddie/freddie-app-boot/profile
  */
 
 import { createRequire } from 'node:module'
@@ -27,8 +27,8 @@ import {
   existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, unlinkSync, writeFileSync,
 } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
-import { applyEntryPatches } from '@deepseek-ai/cordis-plugin-include'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { applyEntryPatches } from '@freddie/cordis-plugin-include'
+import { resolveDshHome } from '@freddie/freddie-home-paths'
 import { loadOverlayPatches } from './index.js'
 
 /** Directory under the Harness home holding every profile. */
@@ -54,17 +54,17 @@ export function resolveProfileDir(name, home = resolveDshHome()) {
 
 /** The shipped profile templates auto-initialized on first use, by name. */
 export const PROFILE_TEMPLATES = {
-  web: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'],
-  headless: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-headless'],
+  web: ['@freddie/freddie-base', '@freddie/freddie-web-app'],
+  headless: ['@freddie/freddie-base', '@freddie/freddie-headless'],
 }
 
 /** Installation-owned bundle tuples normalized to the shipped template. */
 const INSTALLATION_OWNED_PROFILE_TUPLES = {
-  headless: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@deepseek-ai/dsh-headless'],
+  headless: ['@freddie/freddie-base', '@freddie/freddie-web-app', '@freddie/freddie-headless'],
 }
 
 /** The bundle list a `dsh plugin` init uses for a name with no shipped template. */
-export const DEFAULT_PROFILE_BUNDLES = ['@deepseek-ai/dsh-base']
+export const DEFAULT_PROFILE_BUNDLES = ['@freddie/freddie-base']
 
 const PROFILE_PATCH_TEMPLATE = `# Your patch layer for this dsh profile, applied after every bundle layer:
 # a top-level YAML array of loader patch entries (id-targeted config
@@ -144,7 +144,7 @@ function ensureSymlink(link, target) {
 }
 
 /**
- * Maintain the flat module fallback `$DSH_HOME/profiles/node_modules`: one
+ * Maintain the flat module fallback `$FREDDIE_HOME/profiles/node_modules`: one
  * symlink per package in the dsh app's resolvable dependency CLOSURE (BFS
  * over `dependencies` from the app manifest), each resolved from its own
  * real location. Node's parent-directory walk from any profile finds this
@@ -274,7 +274,7 @@ function packageDirFromAnchor(anchor, packageName) {
 /**
  * Resolve one bundle package's directory: installation anchor first, then the
  * profile directory. The installation-first order is the contract that
- * `@deepseek-ai/dsh-base` (and every other in-box bundle) always comes from
+ * `@freddie/freddie-base` (and every other in-box bundle) always comes from
  * the same installation as the running dsh, never from a profile-local copy.
  * Resolution does not require the package to export `./package.json`.
  * @param binName - the diagnostic prefix on the thrown error.

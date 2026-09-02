@@ -1,12 +1,12 @@
 /**
  * Six model-facing persistent terminal tools. Owner identity comes from the exact
  * tool execution Agent; generic `ctx.jobs` owns background ids and collection.
- * @module @deepseek-ai/dsh-tool-terminal
+ * @module @freddie/freddie-tool-terminal
  */
 
-import z from '@deepseek-ai/schemastery'
-import { TerminalSessionId } from '@deepseek-ai/dsh-terminal'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import z from '@freddie/schemastery'
+import { TerminalSessionId } from '@freddie/freddie-terminal'
+import { defineTool } from '@freddie/freddie-tools'
 import { boundTerminalText, renderList, renderRead, renderSend, renderSendRead, renderSpawn } from './render.js'
 
 /** Cordis plugin name. */
@@ -205,7 +205,7 @@ export function apply(ctx, config = {}) {
       if (args.run_in_background === true) {
         if (!enableRunInBackground) throw new Error('background terminal sends are disabled by tool-terminal configuration')
         const jobs = ctx.get('jobs')
-        if (jobs === undefined) throw new Error('background terminal sends require @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs')
+        if (jobs === undefined) throw new Error('background terminal sends require @freddie/freddie-jobs and @freddie/freddie-tool-jobs')
         let cancelRequested = false
         const jobId = jobs.start({
           kind: 'pty-send',

@@ -1,5 +1,5 @@
 import { createElement as h } from 'webjsx'
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button } from '@freddie/freddie-client-ui-primitives'
 
 /**
  * Compute the shared result modal's props from the Session Header

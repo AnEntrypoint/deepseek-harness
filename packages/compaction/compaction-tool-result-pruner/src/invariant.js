@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-compaction-tool-result-pruner`.
- * @module @deepseek-ai/dsh-compaction-tool-result-pruner/invariant
+ * Package-owned invariant companion for `@freddie/freddie-compaction-tool-result-pruner`.
+ * @module @freddie/freddie-compaction-tool-result-pruner/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-compaction-tool-result-pruner'
+const PACKAGE_NAME = '@freddie/freddie-compaction-tool-result-pruner'
 
 /** Cordis companion plugin name. */
 export const name = 'compaction-tool-result-pruner-invariant'

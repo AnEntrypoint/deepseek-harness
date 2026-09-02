@@ -7,7 +7,7 @@
  * Feature-owned rows and sections stay with their features.
  * Export discipline: packages/client/AGENTS.md.
  */
-import { resolveSlotLabel, webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { resolveSlotLabel, webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './SettingsRoot.js'
 import { CloseLabel, HeaderContent, TriggerContent } from './chrome.js'
 import { GeneralSection } from './GeneralSection.js'

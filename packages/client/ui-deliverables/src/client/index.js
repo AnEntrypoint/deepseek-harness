@@ -7,7 +7,7 @@
  * composing this plugin out of cordis.yml removes both surfaces entirely;
  * the owning view renders an empty chain and inert prose at zero cost.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { en, NS, zh } from './locales.js'
 import {
   deliverablesDefinition, producedFileMentions, selectProducedFiles,

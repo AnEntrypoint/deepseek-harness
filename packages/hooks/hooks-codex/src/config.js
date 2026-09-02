@@ -2,10 +2,10 @@
  * Parse Codex's five-event hook subset into shared {@link MatcherGroup}s. Only synchronous command
  * hooks run; other types and `async: true` commands are recorded as skipped. Codex performs no
  * command substitution.
- * @module @deepseek-ai/dsh-hooks-codex/config
+ * @module @freddie/freddie-hooks-codex/config
  */
 
-import { matcherDiagnostic } from '@deepseek-ai/dsh-hook-protocol'
+import { matcherDiagnostic } from '@freddie/freddie-hook-protocol'
 
 /** The five Codex hook points this bridge supports. */
 export const CODEX_EVENTS = ['PreToolUse', 'PostToolUse', 'SessionStart', 'UserPromptSubmit', 'Stop']

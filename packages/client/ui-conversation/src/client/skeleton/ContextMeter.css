@@ -16,23 +16,23 @@
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   cursor: pointer;
 }
 
 .dsh-contextMeter__trigger:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-contextMeter__track {
   fill: none;
-  stroke: var(--dsw-alias-border-l3);
+  stroke: var(--freddie-alias-border-l3);
   stroke-width: 2;
 }
 
 .dsh-contextMeter__fill {
   fill: none;
-  stroke: var(--dsw-alias-label-tertiary);
+  stroke: var(--freddie-alias-label-tertiary);
   stroke-width: 2;
   stroke-linecap: round;
 }
@@ -45,13 +45,13 @@
   box-sizing: border-box;
   width: 264px;
   padding: 12px;
-  border: 1px solid var(--dsw-alias-border-inverted);
+  border: 1px solid var(--freddie-alias-border-inverted);
   border-radius: 12px;
   background: var(--dsw-specific-menu);
   box-shadow: var(--dsw-shadow-lv3);
   font-size: 12px;
   line-height: 20px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   cursor: default;
 }
 
@@ -65,16 +65,16 @@
   margin-left: auto;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-contextMeter__percent {
   font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-contextMeter__headline {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 /* The headline brackets the reading, so the side a locale leaves empty must
@@ -89,7 +89,7 @@
   margin: 10px 0 12px;
   height: 4px;
   border-radius: 999px;
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
   overflow: hidden;
 }
 
@@ -98,7 +98,7 @@
   min-width: 2px;
   height: 100%;
   border-radius: 1px;
-  background: var(--meter-tint, var(--dsw-alias-label-tertiary));
+  background: var(--meter-tint, var(--freddie-alias-label-tertiary));
 }
 
 .dsh-contextMeter__swatch {
@@ -137,11 +137,11 @@
 }
 
 .dsh-contextMeter__row dt {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-contextMeter__row dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }

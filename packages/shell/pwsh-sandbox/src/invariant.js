@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-pwsh-sandbox`.
- * @module @deepseek-ai/dsh-pwsh-sandbox/invariant
+ * Package-owned invariant companion for `@freddie/freddie-pwsh-sandbox`.
+ * @module @freddie/freddie-pwsh-sandbox/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-pwsh-sandbox'
+const PACKAGE_NAME = '@freddie/freddie-pwsh-sandbox'
 
 /** Cordis companion plugin name. */
 export const name = 'pwsh-sandbox-invariant'

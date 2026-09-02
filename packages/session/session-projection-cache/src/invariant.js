@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-session-projection-cache`.
- * @module @deepseek-ai/dsh-session-projection-cache/invariant
+ * Package-owned invariant companion for `@freddie/freddie-session-projection-cache`.
+ * @module @freddie/freddie-session-projection-cache/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-session-projection-cache'
+const PACKAGE_NAME = '@freddie/freddie-session-projection-cache'
 
 /** Cordis companion plugin name. */
 export const name = 'session-projection-cache-invariant'

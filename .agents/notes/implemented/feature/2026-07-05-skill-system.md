@@ -6,13 +6,13 @@ Status: implemented
 
 Agent products have converged on a skill pattern: keep the request prompt small by listing only available instruction bundles, then load the full body when the model decides a task matches. Codex, Claude Code, OpenCode, and Kimi Code differ in details, but all separate discovery metadata from complete instructions so a workspace can carry reusable behavior without paying the full prompt cost on every turn.
 
-DeepSeek Harness uses the same primitive so project-specific review, plugin-authoring, and tool-usage guidance lives next to the workspace or the user's agent configuration instead of being hard-coded into the loop.
+Freddie uses the same primitive so project-specific review, plugin-authoring, and tool-usage guidance lives next to the workspace or the user's agent configuration instead of being hard-coded into the loop.
 
 ## Decision
 
-`@deepseek-ai/dsh-skill` is the pure provider registry (`ctx.skills`), `@deepseek-ai/dsh-skill-filesystem` is the shipped local filesystem provider, and `@deepseek-ai/dsh-tool-skill` owns the durable session catalog and model-facing loader tool. `dsh-agent-spine-demo` loads the registry, local provider, and consumer by default so TUI, headless, and ACP apps get the same behavior while embedded or remote providers contribute skills without changing the registry or consumer. Its `skills` config forwards `registry`, `local`, and `tool` branches to those owners.
+`@freddie/freddie-skill` is the pure provider registry (`ctx.skills`), `@freddie/freddie-skill-filesystem` is the shipped local filesystem provider, and `@freddie/freddie-tool-skill` owns the durable session catalog and model-facing loader tool. `dsh-agent-spine-demo` loads the registry, local provider, and consumer by default so TUI, headless, and ACP apps get the same behavior while embedded or remote providers contribute skills without changing the registry or consumer. Its `skills` config forwards `registry`, `local`, and `tool` branches to those owners.
 
-Dedicated packaged providers can contribute immutable skills without filesystem discovery. The shipped CLI declares `@deepseek-ai/dsh-skill-badge` disabled by default; enabling its composition row contributes the official badge instructions through the same registry and consumer ([decision](2026-08-06-bundled-dsh-badge-skill.md)).
+Dedicated packaged providers can contribute immutable skills without filesystem discovery. The shipped CLI declares `@freddie/freddie-skill-badge` disabled by default; enabling its composition row contributes the official badge instructions through the same registry and consumer ([decision](2026-08-06-bundled-dsh-badge-skill.md)).
 
 Provider plugins register synchronously during `apply()`. Provider membership is direct effect-owned state: registration and disposal invalidate completed catalogs synchronously, and discovery reads the current provider map on demand rather than observing registry-change events. Provider catalogs return ranked candidates from awaited `list()` calls, where remote providers perform initialization, authentication, and discovery while honoring the lookup abort signal. The registry validates each candidate, resolves same-name skills first-wins by rank, provider registration order, and provider-local order, then sorts summaries by skill name for deterministic consumers. It caches only completed catalog snapshots and retries when a provider/runtime revision changes during discovery, so an unload cannot freeze a stale, unresolvable skill into a session catalog. Runtime `ctx.skills.register(...)` remains a convenience for embedded in-process skills and uses project-over-user priority; `runtime` is reserved as the registry-owned provider name.
 
@@ -38,7 +38,7 @@ The data structures and catalog/tool contract are documented in [skills.md](../.
 
 **Use a system-prompt section.** Rejected because the rendered system prompt is a single string, while the catalog is a user-role `<system-reminder>` message. The [request-only session-prefix extension point](../../archived/feature/2026-07-07-session-prefix.md) (archived) was the original mechanism; after the unified sourced-message decision removed it, the catalog became a durable sourced injection with the same message shape.
 
-**Materialize built-in DSH authoring skills under `~/.dsh/skills/.system`.** Rejected because bundled skills do not write user home on startup, and embedded or remote providers supply configured skills.
+**Materialize built-in FREDDIE authoring skills under `~/.dsh/skills/.system`.** Rejected because bundled skills do not write user home on startup, and embedded or remote providers supply configured skills.
 
 **Recursively discover nested `**/SKILL.md`.** Rejected. Flat files and one-level directory bundles cover the configured roots while keeping duplicate handling and catalog order easy to reason about.
 

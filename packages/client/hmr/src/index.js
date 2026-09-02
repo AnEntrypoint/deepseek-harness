@@ -10,7 +10,7 @@
  */
 import { statSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import { EVENTS_ENDPOINT } from './events.js'
 
 export { EVENTS_ENDPOINT } from './events.js'
@@ -41,7 +41,7 @@ export const Config = z.object({
 function resolveDistIndexIfBuilt() {
   const require = createRequire(import.meta.url)
   try {
-    return require.resolve('@deepseek-ai/dsh-web-frontend/index.html')
+    return require.resolve('@freddie/freddie-web-frontend/index.html')
   } catch {
     return undefined
   }

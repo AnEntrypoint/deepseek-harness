@@ -29,7 +29,7 @@
  * This browser half also owns the `skill` keyed toolview: a replay-stable
  * accent row derived only from each logged call/result slice.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './SkillRow.js'
 import { en, NS, zh } from './locales.js'
 

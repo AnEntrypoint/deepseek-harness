@@ -1,14 +1,14 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-agent-presets`.
- * @module @deepseek-ai/dsh-agent-presets/invariant
+ * Package-owned invariant companion for `@freddie/freddie-agent-presets`.
+ * @module @freddie/freddie-agent-presets/invariant
  */
 
 // Imported through the package name, not `./mount.js`: a module shared between
 // the two build entry points becomes a third chunk that the published `files`
 // list does not carry, which `verify-built-package-invariants` rejects.
-import { leakedServices, livePresetMounts } from '@deepseek-ai/dsh-agent-presets'
+import { leakedServices, livePresetMounts } from '@freddie/freddie-agent-presets'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-agent-presets'
+const PACKAGE_NAME = '@freddie/freddie-agent-presets'
 
 /** Cordis companion plugin name. */
 export const name = 'agent-presets-invariant'

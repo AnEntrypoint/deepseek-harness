@@ -4,18 +4,18 @@
  * creation, flatten post-publication failures, and dispose to whole-tree
  * quiescence.
  *
- * @module @deepseek-ai/dsh-subagent-codex/run
+ * @module @freddie/freddie-subagent-codex/run
  */
 
 import { randomUUID } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { SessionId } from '@freddie/freddie-session'
 import {
   settleRunResult,
   subprocessRunHandle,
-} from '@deepseek-ai/dsh-subagent'
+} from '@freddie/freddie-subagent'
 import {
   CodexAppServerWire,
 } from './wire.js'

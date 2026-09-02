@@ -3,6 +3,6 @@
  * request results (`Location`, `LocationLink`, `Hover`), and the `textDocumentSync` shapes used to
  * decide transient-open support. Types only; no runtime representation survives conversion to
  * buildless JS.
- * @module @deepseek-ai/dsh-lsp-stdio/protocol
+ * @module @freddie/freddie-lsp-stdio/protocol
  */
 export {}

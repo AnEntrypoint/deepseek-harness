@@ -5,7 +5,7 @@
  * {@link InputTriggerController}; the service only registers sources, resolves
  * controllers by session scope, and relays roster changes.
  */
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { InputTriggerController } from './controller.js'
 
 /** The `ctx.inputTriggers` trigger pipeline service (root registry + controller resolution). */

@@ -1,10 +1,10 @@
 /**
  * Model-facing result rendering for the bash tool.
  *
- * @module @deepseek-ai/dsh-tool-bash/render
+ * @module @freddie/freddie-tool-bash/render
  */
 
-import { escalationHintMarker, sandboxDenialMarker } from '@deepseek-ai/dsh-sandbox'
+import { escalationHintMarker, sandboxDenialMarker } from '@freddie/freddie-sandbox'
 
 /** Append the truncation notice (with the full-output spill path) to a stream's text. */
 function streamText(output) {
@@ -94,8 +94,8 @@ export function renderProcessRead(
 
 /**
  * The exit-status parse is the shared marker-contract half of the shell-tool
- * rendering story, owned by `@deepseek-ai/dsh-shell` so `dsh-tool-pwsh` reuses
+ * rendering story, owned by `@freddie/freddie-shell` so `dsh-tool-pwsh` reuses
  * it (its renderer emits the same markers). Re-exported here to keep
  * `../src/render.js` a single import root for bash-tool consumers.
  */
-export { parseExitStatus } from '@deepseek-ai/dsh-shell'
+export { parseExitStatus } from '@freddie/freddie-shell'

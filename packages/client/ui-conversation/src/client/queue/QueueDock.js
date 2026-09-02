@@ -13,7 +13,7 @@ import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconCheckOutline16, IconChevronDownOutline14, IconChevronUpOutline14, IconCloseOutline16,
   IconEditOutline16, IconQueueOutline14, IconSendOutline14, IconTrashOutline16, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { NS } from '../locales.js'
 import css from './QueueDock.css.js'
 

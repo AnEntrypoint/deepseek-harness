@@ -11,9 +11,9 @@ Authorization Service Definition (`ctx.authorization`). Some credentials cannot 
 ## Surface
 
 ```ts
-import type { Context } from '@deepseek-ai/cordis'
-import { AuthorizationDeclinedError, type AuthorizationSession } from '@deepseek-ai/dsh-authorization'
-import { credentialKey } from '@deepseek-ai/dsh-credentials'
+import type { Context } from '@freddie/cordis'
+import { AuthorizationDeclinedError, type AuthorizationSession } from '@freddie/freddie-authorization'
+import { credentialKey } from '@freddie/freddie-credentials'
 
 declare const ctx: Context
 declare const exchange: (signal: AbortSignal) => Promise<void>

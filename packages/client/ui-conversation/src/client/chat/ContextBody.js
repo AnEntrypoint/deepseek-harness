@@ -5,7 +5,7 @@
 // even when this UI version has never seen its producer.
 
 import { createElement as h } from 'webjsx'
-import { JsonBlock } from '@deepseek-ai/dsh-client-ui-primitives'
+import { JsonBlock } from '@freddie/freddie-client-ui-primitives'
 import css from './ContextBody.css.js'
 
 /** Model-facing text stays bounded at the disclosure, not at the producer. */

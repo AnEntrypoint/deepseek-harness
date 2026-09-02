@@ -9,7 +9,7 @@
  * with `removedCount` and marks a cancellation `outcome: 'canceled'`, which
  * separates a turn claiming its input from work being dropped unrun.
  *
- * @module @deepseek-ai/dsh-agent/consumed-work
+ * @module @freddie/freddie-agent/consumed-work
  */
 
 /**

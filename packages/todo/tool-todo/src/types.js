@@ -11,6 +11,6 @@
  * package rule: the type-only value is intentionally dropped, and nothing
  * runtime-visible remains in this file.
  *
- * @module @deepseek-ai/dsh-tool-todo/types
+ * @module @freddie/freddie-tool-todo/types
  */
 export {}

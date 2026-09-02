@@ -2,7 +2,7 @@
  * Surface retention selection and the shared log-recorded compaction
  * transaction for automatic open-turn and manual idle-session compaction.
  *
- * @module @deepseek-ai/dsh-compaction-basic/region
+ * @module @freddie/freddie-compaction-basic/region
  */
 
 import { randomUUID } from 'node:crypto'
@@ -13,8 +13,8 @@ import {
   compactCheckpointSource,
   toolPairingBalancedAfter,
   toolPairingBalancedBefore,
-} from '@deepseek-ai/dsh-compaction'
-import { createUserMessage, errorChain } from '@deepseek-ai/dsh-llm'
+} from '@freddie/freddie-compaction'
+import { createUserMessage, errorChain } from '@freddie/freddie-llm'
 import { frameSummary } from './summarizer.js'
 
 /**

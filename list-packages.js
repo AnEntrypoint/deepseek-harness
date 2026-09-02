@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const packagesDir = 'C:\\dev\\deepseek-harness\\packages';
+const packagesDir = 'C:\\dev\\freddie\\packages';
 try {
   const dirs = fs.readdirSync(packagesDir, { withFileTypes: true })
     .filter(d => d.isDirectory())

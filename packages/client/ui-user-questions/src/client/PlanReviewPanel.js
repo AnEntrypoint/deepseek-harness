@@ -18,7 +18,7 @@
 // applyDiff(this, vdom) call instead of implicit re-render on setState.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button, IconEditOutline16, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, IconEditOutline16, MarkdownText } from '@freddie/freddie-client-ui-primitives'
 import css from './PlanReviewPanel.css.js'
 
 /**

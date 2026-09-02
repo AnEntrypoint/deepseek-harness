@@ -1,16 +1,16 @@
 /**
  * Shared route, framing, timeout, assembly, and validation policy for
  * model-backed session-title providers.
- * @module @deepseek-ai/dsh-session-title-llm
+ * @module @freddie/freddie-session-title-llm
  */
 
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage, BlockAssembler, deepFreeze } from '@deepseek-ai/dsh-llm'
-import { deadline, MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import z from '@freddie/schemastery'
+import { createUserMessage, BlockAssembler, deepFreeze } from '@freddie/freddie-llm'
+import { deadline, MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import {
   normalizeSessionTitle,
   SessionTitleProviderId,
-} from '@deepseek-ai/dsh-session-title'
+} from '@freddie/freddie-session-title'
 
 /** Capability-owned timeout reason code for auxiliary title requests. */
 export const SESSION_TITLE_TIMEOUT_CODE = 'SESSION_TITLE_TIMEOUT'

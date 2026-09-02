@@ -9,8 +9,8 @@
  */
 
 import { join } from 'node:path'
-import { decodeStorageRecord, packChunkRuns, SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session'
-import { SessionFormatUnsupportedError, sessionFormatVersionRefusal } from '@deepseek-ai/dsh-session-persistence'
+import { decodeStorageRecord, packChunkRuns, SESSION_FORMAT_VERSION } from '@freddie/freddie-session'
+import { SessionFormatUnsupportedError, sessionFormatVersionRefusal } from '@freddie/freddie-session-persistence'
 
 /**
  * Return the artifact suffix for one physical encoding.

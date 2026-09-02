@@ -6,6 +6,6 @@
  *
  * This module is intentionally empty at runtime: it re-exported only types.
  *
- * @module @deepseek-ai/dsh-session-stats/client
+ * @module @freddie/freddie-session-stats/client
  */
 export {}

@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-command-goal
+# @freddie/freddie-command-goal
 
 Human-facing `/goal` control over [`ctx.goals`](../goal/README.md). The plugin registers one global command through [`ctx.commands`](../../interaction/commands/README.md), so every composed command adapter discovers and executes it without a model turn. The [human goal-command Agent Note](../../../.agents/notes/implemented/feature/2026-07-19-human-goal-command.md) owns the UX and composition decisions.
 
@@ -25,11 +25,11 @@ The producer injects `commands` and `goals`. A custom app mounts their owners pl
 
 ```yaml
 - id: commands
-  name: '@deepseek-ai/dsh-commands'
+  name: '@freddie/freddie-commands'
 - id: goal
-  name: '@deepseek-ai/dsh-goal'
+  name: '@freddie/freddie-goal'
 - id: command-goal
-  name: '@deepseek-ai/dsh-command-goal'
+  name: '@freddie/freddie-command-goal'
 ```
 
 The shipped `dsh` base enables the persisted-goal stack and this command; the Web client provides its interactive adapter. The ACP automation app enables the domain and model tools without a command adapter; `goals: false` removes that stack. The UI-less `agent-spine-demo` requires an explicit `goals: {}` so headless one-shot callers do not silently change from one physical turn to a multi-round operation.

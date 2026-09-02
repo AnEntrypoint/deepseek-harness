@@ -8,7 +8,7 @@
  * @module dsh-llm-deepseek/translate
  */
 
-import { CallId, EMPTY_RESPONSE_CODE, LlmError } from '@deepseek-ai/dsh-llm'
+import { CallId, EMPTY_RESPONSE_CODE, LlmError } from '@freddie/freddie-llm'
 import { DONE } from './sse.js'
 
 /**

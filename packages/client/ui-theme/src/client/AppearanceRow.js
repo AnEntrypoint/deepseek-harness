@@ -14,7 +14,7 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconDarkOutline16, IconFollowsystemOutline16, IconLightOutline16,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './AppearanceRow.css.js'
 
 /** Cube order and icons (figma 501:30015-30017: Light, Dark, System). */

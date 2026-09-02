@@ -1,12 +1,12 @@
 /**
  * Dynamic Cordis Plugin service: immutable package definitions, one active run
  * per Plugin, human-approved Client activation, and Host/Client invocation.
- * @module @deepseek-ai/dsh-cordis-host-runner
+ * @module @freddie/freddie-cordis-host-runner
  */
 
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import z from '@freddie/schemastery'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { TypertRemoteService, Remote } from '@freddie/freddie-typert-protocol'
 import { isPlugin, normalizeHandler } from './guard.js'
 import { CordisInspectRegistryService } from './inspect-registry.js'
 import { missingServices, startHostHalf } from './lifecycle.js'
@@ -1126,7 +1126,7 @@ function missingFor(ctx, run) {
 }
 
 function missingPluginMessage(id) {
-  return `no dynamic plugin "${id}" in this process — it may have been removed or lost on DSH restart`
+  return `no dynamic plugin "${id}" in this process — it may have been removed or lost on FREDDIE restart`
 }
 
 function errorDetails(error) {

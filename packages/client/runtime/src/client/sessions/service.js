@@ -16,7 +16,7 @@
  */
 // Value import from the inline-safe wire layer (not the connection plugin):
 // plugin-to-plugin value imports are a bundle purity error.
-import { SESSION_SEARCH_RESULT_LIMIT } from '@deepseek-ai/dsh-host-apiproxy/api'
+import { SESSION_SEARCH_RESULT_LIMIT } from '@freddie/freddie-host-apiproxy/api'
 import { createSnapshotStore } from '../contract/store.js'
 import { createScope, scopeOf as scopeTagOf } from '../agents/scope.js'
 import { SessionManager } from './manager.js'

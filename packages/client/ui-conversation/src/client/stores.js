@@ -2,7 +2,7 @@
  * Per-session chat store shared by conversation and details registrations.
  * The plugin creates its handle at apply time so identity follows the fiber.
  */
-import { defineStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { defineStore } from '@freddie/freddie-client-runtime/client'
 
 /**
  * Declares the per-session chat state and write surface.

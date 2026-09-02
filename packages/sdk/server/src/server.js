@@ -2,14 +2,14 @@
  * JSON-RPC methods and notifications for out-of-process harness SDKs.
  * The surrounding context owns plugins, persistence, and configured adapters.
  *
- * @module @deepseek-ai/dsh-sdk-jsonrpc-server/server
+ * @module @freddie/freddie-sdk-jsonrpc-server/server
  */
 
 import { resolve } from 'node:path'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { carrierKeyOf } from '@deepseek-ai/dsh-scope'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { carrierKeyOf } from '@freddie/freddie-scope'
+import { SessionId } from '@freddie/freddie-session'
+import * as LlmDeepSeek from '@freddie/freddie-llm-deepseek'
 
 /** Recover the delegating parent from the service-owned scoped carrier. */
 function subagentParentOf(carrier) {
@@ -96,7 +96,7 @@ export class HarnessSdkJsonRpcServer {
       if (this.provider !== 'deepseek-official') throw new Error(`no adapter registered for provider "${this.provider}"`)
       this.llmFiber = await this.ctx.plugin(LlmDeepSeek, {})
     }
-    return { serverInfo: { name: 'deepseek-harness-sdk-runtime', version: '0.0.1' } }
+    return { serverInfo: { name: 'freddie-sdk-runtime', version: '0.0.1' } }
   }
 
   /**
@@ -171,7 +171,7 @@ export class HarnessSdkJsonRpcServer {
       case 'shutdown':
         return this.shutdown()
       default:
-        throw new Error(`unknown DeepSeek Harness SDK runtime method: ${method}`)
+        throw new Error(`unknown Freddie SDK runtime method: ${method}`)
     }
   }
 
@@ -194,7 +194,7 @@ export class HarnessSdkJsonRpcServer {
     // No preset composition: this server's compositions keep the model-facing
     // rows in the host plane, so this agent reads them from the global layer. A
     // deployment that configures a roster has to join one here first
-    // (@deepseek-ai/dsh-agent-presets README, "Composing a child agent").
+    // (@freddie/freddie-agent-presets README, "Composing a child agent").
     const handle = await this.ctx.agents.create({
       sessionId: SessionId(sessionId),
       meta: { cwd: this.cwd },

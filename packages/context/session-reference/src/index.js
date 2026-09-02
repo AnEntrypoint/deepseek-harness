@@ -2,12 +2,12 @@
  * Cross-session snapshot preparation. Hosts adapt mentions into structured
  * references; this service owns exact reads, projection, budgets, and durable context.
  *
- * @module @deepseek-ai/dsh-session-reference
+ * @module @freddie/freddie-session-reference
  */
 
-import z from '@deepseek-ai/schemastery'
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
-import { createUserMessage, freezeMessage } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { Remote, TypertRemoteService } from '@freddie/freddie-typert-protocol'
+import { createUserMessage, freezeMessage } from '@freddie/freddie-llm'
 import {
   DEFAULT_CANDIDATE_LIMIT,
   DEFAULT_MAX_REFERENCE_BYTES,

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-spill-local`.
- * @module @deepseek-ai/dsh-spill-local/invariant
+ * Package-owned invariant companion for `@freddie/freddie-spill-local`.
+ * @module @freddie/freddie-spill-local/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-spill-local'
+const PACKAGE_NAME = '@freddie/freddie-spill-local'
 
 /** Cordis companion plugin name. */
 export const name = 'spill-local-invariant'

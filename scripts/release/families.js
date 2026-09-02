@@ -34,7 +34,7 @@ const INSTALL_SECTIONS = ['dependencies', 'optionalDependencies']
 const PEER_SECTIONS = ['peerDependencies']
 
 /** The workspace root manifest, which is never a release member. */
-const WORKSPACE_ROOT_PACKAGE = '@deepseek-ai/dsh-root'
+const WORKSPACE_ROOT_PACKAGE = '@freddie/freddie-root'
 
 /** One peer declaration the publish order leaves unordered. */
 
@@ -108,7 +108,7 @@ export class ReleaseFamily {
       const name = requireString(manifest, 'name', normalized)
       const version = requireString(manifest, 'version', normalized)
       if (name === WORKSPACE_ROOT_PACKAGE) throw new Error(`${normalized} selected the workspace root`)
-      if (!name.startsWith('@deepseek-ai/')) throw new Error(`${normalized} must name an @deepseek-ai package`)
+      if (!name.startsWith('@freddie/')) throw new Error(`${normalized} must name an @freddie package`)
       if (seen.has(name)) throw new Error(`${name} appears twice in release family ${this.id}`)
       seen.add(name)
       members.push({
@@ -321,7 +321,7 @@ class DshFamily extends ReleaseFamily {
     validateTarballPayload(files, member.name)
   }
 
-  installedEntry = { packageName: '@deepseek-ai/dsh', binPath: 'lib/bin.js' }
+  installedEntry = { packageName: '@freddie/freddie', binPath: 'lib/bin.js' }
 }
 
 /** `vendor/*`: every package keeps its own version line, so every package has its own tag. */
@@ -348,7 +348,7 @@ class VendorFamily extends ReleaseFamily {
    * @returns `vendor-<unscoped name>-v`.
    */
   tagPrefixFor(member) {
-    return `${this.tagPrefix}${member.name.replace('@deepseek-ai/', '')}-v`
+    return `${this.tagPrefix}${member.name.replace('@freddie/', '')}-v`
   }
 
   /**

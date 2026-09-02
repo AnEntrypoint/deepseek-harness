@@ -5,14 +5,14 @@
  * any trees the service still owns. It has no config: every disposition and
  * limit arrives on the spec, so the deployment-varying choices stay with the
  * caller's config (the bash executor's, the LSP host's, …).
- * @module @deepseek-ai/dsh-subprocess-local
+ * @module @freddie/freddie-subprocess-local
  */
 
 import { constants } from 'node:fs'
 import { access, stat } from 'node:fs/promises'
 import { delimiter, extname, isAbsolute, resolve } from 'node:path'
 import * as nodePty from 'node-pty'
-import { SubprocessRuntime } from '@deepseek-ai/dsh-subprocess'
+import { SubprocessRuntime } from '@freddie/freddie-subprocess'
 import { childEnv, spawnSubprocess } from './spawn.js'
 import { createProcessInspector } from './process-inspector.js'
 import { LocalTerminalHandle } from './terminal.js'

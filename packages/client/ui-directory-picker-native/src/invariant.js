@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-ui-directory-picker-native`.
- * @module @deepseek-ai/dsh-client-ui-directory-picker-native/invariant
+ * Package-owned invariant companion for `@freddie/freddie-client-ui-directory-picker-native`.
+ * @module @freddie/freddie-client-ui-directory-picker-native/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-ui-directory-picker-native'
+const PACKAGE_NAME = '@freddie/freddie-client-ui-directory-picker-native'
 
 /** Cordis companion plugin name. */
 export const name = 'client-ui-directory-picker-native-invariant'

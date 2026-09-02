@@ -1,10 +1,10 @@
 /**
  * File-reference discovery seam shared by host-backed user interfaces.
  *
- * @module @deepseek-ai/dsh-file-reference
+ * @module @freddie/freddie-file-reference
  */
 
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import { Remote, TypertRemoteService } from '@freddie/freddie-typert-protocol'
 
 export { activeAtToken, formatFileMention } from './grammar.js'
 

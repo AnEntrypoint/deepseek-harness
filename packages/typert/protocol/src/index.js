@@ -1,10 +1,10 @@
 /**
  * Remote decorators and explicit Gateway bindings backed only by private
  * module state. Strict reflection remains a Typert compiler responsibility.
- * @module @deepseek-ai/dsh-typert-protocol
+ * @module @freddie/freddie-typert-protocol
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 const TYPERT_REMOTE_SEGMENT_PATTERN = /^[A-Za-z0-9_$.-]+$/
 

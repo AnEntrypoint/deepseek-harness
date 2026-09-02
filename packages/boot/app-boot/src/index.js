@@ -3,7 +3,7 @@
  * `.env`, install the fail-loud Loader guards, resolve the config path (snapshot-aware), load the
  * optional user patch layers from the Harness home (`~/.dsh`), expose its path resolver to
  * config expressions, and drive the Cordis Loader against a leaf `cordis.yml` until the tree settles.
- * @module @deepseek-ai/dsh-app-boot
+ * @module @freddie/freddie-app-boot
  */
 
 import { pathToFileURL } from 'node:url'
@@ -11,12 +11,12 @@ import { readFileSync } from 'node:fs'
 import { parseEnv } from 'node:util'
 import { basename, dirname, isAbsolute, resolve } from 'node:path'
 import * as yaml from 'js-yaml'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include, { applyEntryPatches, entryListSchema } from '@deepseek-ai/cordis-plugin-include'
-import Group from '@deepseek-ai/cordis-plugin-group'
-import { dshHomePath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
+import { Context } from '@freddie/cordis'
+import Loader from '@freddie/cordis-plugin-loader'
+import Include, { applyEntryPatches, entryListSchema } from '@freddie/cordis-plugin-include'
+import Group from '@freddie/cordis-plugin-group'
+import { dshHomePath, resolveDshHome } from '@freddie/freddie-home-paths'
+import { createLaunchEnvironmentSnapshot } from '@freddie/freddie-launch-environment'
 
 export {
   composeEntries,
@@ -37,7 +37,7 @@ export {
  * Resolve the config to boot. Replay swaps a `cordis.yml` basename for
  * `cordis.snapshot.yml` in the same directory; every other mode keeps the path.
  * @param configPath - the requested config path (absolute, or relative to `cwd`).
- * @param snapshotMode - the bin's `$DSH_SNAPSHOT` value; only `'replay'` swaps the
+ * @param snapshotMode - the bin's `$FREDDIE_SNAPSHOT` value; only `'replay'` swaps the
  *   basename.
  * @param cwd - the base a relative `configPath` resolves against.
  * @returns the absolute path of the config to boot.
@@ -98,7 +98,7 @@ const BOOTSTRAP_NAMES = new Set([
 ])
 
 /** Name prefixes no discovered file may set. */
-const BOOTSTRAP_PREFIXES = ['DSH_', 'XDG_', 'DYLD_', 'BASH_FUNC_']
+const BOOTSTRAP_PREFIXES = ['FREDDIE_', 'XDG_', 'DYLD_', 'BASH_FUNC_']
 
 /**
  * Whether a variable may come only from the inherited process environment
@@ -234,7 +234,7 @@ export async function watchUserPatches(
 
 /**
  * Load an optional patch-list file: a top-level YAML array of loader patch
- * entries (`@deepseek-ai/cordis-plugin-include`'s `PatchOptions`): id-targeted config
+ * entries (`@freddie/cordis-plugin-include`'s `PatchOptions`): id-targeted config
  * overrides and `insert` lists, with `!!js` expressions allowed. A missing
  * file means "no layer"; an unreadable, unparsable, or non-array file throws —
  * a present patch file that cannot apply is a misconfiguration and must fail
@@ -274,7 +274,7 @@ export function loadOverlayPatches(binName, file) {
 }
 /**
  * Parse one loader patch list: a top-level YAML array of
- * `@deepseek-ai/cordis-plugin-include` `PatchOptions` (id-targeted config overrides and
+ * `@freddie/cordis-plugin-include` `PatchOptions` (id-targeted config overrides and
  * `insert` lists, `!!js` expressions allowed). Every invalid field or value throws,
  * because a patch file that cannot be applied at all is a misconfiguration; a
  * single patch whose target row is absent stays a per-entry Loader warning, so
@@ -464,7 +464,7 @@ export async function mountRootInclude(
     }
   // `cordis:group` alongside it: a group row is how a composition gives one
   // `isolate` realm to a provider and its consumers together, and an agent
-  // preset living outside this workspace cannot resolve `@deepseek-ai/cordis-plugin-group`
+  // preset living outside this workspace cannot resolve `@freddie/cordis-plugin-group`
   // by name. Both builtins load through the ambient module pipeline, so neither
   // depends on the included tree's own specifier resolution.
   ctx.loader.builtins.group = Group
@@ -768,6 +768,6 @@ export function addHarnessSourceSection(ctx, sourceRoot) {
   return systemPrompt.section({
     name: HARNESS_SOURCE_SECTION,
     order: -99,
-    text: `The DeepSeek Harness implementation checkout is at ${sourceRoot}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.`,
+    text: `The Freddie implementation checkout is at ${sourceRoot}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend FREDDIE itself.`,
   })
 }

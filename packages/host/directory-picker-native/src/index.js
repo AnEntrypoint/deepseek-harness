@@ -6,10 +6,10 @@
  * koffi-driven COM conversation on the child's main thread). Only viable when
  * the operator sits at the host's screen; remote deployments compose the
  * browse backend instead.
- * @module @deepseek-ai/dsh-host-directory-picker-native
+ * @module @freddie/freddie-host-directory-picker-native
  */
 
-import { DirectoryPicker } from '@deepseek-ai/dsh-host-directory-picker'
+import { DirectoryPicker } from '@freddie/freddie-host-directory-picker'
 import { pickNativeDirectory } from './native-picker.js'
 
 export { pickNativeDirectory } from './native-picker.js'

@@ -1,8 +1,8 @@
 /**
  * dsh-lsp's owned branded id: {@link LspProviderId}, the opaque identity a provider reserves on
- * `ctx.lsp`. The `Branded<B>` primitive lives in `@deepseek-ai/dsh-brand`; keeping the type and its
+ * `ctx.lsp`. The `Branded<B>` primitive lives in `@freddie/freddie-brand`; keeping the type and its
  * factory together here lets `index.js` re-export both under one name.
- * @module @deepseek-ai/dsh-lsp/brand
+ * @module @freddie/freddie-lsp/brand
  */
 
 /**

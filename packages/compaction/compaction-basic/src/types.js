@@ -1,5 +1,5 @@
 /**
  * Configuration vocabulary for the replay-aware basic compaction backend.
  *
- * @module @deepseek-ai/dsh-compaction-basic/types
+ * @module @freddie/freddie-compaction-basic/types
  */

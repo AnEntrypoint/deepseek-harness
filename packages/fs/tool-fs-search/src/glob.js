@@ -6,11 +6,11 @@
  * argument validation, argv construction, result parsing, inline sampling,
  * and formatting; process concerns (spawn execution, tree termination,
  * environment scrubbing, output capture) stay behind `ctx.subprocess`.
- * @module @deepseek-ai/dsh-tool-fs-search/glob
+ * @module @freddie/freddie-tool-fs-search/glob
  */
 
 import { sep } from 'node:path'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@freddie/freddie-tools'
 import { runRipgrep, toWorkdirRelative, trySaveFormattedResult } from './search-core.js'
 import { globSearchMeta, searchViewFromMeta } from './presentation.js'
 import { acceptedDirectCallValue } from './direct-call.js'

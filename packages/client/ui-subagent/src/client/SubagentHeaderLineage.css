@@ -20,7 +20,7 @@
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
   cursor: pointer;
@@ -34,12 +34,12 @@
   gap: 4px;
   min-width: 0;
   max-width: 244px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font-weight: 500;
 }
 
 .dsh-subagentHeaderLineage__ancestorSwitcherTrigger {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-weight: 400;
 }
 
@@ -56,7 +56,7 @@
 }
 
 .dsh-subagentHeaderLineage__separator {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   font-size: 14px;
   line-height: 20px;
 }
@@ -70,17 +70,17 @@
 
 .dsh-subagentHeaderLineage__trigger:hover,
 .dsh-subagentHeaderLineage__trigger:focus-visible {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-subagentHeaderLineage__switcherTrigger:hover,
 .dsh-subagentHeaderLineage__switcherTrigger:focus-visible {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-subagentHeaderLineage__ancestorSwitcherTrigger:hover,
 .dsh-subagentHeaderLineage__ancestorSwitcherTrigger:focus-visible {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-subagentHeaderLineage__trigger svg,
@@ -105,8 +105,8 @@
   overflow: auto;
   border-radius: 12px;
   background: var(--dsw-specific-menu);
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
   box-shadow: var(--dsw-shadow-lv3);
 }
 
@@ -130,7 +130,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font-size: 13px;
   line-height: 18px;
   text-align: left;
@@ -140,7 +140,7 @@
 
 .dsh-subagentHeaderLineage__row:hover > .dsh-subagentHeaderLineage__clickarea,
 .dsh-subagentHeaderLineage__row:focus-visible > .dsh-subagentHeaderLineage__clickarea {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-subagentHeaderLineage__clickarea {
@@ -162,7 +162,7 @@
 }
 
 .dsh-subagentHeaderLineage__disabled {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--freddie-alias-label-dimmed);
   cursor: not-allowed;
 }
 
@@ -188,13 +188,13 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
   transition: transform 120ms ease;
 }
 
 .dsh-subagentHeaderLineage__disclosure:hover {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-subagentHeaderLineage__disclosureOpen {
@@ -226,7 +226,7 @@
 
 .dsh-subagentHeaderLineage__summary,
 .dsh-subagentHeaderLineage__metrics {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 11px;
   line-height: 16px;
 }
@@ -260,7 +260,7 @@
   content: '';
   position: absolute;
   left: 0;
-  border-left: 1px solid var(--dsw-alias-border-l2);
+  border-left: 1px solid var(--freddie-alias-border-l2);
 }
 
 .dsh-subagentHeaderLineage__children::before {
@@ -289,13 +289,13 @@
   top: 16px;
   left: -4px;
   width: 14px;
-  border-top: 1px solid var(--dsw-alias-border-l2);
+  border-top: 1px solid var(--freddie-alias-border-l2);
 }
 
 .dsh-subagentHeaderLineage__notice,
 .dsh-subagentHeaderLineage__error {
   padding: 10px 12px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
 }
@@ -305,7 +305,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-subagentHeaderLineage__refresh {
@@ -322,5 +322,5 @@
 }
 
 .dsh-subagentHeaderLineage__refresh:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }

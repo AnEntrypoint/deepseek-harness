@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-subagent",
+  "name": "@freddie/freddie-subagent",
   "description": "Abstract subagent seam (ctx.subagents): named-provider registry for delegating to child agents",
   "version": "0.1.1-rc.2",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/subagent/subagent"
   },
   "type": "module",
@@ -33,67 +33,67 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-presets": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-session-projection-cache": "workspace:^",
-    "@deepseek-ai/dsh-jobs": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-agent": "workspace:^",
+    "@freddie/freddie-agent-presets": "workspace:^",
+    "@freddie/freddie-brand": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-llm": "workspace:^",
+    "@freddie/freddie-sandbox": "workspace:^",
+    "@freddie/freddie-sandbox-policy": "workspace:^",
+    "@freddie/freddie-scope": "workspace:^",
+    "@freddie/freddie-session": "workspace:^",
+    "@freddie/freddie-session-persistence": "workspace:^",
+    "@freddie/freddie-session-projection": "workspace:^",
+    "@freddie/freddie-session-projection-cache": "workspace:^",
+    "@freddie/freddie-jobs": "workspace:^",
+    "@freddie/freddie-tools": "workspace:^",
+    "@freddie/freddie-user-approval": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-agent-presets": {
+    "@freddie/freddie-agent-presets": {
       "optional": true
     },
-    "@deepseek-ai/dsh-sandbox": {
+    "@freddie/freddie-sandbox": {
       "optional": true
     },
-    "@deepseek-ai/dsh-sandbox-policy": {
+    "@freddie/freddie-sandbox-policy": {
       "optional": true
     },
-    "@deepseek-ai/dsh-session-persistence": {
+    "@freddie/freddie-session-persistence": {
       "optional": true
     },
-    "@deepseek-ai/dsh-session-projection": {
+    "@freddie/freddie-session-projection": {
       "optional": true
     },
-    "@deepseek-ai/dsh-session-projection-cache": {
+    "@freddie/freddie-session-projection-cache": {
       "optional": true
     },
-    "@deepseek-ai/dsh-jobs": {
+    "@freddie/freddie-jobs": {
       "optional": true
     },
-    "@deepseek-ai/dsh-user-approval": {
+    "@freddie/freddie-user-approval": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-presets": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-session-projection-cache": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
-    "@deepseek-ai/dsh-storage-domain": "workspace:^",
-    "@deepseek-ai/dsh-jobs": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-agent": "workspace:^",
+    "@freddie/freddie-agent-presets": "workspace:^",
+    "@freddie/freddie-brand": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-llm": "workspace:^",
+    "@freddie/freddie-sandbox": "workspace:^",
+    "@freddie/freddie-sandbox-policy": "workspace:^",
+    "@freddie/freddie-scope": "workspace:^",
+    "@freddie/freddie-session": "workspace:^",
+    "@freddie/freddie-session-persistence": "workspace:^",
+    "@freddie/freddie-session-projection": "workspace:^",
+    "@freddie/freddie-session-projection-cache": "workspace:^",
+    "@freddie/freddie-storage": "workspace:^",
+    "@freddie/freddie-storage-domain": "workspace:^",
+    "@freddie/freddie-jobs": "workspace:^",
+    "@freddie/freddie-tools": "workspace:^",
+    "@freddie/freddie-user-approval": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   }
 }

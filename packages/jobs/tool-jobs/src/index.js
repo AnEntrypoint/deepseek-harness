@@ -4,14 +4,14 @@
  * producers. It also delivers unreported completions to the owning agent:
  * injected into a busy owner's next step, or opening a turn on an idle one
  * under the default `wakeup` delivery, bounded per owner.
- * @module @deepseek-ai/dsh-tool-jobs
+ * @module @freddie/freddie-tool-jobs
  */
 
-import z from '@deepseek-ai/schemastery'
-import { boundContextSummary, createUserMessage } from '@deepseek-ai/dsh-llm'
-import { TextRetainer } from '@deepseek-ai/dsh-output-retention'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { JobId } from '@deepseek-ai/dsh-jobs'
+import z from '@freddie/schemastery'
+import { boundContextSummary, createUserMessage } from '@freddie/freddie-llm'
+import { TextRetainer } from '@freddie/freddie-output-retention'
+import { defineTool } from '@freddie/freddie-tools'
+import { JobId } from '@freddie/freddie-jobs'
 
 export const name = 'tool-jobs'
 export const inject = ['tools', 'jobs', 'systemPrompt']

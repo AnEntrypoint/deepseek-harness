@@ -1,8 +1,8 @@
-/** Package-owned durable goal-stream invariants. @module @deepseek-ai/dsh-goal/invariant */
+/** Package-owned durable goal-stream invariants. @module @freddie/freddie-goal/invariant */
 
 import { applyGoalEvent, emptyGoalFoldState } from './fold.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-goal'
+const PACKAGE_NAME = '@freddie/freddie-goal'
 
 /** Cordis companion plugin name. */
 export const name = 'goal-invariant'

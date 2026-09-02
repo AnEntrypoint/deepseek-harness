@@ -7,7 +7,7 @@
  * cordis.yml row; no client code branches on a capability kind. The dialog's
  * copy is locale-registered here — the flow package owns its own strings.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './flow.js'
 
 /** Locale namespace owning the browser dialog's copy. */

@@ -16,7 +16,7 @@ import {
   IconChevronDownOutline14,
   IconChevronRightOutline14,
   MarkdownText,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './MessageItem.css.js'
 
 const DEFAULT_PROPS = {

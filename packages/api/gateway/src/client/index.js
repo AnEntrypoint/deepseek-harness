@@ -4,7 +4,7 @@
  * participates in method lookup, invocation, or type exposure.
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 /** Required Client services: the Typert registry and the existing Connection carrier. */
 export const inject = ['typert', 'connection']

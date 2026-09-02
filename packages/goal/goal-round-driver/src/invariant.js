@@ -1,10 +1,10 @@
-/** Package-owned goal-round prompt invariants. @module @deepseek-ai/dsh-goal-round-driver/invariant */
+/** Package-owned goal-round prompt invariants. @module @freddie/freddie-goal-round-driver/invariant */
 
 import { isDeepStrictEqual } from 'node:util'
-import { foldGoal } from '@deepseek-ai/dsh-goal'
+import { foldGoal } from '@freddie/freddie-goal'
 import { renderGoalRoundPrompt } from './prompt.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-goal-round-driver'
+const PACKAGE_NAME = '@freddie/freddie-goal-round-driver'
 
 /** Cordis companion plugin name. */
 export const name = 'goal-round-driver-invariant'

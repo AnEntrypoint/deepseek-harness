@@ -23,7 +23,7 @@ import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
 import {
   FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './SidebarRoot.css.js'
 
 /**
@@ -226,8 +226,8 @@ export class DshSidebarRoot extends HTMLElement {
                   asChild(renderSlot('sidebar.brand.name', {}, {
                     fallback: [
                       h('span', {class: css.fallbackBrandName ?? ''}, 'freddie'),
-                      process.env.DSH_CLIENT_COMMIT_HASH
-                        ? h('span', {class: css.buildRevision ?? ''}, process.env.DSH_CLIENT_COMMIT_HASH)
+                      process.env.FREDDIE_CLIENT_COMMIT_HASH
+                        ? h('span', {class: css.buildRevision ?? ''}, process.env.FREDDIE_CLIENT_COMMIT_HASH)
                         : null,
                     ],
                   })),

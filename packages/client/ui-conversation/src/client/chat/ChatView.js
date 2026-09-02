@@ -19,7 +19,7 @@
 // driven from connectedCallback/disconnectedCallback (Toast.tsx's pattern).
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button, IconChevronDownOutline14, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, IconChevronDownOutline14, Modal } from '@freddie/freddie-client-ui-primitives'
 import { PendingSteeringBubble } from './MessageItem.js'
 import { ChatNodeSeat } from './ChatNodeSeat.js'
 import { formatRunDuration } from './message-chrome.js'

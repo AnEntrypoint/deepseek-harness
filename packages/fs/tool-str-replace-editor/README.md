@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-str-replace-editor
+# @freddie/freddie-tool-str-replace-editor
 
 Standalone model-facing `str_replace_editor` over `ctx.fs`. It can be composed with persistent Bash, one-shot Bash, sandboxed Bash, or another terminal surface.
 

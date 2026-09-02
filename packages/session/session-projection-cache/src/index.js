@@ -9,12 +9,12 @@
  * `ver` mismatch discards the row instead of migrating it. Design
  * authority: the session-projection RFC
  * (.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.md).
- * @module @deepseek-ai/dsh-session-projection-cache
+ * @module @freddie/freddie-session-projection-cache
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { snapshotJsonValue } from '@deepseek-ai/dsh-session'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { snapshotJsonValue } from '@freddie/freddie-session'
 import { projectionCacheDomainSpec } from './spec.js'
 
 export { checkpointIdentity, checkpointRecord, checkpointRow, projectionCacheDomainSpec } from './spec.js'

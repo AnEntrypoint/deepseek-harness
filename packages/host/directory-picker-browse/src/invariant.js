@@ -1,9 +1,9 @@
 /**
  * Package-owned invariant companion for the browse directory-picker backend.
- * @module @deepseek-ai/dsh-host-directory-picker-browse/invariant
+ * @module @freddie/freddie-host-directory-picker-browse/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-host-directory-picker-browse'
+const PACKAGE_NAME = '@freddie/freddie-host-directory-picker-browse'
 
 /** Cordis companion plugin name. */
 export const name = 'host-directory-picker-browse-invariant'

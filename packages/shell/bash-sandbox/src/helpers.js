@@ -1,7 +1,7 @@
 /**
  * Internal sandbox-result classification helpers.
  *
- * @module @deepseek-ai/dsh-bash-sandbox/helpers
+ * @module @freddie/freddie-bash-sandbox/helpers
  */
 
 import { accessSync, constants, statSync } from 'node:fs'

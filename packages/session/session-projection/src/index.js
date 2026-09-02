@@ -14,10 +14,10 @@
  * carry the complete post-change state, never a bare delta — it keeps every
  * unit's transition trivially cheap and every served value self-describing.
  *
- * @module @deepseek-ai/dsh-session-projection
+ * @module @freddie/freddie-session-projection
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 /**
  * `ctx.sessionProjections`: the projection unit table and its drive. The

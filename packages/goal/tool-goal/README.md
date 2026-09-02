@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-goal
+# @freddie/freddie-tool-goal
 
 The model-facing control tools for [`ctx.goals`](../goal/README.md): `get_goal`, `create_goal`, and `update_goal`. The [goal-tool Agent Note](../../../.agents/notes/implemented/feature/2026-07-19-model-facing-goal-tools.md) owns the authority split and Codex-shaped UX.
 
@@ -26,7 +26,7 @@ Complete and blocked also accept the exact current goal round: a goal-sourced `u
 
 ```yaml
 - id: tool-goal
-  name: '@deepseek-ai/dsh-tool-goal'
+  name: '@freddie/freddie-tool-goal'
   config:
     blockedAfterConsecutiveRounds: 3
 ```

@@ -1,6 +1,6 @@
 /**
  * Named backend registry of the storage hub.
- * @module @deepseek-ai/dsh-storage/src/registry
+ * @module @freddie/freddie-storage/src/registry
  */
 
 import { StorageError } from './error.js'

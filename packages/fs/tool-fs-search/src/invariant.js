@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-fs-search`.
- * @module @deepseek-ai/dsh-tool-fs-search/invariant
+ * Package-owned invariant companion for `@freddie/freddie-tool-fs-search`.
+ * @module @freddie/freddie-tool-fs-search/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-fs-search'
+const PACKAGE_NAME = '@freddie/freddie-tool-fs-search'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-fs-search-invariant'

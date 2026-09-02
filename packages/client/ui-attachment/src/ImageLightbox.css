@@ -13,7 +13,7 @@
 .dsh-imageLightbox__mask {
   position: absolute;
   inset: 0;
-  background: var(--dsw-alias-bg-mask-1);
+  background: var(--freddie-alias-bg-mask-1);
   backdrop-filter: var(--dsw-mask-blur);
 }
 
@@ -36,9 +36,9 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--dsw-alias-border-l2-darkmode-thin);
+  border: 1px solid var(--freddie-alias-border-l2-darkmode-thin);
   border-radius: 999px;
   background: var(--dsw-specific-input-major);
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   cursor: pointer;
 }

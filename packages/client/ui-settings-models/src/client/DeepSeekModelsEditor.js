@@ -12,7 +12,7 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconChevronDownOutline14, IconChevronRightOutline14, IconPlusOutline16, IconTrashOutline16,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import styles from './ModelsSection.css.js'
 
 /** Row index encoded in an editing-buffer key. */

@@ -11,7 +11,7 @@
  *
  * ```yaml
  * - id: llm
- *   name: '@deepseek-ai/dsh-llm-pi-ai'
+ *   name: '@freddie/freddie-llm-pi-ai'
  *   config:
  *     providers:
  *       # Catalog route: everything but the credential comes from pi-ai.
@@ -52,12 +52,12 @@
  *               max: ultra
  * ```
  *
- * @module @deepseek-ai/dsh-llm-pi-ai
+ * @module @freddie/freddie-llm-pi-ai
  */
 
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import { assertUsableApiKey, LlmError } from '@deepseek-ai/dsh-llm'
-import { deepEqualJson, installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import { launchEnvironmentOf } from '@freddie/freddie-launch-environment'
+import { assertUsableApiKey, LlmError } from '@freddie/freddie-llm'
+import { deepEqualJson, installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
 import { PiAiAdapter } from './adapter.js'
 import { authContextFrom, credentialStoreFrom } from './auth.js'
 import { catalogProviderIds } from './catalog.js'

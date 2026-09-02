@@ -10,6 +10,6 @@ const DEFAULT_CLIENT_TITLE = 'freddie'
 
 /** Set the browser document title from the selected session's title, or the product title when none is selected. */
 export function applyDocumentTitle(title) {
-  const productTitle = process.env.DSH_CLIENT_TITLE ?? DEFAULT_CLIENT_TITLE
+  const productTitle = process.env.FREDDIE_CLIENT_TITLE ?? DEFAULT_CLIENT_TITLE
   document.title = title === undefined ? productTitle : `${title} — ${productTitle}`
 }

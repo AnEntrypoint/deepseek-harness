@@ -12,7 +12,7 @@
  * separate chain entry per shape would race the same carrier, so the shape
  * choice lives inside this entry — see QuestionComposer.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './QuestionComposer.js'
 import { en, zh } from './locales.js'
 

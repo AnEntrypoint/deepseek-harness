@@ -1,12 +1,12 @@
 /**
  * Basic replay-aware compaction backend.
  *
- * @module @deepseek-ai/dsh-compaction-basic
+ * @module @freddie/freddie-compaction-basic
  */
 
-import z from '@deepseek-ai/schemastery'
-import { CompactionEngine, ManualCompactionError } from '@deepseek-ai/dsh-compaction'
-import { CONTEXT_WINDOW_EXCEEDED_CODE, assertNever } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { CompactionEngine, ManualCompactionError } from '@freddie/freddie-compaction'
+import { CONTEXT_WINDOW_EXCEEDED_CODE, assertNever } from '@freddie/freddie-llm'
 import {
   resolveCompactSpec,
   resolveConfig,

@@ -13,7 +13,7 @@
 // resolved frame.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button } from '@freddie/freddie-client-ui-primitives'
 import { PendingApproval } from '../contract/slots.js'
 import { rootToolCall } from '../chat/tool-node-reader.js'
 import css from './ApprovalPanel.css.js'

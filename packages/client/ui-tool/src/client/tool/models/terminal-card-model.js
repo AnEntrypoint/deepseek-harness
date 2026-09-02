@@ -8,7 +8,7 @@
  * are derived once.
  * @module
  */
-import { resolveWorkspacePath } from '@deepseek-ai/dsh-client-runtime/client'
+import { resolveWorkspacePath } from '@freddie/freddie-client-runtime/client'
 
 /**
  * Build the TerminalBlock display copy from the conversation locale seat —

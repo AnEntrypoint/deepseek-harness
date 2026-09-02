@@ -4,7 +4,7 @@
 
 // Value import from the inline-safe wire layer (not the connection plugin):
 // plugin-to-plugin value imports are a bundle purity error.
-import { transportError } from '@deepseek-ai/dsh-host-apiproxy/api'
+import { transportError } from '@freddie/freddie-host-apiproxy/api'
 import { mergeOrderedBaseline } from '../ordered-baseline.js'
 import { flattenLineage } from './lineage.js'
 import { Notifier } from './notifier.js'

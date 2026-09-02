@@ -10,7 +10,7 @@
  * interfaces with no runtime representation. The type-only value is
  * intentionally dropped in the buildless conversion.
  *
- * @module @deepseek-ai/dsh-session-projection/types
+ * @module @freddie/freddie-session-projection/types
  */
 
 export {}

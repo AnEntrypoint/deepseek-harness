@@ -1,9 +1,9 @@
 /**
  * Vocabulary for the spill storage Service Definition. Types only — the abstract service
  * lives in `./index.js`, implementations in sibling packages
- * (`@deepseek-ai/dsh-spill-local` first).
+ * (`@freddie/freddie-spill-local` first).
  *
- * @module @deepseek-ai/dsh-spill/types
+ * @module @freddie/freddie-spill/types
  */
 
 /**

@@ -3,7 +3,7 @@
 // applyDiff(this, vdom) call.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { DisclosureRow, IconBrowseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { DisclosureRow, IconBrowseOutline16 } from '@freddie/freddie-client-ui-primitives'
 import { ReferenceIcon } from '../reference/ReferenceIcon.js'
 import { contextBody } from './ContextBody.js'
 import css from './ContextInjectionRow.css.js'

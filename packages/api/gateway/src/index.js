@@ -1,11 +1,11 @@
 /**
  * Live Typert Remote dispatch over Cordis Services and registered providers.
  * Transport, request correlation, and response envelopes belong to Connection.
- * @module @deepseek-ai/dsh-api-gateway
+ * @module @freddie/freddie-api-gateway
  */
 
-import { Service, symbols } from '@deepseek-ai/cordis'
-import { remoteMethods, TypertLookupFailure } from '@deepseek-ai/dsh-typert-protocol'
+import { Service, symbols } from '@freddie/cordis'
+import { remoteMethods, TypertLookupFailure } from '@freddie/freddie-typert-protocol'
 
 const NEVER_ABORTED_SIGNAL = new AbortController().signal
 

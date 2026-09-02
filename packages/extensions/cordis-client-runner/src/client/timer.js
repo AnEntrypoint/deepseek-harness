@@ -1,6 +1,6 @@
 /** Browser implementation of the Cordis timer Service. */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 /*
  * The browser Service preserves the vendored Host TimerService's erased callback tuples and arbitrary

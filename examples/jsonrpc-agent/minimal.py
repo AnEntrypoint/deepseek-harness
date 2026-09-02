@@ -7,7 +7,7 @@ import argparse
 import os
 from pathlib import Path
 
-from deepseek_harness import DeepSeekHarness
+from freddie import DeepSeekHarness
 
 
 CONFIG = Path(__file__).with_name("minimal.cordis.yml")

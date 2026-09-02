@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-settings-file`.
- * @module @deepseek-ai/dsh-settings-file/invariant
+ * Package-owned invariant companion for `@freddie/freddie-settings-file`.
+ * @module @freddie/freddie-settings-file/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-settings-file'
+const PACKAGE_NAME = '@freddie/freddie-settings-file'
 
 /** Cordis companion plugin name. */
 export const name = 'settings-file-invariant'
@@ -14,7 +14,7 @@ export const inject = ['invariants']
 /**
  * No runtime invariant: this provider's contracts are file round-trip,
  * watcher timing, and atomic-write behavior — IO effects proven by package
- * tests; the in-process commit relation is owned by `@deepseek-ai/dsh-settings`.
+ * tests; the in-process commit relation is owned by `@freddie/freddie-settings`.
  */
 const install = () => {}
 

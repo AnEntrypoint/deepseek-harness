@@ -17,7 +17,7 @@
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { ToolListChangedNotificationSchema } from '@modelcontextprotocol/sdk/types.js'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import { createTransport } from './transport.js'
 import { syncTools } from './tools.js'
 

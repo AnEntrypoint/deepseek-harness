@@ -4,10 +4,10 @@
  * not the only correct recovery (re-read / read the file), so this package
  * appends the remedy at the model boundary; provider messages stay
  * machine-oriented and unchanged.
- * @module @deepseek-ai/dsh-tool-fs/src/error
+ * @module @freddie/freddie-tool-fs/src/error
  */
 
-import { FsError } from '@deepseek-ai/dsh-fs'
+import { FsError } from '@freddie/freddie-fs'
 
 /** The remedy appended to each remediable failure code's message. */
 const REMEDIES = {

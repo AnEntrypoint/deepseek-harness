@@ -1,8 +1,8 @@
 /** Host registry for model-visible, read-only Cordis capability queries. */
 
-import { Service } from '@deepseek-ai/cordis'
-import { snapshotJsonValue } from '@deepseek-ai/dsh-session'
-import { assertSupportedJsonSchema, validateJsonSchemaValue } from '@deepseek-ai/dsh-tools'
+import { Service } from '@freddie/cordis'
+import { snapshotJsonValue } from '@freddie/freddie-session'
+import { assertSupportedJsonSchema, validateJsonSchemaValue } from '@freddie/freddie-tools'
 
 /** Registry and cross-page router behind the two model-facing inspect tools. */
 export class CordisInspectRegistryService extends Service {

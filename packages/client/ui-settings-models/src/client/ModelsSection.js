@@ -20,7 +20,7 @@
  */
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button, IconPlusOutline16, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, IconPlusOutline16, Modal } from '@freddie/freddie-client-ui-primitives'
 import { CustomProviderCard } from './CustomProviderCard.js'
 import { deriveKeyRef, messageOf, protocolChoices, providerUsable } from './store.js'
 import { ProviderEditor } from './ProviderEditor.js'

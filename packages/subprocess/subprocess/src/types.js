@@ -7,5 +7,5 @@
  * @module dsh-subprocess/types
  */
 
-/** Namespace prefix reserved for DeepSeek Harness-managed child environment facts. */
-export const DSH_ENV_PREFIX = 'DSH_'
+/** Namespace prefix reserved for Freddie-managed child environment facts. */
+export const FREDDIE_ENV_PREFIX = 'FREDDIE_'

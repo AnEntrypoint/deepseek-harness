@@ -1,9 +1,9 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-authorization`.
- * @module @deepseek-ai/dsh-authorization/invariant
+ * Package-owned invariant companion for `@freddie/freddie-authorization`.
+ * @module @freddie/freddie-authorization/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-authorization'
+const PACKAGE_NAME = '@freddie/freddie-authorization'
 
 /** Cordis companion plugin name. */
 export const name = 'authorization-invariant'

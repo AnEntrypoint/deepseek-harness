@@ -1,11 +1,11 @@
 /**
  * Model argument schemas, normalization, and filter construction.
  *
- * @module @deepseek-ai/dsh-tool-session-query/input
+ * @module @freddie/freddie-tool-session-query/input
  */
 
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { SessionQueryError } from '@deepseek-ai/dsh-session-query'
+import { SessionId } from '@freddie/freddie-session'
+import { SessionQueryError } from '@freddie/freddie-session-query'
 
 const sessionSearchParameters = {
   query: { type: 'string', required: true, description: 'Literal full-text query over prior session history.' },

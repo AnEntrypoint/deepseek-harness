@@ -8,7 +8,7 @@
  * the process machinery itself (spawn, env scrub, tree-scoped teardown)
  * belongs to the `dsh-subprocess` seam.
  *
- * @module @deepseek-ai/dsh-subagent/out-of-process
+ * @module @freddie/freddie-subagent/out-of-process
  */
 
 import { accessSync, constants, statSync } from 'node:fs'

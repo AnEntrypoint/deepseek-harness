@@ -1,13 +1,13 @@
 /**
  * Model-facing `get_goal`, `create_goal`, and `update_goal` tools over the
  * persisted same-session goal domain.
- * @module @deepseek-ai/dsh-tool-goal
+ * @module @freddie/freddie-tool-goal
  */
 
-import z from '@deepseek-ai/schemastery'
-import { GoalId } from '@deepseek-ai/dsh-goal'
-import { boundContextSummary, createUserMessage, HarnessError } from '@deepseek-ai/dsh-llm'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import z from '@freddie/schemastery'
+import { GoalId } from '@freddie/freddie-goal'
+import { boundContextSummary, createUserMessage, HarnessError } from '@freddie/freddie-llm'
+import { defineTool } from '@freddie/freddie-tools'
 import {
   completionAuthority,
   goalToolExecution,

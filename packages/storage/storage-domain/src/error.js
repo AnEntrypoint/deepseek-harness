@@ -1,6 +1,6 @@
 /**
  * Error vocabulary of the domain data form.
- * @module @deepseek-ai/dsh-storage-domain/src/error
+ * @module @freddie/freddie-storage-domain/src/error
  */
 
 /**

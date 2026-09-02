@@ -1,6 +1,6 @@
 /** Browser download state shared by the Session Header button and `/export`. */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 
 const INITIAL = { bySession: {} }
 

@@ -1,6 +1,6 @@
 /** Runtime constructors and protocol constants for the goal domain. */
 
-import { HarnessError } from '@deepseek-ai/dsh-llm'
+import { HarnessError } from '@freddie/freddie-llm'
 
 /** Version of the goal change embedded in a round-zero message source. */
 export const GOAL_CHANGE_VERSION = 1

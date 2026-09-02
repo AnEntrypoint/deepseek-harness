@@ -5,7 +5,7 @@
  * popupSelect shell self-registers into conversation.input.overlay with
  * per-session resolution.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { CommandUiRuntime } from './service.js'
 import { en, zh } from './locales.js'
 

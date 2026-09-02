@@ -1,10 +1,10 @@
 /**
  * Owner-scoped persistent PTY registry. Backends own terminal mechanics while
  * this service owns ids, publication, authorization, and awaited cleanup.
- * @module @deepseek-ai/dsh-terminal
+ * @module @freddie/freddie-terminal
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { TerminalBackendCleanupError } from './types.js'
 
 export { TerminalBackendCleanupError } from './types.js'

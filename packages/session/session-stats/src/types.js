@@ -9,6 +9,6 @@
  * `SessionStatsProjection` interface and a `SessionProjectionMap` declaration
  * merge, both compile-time-only constructs with no JS representation.
  *
- * @module @deepseek-ai/dsh-session-stats/types
+ * @module @freddie/freddie-session-stats/types
  */
 export {}

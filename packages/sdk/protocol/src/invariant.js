@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-sdk-protocol`.
- * @module @deepseek-ai/dsh-sdk-protocol/invariant
+ * Package-owned invariant companion for `@freddie/freddie-sdk-protocol`.
+ * @module @freddie/freddie-sdk-protocol/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-sdk-protocol'
+const PACKAGE_NAME = '@freddie/freddie-sdk-protocol'
 
 /** Cordis companion plugin name. */
 export const name = 'sdk-protocol-invariant'

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-storage-sqlite`.
- * @module @deepseek-ai/dsh-storage-sqlite/invariant
+ * Package-owned invariant companion for `@freddie/freddie-storage-sqlite`.
+ * @module @freddie/freddie-storage-sqlite/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-storage-sqlite'
+const PACKAGE_NAME = '@freddie/freddie-storage-sqlite'
 
 /** Cordis companion plugin name. */
 export const name = 'storage-sqlite-invariant'

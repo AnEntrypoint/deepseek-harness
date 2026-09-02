@@ -12,7 +12,7 @@
  * strings, and it models global+shadow named registries — this is a
  * per-session singleton with no global layer to merge.
  */
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { ModelDirectory } from './directory.js'
 
 /** The `ctx.modelDirectories` session model-selection service. */

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-agent-instructions`.
- * @module @deepseek-ai/dsh-agent-instructions/invariant
+ * Package-owned invariant companion for `@freddie/freddie-agent-instructions`.
+ * @module @freddie/freddie-agent-instructions/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-agent-instructions'
+const PACKAGE_NAME = '@freddie/freddie-agent-instructions'
 
 /** Cordis companion plugin name. */
 export const name = 'workspace-context-invariant'

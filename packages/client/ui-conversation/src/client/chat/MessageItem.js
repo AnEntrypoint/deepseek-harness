@@ -8,7 +8,7 @@
 // functions plus one custom element for ModelRetryItem's timer state.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { JsonBlock, MessageText, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
+import { JsonBlock, MessageText, StateDot } from '@freddie/freddie-client-ui-primitives'
 import { ReferenceIcon } from '../reference/ReferenceIcon.js'
 import { CompactionItem } from './CompactionItem.js'
 import { ContextInjectionRow } from './ContextInjectionRow.js'

@@ -5,10 +5,10 @@
  * already validates every mutable value before `currentSelection()` can observe it.
  * The empty installer keeps that absence explicit in composed invariant sets.
  *
- * @module @deepseek-ai/dsh-agent-default-model/invariant
+ * @module @freddie/freddie-agent-default-model/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-agent-default-model'
+const PACKAGE_NAME = '@freddie/freddie-agent-default-model'
 
 /** Cordis companion plugin name. */
 export const name = 'agent-default-model-invariant'

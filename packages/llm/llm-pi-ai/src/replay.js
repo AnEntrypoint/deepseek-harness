@@ -8,7 +8,7 @@
  * @module dsh-llm-pi-ai/replay
  */
 
-import { LlmError } from '@deepseek-ai/dsh-llm'
+import { LlmError } from '@freddie/freddie-llm'
 
 /** Parse tool-call argument JSON; tolerate model malformations with {}. */
 function parseArguments(raw) {

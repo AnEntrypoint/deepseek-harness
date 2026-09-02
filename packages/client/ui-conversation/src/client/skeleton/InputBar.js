@@ -16,7 +16,7 @@ import { applyDiff, createElement as h } from 'webjsx'
 import clsx from 'clsx'
 import {
   IconPlusOutline16, IconWarningOutline16, mountToast, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { deriveDecorations } from '../input/decorations.js'
 import { attachmentErrorText, imageSizeText } from '../image-labels.js'
 import { ReferenceIcon } from '../reference/ReferenceIcon.js'

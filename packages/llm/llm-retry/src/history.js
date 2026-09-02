@@ -1,4 +1,4 @@
-/** Durable request-route lookup for one open model step. @module @deepseek-ai/dsh-llm-retry/history */
+/** Durable request-route lookup for one open model step. @module @freddie/freddie-llm-retry/history */
 
 /**
  * Find the provider in force for one currently open step.

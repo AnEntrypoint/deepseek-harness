@@ -45,5 +45,5 @@ export function isCordisGroupEntry(value) {
     && value !== null
     && Array.isArray(value.config)
     && (value.group === true
-      || value.name === '@deepseek-ai/cordis-plugin-group')
+      || value.name === '@freddie/cordis-plugin-group')
 }

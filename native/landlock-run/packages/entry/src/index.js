@@ -46,7 +46,7 @@ export const LAUNCHER_FAILURE_EXIT = 125
 
 /**
  * Path of the launcher binary for this host: resolved from the per-platform
- * npm package `@deepseek-ai/node-addon-landlock-run-<platform>-<arch>` (npm's
+ * npm package `@freddie/node-addon-landlock-run-<platform>-<arch>` (npm's
  * `os`/`cpu` fields make installers fetch only the matching one). When the
  * package is not resolvable — a platform without one, or an install that
  * skipped the optional dependency — the returned fallback path points inside
@@ -62,7 +62,7 @@ export const LAUNCHER_FAILURE_EXIT = 125
 export function launcherPath(
   resolvePackageJson = createRequire(import.meta.url).resolve,
 ) {
-  const platformPackage = `@deepseek-ai/node-addon-landlock-run-${process.platform}-${process.arch}`
+  const platformPackage = `@freddie/node-addon-landlock-run-${process.platform}-${process.arch}`
   try {
     return join(dirname(resolvePackageJson(`${platformPackage}/package.json`)), 'bin', LAUNCHER_BIN)
   } catch {

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-agent-spine-demo`.
- * @module @deepseek-ai/dsh-agent-spine-demo/invariant
+ * Package-owned invariant companion for `@freddie/freddie-agent-spine-demo`.
+ * @module @freddie/freddie-agent-spine-demo/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-agent-spine-demo'
+const PACKAGE_NAME = '@freddie/freddie-agent-spine-demo'
 
 /** Cordis companion plugin name. */
 export const name = 'agent-spine-demo-invariant'

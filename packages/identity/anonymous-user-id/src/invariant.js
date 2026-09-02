@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-anonymous-user-id`.
- * @module @deepseek-ai/dsh-anonymous-user-id/invariant
+ * Package-owned invariant companion for `@freddie/freddie-anonymous-user-id`.
+ * @module @freddie/freddie-anonymous-user-id/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-anonymous-user-id'
+const PACKAGE_NAME = '@freddie/freddie-anonymous-user-id'
 
 /** Cordis companion plugin name. */
 export const name = 'anonymous-user-id-invariant'

@@ -1,10 +1,10 @@
 /**
  * Service Definition for the code-execution capability seam that runs one model-written program against host async bindings.
  * Runtimes know nothing about tools or sessions; consumers own those concerns.
- * @module @deepseek-ai/dsh-code-runtime
+ * @module @freddie/freddie-code-runtime
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@freddie/cordis'
 
 /**
  * Binding globals EVERY backend refuses because SOME backend owns the slot in

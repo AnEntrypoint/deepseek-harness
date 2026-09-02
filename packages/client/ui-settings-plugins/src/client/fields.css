@@ -8,7 +8,7 @@
 }
 
 .dsh-fields__field + .dsh-fields__field {
-  border-top: 1px solid var(--dsw-alias-border-l2);
+  border-top: 1px solid var(--freddie-alias-border-l2);
 }
 
 .dsh-fields__head {
@@ -23,7 +23,7 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 1.5;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-fields__badges {
@@ -39,8 +39,8 @@
   line-height: 17px;
   white-space: nowrap;
   font-weight: 500;
-  background: var(--dsw-alias-bg-module-platform);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-bg-module-platform);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-fields__badgeMuted {
@@ -49,7 +49,7 @@
   font-size: 11px;
   line-height: 17px;
   white-space: nowrap;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-fields__reset {
@@ -59,12 +59,12 @@
   font: inherit;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   cursor: pointer;
 }
 
 .dsh-fields__reset:hover:not(:disabled) {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-fields__reset:disabled {
@@ -74,39 +74,39 @@
 .dsh-fields__input {
   height: 34px;
   padding: 0 12px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 8px;
-  background: var(--dsw-alias-bg-layer-3);
+  background: var(--freddie-alias-bg-layer-3);
   font: inherit;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-fields__input:focus-visible {
   outline: none;
-  border-color: var(--dsw-alias-brand-primary);
+  border-color: var(--freddie-alias-brand-primary);
 }
 
 .dsh-fields__input:disabled {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: default;
 }
 
 .dsh-fields__inputInvalid {
-  border-color: var(--dsw-alias-label-error);
+  border-color: var(--freddie-alias-label-error);
 }
 
 .dsh-fields__invalid {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--dsw-alias-label-error);
+  color: var(--freddie-alias-label-error);
 }
 
 .dsh-fields__hint {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }

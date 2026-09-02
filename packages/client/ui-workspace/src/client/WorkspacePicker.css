@@ -12,9 +12,9 @@
 }
 
 .dsh-workspacePicker__modalError {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-workspacePicker__menuStatus {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }

@@ -1,6 +1,6 @@
 /** Workspace baseline, incremental-frame, and unary-action owner. */
 
-import { transportError } from '@deepseek-ai/dsh-host-apiproxy/api'
+import { transportError } from '@freddie/freddie-host-apiproxy/api'
 import { Notifier } from '../sessions/notifier.js'
 import { Workspace } from './workspace.js'
 

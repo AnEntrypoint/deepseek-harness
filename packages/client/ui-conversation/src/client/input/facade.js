@@ -6,7 +6,7 @@
  * sink). Package-private; the hub alone constructs it and wires the scoped
  * event listeners onto it.
  */
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 import { InputMachine, projectClipboard } from './machine.js'
 
 /** Guard tier from the machine phase. */

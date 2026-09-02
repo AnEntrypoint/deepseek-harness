@@ -6,13 +6,13 @@
  * classification, the model-friendly terminal environment, and the model-facing
  * stdout/stderr merge for background reads. Execution policy belongs in
  * `tools/pre-execute` or a sandboxing executor.
- * @module @deepseek-ai/dsh-bash-local
+ * @module @freddie/freddie-bash-local
  */
 
-import z from '@deepseek-ai/schemastery'
-import { SHELL_SETTINGS_NAMESPACE, ShellExecutor } from '@deepseek-ai/dsh-shell'
-import { installSettingsSection } from '@deepseek-ai/dsh-settings'
-import { clampTimeout, deadline, MAX_TIMER_DELAY_MS, timeoutOf } from '@deepseek-ai/dsh-timeout'
+import z from '@freddie/schemastery'
+import { SHELL_SETTINGS_NAMESPACE, ShellExecutor } from '@freddie/freddie-shell'
+import { installSettingsSection } from '@freddie/freddie-settings'
+import { clampTimeout, deadline, MAX_TIMER_DELAY_MS, timeoutOf } from '@freddie/freddie-timeout'
 
 /**
  * Model-friendly environment overrides: disable colors, pagers, and

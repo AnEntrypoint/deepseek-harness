@@ -10,7 +10,7 @@
  * trace and does not count toward the empty line.
  */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 
 /** Derives the served namespaces from the shared describe mirror and pairs them with the cards that claim them. */
 export class ConfigurablePluginsTabController {

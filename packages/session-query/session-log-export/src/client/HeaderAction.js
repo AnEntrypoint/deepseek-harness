@@ -1,5 +1,5 @@
 import { applyDiff, createElement as h } from 'webjsx'
-import { IconDownloadOutline16, renderModal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconDownloadOutline16, renderModal } from '@freddie/freddie-client-ui-primitives'
 import { dialogProps } from './Dialog.js'
 import css from './HeaderAction.css.js'
 

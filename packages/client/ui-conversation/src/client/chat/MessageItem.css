@@ -25,11 +25,11 @@
   padding: 10px 16px;
   font-size: 16px;
   line-height: 24px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-messageItem__referenceSummary {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
 }
@@ -64,7 +64,7 @@
 }
 
 .dsh-messageItem__compactionButton:not(:disabled):hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-messageItem__compactionLeading {
@@ -74,7 +74,7 @@
   width: 16px;
   height: 16px;
   margin-right: 6px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-messageItem__compactionContextIcon,
@@ -103,7 +103,7 @@
   flex: none;
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-label-primary-dimmed);
+  color: var(--freddie-alias-label-primary-dimmed);
 }
 
 .dsh-messageItem__compactionSep {
@@ -112,14 +112,14 @@
   height: 2px;
   margin: 0 8px;
   border-radius: 1px;
-  background: var(--dsw-alias-label-caption);
+  background: var(--freddie-alias-label-caption);
 }
 
 .dsh-messageItem__compactionSummary {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 14px;
   line-height: 24px;
   text-overflow: ellipsis;
@@ -128,13 +128,13 @@
 
 .dsh-messageItem__compactionBody {
   padding: 4px 0 4px 22px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 14px;
   line-height: 24px;
 }
 
 .dsh-messageItem__retryRow {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 13px;
   line-height: 20px;
 }
@@ -168,11 +168,11 @@
 }
 
 .dsh-messageItem__retrySummary:hover {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-messageItem__retrySummary:focus-visible {
-  outline: 1.5px solid var(--dsw-alias-button-info-fill);
+  outline: 1.5px solid var(--freddie-alias-button-info-fill);
   outline-offset: 2px;
 }
 
@@ -184,11 +184,11 @@
   background:
     linear-gradient(
       90deg,
-      var(--dsw-alias-label-tertiary) 0%,
-      var(--dsw-alias-label-tertiary) 40%,
-      var(--dsw-alias-label-secondary) 50%,
-      var(--dsw-alias-label-tertiary) 60%,
-      var(--dsw-alias-label-tertiary) 100%
+      var(--freddie-alias-label-tertiary) 0%,
+      var(--freddie-alias-label-tertiary) 40%,
+      var(--freddie-alias-label-secondary) 50%,
+      var(--freddie-alias-label-tertiary) 60%,
+      var(--freddie-alias-label-tertiary) 100%
     );
   background-position: 100% 50%;
   background-size: 200% 100%;
@@ -212,7 +212,7 @@
 }
 
 .dsh-messageItem__retryDetailLabel {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-messageItem__turnErrorRow {
@@ -236,22 +236,22 @@
 
 .dsh-messageItem__turnErrorTitle {
   margin-right: 6px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
   font-weight: 600;
 }
 
 .dsh-messageItem__turnErrorMessage {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-messageItem__turnErrorCode {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: var(--dsw-font-markdown-code-block-small);
 }
 
 .dsh-messageItem__maxTokensTitle {
   margin-right: 6px;
-  color: var(--dsw-alias-state-warn-primary);
+  color: var(--freddie-alias-state-warn-primary);
   font-weight: 600;
 }
 
@@ -280,7 +280,7 @@
   align-items: center;
   gap: 4px;
   margin: 0 2px;
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
   font-weight: 500;
   white-space: nowrap;
   vertical-align: baseline;

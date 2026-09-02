@@ -1,12 +1,12 @@
 /**
  * Persistent shell PTY backend over the subprocess terminal primitive, shared
  * sandbox policy, bounded output, and provider-owned session cleanup.
- * @module @deepseek-ai/dsh-terminal-bash
+ * @module @freddie/freddie-terminal-bash
  */
 
-import { TerminalBackendCleanupError } from '@deepseek-ai/dsh-terminal'
-import { effectiveSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
-import { ENCODING_PREAMBLE } from '@deepseek-ai/dsh-pwsh-local'
+import { TerminalBackendCleanupError } from '@freddie/freddie-terminal'
+import { effectiveSandboxMode } from '@freddie/freddie-sandbox-policy'
+import { ENCODING_PREAMBLE } from '@freddie/freddie-pwsh-local'
 import { resolveConfig, validateConfig } from './config.js'
 import { LocalPtySession } from './session.js'
 import { CONTROLLED_PROMPT } from './sanitize.js'
@@ -48,9 +48,9 @@ function childEnvironment(spec, dialect) {
     TERM: 'dumb',
     PAGER: 'cat',
     GIT_PAGER: 'cat',
-    DSH_SHELL: '1',
-    DSH_SESSION_ID: spec.owner.id,
-    DSH_PTY_SESSION_ID: spec.sessionId,
+    FREDDIE_SHELL: '1',
+    FREDDIE_SESSION_ID: spec.owner.id,
+    FREDDIE_PTY_SESSION_ID: spec.sessionId,
   }
   if (dialect === 'pwsh') {
     // pwsh ignores PS1/PROMPT_COMMAND; its prompt is installed by the startup

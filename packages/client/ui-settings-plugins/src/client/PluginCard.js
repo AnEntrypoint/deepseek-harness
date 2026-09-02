@@ -20,7 +20,7 @@
 
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
-import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14 } from '@freddie/freddie-client-ui-primitives'
 import css from './PluginCard.css.js'
 
 /** One plugin card custom element. See {@link PluginCardProps} for the field-by-field docs. */

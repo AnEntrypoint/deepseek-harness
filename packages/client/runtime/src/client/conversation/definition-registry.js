@@ -1,4 +1,4 @@
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 /** Shared lifecycle and stable-entry storage for one Conversation Definition registry. */
 export class ConversationDefinitionRegistry extends Service {

@@ -5,12 +5,12 @@
  * Background policy is selected by this plugin's configuration: one-shot
  * calls own a plain Task, while continuable calls use
  * `ctx.subagents.startContinuable()`.
- * @module @deepseek-ai/dsh-tool-subagent
+ * @module @freddie/freddie-tool-subagent
  */
 
-import z from '@deepseek-ai/schemastery'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { assertSubagentMaxDepth, settleRun } from '@deepseek-ai/dsh-subagent'
+import z from '@freddie/schemastery'
+import { defineTool } from '@freddie/freddie-tools'
+import { assertSubagentMaxDepth, settleRun } from '@freddie/freddie-subagent'
 
 export const name = 'tool-subagent'
 export const inject = ['tools', 'subagents', 'systemPrompt']
@@ -331,7 +331,7 @@ export function apply(ctx, config) {
           }
           const jobs = ctx.get('jobs')
           if (jobs === undefined) {
-            throw new Error('background jobs unavailable: load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs')
+            throw new Error('background jobs unavailable: load @freddie/freddie-jobs and @freddie/freddie-tool-jobs')
           }
           // One-shot background child: job preflight finishes before the
           // starter can spawn, and the task-owned signal covers startup.

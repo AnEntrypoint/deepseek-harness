@@ -16,8 +16,8 @@ import { createHash } from 'node:crypto'
 import { isDeepStrictEqual } from 'node:util'
 import { ListToolsResultSchema } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
-import { isImageAdmissionError } from '@deepseek-ai/dsh-attachment'
-import { assertSupportedJsonSchema } from '@deepseek-ai/dsh-tools'
+import { isImageAdmissionError } from '@freddie/freddie-attachment'
+import { assertSupportedJsonSchema } from '@freddie/freddie-tools'
 
 /**
  * DeepSeek function-name contract: at most 64 characters. Wire-protocol

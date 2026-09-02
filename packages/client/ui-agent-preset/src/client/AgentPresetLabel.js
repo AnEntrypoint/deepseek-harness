@@ -9,7 +9,7 @@
  */
 
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
-import { IconAgentPresetOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconAgentPresetOutline16 } from '@freddie/freddie-client-ui-primitives'
 import { presetDisplayText } from './locales.js'
 import css from './AgentPresetLabel.css.js'
 

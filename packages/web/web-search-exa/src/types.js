@@ -4,5 +4,5 @@
  * URL, optional title, optional `publishedDate`, and (when highlights are
  * requested) a `highlights[]` array of salient sentences.
  *
- * @module @deepseek-ai/dsh-web-search-exa/types
+ * @module @freddie/freddie-web-search-exa/types
  */

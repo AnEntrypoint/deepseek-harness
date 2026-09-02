@@ -1,12 +1,12 @@
 /**
  * Plugin-owned human-command registry shared by interactive UI adapters.
- * @module @deepseek-ai/dsh-commands
+ * @module @freddie/freddie-commands
  */
 
-import { Context } from '@deepseek-ai/cordis'
-import { AttachmentError, admitEncodedImages } from '@deepseek-ai/dsh-attachment'
-import { NamedEntries, ScopedLayers } from '@deepseek-ai/dsh-scope'
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import { Context } from '@freddie/cordis'
+import { AttachmentError, admitEncodedImages } from '@freddie/freddie-attachment'
+import { NamedEntries, ScopedLayers } from '@freddie/freddie-scope'
+import { TypertRemoteService, Remote } from '@freddie/freddie-typert-protocol'
 import { CommandId } from './brand.js'
 
 export { CommandId } from './brand.js'

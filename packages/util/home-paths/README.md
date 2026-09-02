@@ -1,18 +1,18 @@
 # dsh-home-paths
 
-Shared filesystem path helpers for DeepSeek Harness user data.
+Shared filesystem path helpers for Freddie user data.
 
-## DSH home
+## FREDDIE home
 
-`resolveDshHome()` resolves the single-root DeepSeek Harness home. Precedence, highest first: an explicit configured path, `$DSH_HOME`, then `~/.dsh`. The harness keeps all user data under one root.
+`resolveDshHome()` resolves the single-root Freddie home. Precedence, highest first: an explicit configured path, `$FREDDIE_HOME`, then `~/.dsh`. The harness keeps all user data under one root.
 
 `dshHomePath(...segments)` joins child segments onto that resolved home with Node's platform path rules. With no segments it returns the home itself.
 
-`dshHomeDisplay()` names an active root symbolically for user-facing paths: `~/.dsh` for the default home, `$DSH_HOME` for any configured home. It never leaks an absolute machine path.
+`dshHomeDisplay()` names an active root symbolically for user-facing paths: `~/.dsh` for the default home, `$FREDDIE_HOME` for any configured home. It never leaks an absolute machine path.
 
-`DSH_HOME_DIR_NAME` owns the default user-data directory name: `.dsh`.
+`FREDDIE_HOME_DIR_NAME` owns the default user-data directory name: `.dsh`.
 
-`defaultDshHome()` returns the default DeepSeek Harness home by joining the operating-system home directory with `.dsh`, using Node's platform path rules.
+`defaultDshHome()` returns the default Freddie home by joining the operating-system home directory with `.dsh`, using Node's platform path rules.
 
 `expandHomePath()` expands `~`, `~/...`, and Windows-style `~\...` prefixes against the operating-system home directory. It leaves non-tilde paths and `~user/...` untouched.
 

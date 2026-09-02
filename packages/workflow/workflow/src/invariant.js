@@ -1,6 +1,6 @@
-/** Package-owned workflow lifecycle invariants. @module @deepseek-ai/dsh-workflow/invariant */
+/** Package-owned workflow lifecycle invariants. @module @freddie/freddie-workflow/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-workflow'
+const PACKAGE_NAME = '@freddie/freddie-workflow'
 
 /** Cordis companion plugin name. */
 export const name = 'workflow-invariant'

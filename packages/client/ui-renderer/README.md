@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-renderer
+# @freddie/freddie-client-ui-renderer
 
 The browser Cordis plugin that owns the React rendering layer. [`dsh-client-web`](../web/README.md) renders a framework-free boot page and loads the complete client plugin roster; after every entry activates, it calls `ctx.uiRenderer.mount(container)`. This package provides that service, installs the slot renderer, hydrates the existing boot DOM, switches to the assembled application before the next paint, and returns the React root's unmount disposer.
 

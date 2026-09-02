@@ -1,4 +1,4 @@
-/** Lossless-JSON validation and detached snapshots for durable session data. @module @deepseek-ai/dsh-session/json */
+/** Lossless-JSON validation and detached snapshots for durable session data. @module @freddie/freddie-session/json */
 
 /** Whether a realm-owned intrinsic prototype is backed by its native constructor. */
 function hasIntrinsicConstructor(prototype, name) {

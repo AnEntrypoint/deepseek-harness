@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-user-questions`.
- * @module @deepseek-ai/dsh-user-questions/invariant
+ * Package-owned invariant companion for `@freddie/freddie-user-questions`.
+ * @module @freddie/freddie-user-questions/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-user-questions'
+const PACKAGE_NAME = '@freddie/freddie-user-questions'
 
 /** Cordis companion plugin name. */
 export const name = 'user-questions-invariant'

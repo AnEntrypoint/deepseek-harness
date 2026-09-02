@@ -10,7 +10,7 @@
 // turn's transcript tail. Think / tool-head-only nodes stay chrome-free.
 
 import { createElement as h } from 'webjsx'
-import { JsonBlock, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { JsonBlock, MarkdownText } from '@freddie/freddie-client-ui-primitives'
 import { ReasoningRow } from './ReasoningRow.js'
 import css from './AssistantMarkdown.css.js'
 

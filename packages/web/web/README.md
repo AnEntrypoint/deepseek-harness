@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-web
+# @freddie/freddie-web
 
 The **`WebRuntime`** (`ctx.web`) defines WHAT web access the harness has — search the web, fetch a URL — over multiple providers, without binding the model contract to one vendor's API shape.
 
@@ -6,11 +6,11 @@ This package owns the Service Definition role of the web capability. Unlike shel
 
 | Package | Role |
 |---|---|
-| `@deepseek-ai/dsh-web` (this) | Service Definition: the service, provider registries, selection policy, request/result vocabulary, the `WebError` taxonomy |
-| `@deepseek-ai/dsh-web-search-exa` | Search provider: Exa |
-| `@deepseek-ai/dsh-web-search-perplexity` | Search provider: Perplexity |
-| `@deepseek-ai/dsh-web-fetch-http` | Fetch provider: anonymous public HTTP(S) |
-| `@deepseek-ai/dsh-tool-web` | Consumer: the model-facing `web_search` / `web_fetch` tool schemas over `ctx.web` |
+| `@freddie/freddie-web` (this) | Service Definition: the service, provider registries, selection policy, request/result vocabulary, the `WebError` taxonomy |
+| `@freddie/freddie-web-search-exa` | Search provider: Exa |
+| `@freddie/freddie-web-search-perplexity` | Search provider: Perplexity |
+| `@freddie/freddie-web-fetch-http` | Fetch provider: anonymous public HTTP(S) |
+| `@freddie/freddie-tool-web` | Consumer: the model-facing `web_search` / `web_fetch` tool schemas over `ctx.web` |
 
 Search and fetch share no request schema and no business logic, but they are deliberately one seam: `ctx.web` is a single web-access middle layer with one provider-selection policy owner, one abort/error vocabulary, and one product-facing "how this harness reaches the web" config surface. The `Search`/`Fetch` method pairs are deliberately parallel.
 
@@ -26,7 +26,7 @@ Providers register **capabilities**, not tools. `dsh-tool-web` is the only owner
 
 ## Selection
 
-Selection never depends on registration, config, or HMR order. A capability has an explicit provider id (config `searchProvider`/`fetchProvider`, or env `$DSH_WEB_SEARCH_PROVIDER`/`$DSH_WEB_FETCH_PROVIDER` feeding the same fields), or auto-selects when exactly one usable provider is registered. `search()`/`fetch()` resolve the provider at execution time:
+Selection never depends on registration, config, or HMR order. A capability has an explicit provider id (config `searchProvider`/`fetchProvider`, or env `$FREDDIE_WEB_SEARCH_PROVIDER`/`$FREDDIE_WEB_FETCH_PROVIDER` feeding the same fields), or auto-selects when exactly one usable provider is registered. `search()`/`fetch()` resolve the provider at execution time:
 
 | Situation | Execution |
 |---|---|

@@ -2,7 +2,7 @@
  * Fixed physical-record compression for SQLite. Schema-owned functions
  * encode logical events and decode tagged rows before persistence consumers
  * observe them.
- * @module @deepseek-ai/dsh-session-persistence-sqlite/compression
+ * @module @freddie/freddie-session-persistence-sqlite/compression
  */
 
 import { TextDecoder } from 'node:util'

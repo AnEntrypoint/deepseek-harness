@@ -1,11 +1,11 @@
 /**
  * Caller identity, workspace authorization, and visible lineage projection.
  *
- * @module @deepseek-ai/dsh-tool-session-query/workspace-access
+ * @module @freddie/freddie-tool-session-query/workspace-access
  */
 
-import { HarnessError } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { HarnessError } from '@freddie/freddie-llm'
+import { SessionId } from '@freddie/freddie-session'
 import { serviceBoundary } from './service-boundary.js'
 
 function callerOf(exec) {

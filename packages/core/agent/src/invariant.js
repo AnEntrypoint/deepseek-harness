@@ -1,6 +1,6 @@
-/** Package-owned agent lifecycle invariants. @module @deepseek-ai/dsh-agent/invariant */
+/** Package-owned agent lifecycle invariants. @module @freddie/freddie-agent/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-agent'
+const PACKAGE_NAME = '@freddie/freddie-agent'
 
 /** Cordis companion plugin name. */
 export const name = 'agent-invariant'

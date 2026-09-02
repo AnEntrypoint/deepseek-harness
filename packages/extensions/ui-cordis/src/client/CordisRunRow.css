@@ -14,12 +14,12 @@
   display: inline-flex;
   flex: none;
   margin-right: 8px;
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-cordisRunRow__title {
   flex: none;
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
   font-size: 14px;
   font-weight: 500;
   line-height: 24px;
@@ -31,7 +31,7 @@
   height: 2px;
   margin: 0 8px;
   border-radius: 50%;
-  background: var(--dsw-alias-state-business-primary);
+  background: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-cordisRunRow__summary,
@@ -39,7 +39,7 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font-size: 13px;
   line-height: 24px;
   text-overflow: ellipsis;
@@ -47,28 +47,28 @@
 }
 
 .dsh-cordisRunRow__error {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-cordisRunRow__status {
   flex: none;
   margin-left: 8px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   font-size: 12px;
   line-height: 24px;
 }
 
 .dsh-cordisRunRow__card[data-cordis-status='awaiting-approval'] .dsh-cordisRunRow__status,
 .dsh-cordisRunRow__card[data-cordis-status='client-pending'] .dsh-cordisRunRow__status {
-  color: var(--dsw-alias-state-warn-label);
+  color: var(--freddie-alias-state-warn-label);
 }
 
 .dsh-cordisRunRow__card[data-cordis-status='running'] .dsh-cordisRunRow__status {
-  color: var(--dsw-alias-state-success-primary);
+  color: var(--freddie-alias-state-success-primary);
 }
 
 .dsh-cordisRunRow__card[data-cordis-status='failed'] .dsh-cordisRunRow__status {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-cordisRunRow__inspect {
@@ -82,7 +82,7 @@
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
   opacity: 0;
 }
@@ -93,14 +93,14 @@
 }
 
 .dsh-cordisRunRow__inspect:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-cordisRunRow__message {
   padding: 8px 12px;
   border-radius: 8px;
-  background: var(--dsw-alias-button-ghost-active-fill);
-  color: var(--dsw-alias-label-tertiary);
+  background: var(--freddie-alias-button-ghost-active-fill);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
 }
@@ -108,19 +108,19 @@
 .dsh-cordisRunRow__business {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 12px;
-  background: var(--dsw-alias-bg-base);
+  background: var(--freddie-alias-bg-base);
 }
 
 .dsh-cordisRunRow__output {
   margin: 0;
   padding: 10px 12px;
   overflow: auto;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 8px;
-  background: var(--dsw-alias-markdown-code-block);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-markdown-code-block);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-markdown-code-block-small);
   white-space: pre-wrap;
   overflow-wrap: anywhere;

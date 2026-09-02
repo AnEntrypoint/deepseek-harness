@@ -6,11 +6,11 @@
  * Plugin lifecycle reads use the optional `ctx.fs` provider, so providerless products
  * mount it as a no-op.
  *
- * @module @deepseek-ai/dsh-agent-instructions
+ * @module @freddie/freddie-agent-instructions
  */
 
 import { isDeepStrictEqual } from 'node:util'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from '@freddie/freddie-llm'
 import { Config, resolveConfig, workspaceBaselineIdentity } from './config.js'
 import { findProjectRoot, loadBaselineInstructionSet } from './files.js'
 import {

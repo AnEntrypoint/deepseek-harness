@@ -9,7 +9,7 @@
  * through {@link SettingsDescribeMirror.acceptView}.
  */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 
 /**
  * Serializes every Host `settings.describe` read behind one snapshot store.

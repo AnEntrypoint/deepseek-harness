@@ -1,12 +1,12 @@
 /**
  * Durable projection state for dynamic runtime context.
- * @module @deepseek-ai/dsh-agent-loop/runtime-context
+ * @module @freddie/freddie-agent-loop/runtime-context
  */
 
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { isReplacementSurfaceEvent } from '@deepseek-ai/dsh-session'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { isReplacementSurfaceEvent } from '@freddie/freddie-session'
 
-const SOURCE = '@deepseek-ai/dsh-system-prompt'
+const SOURCE = '@freddie/freddie-system-prompt'
 const CLEARED = 'Current runtime context: none. Earlier runtime-context snapshots no longer apply.'
 
 function isOwned(message) {

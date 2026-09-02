@@ -6,7 +6,7 @@
  * back into the mirror.
  */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 import { displayPermissionPreset } from './presentation.js'
 
 /** Permission's settings namespace on the host wire. */

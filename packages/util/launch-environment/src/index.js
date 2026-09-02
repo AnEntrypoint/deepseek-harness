@@ -3,7 +3,7 @@
  * supplied each value. Harness consumers resolve through it instead of a flattened
  * `process.env`; launchers may still materialize accepted values for config
  * expressions and third-party libraries.
- * @module @deepseek-ai/dsh-launch-environment
+ * @module @freddie/freddie-launch-environment
  */
 
 /**
@@ -70,7 +70,7 @@ export function createLaunchEnvironmentSnapshot(layers) {
 }
 
 /** Context slot the launcher fills with this run's snapshot before any config entry mounts. */
-export const DSH_LAUNCH_ENVIRONMENT_KEY = 'launchEnvironment'
+export const FREDDIE_LAUNCH_ENVIRONMENT_KEY = 'launchEnvironment'
 
 /**
  * Return the launcher's snapshot, or the inherited environment as the sole
@@ -79,6 +79,6 @@ export const DSH_LAUNCH_ENVIRONMENT_KEY = 'launchEnvironment'
  * @returns the snapshot to resolve user-facing values against.
  */
 export function launchEnvironmentOf(ctx) {
-  return ctx.get(DSH_LAUNCH_ENVIRONMENT_KEY)
+  return ctx.get(FREDDIE_LAUNCH_ENVIRONMENT_KEY)
     ?? createLaunchEnvironmentSnapshot([{ source: 'process', values: process.env }])
 }

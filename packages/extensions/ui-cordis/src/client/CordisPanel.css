@@ -27,7 +27,7 @@
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font-family: inherit;
   font-size: 14px;
   cursor: pointer;
@@ -35,11 +35,11 @@
 }
 
 .dsh-cordisPanel__badge:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-cordisPanel__badge[data-active] {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-cordisPanel__badgeLabel {
@@ -52,7 +52,7 @@
 .dsh-cordisPanel__badgeCount {
   flex: none;
   margin-left: auto;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 16px;
   font-variant-numeric: tabular-nums;
@@ -89,13 +89,13 @@
   max-width: calc(100vw - 24px);
   max-height: 60vh;
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-inverted);
+  border: 1px solid var(--freddie-alias-border-inverted);
   border-radius: 12px;
   background: var(--dsw-specific-menu);
   box-shadow: var(--dsw-shadow-lv3);
   /* Only `.body` scrolls; the header remains fixed above it. */
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 }
 
 .dsh-cordisPanel__header {
@@ -119,7 +119,7 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-cordisPanel__note,
@@ -127,11 +127,11 @@
   margin: 4px 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-cordisPanel__readError {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 /* Session headings replace per-row ownership markers. */
@@ -140,7 +140,7 @@
   font-size: 11px;
   font-weight: 500;
   line-height: 16px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -159,12 +159,12 @@
   flex-direction: column;
   gap: 8px;
   padding: 14px 12px 10px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 12px;
 }
 
 .dsh-cordisPanel__row[data-cordis-awaiting] {
-  border-color: var(--dsw-alias-state-business-primary);
+  border-color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-cordisPanel__rowHead {
@@ -175,8 +175,8 @@
 
 .dsh-cordisPanel__rowId {
   flex: none;
-  color: var(--dsw-alias-label-tertiary);
-  font-family: var(--dsh-font-mono, monospace);
+  color: var(--freddie-alias-label-tertiary);
+  font-family: var(--freddie-font-mono, monospace);
   font-size: 11px;
   line-height: 20px;
 }
@@ -188,7 +188,7 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 20px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -200,31 +200,31 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: var(--dsw-alias-button-ghost-active-fill);
+  background: var(--freddie-alias-button-ghost-active-fill);
   font-size: 11px;
   line-height: 20px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-cordisPanel__row[data-cordis-status='idle'] .dsh-cordisPanel__rowStatus {
-  background: var(--dsw-alias-button-ghost-active-fill);
-  color: var(--dsw-alias-label-caption);
+  background: var(--freddie-alias-button-ghost-active-fill);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-cordisPanel__row[data-cordis-status='awaiting-approval'] .dsh-cordisPanel__rowStatus,
 .dsh-cordisPanel__row[data-cordis-status='client-pending'] .dsh-cordisPanel__rowStatus {
-  background: var(--dsw-alias-state-warn-tertiary);
-  color: var(--dsw-alias-state-warn-label);
+  background: var(--freddie-alias-state-warn-tertiary);
+  color: var(--freddie-alias-state-warn-label);
 }
 
 .dsh-cordisPanel__row[data-cordis-status='failed'] .dsh-cordisPanel__rowStatus {
-  background: var(--dsw-alias-interactive-bg-hover-danger);
-  color: var(--dsw-alias-state-error-primary);
+  background: var(--freddie-alias-interactive-bg-hover-danger);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-cordisPanel__row[data-cordis-status='running'] .dsh-cordisPanel__rowStatus {
-  background: var(--dsw-alias-state-success-tertiary);
-  color: var(--dsw-alias-state-success-primary);
+  background: var(--freddie-alias-state-success-tertiary);
+  color: var(--freddie-alias-state-success-primary);
 }
 
 .dsh-cordisPanel__rowDetail {
@@ -238,7 +238,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   font-size: 11px;
   line-height: 18px;
 }
@@ -248,10 +248,10 @@
   flex: 1;
   height: 26px;
   padding: 0 8px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 7px;
   background: transparent;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: inherit;
 }
 
@@ -261,7 +261,7 @@
   overflow: hidden;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -269,7 +269,7 @@
 .dsh-cordisPanel__rowError {
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-cordisPanel__rowActions {
@@ -284,7 +284,7 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   font-size: 11px;
   line-height: 18px;
 }
@@ -297,16 +297,16 @@
 
 .dsh-cordisPanel__transitionActions button {
   padding: 2px 8px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 999px;
   background: transparent;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: inherit;
   cursor: pointer;
 }
 
 .dsh-cordisPanel__transitionActions button:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-cordisPanel__transitionActions button:disabled {
@@ -315,7 +315,7 @@
 }
 
 .dsh-cordisPanel__activeVersion {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   font-size: 11px;
   line-height: 16px;
 }
@@ -332,13 +332,13 @@
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
 }
 
 .dsh-cordisPanel__actionButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-interactive-bg-hover);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-cordisPanel__actionButton:disabled {

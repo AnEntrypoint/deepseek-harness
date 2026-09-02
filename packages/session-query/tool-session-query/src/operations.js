@@ -1,11 +1,11 @@
 /**
  * Tool operation orchestration over session-query service capabilities.
  *
- * @module @deepseek-ai/dsh-tool-session-query/operations
+ * @module @freddie/freddie-tool-session-query/operations
  */
 
-import { HarnessError } from '@deepseek-ai/dsh-llm'
-import { SessionQueryError } from '@deepseek-ai/dsh-session-query'
+import { HarnessError } from '@freddie/freddie-llm'
+import { SessionQueryError } from '@freddie/freddie-session-query'
 import { toolInput } from './input.js'
 import { presentation } from './presentation.js'
 import { serviceBoundary } from './service-boundary.js'

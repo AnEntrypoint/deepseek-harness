@@ -7,7 +7,7 @@
  * through one property read; assignment through the tracker proxy and `#`
  * private fields bypass that rebinding.
  */
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 /** Create one browser-only draft descriptor; only its id enters input state. */
 function browserDraftAttachment(file) {

@@ -1,6 +1,6 @@
-/** Package-owned hook invocation/result stream invariants. @module @deepseek-ai/dsh-hook-protocol/invariant */
+/** Package-owned hook invocation/result stream invariants. @module @freddie/freddie-hook-protocol/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-hook-protocol'
+const PACKAGE_NAME = '@freddie/freddie-hook-protocol'
 
 /** Cordis companion plugin name. */
 export const name = 'hook-protocol-invariant'

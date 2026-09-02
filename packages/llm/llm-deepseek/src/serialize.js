@@ -6,7 +6,7 @@
  * @module dsh-llm-deepseek/serialize
  */
 
-import { contentHasImage, LlmError, offloadRequestImagesWithPolicy, requestImageHandleText } from '@deepseek-ai/dsh-llm'
+import { contentHasImage, LlmError, offloadRequestImagesWithPolicy, requestImageHandleText } from '@freddie/freddie-llm'
 
 const TOOL_RESULT_IMAGE_TEXT = 'Attached image(s) from tool result:'
 

@@ -8,7 +8,7 @@
 // result-side only, so there is no running-state read card to draw.
 
 import { createElement as h, Fragment } from 'webjsx'
-import { IconBrowseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconBrowseOutline16 } from '@freddie/freddie-client-ui-primitives'
 import { readCardModel } from '../models/read-card-model.js'
 import { toolRowModel } from '../models/tool-call-model.js'
 import { ToolRow } from '../components/ToolRow.js'

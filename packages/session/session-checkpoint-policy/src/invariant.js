@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-session-checkpoint-policy`.
- * @module @deepseek-ai/dsh-session-checkpoint-policy/invariant
+ * Package-owned invariant companion for `@freddie/freddie-session-checkpoint-policy`.
+ * @module @freddie/freddie-session-checkpoint-policy/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-session-checkpoint-policy'
+const PACKAGE_NAME = '@freddie/freddie-session-checkpoint-policy'
 
 /** Cordis companion plugin name. */
 export const name = 'session-checkpoint-policy-invariant'

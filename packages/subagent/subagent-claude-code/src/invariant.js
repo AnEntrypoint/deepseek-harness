@@ -1,11 +1,11 @@
 /**
  * Package-owned invariant companion for
- * `@deepseek-ai/dsh-subagent-claude-code`.
- * @module @deepseek-ai/dsh-subagent-claude-code/invariant
+ * `@freddie/freddie-subagent-claude-code`.
+ * @module @freddie/freddie-subagent-claude-code/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-subagent-claude-code'
+const PACKAGE_NAME = '@freddie/freddie-subagent-claude-code'
 
 /** Cordis companion plugin name. */
 export const name = 'subagent-claude-code-invariant'

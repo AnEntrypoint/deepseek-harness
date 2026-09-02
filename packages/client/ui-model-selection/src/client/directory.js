@@ -5,7 +5,7 @@
  * the single fact source and the store is one shared echo — a switch made in
  * either entry is what the other shows next.
  */
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 
 /** One session's shared directory controller; disposed with the session scope. */
 export class ModelDirectory {

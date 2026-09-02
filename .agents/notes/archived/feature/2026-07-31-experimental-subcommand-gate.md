@@ -1,4 +1,4 @@
-# Agent Note: experimental subcommands gate behind `--experimental` or `DSH_EXPERIMENTAL=1`
+# Agent Note: experimental subcommands gate behind `--experimental` or `FREDDIE_EXPERIMENTAL=1`
 
 Status: implemented
 Archived: 2026-08-03
@@ -11,15 +11,15 @@ The `meta` and `upgrade` entry points carried their experimental status in their
 
 ## Decision
 
-`dsh experimental-meta` is `dsh meta` and `dsh experimental-upgrade` is `dsh upgrade`. Each runs only when the invocation passes its `--experimental` flag or the environment carries `DSH_EXPERIMENTAL=1`; otherwise the command fails loud on stderr with exit 1, naming both opt-ins. Per the pre-release stance, the old names are gone with no aliases, and `args.spec.ts` pins their rejection.
+`dsh experimental-meta` is `dsh meta` and `dsh experimental-upgrade` is `dsh upgrade`. Each runs only when the invocation passes its `--experimental` flag or the environment carries `FREDDIE_EXPERIMENTAL=1`; otherwise the command fails loud on stderr with exit 1, naming both opt-ins. Per the pre-release stance, the old names are gone with no aliases, and `args.spec.ts` pins their rejection.
 
-The gate has two halves with one owner each. The per-invocation half is a Commander `--experimental` option on each experimental subcommand, checked inside its action after the leaked-parent-option rejection. The environment half is a boolean `parseDshArgs` parameter: `bin.ts` reads `process.env.DSH_EXPERIMENTAL === '1'` at the process boundary (after `loadEnv`, so a project `.env` can set it) and passes the result down, so the parser's environment dependency is explicit in its signature and the tests need no env mutation. `1` is the only enabling value — the variable is an explicit opt-in, not a truthiness check.
+The gate has two halves with one owner each. The per-invocation half is a Commander `--experimental` option on each experimental subcommand, checked inside its action after the leaked-parent-option rejection. The environment half is a boolean `parseDshArgs` parameter: `bin.ts` reads `process.env.FREDDIE_EXPERIMENTAL === '1'` at the process boundary (after `loadEnv`, so a project `.env` can set it) and passes the result down, so the parser's environment dependency is explicit in its signature and the tests need no env mutation. `1` is the only enabling value — the variable is an explicit opt-in, not a truthiness check.
 
 Stabilizing a command later means deleting its `--experimental` option and `requireExperimental` call; the name does not move.
 
 ## Testing
 
-`args.spec.ts` pins both admit paths, bare-name rejection, old-name rejection, and leaked-option rejection under the env opt-in. `built-bin.e2e.ts` proves the assembled entry end to end: the gate diagnostic on stderr with exit 1, and that `--experimental`, `DSH_EXPERIMENTAL=1`, but not `DSH_EXPERIMENTAL=0`, reach the TUI's piped-stdio refusal — the next gate past this one. Both gated commands were also verified interactively in tmux: `dsh meta --experimental` and `DSH_EXPERIMENTAL=1 dsh meta` boot the TUI over the checkout, and `DSH_EXPERIMENTAL=1 dsh upgrade` seeds the `dsh-upgrade` skill.
+`args.spec.ts` pins both admit paths, bare-name rejection, old-name rejection, and leaked-option rejection under the env opt-in. `built-bin.e2e.ts` proves the assembled entry end to end: the gate diagnostic on stderr with exit 1, and that `--experimental`, `FREDDIE_EXPERIMENTAL=1`, but not `FREDDIE_EXPERIMENTAL=0`, reach the TUI's piped-stdio refusal — the next gate past this one. Both gated commands were also verified interactively in tmux: `dsh meta --experimental` and `FREDDIE_EXPERIMENTAL=1 dsh meta` boot the TUI over the checkout, and `FREDDIE_EXPERIMENTAL=1 dsh upgrade` seeds the `dsh-upgrade` skill.
 
 ## Alternatives considered
 
@@ -29,8 +29,8 @@ Stabilizing a command later means deleting its `--experimental` option and `requ
 
 **Read `process.env` inside `parseDshArgs`.** Rejected: the repo validates at the process boundary and keeps typed seams pure; tests would have to mutate and restore `process.env` around each case.
 
-**Accept any non-empty `DSH_EXPERIMENTAL`.** Rejected: the telemetry switch prefers off-by-mistake for a privacy control, but an experimental gate is an acknowledgement — `DSH_EXPERIMENTAL=0` must not enable the commands it names.
+**Accept any non-empty `FREDDIE_EXPERIMENTAL`.** Rejected: the telemetry switch prefers off-by-mistake for a privacy control, but an experimental gate is an acknowledgement — `FREDDIE_EXPERIMENTAL=0` must not enable the commands it names.
 
 ## Consequences
 
-Daily invocations shorten to `dsh meta --experimental` and `dsh upgrade --experimental`, and a developer who sets `DSH_EXPERIMENTAL=1` in their environment gets the bare `dsh meta`/`dsh upgrade`. `dsh --help` marks both commands `(experimental)`. The gate costs one extra flag or env var until a command stabilizes, at which point the gate is deleted and the name is already final.
+Daily invocations shorten to `dsh meta --experimental` and `dsh upgrade --experimental`, and a developer who sets `FREDDIE_EXPERIMENTAL=1` in their environment gets the bare `dsh meta`/`dsh upgrade`. `dsh --help` marks both commands `(experimental)`. The gate costs one extra flag or env var until a command stabilizes, at which point the gate is deleted and the name is already final.

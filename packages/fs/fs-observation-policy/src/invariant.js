@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-fs-observation-policy`.
- * @module @deepseek-ai/dsh-fs-observation-policy/invariant
+ * Package-owned invariant companion for `@freddie/freddie-fs-observation-policy`.
+ * @module @freddie/freddie-fs-observation-policy/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-fs-observation-policy'
+const PACKAGE_NAME = '@freddie/freddie-fs-observation-policy'
 
 /** Cordis companion plugin name. */
 export const name = 'fs-observation-policy-invariant'

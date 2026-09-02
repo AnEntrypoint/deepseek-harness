@@ -4,7 +4,7 @@
  * `api-catalog.js`. This module owns the join of the two plus presentation: which
  * lines a section prints, how compact the default report stays, and what an exact
  * `name` adds.
- * @module @deepseek-ai/dsh-tool-cordis/inspect
+ * @module @freddie/freddie-tool-cordis/inspect
  */
 
 import { EVENT_API, INHERITED_CTX_API, SERVICE_API, TYPE_API } from './api-catalog.js'
@@ -158,7 +158,7 @@ export function describeTools(ctx, scope) {
 export function describeDynamic(ctx, agent) {
   const rows = agent === undefined ? [] : ctx.dynamicCordisRunner.snapshot(agent)
   if (rows.length === 0) {
-    return ['No dynamic Plugins are defined in this session. Definitions live only in this process\'s memory, so a DSH restart clears them.']
+    return ['No dynamic Plugins are defined in this session. Definitions live only in this process\'s memory, so a FREDDIE restart clears them.']
   }
   return rows.flatMap((row) => {
     const head = `- Plugin ${row.pluginId}; current: ${row.currentPackageId ?? 'none'}; next: ${row.nextPackageId ?? 'none'}`

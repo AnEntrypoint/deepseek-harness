@@ -1,8 +1,8 @@
 /** Team membership, continuable-child provisioning, and roster-owned teardown. */
 
 import { randomUUID } from 'node:crypto'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { foldSubagentDescriptor } from '@deepseek-ai/dsh-subagent'
+import { SessionId } from '@freddie/freddie-session'
+import { foldSubagentDescriptor } from '@freddie/freddie-subagent'
 import { errorMessage, TeamError } from './error.js'
 import { messageAccepted } from './session-message.js'
 import { TeamId } from './types.js'

@@ -23,11 +23,11 @@
  * })
  * ```
  *
- * @module @deepseek-ai/dsh-authorization
+ * @module @freddie/freddie-authorization
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { HarnessError } from '@deepseek-ai/dsh-llm'
+import { Service } from '@freddie/cordis'
+import { HarnessError } from '@freddie/freddie-llm'
 
 /** Stable error taxonomy for authorization failures. */
 export class AuthorizationError extends HarnessError {

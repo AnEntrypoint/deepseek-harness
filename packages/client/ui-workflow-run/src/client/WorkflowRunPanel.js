@@ -1,8 +1,8 @@
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
   DisclosureRow, IconChevronRightOutline14, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import { shallowEqual } from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-ui-primitives'
+import { shallowEqual } from '@freddie/freddie-client-runtime/client'
 import css from './WorkflowRunPanel.css.js'
 
 const STATUS_KEYS = {

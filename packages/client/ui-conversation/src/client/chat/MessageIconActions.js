@@ -10,7 +10,7 @@
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
   IconBranchOutline16, IconCheckOutline16, IconCopyOutline16, Tooltip, writeClipboard,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { formatLatencySeconds, formatMessageClock, formatRunDuration, formatTokensPerSecond } from './message-chrome.js'
 import { createCalendarDay } from './use-calendar-day.js'
 import css from './MessageIconActions.css.js'

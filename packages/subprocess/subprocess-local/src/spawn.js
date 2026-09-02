@@ -13,8 +13,8 @@ import { closeSync, mkdtempSync, openSync, unlinkSync, writeSync } from 'node:fs
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout as sleepMs } from 'node:timers/promises'
-import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import { scrubbedParentEnv } from '@freddie/freddie-subprocess'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import { linuxProcessGroupHasLiveMembers } from './process-inspector.js'
 
 /**
@@ -50,7 +50,7 @@ export function childEnv(extra) {
  * Local-only synchronous final termination used by the owning service during
  * host exit and as the last fallback after failed normal disposal. It is
  * intentionally absent from the public subprocess seam.
- * @typedef {import('@deepseek-ai/dsh-subprocess').SubprocessHandle & { terminateForHostExit(): void }} LocalSubprocessHandle
+ * @typedef {import('@freddie/freddie-subprocess').SubprocessHandle & { terminateForHostExit(): void }} LocalSubprocessHandle
  */
 
 /**

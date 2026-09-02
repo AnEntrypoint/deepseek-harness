@@ -1,5 +1,5 @@
 import { createElement as h } from 'webjsx'
-import { MessageText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { MessageText } from '@freddie/freddie-client-ui-primitives'
 import css from './GoalCommandInputView.css.js'
 
 /** Right-aligned `/goal` input bubble without ordinary message actions. */

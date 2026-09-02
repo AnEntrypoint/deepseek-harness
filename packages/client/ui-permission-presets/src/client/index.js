@@ -13,7 +13,7 @@
  * The General-settings row separately writes the default preset for sessions
  * created later through the host Settings API.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 export { PermissionRow } from './PermissionRow.js'
 import {
   accessEn, accessZh, en, zh,

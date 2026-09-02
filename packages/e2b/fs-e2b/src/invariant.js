@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-fs-e2b`.
- * @module @deepseek-ai/dsh-fs-e2b/invariant
+ * Package-owned invariant companion for `@freddie/freddie-fs-e2b`.
+ * @module @freddie/freddie-fs-e2b/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-fs-e2b'
+const PACKAGE_NAME = '@freddie/freddie-fs-e2b'
 
 /** Cordis companion plugin name. */
 export const name = 'fs-e2b-invariant'

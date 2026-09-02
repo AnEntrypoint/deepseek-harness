@@ -1,6 +1,6 @@
-/** Package-owned durable plan-mode invariants. @module @deepseek-ai/dsh-plan-mode/invariant */
+/** Package-owned durable plan-mode invariants. @module @freddie/freddie-plan-mode/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-plan-mode'
+const PACKAGE_NAME = '@freddie/freddie-plan-mode'
 
 /** Cordis companion plugin name. */
 export const name = 'plan-mode-invariant'

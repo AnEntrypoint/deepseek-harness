@@ -37,7 +37,7 @@ export type SubagentIdentityProjection =
   | { mode: 'one-shot'; label?: string; seq: number }
   | { mode: 'continuable'; label: string; seq: number }
 
-declare module '@deepseek-ai/dsh-session-projection/types' {
+declare module '@freddie/freddie-session-projection/types' {
   interface SessionProjectionMap {
     subagent: SubagentIdentityProjection | null
   }

@@ -3,10 +3,10 @@
  * per-namespace sections; plugins register a namespace schema and read the
  * resolved value, which layers schema defaults, the registrant's composition
  * `base`, and the user document section, in that order.
- * @module @deepseek-ai/dsh-settings
+ * @module @freddie/freddie-settings
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@freddie/cordis'
 import { redactSecrets } from './redact.js'
 
 export { redactSecrets } from './redact.js'

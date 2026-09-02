@@ -16,7 +16,7 @@
  */
 import { applyDiff, createElement as h } from 'webjsx'
 import clsx from 'clsx'
-import { createAnchoredMaxHeight } from '@deepseek-ai/dsh-client-ui-primitives'
+import { createAnchoredMaxHeight } from '@freddie/freddie-client-ui-primitives'
 import css from './MenuView.css.js'
 
 /** Design cap on the list height (figma SLASH 39:26572 MenuDropdown). */

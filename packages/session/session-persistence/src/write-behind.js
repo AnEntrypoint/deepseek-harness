@@ -1,6 +1,6 @@
 /**
  * Bounded per-session write batching for the shared persistence coordinator.
- * @module @deepseek-ai/dsh-session-persistence/write-behind
+ * @module @freddie/freddie-session-persistence/write-behind
  */
 
 /** Dependencies and scheduling policy for one live session's write controller. */

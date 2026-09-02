@@ -2,11 +2,11 @@
  * SQLite storage backend for the storage hub: one database file hosts every
  * routed unit, document-per-row (`key TEXT` / `value TEXT` JSON). Registers
  * as backend `sqlite`; the disposer unregisters first, then closes the medium.
- * @module @deepseek-ai/dsh-storage-sqlite
+ * @module @freddie/freddie-storage-sqlite
  */
 
-import z from '@deepseek-ai/schemastery'
-import { StorageError, UNIT_NAME_RE, storageBackendServiceKey } from '@deepseek-ai/dsh-storage'
+import z from '@freddie/schemastery'
+import { StorageError, UNIT_NAME_RE, storageBackendServiceKey } from '@freddie/freddie-storage'
 import { openDatabase, recordTableName } from './schema.js'
 import { SqliteKvUnit } from './unit.js'
 

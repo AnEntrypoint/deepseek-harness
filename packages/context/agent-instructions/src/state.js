@@ -1,10 +1,10 @@
 /**
  * Session-visible workspace instruction state and dynamic reconciliation.
  *
- * @module @deepseek-ai/dsh-agent-instructions/state
+ * @module @freddie/freddie-agent-instructions/state
  */
 
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from '@freddie/freddie-llm'
 import { instructionContentSha1, trimmedInstructionDigest } from './digest.js'
 import {
   ancestorChain,

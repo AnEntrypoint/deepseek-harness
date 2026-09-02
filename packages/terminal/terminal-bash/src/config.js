@@ -1,7 +1,7 @@
 /** Validated configuration for the local PTY backend. */
 
-import z from '@deepseek-ai/schemastery'
-import { resolvePwshPath } from '@deepseek-ai/dsh-pwsh-local'
+import z from '@freddie/schemastery'
+import { resolvePwshPath } from '@freddie/freddie-pwsh-local'
 
 /** Bash dialect default executable. */
 export const DEFAULT_BASH_SHELL = '/bin/bash'

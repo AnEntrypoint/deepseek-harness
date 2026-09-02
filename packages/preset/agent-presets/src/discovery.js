@@ -11,14 +11,14 @@
  * path refuses the name while no surface shows anything to delete — and a
  * malformed composition would otherwise read as an ordinary preset until the
  * first session fails to mount it.
- * @module @deepseek-ai/dsh-agent-presets/discovery
+ * @module @freddie/freddie-agent-presets/discovery
  */
 
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { load } from 'js-yaml'
-import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
-import { expandHomePath } from '@deepseek-ai/dsh-home-paths'
+import { entryListSchema } from '@freddie/cordis-plugin-include'
+import { expandHomePath } from '@freddie/freddie-home-paths'
 import { readPresetMetadata } from './metadata.js'
 import { PRESET_ID } from './preset.js'
 

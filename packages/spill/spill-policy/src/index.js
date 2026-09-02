@@ -7,7 +7,7 @@
  * locator and retrieval guidance.
  *
  * It registers NO service and owns NO storage or preview mechanics: preview is
- * `@deepseek-ai/dsh-output-retention` (`TextRetainer`), storage is `ctx.spillStore`.
+ * `@freddie/freddie-output-retention` (`TextRetainer`), storage is `ctx.spillStore`.
  * The policy only decides WHEN to spill and composes the notice.
  *
  * A second arm applies the SAME cap to the durable log: the
@@ -40,11 +40,11 @@
  * replaced content still has its replacement bounded, and value replacements
  * and `block` decisions pass through unchanged.
  *
- * @module @deepseek-ai/dsh-spill-policy
+ * @module @freddie/freddie-spill-policy
  */
 
-import z from '@deepseek-ai/schemastery'
-import { TextRetainer, describeOmitted } from '@deepseek-ai/dsh-output-retention'
+import z from '@freddie/schemastery'
+import { TextRetainer, describeOmitted } from '@freddie/freddie-output-retention'
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'spill-policy'

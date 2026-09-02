@@ -11,7 +11,7 @@ Global style sheets belong in `ui-theme/src/styles/`. Component styles live besi
 ## Component rules
 
 - Use CSS Modules and `clsx`; do not add a component library or Tailwind.
-- Use `--dsw-alias-*` semantic tokens in feature components. Do not copy static palette values or write literal colors there.
+- Use `--freddie-alias-*` semantic tokens in feature components. Do not copy static palette values or write literal colors there.
 - Keep theme selectors out of feature component CSS. Light/dark overrides belong to the theme owner.
 - Pair font sizes with line heights and use the theme typography variables when an existing role matches.
 - Keep source text, terminal output, and diff lines unwrapped when their component contract requires column preservation; use the shared scrollbar styles rather than component-specific scrollbar selectors.

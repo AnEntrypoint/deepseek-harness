@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-launch-environment",
-  "description": "Immutable DeepSeek Harness launch environment that records which layer supplied each value",
+  "name": "@freddie/freddie-launch-environment",
+  "description": "Immutable Freddie launch environment that records which layer supplied each value",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/util/launch-environment"
   },
   "type": "module",
@@ -28,11 +28,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   }
 }

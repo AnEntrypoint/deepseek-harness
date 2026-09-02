@@ -2,10 +2,10 @@
  * Vocabulary for the filesystem Service Definition (`ctx.fs`): the opaque target/version
  * identities, the metadata `stat` returns, the write-intent and outcome shapes, the
  * literal-edit request/outcome, and the typed error taxonomy.
- * @module @deepseek-ai/dsh-fs/types
+ * @module @freddie/freddie-fs/types
  */
 
-import { HarnessError } from '@deepseek-ai/dsh-llm'
+import { HarnessError } from '@freddie/freddie-llm'
 
 /**
  * Brand a string as an FsTargetKey. For backend use only — a consumer

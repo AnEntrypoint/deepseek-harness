@@ -4,7 +4,7 @@
  * prompt and settles when the whole agent next becomes idle.
  * Mirrors the Python SDK's `DeepSeekHarness`/`Session` pair.
  *
- * @module @deepseek-ai/dsh-sdk-client/api
+ * @module @freddie/freddie-sdk-client/api
  */
 
 import { randomUUID } from 'node:crypto'
@@ -12,7 +12,7 @@ import { resolve } from 'node:path'
 import { HarnessClient, isRecord, SdkProtocolError } from './client.js'
 
 /**
- * Reusable SDK for running DeepSeek Harness agent turns in a runtime
+ * Reusable SDK for running Freddie agent turns in a runtime
  * subprocess. The subprocess starts lazily on first use and stays owned by
  * this instance until {@link close}; always close (or `await using`) so the
  * child is reaped.

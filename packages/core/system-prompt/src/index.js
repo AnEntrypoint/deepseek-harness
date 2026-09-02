@@ -1,12 +1,12 @@
 /**
  * Registry for ordered system sections, dynamic context, tool schemas, and prompt variables.
  *
- * @module @deepseek-ai/dsh-system-prompt
+ * @module @freddie/freddie-system-prompt
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { AnonymousEntries, NamedEntries, ScopedLayers, scopeTarget } from '@deepseek-ai/dsh-scope'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { AnonymousEntries, NamedEntries, ScopedLayers, scopeTarget } from '@freddie/freddie-scope'
 
 /**
  * The deployment persona's section name and order. Exported because a
@@ -218,7 +218,7 @@ export class SystemPrompt extends Service {
       this.section({
         name: 'harness:identity',
         order: -100,
-        text: 'You are an AI agent powered by DeepSeek Harness.',
+        text: 'You are an AI agent powered by Freddie.',
       })
     }
     this.section({

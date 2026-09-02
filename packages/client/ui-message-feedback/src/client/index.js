@@ -4,10 +4,10 @@
  * Session backs every message control in that Session, so a single list read
  * seeds the whole transcript. Mutations go through the generated
  * messageFeedback Remote; the Host owns per-item compare-and-set.
- * @module @deepseek-ai/dsh-client-ui-message-feedback/client
+ * @module @freddie/freddie-client-ui-message-feedback/client
  */
 
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { MessageFeedbackController } from './controller.js'
 export { MessageFeedbackActions } from './MessageFeedbackActions.js'
 import { en, zh } from './locales.js'

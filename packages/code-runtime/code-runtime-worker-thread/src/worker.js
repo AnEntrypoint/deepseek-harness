@@ -1,7 +1,7 @@
 /**
  * Spawn-only worker entrypoint over {@link runWorkerMain}. Executable logic stays in
  * `bootstrap.js` for in-process coverage; real-worker tests cover this glue.
- * @module @deepseek-ai/dsh-code-runtime-worker-thread/src/worker
+ * @module @freddie/freddie-code-runtime-worker-thread/src/worker
  */
 
 import { parentPort, workerData } from 'node:worker_threads'

@@ -8,7 +8,7 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconChevronDownOutline14, IconInspectOutline12, IconSkillOutline16, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './SkillRow.css.js'
 
 /** First physical line for the collapsed error summary and malformed-args fallback. */

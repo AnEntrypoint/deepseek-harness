@@ -2,7 +2,7 @@
  * Generic-task adaptation for background pwsh process handles — the shell-agnostic
  * twin of `dsh-tool-bash`'s background adaptation.
  *
- * @module @deepseek-ai/dsh-tool-pwsh/background
+ * @module @freddie/freddie-tool-pwsh/background
  */
 
 /* jscpd:ignore-start -- deliberate twin of dsh-tool-bash/background.ts (Agent Note). */

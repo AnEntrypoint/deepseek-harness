@@ -1,4 +1,4 @@
-/** Package-owned durable clock-context invariants. @module @deepseek-ai/dsh-time-context/invariant */
+/** Package-owned durable clock-context invariants. @module @freddie/freddie-time-context/invariant */
 
 import {
   deriveBrowserTimeZoneContext,
@@ -6,7 +6,7 @@ import {
 } from './request-zone.js'
 import { createTimestampFormatter, formatTimestamp } from './timestamp.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-time-context'
+const PACKAGE_NAME = '@freddie/freddie-time-context'
 const SOURCE_NAME = 'time-context'
 const READING = new RegExp(
   '^Time sampled while preparing turn (\\d+), step (\\d+): '

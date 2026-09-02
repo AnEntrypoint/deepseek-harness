@@ -1,14 +1,14 @@
 /**
- * `@deepseek-ai/dsh-web-search-perplexity`: registers a Perplexity-backed
+ * `@freddie/freddie-web-search-perplexity`: registers a Perplexity-backed
  * `WebSearchProvider` with `ctx.web`. A function/namespace plugin (NOT a
  * default-export service): it registers INTO the seam's provider registry, like
- * `@deepseek-ai/dsh-llm-deepseek` registers an adapter into `ctx.llm`.
+ * `@freddie/freddie-llm-deepseek` registers an adapter into `ctx.llm`.
  *
- * @module @deepseek-ai/dsh-web-search-perplexity
+ * @module @freddie/freddie-web-search-perplexity
  */
 
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import z from '@deepseek-ai/schemastery'
+import { launchEnvironmentOf } from '@freddie/freddie-launch-environment'
+import z from '@freddie/schemastery'
 import { PerplexitySearchProvider, PERPLEXITY_DEFAULT_BASE_URL, PERPLEXITY_DEFAULT_MAX_TOKENS, PERPLEXITY_DEFAULT_MODEL } from './provider.js'
 
 export {

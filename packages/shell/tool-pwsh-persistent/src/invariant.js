@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-pwsh-persistent`.
- * @module @deepseek-ai/dsh-tool-pwsh-persistent/invariant
+ * Package-owned invariant companion for `@freddie/freddie-tool-pwsh-persistent`.
+ * @module @freddie/freddie-tool-pwsh-persistent/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-pwsh-persistent'
+const PACKAGE_NAME = '@freddie/freddie-tool-pwsh-persistent'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-pwsh-persistent-invariant'

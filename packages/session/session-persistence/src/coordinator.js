@@ -2,7 +2,7 @@
  * Shared buffering, serialization, adoption, repair, and disposal orchestration
  * for first-party backends. Third-party backends may implement the public
  * persistence seam directly.
- * @module @deepseek-ai/dsh-session-persistence/coordinator
+ * @module @freddie/freddie-session-persistence/coordinator
  */
 
 import {
@@ -13,8 +13,8 @@ import {
   SessionPreparation,
   snapshotJsonValue,
   snapshotSessionEvent,
-} from '@deepseek-ai/dsh-session'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+} from '@freddie/freddie-session'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import { observeQueuedAbort, SessionPreparations } from './preparations.js'
 import { SessionWriteBehind } from './write-behind.js'
 

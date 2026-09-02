@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-fs-local`.
- * @module @deepseek-ai/dsh-fs-local/invariant
+ * Package-owned invariant companion for `@freddie/freddie-fs-local`.
+ * @module @freddie/freddie-fs-local/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-fs-local'
+const PACKAGE_NAME = '@freddie/freddie-fs-local'
 
 /** Cordis companion plugin name. */
 export const name = 'fs-local-invariant'

@@ -8,7 +8,7 @@
  * that belongs to no single feature (chrome, the General section) is owned by
  * ui-settings-general too.
  *
- * Slot type contract (formerly a `declare module '@deepseek-ai/dsh-client-ui-slots'`
+ * Slot type contract (formerly a `declare module '@freddie/freddie-client-ui-slots'`
  * augmentation) — compile-time only, dropped in the buildless conversion:
  *
  * 'settings.trigger': { kind: 'single', scope: 'root', owner: SettingsTriggerOwnerProps }

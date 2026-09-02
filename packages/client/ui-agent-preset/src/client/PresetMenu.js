@@ -9,7 +9,7 @@
  * label marks it rather than presenting every preset as shipped and vetted.
  */
 
-import { IconChevronDownOutline14, renderMenu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, renderMenu } from '@freddie/freddie-client-ui-primitives'
 import { presetDisplayText } from './locales.js'
 import { createElement as h, Fragment } from 'webjsx'
 

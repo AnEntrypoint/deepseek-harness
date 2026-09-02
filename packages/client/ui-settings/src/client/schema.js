@@ -1,6 +1,6 @@
 /** Synchronous schema introspection and immutable settings-draft edits. */
-import { Service } from '@deepseek-ai/cordis'
-import Schema from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import Schema from '@freddie/schemastery'
 
 function cloneContainer(container, key) {
   if (Array.isArray(container)) return [...container]

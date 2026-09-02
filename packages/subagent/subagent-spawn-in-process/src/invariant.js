@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-subagent-spawn-in-process`.
- * @module @deepseek-ai/dsh-subagent-spawn-in-process/invariant
+ * Package-owned invariant companion for `@freddie/freddie-subagent-spawn-in-process`.
+ * @module @freddie/freddie-subagent-spawn-in-process/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-subagent-spawn-in-process'
+const PACKAGE_NAME = '@freddie/freddie-subagent-spawn-in-process'
 
 /** Cordis companion plugin name. */
 export const name = 'subagent-spawn-in-process-invariant'

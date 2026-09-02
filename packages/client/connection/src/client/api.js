@@ -12,8 +12,8 @@ export {
   RpcId,
   SESSION_SEARCH_RESULT_LIMIT,
   transportError,
-} from '@deepseek-ai/dsh-host-apiproxy/api'
-export { AbstractApiClient } from '@deepseek-ai/dsh-host-apiproxy/client'
+} from '@freddie/freddie-host-apiproxy/api'
+export { AbstractApiClient } from '@freddie/freddie-host-apiproxy/client'
 
 /**
  * Unwrap a unary response: RpcResponse<T> -> RpcResult<T> (business code only

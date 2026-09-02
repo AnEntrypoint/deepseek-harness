@@ -3,7 +3,7 @@
  * one pure decision from sampled host facts to a concrete backend kind. The
  * caller samples exactly once per boot, so the mounted capability stays
  * stable for the service lifetime as the seam requires.
- * @module @deepseek-ai/dsh-host-directory-picker-auto/resolve
+ * @module @freddie/freddie-host-directory-picker-auto/resolve
  */
 
 /** An env value counts only when set and non-blank (an empty export is "unset" by shell convention). */

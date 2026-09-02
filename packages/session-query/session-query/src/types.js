@@ -2,7 +2,7 @@
  * Public records for exact reads and relationship traces over the
  * live-preferred logical session corpus.
  *
- * @module @deepseek-ai/dsh-session-query/types
+ * @module @freddie/freddie-session-query/types
  */
 
 export { SessionSearchCursor } from './cursor.js'

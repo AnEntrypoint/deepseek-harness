@@ -1,12 +1,12 @@
 /**
  * Configuration normalization for workspace instruction discovery and rendering.
  *
- * @module @deepseek-ai/dsh-agent-instructions/config
+ * @module @freddie/freddie-agent-instructions/config
  */
 
 import { relative } from 'node:path'
-import z from '@deepseek-ai/schemastery'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import z from '@freddie/schemastery'
+import { resolveDshHome } from '@freddie/freddie-home-paths'
 
 const DEFAULT_PROJECT_ROOT_MARKERS = ['.git']
 const DEFAULT_INSTRUCTION_FILE_CANDIDATES = ['AGENTS.md', 'CLAUDE.md']

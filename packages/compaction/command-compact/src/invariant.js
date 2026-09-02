@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-command-compact`.
- * @module @deepseek-ai/dsh-command-compact/invariant
+ * Package-owned invariant companion for `@freddie/freddie-command-compact`.
+ * @module @freddie/freddie-command-compact/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-command-compact'
+const PACKAGE_NAME = '@freddie/freddie-command-compact'
 
 /** Cordis companion plugin name. */
 export const name = 'command-compact-invariant'

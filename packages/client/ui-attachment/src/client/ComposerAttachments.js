@@ -175,7 +175,7 @@ export function renderComposerAttachments(el, props) {
 /**
  * Slot component entry point: a plain function honoring the slot registry's
  * `SlotComponent<P> = (props: P) => ReactNode` contract (that contract lives
- * in `@deepseek-ai/dsh-client-ui-slots`, a package not yet converted off
+ * in `@freddie/freddie-client-ui-slots`, a package not yet converted off
  * React — see the conversion report). Each call creates a fresh element,
  * since the slot renderer calls this on every re-render with fresh props
  * rather than holding a persistent handle; the element's own `setProps`

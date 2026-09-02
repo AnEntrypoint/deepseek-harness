@@ -1,20 +1,20 @@
 /**
  * E2B provider for the filesystem capability seam. Paths, contents, and
  * atomic staging files remain inside the shared remote sandbox.
- * @module @deepseek-ai/dsh-fs-e2b
+ * @module @freddie/freddie-fs-e2b
  */
 
 import { createHash, randomUUID } from 'node:crypto'
 import { Buffer } from 'node:buffer'
 import { posix } from 'node:path'
-import { FileSystem, FsError, FsTargetKey, FsVersion } from '@deepseek-ai/dsh-fs'
+import { FileSystem, FsError, FsTargetKey, FsVersion } from '@freddie/freddie-fs'
 import {
   CommandExitError,
   e2bControlEnvs,
   FileNotFoundError,
   FileType,
   quoteE2BShellArg,
-} from '@deepseek-ai/dsh-e2b'
+} from '@freddie/freddie-e2b'
 
 const VERSION_METADATA_KEY = 'dsh-version'
 const BINARY_SAMPLE_BYTES = 8192

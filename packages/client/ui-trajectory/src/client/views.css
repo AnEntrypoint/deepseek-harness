@@ -1,6 +1,6 @@
 /* Full-bleed, fixed-height host for the trajectory ledger. */
 .dsh-views__root {
-  --dsh-trajectory-toolbar-height: 32px;
+  --freddie-trajectory-toolbar-height: 32px;
 
   display: flex;
   flex-direction: column;
@@ -9,8 +9,8 @@
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-bg-layer-1);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-bg-layer-1);
 }
 
 .dsh-views__ledger {
@@ -24,5 +24,5 @@
   overflow: hidden;
 
   /* ConversationRoot publishes the floating composer's live height. */
-  --dsh-trajectory-bottom-clearance: calc(var(--dsh-composer-height, 152px) + 16px);
+  --freddie-trajectory-bottom-clearance: calc(var(--freddie-composer-height, 152px) + 16px);
 }

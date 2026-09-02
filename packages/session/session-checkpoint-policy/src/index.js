@@ -1,10 +1,10 @@
 /**
  * Semantic durability checkpoints for model requests, top-level tool dispatch,
  * and completed agent steps.
- * @module @deepseek-ai/dsh-session-checkpoint-policy
+ * @module @freddie/freddie-session-checkpoint-policy
  */
 
-import { TOOL_ABORTED_BEFORE_DISPATCH } from '@deepseek-ai/dsh-tools'
+import { TOOL_ABORTED_BEFORE_DISPATCH } from '@freddie/freddie-tools'
 
 /** Cordis plugin name used by Loader diagnostics. */
 export const name = 'session-checkpoint-policy'

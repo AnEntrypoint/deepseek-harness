@@ -17,7 +17,7 @@
   --dsl-terminal-line-height: 18px;
   --dsl-terminal-output-max-height: 224px;
   margin: 4px 0 4px 4px;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 1px solid var(--freddie-alias-border-l1);
 }
 
 /* A bash execution error can settle without terminal-card material (for
@@ -27,9 +27,9 @@
   display: flex;
   flex-direction: column;
   margin: 4px 0 4px 4px;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 1px solid var(--freddie-alias-border-l1);
   border-radius: 12px;
-  background: var(--dsw-alias-markdown-code-block);
+  background: var(--freddie-alias-markdown-code-block);
   font: var(--dsw-font-markdown-code-block-small);
 }
 
@@ -57,24 +57,24 @@
   position: sticky;
   top: 0;
   align-self: start;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-bashSample__ioDivider {
   flex: none;
   height: 1px;
-  background: var(--dsw-alias-border-l2);
+  background: var(--freddie-alias-border-l2);
 }
 
 .dsh-bashSample__ioText {
   min-width: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-bashSample__ioText[data-error] {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 /* ToolRow's unified expand interaction, replicated per the registrant
@@ -104,7 +104,7 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
+    color-mix(in srgb, var(--freddie-alias-bg-base) 60%, transparent) 55%,
     transparent 100%
   );
   animation: dsh-bashSample__dsh-bash-row-sweep 2.6s ease-out infinite;
@@ -125,11 +125,11 @@
   align-items: center;
   justify-content: center;
   margin-right: 6px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-bashSample__chevron {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 /* Hover preview on the expandable row: the idle icon crossfades (100ms) into
@@ -160,7 +160,7 @@
   flex: none;
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-bashSample__sep {
@@ -169,7 +169,7 @@
   height: 2px;
   border-radius: 1px;
   margin: 0 8px;
-  background: var(--dsw-alias-label-caption);
+  background: var(--freddie-alias-label-caption);
 }
 
 .dsh-bashSample__summary {
@@ -180,12 +180,12 @@
   white-space: nowrap;
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 /* Error row's collapsed summary: the failure's first line in the error color. */
 .dsh-bashSample__errorSummary {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 /* Hover-revealed Inspect pill under the expanded terminal's bottom-left —
@@ -204,11 +204,11 @@
   gap: 4px;
   margin: 4px 0 2px 4px;
   padding: 2px 8px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 999px;
   /* Base background, not bg-overlay: the overlay token reads too heavy. */
-  background: var(--dsw-alias-bg-base);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-bg-base);
+  color: var(--freddie-alias-label-secondary);
   font-size: 11px;
   line-height: 16px;
   cursor: pointer;
@@ -224,8 +224,8 @@
 /* Solid hover fill: the pill floats over terminal output, so a translucent
    hover token would let the text underneath bleed through. */
 .dsh-bashSample__inspectButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover-solid);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover-solid);
+  color: var(--freddie-alias-label-primary);
 }
 
 

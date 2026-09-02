@@ -4,7 +4,7 @@
  * the ordinary-process and terminal teardown ladders.
  */
 
-import { CommandExitError, e2bControlEnvs, SandboxNotFoundError } from '@deepseek-ai/dsh-e2b'
+import { CommandExitError, e2bControlEnvs, SandboxNotFoundError } from '@freddie/freddie-e2b'
 
 /**
  * Normalize an unknown rejection into an Error.

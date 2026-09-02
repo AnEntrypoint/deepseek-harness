@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-sandbox`.
- * @module @deepseek-ai/dsh-sandbox/invariant
+ * Package-owned invariant companion for `@freddie/freddie-sandbox`.
+ * @module @freddie/freddie-sandbox/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-sandbox'
+const PACKAGE_NAME = '@freddie/freddie-sandbox'
 
 /** Cordis companion plugin name. */
 export const name = 'sandbox-invariant'

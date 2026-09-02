@@ -6,16 +6,16 @@
  * serves remote clients the dialog backend cannot. Policy decisions (hidden
  * entries flagged but returned, symlinks followed, whole-filesystem scope) are
  * recorded in the directory-picker seam Agent Note.
- * @module @deepseek-ai/dsh-host-directory-picker-browse
+ * @module @freddie/freddie-host-directory-picker-browse
  */
 
 import { mkdir, opendir, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, dirname, join, posix, resolve, win32 } from 'node:path'
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import {
   DirectoryPicker, DirectoryPickerError,
-} from '@deepseek-ai/dsh-host-directory-picker'
+} from '@freddie/freddie-host-directory-picker'
 
 /**
  * Ancestor chain from the filesystem root to `target` inclusive — the

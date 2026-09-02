@@ -9,8 +9,8 @@
  * key -> create/cache, dropped with the last holding entry, session instances
  * cleared (with persisted state) on scope death.
  */
-import { Service } from '@deepseek-ai/cordis'
-import { SlotCore } from '@deepseek-ai/dsh-client-ui-slots'
+import { Service } from '@freddie/cordis'
+import { SlotCore } from '@freddie/freddie-client-ui-slots'
 
 /** Instance key for root-scoped store records (session records key by session id, so the literal cannot collide). */
 const ROOT_INSTANCE_KEY = 'root'

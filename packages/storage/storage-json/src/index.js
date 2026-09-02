@@ -2,13 +2,13 @@
  * JSON storage backend: one human-readable file per unit under a configured
  * root, published by atomic whole-file rewrite. Registers as backend `json`
  * on the storage hub.
- * @module @deepseek-ai/dsh-storage-json
+ * @module @freddie/freddie-storage-json
  */
 
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import z from '@deepseek-ai/schemastery'
-import { StorageError, UNIT_NAME_RE, storageBackendServiceKey } from '@deepseek-ai/dsh-storage'
+import z from '@freddie/schemastery'
+import { StorageError, UNIT_NAME_RE, storageBackendServiceKey } from '@freddie/freddie-storage'
 import { openJsonUnit } from './unit.js'
 
 /** Cordis plugin name. */

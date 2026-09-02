@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-lsp-stdio`.
- * @module @deepseek-ai/dsh-lsp-stdio/invariant
+ * Package-owned invariant companion for `@freddie/freddie-lsp-stdio`.
+ * @module @freddie/freddie-lsp-stdio/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-lsp-stdio'
+const PACKAGE_NAME = '@freddie/freddie-lsp-stdio'
 
 /** Cordis companion plugin name. */
 export const name = 'lsp-stdio-invariant'

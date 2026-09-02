@@ -2,10 +2,10 @@
  * Crash-recovery repair for an interrupted session log. It preserves a fully
  * written final turn and supplies the missing tool, step, and turn boundaries
  * needed to resume with a provider-valid transcript.
- * @module @deepseek-ai/dsh-session/repair
+ * @module @freddie/freddie-session/repair
  */
 
-import { MessageId, freezeMessage } from '@deepseek-ai/dsh-llm'
+import { MessageId, freezeMessage } from '@freddie/freddie-llm'
 
 /** Recovery code for an assistant tool request that never reached a recorded call start. */
 export const TOOL_NOT_STARTED = 'TOOL_NOT_STARTED'

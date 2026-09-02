@@ -1,10 +1,10 @@
 /**
  * Model text rendering and generic tool-call presentation.
  *
- * @module @deepseek-ai/dsh-tool-session-query/presentation
+ * @module @freddie/freddie-tool-session-query/presentation
  */
 
-import { extractSessionEventText } from '@deepseek-ai/dsh-session-query'
+import { extractSessionEventText } from '@freddie/freddie-session-query'
 import { workspaceAccess } from './workspace-access.js'
 
 function formatSessionSearch(

@@ -7,5 +7,5 @@
  * aggregates — with zero content duplication. Host-coupled domain
  * vocabulary (message sources, events, fold shapes) lives in ./domain.js.
  *
- * @module @deepseek-ai/dsh-goal/types
+ * @module @freddie/freddie-goal/types
  */

@@ -17,16 +17,16 @@ import Anser from 'anser'
  * through to anser's literal rgb, as do all 256-palette and truecolor values.
  */
 const TOKEN_BY_BASIC_RGB = {
-  '0,0,0': 'var(--dsw-alias-label-primary)',
-  '255,255,255': 'var(--dsw-alias-label-primary)',
-  '85,85,85': 'var(--dsw-alias-label-tertiary)',
-  '187,0,0': 'var(--dsw-alias-state-error-primary)',
-  '255,85,85': 'var(--dsw-alias-state-error-secondary)',
-  '0,187,0': 'var(--dsw-alias-state-success-primary)',
-  '0,255,0': 'var(--dsw-alias-state-success-secondary)',
-  '187,187,0': 'var(--dsw-alias-state-warn-primary)',
-  '255,255,85': 'var(--dsw-alias-state-warn-secondary)',
-  '0,0,187': 'var(--dsw-alias-state-business-primary)',
+  '0,0,0': 'var(--freddie-alias-label-primary)',
+  '255,255,255': 'var(--freddie-alias-label-primary)',
+  '85,85,85': 'var(--freddie-alias-label-tertiary)',
+  '187,0,0': 'var(--freddie-alias-state-error-primary)',
+  '255,85,85': 'var(--freddie-alias-state-error-secondary)',
+  '0,187,0': 'var(--freddie-alias-state-success-primary)',
+  '0,255,0': 'var(--freddie-alias-state-success-secondary)',
+  '187,187,0': 'var(--freddie-alias-state-warn-primary)',
+  '255,255,85': 'var(--freddie-alias-state-warn-secondary)',
+  '0,0,187': 'var(--freddie-alias-state-business-primary)',
   '85,85,255': 'var(--dsw-static-blue-400)',
 }
 

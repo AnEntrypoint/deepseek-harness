@@ -1,9 +1,9 @@
 /**
  * Shared path resolution and regular-file validation for model-facing read tools.
- * @module @deepseek-ai/dsh-tool-fs/src/read-target
+ * @module @freddie/freddie-tool-fs/src/read-target
  */
 
-import { FsError } from '@deepseek-ai/dsh-fs'
+import { FsError } from '@freddie/freddie-fs'
 import { sessionResolveOptions } from './session-cwd.js'
 
 /**

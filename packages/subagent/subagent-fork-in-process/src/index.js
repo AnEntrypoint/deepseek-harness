@@ -4,11 +4,11 @@
  * parent's session log — so the child inherits the parent's conversation context instead of
  * starting fresh. The seed ends at the last `turn/end`: the current tool-call turn is
  * unbalanced and cannot be replayed as a valid child session.
- * @module @deepseek-ai/dsh-subagent-fork-in-process
+ * @module @freddie/freddie-subagent-fork-in-process
  */
 
-import z from '@deepseek-ai/schemastery'
-import { startInProcessRun } from '@deepseek-ai/dsh-subagent-in-process-driver'
+import z from '@freddie/schemastery'
+import { startInProcessRun } from '@freddie/freddie-subagent-in-process-driver'
 
 export const name = 'subagent-fork-in-process'
 // `tools` is deliberately NOT injected — same rationale as subagent-spawn-in-process: the

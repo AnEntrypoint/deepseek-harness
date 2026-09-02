@@ -1,8 +1,8 @@
-/** Package-owned session-event invariants for sandbox policy. @module @deepseek-ai/dsh-sandbox-policy/invariant */
+/** Package-owned session-event invariants for sandbox policy. @module @freddie/freddie-sandbox-policy/invariant */
 
 import { SANDBOX_MODES } from './session-mode.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-sandbox-policy'
+const PACKAGE_NAME = '@freddie/freddie-sandbox-policy'
 
 /** Cordis companion plugin name. */
 export const name = 'sandbox-policy-invariant'

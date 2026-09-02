@@ -3,7 +3,7 @@
  * consumes and produces, plus the fields in the `workflow/*` event payloads.
  * Types only (plus the id-brand factory), per the package convention.
  *
- * @module @deepseek-ai/dsh-workflow/types
+ * @module @freddie/freddie-workflow/types
  */
 
 /** Identifies one workflow run. */

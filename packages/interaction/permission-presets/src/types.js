@@ -6,5 +6,5 @@
  * browser half-entry's re-export) for client aggregates — with zero content
  * duplication.
  *
- * @module @deepseek-ai/dsh-permission-presets/types
+ * @module @freddie/freddie-permission-presets/types
  */

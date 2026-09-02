@@ -12,10 +12,10 @@ const _deepseek_ai_dsh_session_reference_sessionReferenceResolver_candidates_res
 }))
 
 export const TYPERT_REMOTE = {
-  package: '@deepseek-ai/dsh-session-reference',
+  package: '@freddie/freddie-session-reference',
   descriptors: [
     {
-      id: '@deepseek-ai/dsh-session-reference#sessionReferenceResolver/candidates',
+      id: '@freddie/freddie-session-reference#sessionReferenceResolver/candidates',
       service: 'sessionReferenceResolver',
       namespace: 'sessionReferenceResolver',
       method: 'candidates',
@@ -33,7 +33,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_session_reference_sessionReferenceResolver_candidates_parameter_0$schema,
           },
         },
@@ -43,7 +43,7 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session-reference#sessionReferenceResolver/candidates:query',
+            typeSymbol: '@freddie/freddie-session-reference#sessionReferenceResolver/candidates:query',
             schema: _deepseek_ai_dsh_session_reference_sessionReferenceResolver_candidates_parameter_1$schema,
           },
         },
@@ -51,7 +51,7 @@ export const TYPERT_REMOTE = {
       cancellation: { parameter: 'signal' },
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-session-reference#sessionReferenceResolver/candidates:result',
+        typeSymbol: '@freddie/freddie-session-reference#sessionReferenceResolver/candidates:result',
         schema: _deepseek_ai_dsh_session_reference_sessionReferenceResolver_candidates_result$schema,
       },
       sourceLocation: {"file":"packages/context/session-reference/src/index.ts","line":218,"column":9},

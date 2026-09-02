@@ -2,13 +2,13 @@
  * Workspace entity registry (`ctx.workspaceRegistry`): durable workspace records,
  * stable registry order, and header-validated session membership over the
  * domain data form.
- * @module @deepseek-ai/dsh-workspace
+ * @module @freddie/freddie-workspace
  */
 
 import { randomUUID } from 'node:crypto'
 import { stat } from 'node:fs/promises'
 import { basename } from 'node:path'
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { WorkspaceEntity } from './entity.js'
 
 export { WorkspaceMoveInvalidError } from './entity.js'

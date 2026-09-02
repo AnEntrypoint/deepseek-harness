@@ -1,7 +1,7 @@
 /**
  * Generic-task adaptation for background bash process handles.
  *
- * @module @deepseek-ai/dsh-tool-bash/background
+ * @module @freddie/freddie-tool-bash/background
  */
 
 /**

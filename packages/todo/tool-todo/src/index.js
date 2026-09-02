@@ -2,12 +2,12 @@
  * Model-facing whole-list replacement. Each call appends a `todo/write` snapshot to the calling
  * agent's session; replay is last-write-wins, and UIs render from session events. A non-agent
  * caller has no owning list and is rejected. Named exports preserve loader injection metadata.
- * @module @deepseek-ai/dsh-tool-todo
+ * @module @freddie/freddie-tool-todo
  */
 
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import { z as zod } from 'zod'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@freddie/freddie-tools'
 // The `todos` projection-key declaration lived in src/types.ts (its one home);
 // src/types.js is now a pure-type-dropped module (nothing runtime-visible
 // survives from it) -- kept as a sibling module for import-site stability.

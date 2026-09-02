@@ -1,5 +1,5 @@
 /**
  * Public configuration and measurement vocabulary for replay token metering.
  *
- * @module @deepseek-ai/dsh-token-meter/types
+ * @module @freddie/freddie-token-meter/types
  */

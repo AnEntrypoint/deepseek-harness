@@ -9,8 +9,8 @@
 
   margin: 16px 0;
   padding: 12px 14px;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-markdown-code-block);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-markdown-code-block);
   border-radius: var(--dsl-web-radius);
 }
 
@@ -58,7 +58,7 @@
 }
 
 .dsh-webBlock__sourceLink {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
   font-size: 14px;
   line-height: 20px;
   word-break: break-word;
@@ -70,7 +70,7 @@
 
 .dsh-webBlock__snippet {
   margin-top: 2px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font-size: 13px;
   line-height: 19px;
   word-break: break-word;
@@ -78,18 +78,18 @@
 
 .dsh-webBlock__published {
   margin-top: 2px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: var(--dsw-font-xs-13);
 }
 
 .dsh-webBlock__truncated {
   margin-top: 8px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: var(--dsw-font-xs-13);
 }
 
 .dsh-webBlock__empty {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-xs-13);
 }
 
@@ -101,7 +101,7 @@
 }
 
 .dsh-webBlock__fetchUrl {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
   font-family: var(--ds-font-family-code);
   font-size: 13px;
   line-height: 19px;
@@ -119,7 +119,7 @@
 }
 
 .dsh-webBlock__status {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-xs-13);
 }
 

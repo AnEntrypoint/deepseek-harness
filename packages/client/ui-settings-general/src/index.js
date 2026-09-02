@@ -1,7 +1,7 @@
 /** Host loader entry for the browser implementation exported from `./client`. */
 
-import z from '@deepseek-ai/schemastery'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import z from '@freddie/schemastery'
+import { settingsNamespace } from '@freddie/freddie-settings'
 
 /** Durable settings namespace for product-wide GUI onboarding facts. */
 const ONBOARDING_SETTINGS_NAMESPACE = 'ui-onboarding'

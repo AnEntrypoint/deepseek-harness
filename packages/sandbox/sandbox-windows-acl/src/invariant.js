@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-sandbox-windows-acl`.
- * @module @deepseek-ai/dsh-sandbox-windows-acl/invariant
+ * Package-owned invariant companion for `@freddie/freddie-sandbox-windows-acl`.
+ * @module @freddie/freddie-sandbox-windows-acl/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-sandbox-windows-acl'
+const PACKAGE_NAME = '@freddie/freddie-sandbox-windows-acl'
 
 /** Cordis companion plugin name. */
 export const name = 'sandbox-windows-acl-invariant'

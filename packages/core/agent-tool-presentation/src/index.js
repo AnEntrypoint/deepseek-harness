@@ -15,10 +15,10 @@
  * This row therefore waits for it rather than assuming it: a preset selecting
  * Code Mode against a deployment that composes no runtime fails at mount, named
  * in the preset's own activation audit, instead of at the first prompt.
- * @module @deepseek-ai/dsh-agent-tool-presentation
+ * @module @freddie/freddie-agent-tool-presentation
  */
 
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 
 /** Cordis plugin name. */
 export const name = 'tool-presentation'

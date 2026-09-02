@@ -6,7 +6,7 @@
  * backend write leaves memory untouched (no divergence between reads and the
  * medium), and events carry values that equal the in-memory state at
  * emission, in write order.
- * @module @deepseek-ai/dsh-storage-domain/src/domain
+ * @module @freddie/freddie-storage-domain/src/domain
  */
 
 import { DomainError } from './error.js'

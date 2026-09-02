@@ -4,11 +4,11 @@
  * NOT queued here — per the backend contract, write ordering belongs to the
  * caller (the domain layer's write chain); this unit only guarantees that
  * each single call publishes a complete, durable file.
- * @module @deepseek-ai/dsh-storage-json/src/unit
+ * @module @freddie/freddie-storage-json/src/unit
  */
 
 import { readFile } from 'node:fs/promises'
-import { StorageError } from '@deepseek-ai/dsh-storage'
+import { StorageError } from '@freddie/freddie-storage'
 import { writeAtomic } from './atomic.js'
 import { parse, serialize } from './format.js'
 

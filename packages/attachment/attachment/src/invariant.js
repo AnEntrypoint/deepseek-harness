@@ -1,7 +1,7 @@
-/** Package-owned invariant companion for `@deepseek-ai/dsh-attachment`. @module @deepseek-ai/dsh-attachment/invariant */
+/** Package-owned invariant companion for `@freddie/freddie-attachment`. @module @freddie/freddie-attachment/invariant */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-attachment'
+const PACKAGE_NAME = '@freddie/freddie-attachment'
 /** Cordis companion plugin name. */
 export const name = 'attachment-invariant'
 /** Service required before package ownership can be reserved. */

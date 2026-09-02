@@ -5,10 +5,10 @@
  * (validation, descriptor projection) derive from it. Record schemas are zod
  * (`z.infer` keeps types un-duplicated and the same schemas later project to
  * RPC wire schemas); plugin `Config` stays schemastery.
- * @module @deepseek-ai/dsh-storage-domain/src/spec
+ * @module @freddie/freddie-storage-domain/src/spec
  */
 
-import { UNIT_NAME_RE } from '@deepseek-ai/dsh-storage'
+import { UNIT_NAME_RE } from '@freddie/freddie-storage'
 
 /**
  * Declare one table.

@@ -7,7 +7,7 @@ import { dirname, join, parse, resolve } from 'node:path'
 import {
   AttachmentError,
   AttachmentId,
-} from '@deepseek-ai/dsh-attachment'
+} from '@freddie/freddie-attachment'
 import { normalizeImage } from './normalization.js'
 import { detectImage, probeImage } from './image.js'
 
@@ -134,7 +134,7 @@ async function ensureDurableDirectory(path, boundary) {
 }
 
 /**
- * Establish this process's proof that one DSH_HOME entry and every ancestor
+ * Establish this process's proof that one FREDDIE_HOME entry and every ancestor
  * below the filesystem root are durable. Mere existence is insufficient: a
  * concurrent process may have created the directory but not synced its parent.
  */
@@ -149,7 +149,7 @@ async function ensureDurableHome(path) {
 
 /**
  * Publish one already verified normalized image below a versioned attachment root.
- * @param root - absolute `DSH_HOME/attachments/v1` root.
+ * @param root - absolute `FREDDIE_HOME/attachments/v1` root.
  * @param prepared - deterministic normalized bytes and reference.
  * @returns durable content-addressed normalized image reference.
  */
@@ -161,7 +161,7 @@ export async function commitPreparedImageFile(root, prepared) {
   }
   const bucket = join(root, 'objects', sha256.slice(0, 2))
   const staging = join(root, 'tmp')
-  // Establish DSH_HOME itself against the filesystem root once per process.
+  // Establish FREDDIE_HOME itself against the filesystem root once per process.
   // Every process performs that proof independently, so observing a directory
   // another process created can never be mistaken for durable publication.
   const boundary = await ensureDurableHome(dirname(dirname(resolve(root))))
@@ -212,7 +212,7 @@ export async function commitPreparedImageFile(root, prepared) {
 
 /**
  * Decode and normalize one image once, then publish the prepared object.
- * @param root - absolute `DSH_HOME/attachments/v1` root.
+ * @param root - absolute `FREDDIE_HOME/attachments/v1` root.
  * @param input - submitted encoded bytes and declared media type.
  * @param limits - resolved source admission policy.
  * @param policy - resolved normalization policy.
@@ -224,7 +224,7 @@ export async function saveImageFile(root, input, limits, policy) {
 
 /**
  * Read and verify one content-addressed image.
- * @param root - absolute `DSH_HOME/attachments/v1` root.
+ * @param root - absolute `FREDDIE_HOME/attachments/v1` root.
  * @param ref - reference recorded in the session log.
  * @param signal - optional cancellation for filesystem and verification work.
  * @returns verified bytes and reference.

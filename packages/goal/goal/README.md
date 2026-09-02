@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-goal
+# @freddie/freddie-goal
 
 Event-sourced same-session goal state. The service retains one current completion objective in an agent's existing session while keeping permission to continue as process-local activation. The [goal-domain Agent Note](../../../.agents/notes/implemented/feature/2026-07-19-persisted-same-session-goal-domain.md) owns the design rationale; the [goal type catalog](../../../docs/subsystems/goal.md) records the literal data shapes.
 
@@ -6,7 +6,7 @@ Event-sourced same-session goal state. The service retains one current completio
 
 ```yaml
 - id: goal
-  name: '@deepseek-ai/dsh-goal'
+  name: '@freddie/freddie-goal'
   config:
     defaultMaxGoalRounds: 256
 ```

@@ -1,9 +1,9 @@
-/** Package-owned scoped-dispatch invariants. @module @deepseek-ai/dsh-scope/invariant */
+/** Package-owned scoped-dispatch invariants. @module @freddie/freddie-scope/invariant */
 
-import { carrierKeyOf, isScopeCarrier } from '@deepseek-ai/dsh-scope'
+import { carrierKeyOf, isScopeCarrier } from '@freddie/freddie-scope'
 import { scopedSubjectResolverFor } from './scoped-events.generated.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-scope'
+const PACKAGE_NAME = '@freddie/freddie-scope'
 
 /** Cordis companion plugin name. */
 export const name = 'scope-invariant'

@@ -8,7 +8,7 @@
 // above the composer, so the row stays one line until expanded.
 
 import { createElement as h, Fragment } from 'webjsx'
-import { IconChecklistOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChecklistOutline14 } from '@freddie/freddie-client-ui-primitives'
 import { toolRowModel } from '../models/tool-call-model.js'
 import { ToolRow } from '../components/ToolRow.js'
 import { CONVERSATION_NS as NS } from '../../locale.js'

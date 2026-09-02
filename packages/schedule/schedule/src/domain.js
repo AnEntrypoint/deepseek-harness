@@ -1,6 +1,6 @@
 /**
  * Strict Schedule decoding, replay, time validation, and framing.
- * @module @deepseek-ai/dsh-schedule
+ * @module @freddie/freddie-schedule
  */
 
 /** Durable Schedule protocol version implemented by this package. */

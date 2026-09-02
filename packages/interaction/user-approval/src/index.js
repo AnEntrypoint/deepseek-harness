@@ -1,14 +1,14 @@
 /**
  * Service Definition for the approval capability seam, covering requests, cancellation, audit, and per-session policy. Missing
  * answerers fail closed; grants apply only to the requested action.
- * @module @deepseek-ai/dsh-user-approval
+ * @module @freddie/freddie-user-approval
  */
 
 import { randomUUID } from 'node:crypto'
-import { Context, Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { scopeTarget } from '@deepseek-ai/dsh-scope'
+import { Context, Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { scopeTarget } from '@freddie/freddie-scope'
 
 import { ApprovalRequestId } from './types.js'
 

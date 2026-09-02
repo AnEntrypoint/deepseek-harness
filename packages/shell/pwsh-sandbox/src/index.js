@@ -1,6 +1,6 @@
 /**
  * Sandbox-consuming PowerShell executor — the pwsh twin of
- * `@deepseek-ai/dsh-bash-sandbox`. It wraps the exact local pwsh argv through
+ * `@freddie/freddie-bash-sandbox`. It wraps the exact local pwsh argv through
  * `ctx.sandbox` (which on Windows resolves to the ACL restricted-token runner
  * chain), inherits local process mechanics, and reports the selected mode,
  * enforcement, and denial facts. Positive runner-launch evidence means the
@@ -9,11 +9,11 @@
  * local-executor semantics. The tool layer owns the escalation approval flow
  * through `ctx.approval`; this executor reports the sandbox facts the tool
  * renders.
- * @module @deepseek-ai/dsh-pwsh-sandbox
+ * @module @freddie/freddie-pwsh-sandbox
  */
 
-import { SandboxUnavailableError } from '@deepseek-ai/dsh-sandbox'
-import { PwshLocalExecutor } from '@deepseek-ai/dsh-pwsh-local'
+import { SandboxUnavailableError } from '@freddie/freddie-sandbox'
+import { PwshLocalExecutor } from '@freddie/freddie-pwsh-local'
 import { classifyDenial, classifyRunnerFailure, isRunnerSpawnFailure, matchesSignature } from './helpers.js'
 
 /**

@@ -13,7 +13,7 @@
 .dsh-trajectoryGroupHeader__title {
   flex: none;
   font: var(--dsw-font-xs-13);
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryGroupHeader__description {
@@ -23,5 +23,5 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font: var(--dsw-font-xs-13);
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }

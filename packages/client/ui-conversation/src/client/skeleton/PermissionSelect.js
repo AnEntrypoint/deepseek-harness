@@ -5,7 +5,7 @@
 
 import { applyDiff, createElement as h } from 'webjsx'
 import clsx from 'clsx'
-import { IconChevronDownOutline14, renderMenu, renderRiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, renderMenu, renderRiskConfirmation } from '@freddie/freddie-client-ui-primitives'
 import css from './PermissionSelect.css.js'
 
 const FULL_ACCESS = 'danger-full-access'

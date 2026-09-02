@@ -6,7 +6,7 @@
  * continuation host in `./continuation.js` — so this module stays the published
  * surface rather than a bag of everything type-shaped.
  *
- * @module @deepseek-ai/dsh-subagent/types
+ * @module @freddie/freddie-subagent/types
  */
 
 /** Identifies one accepted subagent run across its lifecycle event pair. */

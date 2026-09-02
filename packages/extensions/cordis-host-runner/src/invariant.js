@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-cordis-host-runner`.
- * @module @deepseek-ai/dsh-cordis-host-runner/invariant
+ * Package-owned invariant companion for `@freddie/freddie-cordis-host-runner`.
+ * @module @freddie/freddie-cordis-host-runner/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-cordis-host-runner'
+const PACKAGE_NAME = '@freddie/freddie-cordis-host-runner'
 
 /** Cordis companion plugin name. */
 export const name = 'cordis-host-runner-invariant'

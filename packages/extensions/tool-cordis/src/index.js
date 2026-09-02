@@ -1,13 +1,13 @@
 /**
  * Model-facing Cordis runtime/package inspection, define, run, stop, and remove tools.
- * @module @deepseek-ai/dsh-tool-cordis
+ * @module @freddie/freddie-tool-cordis
  */
 
 import {
   CordisDynamicPackageId, CordisDynamicPluginId,
-} from '@deepseek-ai/dsh-cordis-host-runner'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+} from '@freddie/freddie-cordis-host-runner'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { defineTool } from '@freddie/freddie-tools'
 import { missingServices, providedServices } from './inspect.js'
 import {
   presentDefineCall, presentInspectListCall, presentInspectQueryCall, presentInspectSelfCall, presentRunCall,
@@ -509,7 +509,7 @@ function renderUnavailableReference(id) {
   return [
     '<cordis_dynamic_plugin_context>',
     `The user explicitly referenced @${id}, but this Plugin is unavailable in the current Session.`,
-    'It may have been removed, belong to another Session, or have been lost when the DSH process restarted.',
+    'It may have been removed, belong to another Session, or have been lost when the FREDDIE process restarted.',
     'Do not claim that it was updated or silently create a replacement Plugin. Tell the user that the reference is currently unavailable.',
     '</cordis_dynamic_plugin_context>',
   ].join('\n')

@@ -1,13 +1,13 @@
 /**
  * Default model selection for an Agent without a session-specific selection.
  *
- * @module @deepseek-ai/dsh-agent-default-model
+ * @module @freddie/freddie-agent-default-model
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { ReasoningEffortId } from '@freddie/freddie-llm'
+import { installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
 
 /** Settings namespace carrying the default model selection for future Agents. */
 export const AGENT_DEFAULT_MODEL_SETTINGS_NAMESPACE = settingsNamespace('agent-default-model')

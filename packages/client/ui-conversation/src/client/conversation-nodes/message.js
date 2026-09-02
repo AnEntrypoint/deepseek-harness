@@ -1,6 +1,6 @@
 import {
   contextForm, contextProvenance, isAppendSurfaceEvent, isReplacementSurfaceEvent,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-runtime/client'
 import { chatNode } from './common.js'
 
 function isCompactionCheckpoint(event) {

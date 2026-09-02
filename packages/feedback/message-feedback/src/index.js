@@ -1,14 +1,14 @@
 /**
  * Durable, lifecycle-bound feedback for finalized assistant messages.
- * @module @deepseek-ai/dsh-message-feedback
+ * @module @freddie/freddie-message-feedback
  */
 
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
-import { Service } from '@deepseek-ai/cordis'
-import s from '@deepseek-ai/schemastery'
-import { deriveEventMessage, isAppendSurfaceEvent } from '@deepseek-ai/dsh-session/surface'
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import { Service } from '@freddie/cordis'
+import s from '@freddie/schemastery'
+import { deriveEventMessage, isAppendSurfaceEvent } from '@freddie/freddie-session/surface'
+import { TypertRemoteService, Remote } from '@freddie/freddie-typert-protocol'
 import { messageFeedbackDomainSpec } from './spec.js'
 
 export {

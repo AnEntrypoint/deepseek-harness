@@ -1,20 +1,20 @@
 /**
  * Durable session skill catalog and model-facing `skill` loader tool.
  *
- * @module @deepseek-ai/dsh-tool-skill
+ * @module @freddie/freddie-tool-skill
  */
 
 import { createHash } from 'node:crypto'
-import z from '@deepseek-ai/schemastery'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { defineTool } from '@freddie/freddie-tools'
+import { createUserMessage } from '@freddie/freddie-llm'
 import {
   escapeText,
   isModelInvocable,
   isSkillName,
   isUserInvocable,
   renderSkillContent,
-} from '@deepseek-ai/dsh-skill'
+} from '@freddie/freddie-skill'
 
 export const name = 'tool-skill'
 export const inject = ['agents', 'tools', 'skills']

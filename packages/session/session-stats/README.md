@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-session-stats
+# @freddie/freddie-session-stats
 
 Function plugin registering the `sessionStats` projection unit: whole-log conversation figures — turn/step counts and the LLM, tool, first-token, and decode wall times — folded from step boundaries, stream chunks, tool pairs, and assembled assistant messages, and served through the session-projection seam (registry snapshot, change feed, and every projection carrier: history tail page, `session/projection` push frames, session list rows). Clients render full-session figures that paging and compaction cannot change; the reference consumer is the web chat stats strip, whose window fold mirrors these field names as its no-unit fallback.
 
@@ -16,7 +16,7 @@ Function plugin registering the `sessionStats` projection unit: whole-log conver
 
 ```yaml
 - id: session-stats
-  name: '@deepseek-ai/dsh-session-stats'
+  name: '@freddie/freddie-session-stats'
 ```
 
 Injects `sessionProjections` — the plugin's whole purpose; in assemblies without the registry the fiber stays pending and nothing registers.

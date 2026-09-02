@@ -12,7 +12,7 @@
 /* The shared cordis accent (matches ui-tool's [data-tool^='cordis_'] rows). */
 .dsh-cordisDefineRow__card .dsh-cordisDefineRow__title,
 .dsh-cordisDefineRow__card .dsh-cordisDefineRow__chevron {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-cordisDefineRow__title {
@@ -32,7 +32,7 @@
   height: 2px;
   border-radius: 1px;
   margin: 0 8px;
-  background: var(--dsw-alias-state-business-primary);
+  background: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-cordisDefineRow__name {
@@ -43,7 +43,7 @@
   white-space: nowrap;
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 /* The purpose absorbs the remaining width and clips first: the name and the
@@ -57,7 +57,7 @@
   white-space: nowrap;
   font-size: 13px;
   line-height: 24px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-cordisDefineRow__errorSummary {
@@ -68,7 +68,7 @@
   white-space: nowrap;
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-cordisDefineRow__requestError {
@@ -80,7 +80,7 @@
   white-space: nowrap;
   font-size: 12px;
   line-height: 24px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-cordisDefineRow__readout {
@@ -95,13 +95,13 @@
   margin: 4px 0 2px 4px;
   font-size: 11px;
   line-height: 16px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-cordisDefineRow__statusLabel {
   font-size: 12px;
   line-height: 24px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 /* The model's question, shown beside the approve/decline pair. */
@@ -114,7 +114,7 @@
   white-space: nowrap;
   font-size: 12px;
   line-height: 24px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 /* A qualified success (nothing acknowledged the dispatch, or the browser half
@@ -129,7 +129,7 @@
   white-space: nowrap;
   font-size: 12px;
   line-height: 24px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-cordisDefineRow__switch {
@@ -145,11 +145,11 @@
 .dsh-cordisDefineRow__card[data-terminal] .dsh-cordisDefineRow__name,
 .dsh-cordisDefineRow__card[data-terminal] .dsh-cordisDefineRow__purpose,
 .dsh-cordisDefineRow__card[data-terminal] .dsh-cordisDefineRow__statusLabel {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-cordisDefineRow__card[data-terminal] .dsh-cordisDefineRow__separator {
-  background: var(--dsw-alias-label-caption);
+  background: var(--freddie-alias-label-caption);
 }
 
 .dsh-cordisDefineRow__bodyWrap {
@@ -166,7 +166,7 @@
 .dsh-cordisDefineRow__sourceTabs {
   display: flex;
   height: 32px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
 }
 
 .dsh-cordisDefineRow__sourceTab {
@@ -174,14 +174,14 @@
   padding: 0 10px;
   border: 0;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
   font: var(--dsw-font-xs-13);
 }
 
 .dsh-cordisDefineRow__sourceTab:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-cordisDefineRow__sourceTab:disabled {
@@ -190,7 +190,7 @@
 }
 
 .dsh-cordisDefineRow__sourceTabActive {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-cordisDefineRow__sourceTabActive::after {
@@ -200,12 +200,12 @@
   left: 10px;
   height: 2px;
   border-radius: 1px 1px 0 0;
-  background: var(--dsw-alias-state-business-primary);
+  background: var(--freddie-alias-state-business-primary);
   content: '';
 }
 
 .dsh-cordisDefineRow__sourceTab:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: -1px;
 }
 
@@ -232,7 +232,7 @@
   font-size: 11px;
   font-weight: 500;
   line-height: 16px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -240,17 +240,17 @@
 .dsh-cordisDefineRow__output {
   margin: 0;
   padding: 8px 10px;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 1px solid var(--freddie-alias-border-l1);
   border-radius: 8px;
-  background: var(--dsw-alias-markdown-code-block);
+  background: var(--freddie-alias-markdown-code-block);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font: var(--dsw-font-markdown-code-block-small);
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-cordisDefineRow__output[data-error] {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-cordisDefineRow__inspectButton {
@@ -260,10 +260,10 @@
   gap: 4px;
   margin: 4px 0 2px 4px;
   padding: 2px 8px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 999px;
-  background: var(--dsw-alias-bg-base);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-bg-base);
+  color: var(--freddie-alias-label-secondary);
   font-size: 11px;
   line-height: 16px;
   cursor: pointer;
@@ -277,8 +277,8 @@
 }
 
 .dsh-cordisDefineRow__inspectButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover-solid);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover-solid);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-cordisDefineRow__visuallyHidden {

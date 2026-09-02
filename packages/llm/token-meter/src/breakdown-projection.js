@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod'
-import { canonicalHeader } from '@deepseek-ai/dsh-session'
+import { canonicalHeader } from '@freddie/freddie-session'
 import { estimateSystemTokens, estimateToolsTokens } from './estimate.js'
 import { foldSurfaceProjection } from './surface-projection.js'
 

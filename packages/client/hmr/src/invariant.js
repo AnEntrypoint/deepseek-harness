@@ -1,9 +1,9 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-hmr`.
- * @module @deepseek-ai/dsh-client-hmr/invariant
+ * Package-owned invariant companion for `@freddie/freddie-client-hmr`.
+ * @module @freddie/freddie-client-hmr/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-hmr'
+const PACKAGE_NAME = '@freddie/freddie-client-hmr'
 
 /** Cordis companion plugin name. */
 export const name = 'client-hmr-invariant'

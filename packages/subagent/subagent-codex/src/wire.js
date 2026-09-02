@@ -4,10 +4,10 @@
  * product methods, current thread/turn association, unattended approval
  * responses, and terminal-answer selection.
  *
- * @module @deepseek-ai/dsh-subagent-codex/wire
+ * @module @freddie/freddie-subagent-codex/wire
  */
 
-import { JsonRpcLineTransport } from '@deepseek-ai/dsh-sdk-protocol'
+import { JsonRpcLineTransport } from '@freddie/freddie-sdk-protocol'
 
 const THREAD_PERMISSION_PARAMS = {
   never: { approvalPolicy: 'never' },
@@ -258,8 +258,8 @@ export class CodexAppServerWire {
   async initialize(signal) {
     object(await this.guarded(this.transport.request('initialize', {
       clientInfo: {
-        name: 'deepseek-harness',
-        title: 'DeepSeek Harness',
+        name: 'freddie',
+        title: 'Freddie',
         version: '0.0.1',
       },
       capabilities: {

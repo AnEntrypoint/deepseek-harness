@@ -3,11 +3,11 @@
  * Every workspace package registers checks from a `./invariant` companion;
  * ordinary package entrypoints stay independent of diagnostics.
  *
- * @module @deepseek-ai/dsh-invariants
+ * @module @freddie/freddie-invariants
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 
 /** Thrown when a package-owned runtime invariant is violated. */
 export class InvariantError extends Error {

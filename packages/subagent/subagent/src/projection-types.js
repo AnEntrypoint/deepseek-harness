@@ -1,5 +1,5 @@
 /**
  * Pure client-safe subagent projection vocabulary.
  *
- * @module @deepseek-ai/dsh-subagent/projection-types
+ * @module @freddie/freddie-subagent/projection-types
  */

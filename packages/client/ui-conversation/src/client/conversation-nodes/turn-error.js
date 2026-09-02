@@ -1,4 +1,4 @@
-import { displayFailureMessage } from '@deepseek-ai/dsh-client-runtime/client'
+import { displayFailureMessage } from '@freddie/freddie-client-runtime/client'
 import { chatNode } from './common.js'
 
 function lastStep(context) {

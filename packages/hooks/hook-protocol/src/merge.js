@@ -3,7 +3,7 @@
  * is `deny > ask > allow`; the first `continue:false` stop is sticky; reasons
  * for the winning rank are joined; and context and system messages accumulate
  * in hook order.
- * @module @deepseek-ai/dsh-hook-protocol/merge
+ * @module @freddie/freddie-hook-protocol/merge
  */
 
 /** Rank a single hook's decision for the deny>ask>allow precedence (higher = stricter). */

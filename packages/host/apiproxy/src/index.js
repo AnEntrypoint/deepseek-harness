@@ -1,5 +1,5 @@
 /**
- * @deepseek-ai/dsh-host-apiproxy — the API gateway every client shape shares:
+ * @freddie/freddie-host-apiproxy — the API gateway every client shape shares:
  * the ApiProxy contract (api/: types + zod schemas, browser-safe), the fetch
  * carrier pair (fetch/: toFetchHandler on the host side, AbstractApiClient +
  * platform subclasses on the client side), and the host-side implementation
@@ -12,8 +12,8 @@
  * service; sessions that have already logged a selection remain unchanged.
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Context, Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import { createApiProxy, DEFAULT_COLD_BLANK_PROBE_MAX_BYTES } from './api-proxy.js'
 import {
   DEFAULT_SESSION_LOG_COMPRESSION_LEVEL,

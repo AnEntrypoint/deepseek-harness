@@ -1,8 +1,8 @@
 {
-  "organization": "deepseek-harness",
-  "repository": "deepseek-harness",
+  "organization": "freddie",
+  "repository": "freddie",
   "projectNumber": 1,
-  "projectTitle": "DSH Issue Management",
+  "projectTitle": "FREDDIE Issue Management",
   "lifecycleActor": "dsh-issue-management",
   "priorityField": "Priority",
   "allowUnassignedOwner": true,

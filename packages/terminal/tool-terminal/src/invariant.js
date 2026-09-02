@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-terminal`.
- * @module @deepseek-ai/dsh-tool-terminal/invariant
+ * Package-owned invariant companion for `@freddie/freddie-tool-terminal`.
+ * @module @freddie/freddie-tool-terminal/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-terminal'
+const PACKAGE_NAME = '@freddie/freddie-tool-terminal'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-terminal-invariant'

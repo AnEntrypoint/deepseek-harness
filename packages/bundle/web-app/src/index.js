@@ -1,5 +1,5 @@
 /**
- * @deepseek-ai/dsh-web-app — the browser-surface bundle's runtime glue plugin
+ * @freddie/freddie-web-app — the browser-surface bundle's runtime glue plugin
  * plus the bundle patch (`cordis.patch.yml`, declared by the `dsh.bundle.patch`
  * manifest field). The plugin owns the browser-surface glue: it resolves
  * the built frontend dist (workspace knowledge of this bundle, never user
@@ -8,18 +8,18 @@
  * variable, the URL line, and the default-browser handoff. App command-line
  * values arrive through the `webStartup` service expressions in the bundle
  * patch.
- * @module @deepseek-ai/dsh-web-app
+ * @module @freddie/freddie-web-app
  */
 
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { networkInterfaces } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import z from '@deepseek-ai/schemastery'
-import { addHarnessSourceSection } from '@deepseek-ai/dsh-app-boot'
-import * as FrontendStatic from '@deepseek-ai/dsh-host-frontend-static'
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
+import z from '@freddie/schemastery'
+import { addHarnessSourceSection } from '@freddie/freddie-app-boot'
+import * as FrontendStatic from '@freddie/freddie-host-frontend-static'
+import { launchEnvironmentOf } from '@freddie/freddie-launch-environment'
+import { scrubbedParentEnv } from '@freddie/freddie-subprocess'
 
 /** Stable Cordis plugin name. */
 export const name = 'web-app'
@@ -38,7 +38,7 @@ export const inject = ['webServer']
  * @property {boolean} openBrowser - Permit default-browser handoff after the Loader tree settles; an SSH launch suppresses it.
  * @property {boolean} printUrl - Print the URL line on activation; a non-interactive layer can turn it off.
  * @property {boolean} surfaceContext - Register the model-visible surface context (the `app:web-surface` prompt
- * section and the `DSH_WEB_URL` bash variable). A one-shot non-interactive
+ * section and the `FREDDIE_WEB_URL` bash variable). A one-shot non-interactive
  * layer can turn it off when its user is not in the GUI, so the
  * orientation text would be false.
  * @property {string[]} trustedHosts - Explicit `--trusted-host` authorities from this invocation.
@@ -58,7 +58,7 @@ export const Config = z.object({
  */
 
 /** Environment variable naming the canonical local URL of this Web GUI. */
-const DSH_WEB_URL = 'DSH_WEB_URL'
+const FREDDIE_WEB_URL = 'FREDDIE_WEB_URL'
 
 // Display-only mirror of the webserver schema's loopback host: the address the
 // local URL always prints. Not a source of truth — the schema is.
@@ -130,7 +130,7 @@ function webSurfacePrompt(webUrl) {
   const updateContract = 'The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while '
     + '`pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. '
     + 'Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. '
-  return `You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}. `
+  return `You are interacting with the user through the Freddie Web GUI at ${webUrl}. `
     + 'When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. '
     + 'The browser provides no implicit DOM, route, or screenshot context. '
     + updateContract
@@ -155,7 +155,7 @@ function localWebUrl(ctx) {
 function resolveDistIndex() {
   const require = createRequire(import.meta.url)
   try {
-    return require.resolve('@deepseek-ai/dsh-web-frontend/index.html')
+    return require.resolve('@freddie/freddie-web-frontend/index.html')
   } catch {
     /* v8 ignore next 2 -- reachable only on a checkout missing apps/web entirely */
     throw new Error('web-app: apps/web/index.html not found; check out the repository root first')
@@ -233,9 +233,9 @@ export function apply(ctx, config) {
       runtimeCtx.shellEnv.register({
         name: 'web-runtime',
         variables: {
-          [DSH_WEB_URL]: { description: 'Canonical local URL of the DeepSeek Harness Web GUI serving this session.' },
+          [FREDDIE_WEB_URL]: { description: 'Canonical local URL of the Freddie Web GUI serving this session.' },
         },
-        resolve: () => ({ [DSH_WEB_URL]: localWebUrl(runtimeCtx) }),
+        resolve: () => ({ [FREDDIE_WEB_URL]: localWebUrl(runtimeCtx) }),
       })
     })
   }

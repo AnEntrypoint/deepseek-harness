@@ -4,7 +4,7 @@
  * each schema-declared secret position and whether it currently holds a value,
  * so a configuration surface can render a write-only input without ever
  * receiving the secret itself.
- * @module @deepseek-ai/dsh-settings/redact
+ * @module @freddie/freddie-settings/redact
  */
 
 /** Whether a value is a plain data object the walker may recurse into. */

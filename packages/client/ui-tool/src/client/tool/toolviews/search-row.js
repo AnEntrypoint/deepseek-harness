@@ -12,7 +12,7 @@
 // model-facing text through ToolRow's Output section instead.
 
 import { createElement as h, Fragment } from 'webjsx'
-import { IconSearchOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconSearchOutline16 } from '@freddie/freddie-client-ui-primitives'
 import { searchCardModel } from '../models/search-card-model.js'
 import { toolRowModel } from '../models/tool-call-model.js'
 import { ToolRow } from '../components/ToolRow.js'

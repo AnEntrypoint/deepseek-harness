@@ -9,7 +9,7 @@ import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
   IconChevronDownOutline14,
   IconSearchOutline16,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './PluginInventorySettingsTab.css.js'
 
 const PHASE_KEYS = {

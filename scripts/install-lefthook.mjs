@@ -20,12 +20,12 @@ const MINIMUM_GIT = [2, 26, 0]
 const HOOKS_DIRECTORY = 'dsh-hooks'
 const OWNERSHIP_MARKER = '.dsh-lefthook-owned'
 const OWNERSHIP_MARKER_VERSION = 1
-const OWNERSHIP_MARKER_OWNER = 'deepseek-harness worktree-local lefthook hooks'
+const OWNERSHIP_MARKER_OWNER = 'freddie worktree-local lefthook hooks'
 const INSTALL_LOCK = 'dsh-lefthook-install.lock'
 const INSTALL_LOCK_TIMEOUT_MS = 30_000
 const INSTALL_LOCK_INITIALIZATION_TIMEOUT_MS = 5_000
 const INSTALL_LOCK_POLL_MS = 50
-const ALLOW_HOOKS_PATH_OVERRIDE = 'DSH_LEFTHOOK_ALLOW_HOOKS_PATH_OVERRIDE'
+const ALLOW_HOOKS_PATH_OVERRIDE = 'FREDDIE_LEFTHOOK_ALLOW_HOOKS_PATH_OVERRIDE'
 const REPOSITORY_EXTENSION_PATTERN = '^extensions\\.'
 
 function errorCode(error) {
@@ -376,7 +376,7 @@ async function acquireInstallLock(commonDirectory) {
       let ownedStat
       try {
         ownedStat = fstatSync(lockHandle)
-        const writeDelay = Number(process.env.DSH_TEST_LEFTHOOK_LOCK_WRITE_DELAY_MS ?? 0)
+        const writeDelay = Number(process.env.FREDDIE_TEST_LEFTHOOK_LOCK_WRITE_DELAY_MS ?? 0)
         if (writeDelay > 0) {
           await new Promise(resolveWait => setTimeout(resolveWait, writeDelay))
         }

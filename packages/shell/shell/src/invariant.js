@@ -1,6 +1,6 @@
-/** Package-owned invariant companion for the bash seam. @module @deepseek-ai/dsh-shell/invariant */
+/** Package-owned invariant companion for the bash seam. @module @freddie/freddie-shell/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-shell'
+const PACKAGE_NAME = '@freddie/freddie-shell'
 
 /** Cordis companion plugin name. */
 export const name = 'shell-invariant'

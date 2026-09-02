@@ -4,5 +4,5 @@
  * event. Kept separate from ./types.js (the pure client-safe outlet) because
  * these declarations pull dsh-agent, dsh-llm, and cordis into the program —
  * the one-program-per-side layout forbids that on client aggregates.
- * @module @deepseek-ai/dsh-goal
+ * @module @freddie/freddie-goal
  */

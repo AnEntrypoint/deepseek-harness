@@ -3,7 +3,7 @@
 import { createElement as h } from 'webjsx'
 import {
   IconInspectOutline12, IconStopFill16, IconTrashOutline16, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { cordisActionCard } from './card-model.js'
 import css from './CordisRunRow.css.js'
 

@@ -1,12 +1,12 @@
 /**
  * Model-facing PowerShell Consumer of the `ctx.shell` capability seam. Intended for
  * Windows compositions where a PowerShell executor (e.g.
- * `@deepseek-ai/dsh-pwsh-local`) backs `ctx.shell`; the tool contract is
+ * `@freddie/freddie-pwsh-local`) backs `ctx.shell`; the tool contract is
  * PowerShell-dialect: native `C:\...` paths and `$env:NAME` variables.
  *
  * Behavior mirrors `dsh-tool-bash` call-for-call: foreground and
  * `run_in_background` execution (background handles register with the
- * generic `ctx.jobs` runtime), the managed `DSH_*` environment through the
+ * generic `ctx.jobs` runtime), the managed `FREDDIE_*` environment through the
  * shared `shell-env` registry, the per-call sandbox policy resolution (the
  * calling session's mode and cwd travel to the confining executor), the
  * sandbox-denial rendering with the same-turn escalation surface
@@ -14,17 +14,17 @@
  * `ctx.approval`), and the bash marker/truncation rendering story. UI
  * presentation mirrors the bash tool's too: a completed foreground call is
  * a terminal card with the parsed exit-status pill, using the shared
- * exit-status parse from `@deepseek-ai/dsh-shell`.
+ * exit-status parse from `@freddie/freddie-shell`.
  *
- * @module @deepseek-ai/dsh-tool-pwsh
+ * @module @freddie/freddie-tool-pwsh
  */
 
 import { isAbsolute, resolve as resolvePath } from 'node:path'
-import z from '@deepseek-ai/schemastery'
-import { defineTool, TOOL_ABORTED } from '@deepseek-ai/dsh-tools'
-import { HarnessError } from '@deepseek-ai/dsh-llm'
-import { ESCALATION_TARGETS, approveEscalation, validateEscalationArgs } from '@deepseek-ai/dsh-sandbox'
-import { parseExitStatus } from '@deepseek-ai/dsh-shell'
+import z from '@freddie/schemastery'
+import { defineTool, TOOL_ABORTED } from '@freddie/freddie-tools'
+import { HarnessError } from '@freddie/freddie-llm'
+import { ESCALATION_TARGETS, approveEscalation, validateEscalationArgs } from '@freddie/freddie-sandbox'
+import { parseExitStatus } from '@freddie/freddie-shell'
 import { processOutcome } from './background.js'
 import { renderPwshProcessRead, renderPwshResult } from './render.js'
 
@@ -61,7 +61,7 @@ function pwshDescription(backgroundEnabled, escalationModes) {
     + 'Each call runs in a fresh pwsh process: no state (cwd, variables, functions) persists between calls — '
     + 'pass `workdir` instead of using `cd`. Paths use native Windows form (`C:\\...`); read environment '
     + 'variables with `$env:NAME`. Non-zero exits are reported as `[exit code: N]`. '
-    + 'Current harness environment facts are exposed through managed `$env:DSH_*` variables; inspect them when needed. '
+    + 'Current harness environment facts are exposed through managed `$env:FREDDIE_*` variables; inspect them when needed. '
     + 'Commands may run under a file sandbox; a blocked file operation is reported as `[sandbox: file access denied under <mode> mode]` — a policy denial, not a bug in the command; do not retry another way. '
     + 'Long output is truncated to its tail; the full output is saved to a file whose path is reported when available. '
     + 'On Windows a force-killed command settles as `[exit code: 1]` without a signal marker — treat it as an interruption, not a command failure. '
@@ -323,7 +323,7 @@ export function apply(ctx, config = {}) {
         }
         const jobs = ctx.get('jobs')
         if (jobs === undefined) {
-          throw new Error('background jobs unavailable: load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs')
+          throw new Error('background jobs unavailable: load @freddie/freddie-jobs and @freddie/freddie-tool-jobs')
         }
         // The caller owns cancellation until ctx.jobs commits detached ownership.
         if (exec.signal.aborted) {

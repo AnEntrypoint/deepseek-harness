@@ -1,12 +1,12 @@
 /**
  * Concrete session-query service with SQLite FTS5 over the live-preferred corpus.
  *
- * @module @deepseek-ai/dsh-session-query-sqlite
+ * @module @freddie/freddie-session-query-sqlite
  */
 
 import { createHash, randomUUID } from 'node:crypto'
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import SessionQueryEngine, {
   SESSION_QUERY_DEFAULT_PERSISTED_INSPECT_CONCURRENCY,
   SESSION_QUERY_READ_WINDOW_MAX,
@@ -14,7 +14,7 @@ import SessionQueryEngine, {
   SessionSearchCursor,
   assertSessionHeadersCompatible,
   buildSessionEventSearchDocuments,
-} from '@deepseek-ai/dsh-session-query'
+} from '@freddie/freddie-session-query'
 import {
   openSearchDatabase,
 } from './schema.js'

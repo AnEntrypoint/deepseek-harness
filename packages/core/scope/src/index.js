@@ -2,10 +2,10 @@
  * Scoped-context primitive: mint a Cordis context that tags registrations with
  * an opaque identity and build routing-only event carriers for that identity.
  *
- * @module @deepseek-ai/dsh-scope
+ * @module @freddie/freddie-scope
  */
 
-import { Context as CordisContext } from '@deepseek-ai/cordis'
+import { Context as CordisContext } from '@freddie/cordis'
 
 export { AnonymousEntries, NamedEntries, ScopedLayers } from './store.js'
 

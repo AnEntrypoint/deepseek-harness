@@ -1,3 +1,3 @@
 import { clientBundle } from '../../client/tsdown.client.js'
 
-export default clientBundle('@deepseek-ai/dsh-cordis-client-runner', ['src/index.js', 'src/invariant.js'])
+export default clientBundle('@freddie/freddie-cordis-client-runner', ['src/index.js', 'src/invariant.js'])

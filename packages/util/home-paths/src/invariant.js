@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-home-paths`.
- * @module @deepseek-ai/dsh-home-paths/invariant
+ * Package-owned invariant companion for `@freddie/freddie-home-paths`.
+ * @module @freddie/freddie-home-paths/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-home-paths'
+const PACKAGE_NAME = '@freddie/freddie-home-paths'
 
 /** Cordis companion plugin name. */
 export const name = 'home-paths-invariant'

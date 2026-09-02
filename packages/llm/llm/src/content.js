@@ -1,4 +1,4 @@
-/** Content-block structure helpers. @module @deepseek-ai/dsh-llm/content */
+/** Content-block structure helpers. @module @freddie/freddie-llm/content */
 
 /** Model-facing stand-in for an image removed to fit a provider request bound. */
 export const OFFLOADED_IMAGE_TEXT

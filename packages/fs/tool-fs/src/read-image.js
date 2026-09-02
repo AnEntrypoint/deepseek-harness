@@ -5,12 +5,12 @@
  * image-reading tool is useful only when the exact calling route can inspect
  * its result, so unknown capability refuses instead of relying on an adapter
  * failure after filesystem and attachment work.
- * @module @deepseek-ai/dsh-tool-fs/src/read-image
+ * @module @freddie/freddie-tool-fs/src/read-image
  */
 
 import { basename, extname } from 'node:path'
-import { AttachmentError, AttachmentId } from '@deepseek-ai/dsh-attachment'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { AttachmentError, AttachmentId } from '@freddie/freddie-attachment'
+import { defineTool } from '@freddie/freddie-tools'
 import { resolveRegularReadTarget } from './read-target.js'
 
 /** Extensions `read_image` accepts; magic-byte validation at the attachment service stays authoritative. */

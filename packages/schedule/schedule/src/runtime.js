@@ -1,9 +1,9 @@
 /**
  * Disposable live timer projection for one exact root agent.
- * @module @deepseek-ai/dsh-schedule
+ * @module @freddie/freddie-schedule
  */
 
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from '@freddie/freddie-llm'
 import {
   foldScheduleEvents,
   renderEveryReminderBatchFraming,

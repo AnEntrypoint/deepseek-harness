@@ -5,7 +5,7 @@
  * provider driver and the continuation manager compose children this way, so
  * depth accounting, lineage stamping, and delegation policy have one home.
  *
- * @module @deepseek-ai/dsh-subagent/child-agent
+ * @module @freddie/freddie-subagent/child-agent
  */
 
 import { delegationDepthOf } from './depth.js'

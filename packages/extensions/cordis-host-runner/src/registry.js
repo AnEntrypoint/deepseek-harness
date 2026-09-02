@@ -1,6 +1,6 @@
 /**
  * Process-local dynamic Plugin registry and its opaque identity mints.
- * @module @deepseek-ai/dsh-cordis-host-runner/registry
+ * @module @freddie/freddie-cordis-host-runner/registry
  */
 
 /** Registry, identity mints, and pending approval index. */

@@ -1,6 +1,6 @@
-/** Package-owned invariant companion for the directory-picker seam. @module @deepseek-ai/dsh-host-directory-picker/invariant */
+/** Package-owned invariant companion for the directory-picker seam. @module @freddie/freddie-host-directory-picker/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-host-directory-picker'
+const PACKAGE_NAME = '@freddie/freddie-host-directory-picker'
 
 /** Cordis companion plugin name. */
 export const name = 'host-directory-picker-invariant'

@@ -1,5 +1,5 @@
 import { applyDiff, createElement as h } from 'webjsx'
-import { IconChevronDownOutline14, StateDot, createDismissOnOutsidePointer } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, StateDot, createDismissOnOutsidePointer } from '@freddie/freddie-client-ui-primitives'
 import { NS } from './locales.js'
 import css from './JobListAction.css.js'
 

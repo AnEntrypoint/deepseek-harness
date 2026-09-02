@@ -1,14 +1,14 @@
 /**
  * Tool registry, model presentation modes, and pre/guard/around/post/result
  * execution pipeline.
- * @module @deepseek-ai/dsh-tools
+ * @module @freddie/freddie-tools
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { AnonymousEntries, NamedEntries, ScopedLayers, scopeOf, scopeTarget } from '@deepseek-ai/dsh-scope'
-import { assertNever, deepFreeze, HarnessError } from '@deepseek-ai/dsh-llm'
-import { snapshotJsonValue } from '@deepseek-ai/dsh-session'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { AnonymousEntries, NamedEntries, ScopedLayers, scopeOf, scopeTarget } from '@freddie/freddie-scope'
+import { assertNever, deepFreeze, HarnessError } from '@freddie/freddie-llm'
+import { snapshotJsonValue } from '@freddie/freddie-session'
 import { assertSupportedJsonSchema, validateJsonSchemaValue } from './json-schema.js'
 import { createRunCodeTool, RUN_CODE_NAME, SDK_SECTION_ORDER } from './code-mode.js'
 import { renderToolsSdk } from './ts-types.js'
@@ -188,7 +188,7 @@ function errorInfo(error) {
  * Scheduler entry point omitted from the generated named service API.
  * @internal
  */
-export const TOOL_RUNTIME_SCHEDULER = Symbol('@deepseek-ai/dsh-tools.scheduler')
+export const TOOL_RUNTIME_SCHEDULER = Symbol('@freddie/freddie-tools.scheduler')
 
 /** Canonical error code for cancellation after a tool body was invoked. */
 export const TOOL_ABORTED = 'ABORTED'
@@ -487,7 +487,7 @@ export class ToolRuntime extends Service {
   requireCodeRuntime(mode) {
     const runtime = this.ctx.get('codeRuntime')
     if (!runtime) {
-      throw new Error(`dsh-tools: mode "${mode}" requires a code runtime — load a ctx.codeRuntime implementation (e.g. @deepseek-ai/dsh-code-runtime-worker-thread) or set tools mode to "native"`)
+      throw new Error(`dsh-tools: mode "${mode}" requires a code runtime — load a ctx.codeRuntime implementation (e.g. @freddie/freddie-code-runtime-worker-thread) or set tools mode to "native"`)
     }
     if (!Object.hasOwn(SDK_RENDERERS, runtime.language)) {
       const known = Object.keys(SDK_RENDERERS).map(name => JSON.stringify(name)).join(', ')

@@ -1,6 +1,6 @@
 /** React-free Workspace entity with a client-local materialization lifecycle. */
 
-import { transportError } from '@deepseek-ai/dsh-host-apiproxy/api'
+import { transportError } from '@freddie/freddie-host-apiproxy/api'
 import { Notifier } from '../sessions/notifier.js'
 
 /**

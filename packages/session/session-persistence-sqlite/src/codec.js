@@ -1,7 +1,7 @@
 /**
  * Schema-17 physical chunk-row codec. This package owns the durable tags,
  * validation, and row-size limits independently from other persistence formats.
- * @module @deepseek-ai/dsh-session-persistence-sqlite/codec
+ * @module @freddie/freddie-session-persistence-sqlite/codec
  */
 
 /* jscpd:ignore-start -- schema 17 deliberately owns a frozen physical codec;

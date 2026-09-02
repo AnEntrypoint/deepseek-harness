@@ -5,10 +5,10 @@
  * operation, so a changed credential reaches the next operation without any
  * plugin restart, and configuration surfaces describe a reference without
  * ever seeing its value.
- * @module @deepseek-ai/dsh-credentials
+ * @module @freddie/freddie-credentials
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 const REF_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 

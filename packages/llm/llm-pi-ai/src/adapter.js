@@ -33,8 +33,8 @@ import {
   LlmAdapter,
   LlmError,
   ReasoningEffortId,
-} from '@deepseek-ai/dsh-llm'
-import { idleWatchdog, timeoutOf } from '@deepseek-ai/dsh-timeout'
+} from '@freddie/freddie-llm'
+import { idleWatchdog, timeoutOf } from '@freddie/freddie-timeout'
 import { toPiContext } from './context.js'
 import { toStreamChunks } from './stream.js'
 

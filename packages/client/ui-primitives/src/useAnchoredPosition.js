@@ -13,7 +13,7 @@
  * open), `stop()` when it closes/unmounts, and read `.value` for the current
  * `{ left, top }` (or `null` before the first measurement / while closed).
  * Pass `onChange` so the owner can trigger its own `#render()`.
- * @module @deepseek-ai/dsh-client-ui-primitives/useAnchoredPosition
+ * @module @freddie/freddie-client-ui-primitives/useAnchoredPosition
  */
 
 /**

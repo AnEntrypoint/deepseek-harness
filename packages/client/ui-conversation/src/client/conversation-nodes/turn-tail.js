@@ -1,4 +1,4 @@
-import { isAppendSurfaceEvent, toAssistantBlocks } from '@deepseek-ai/dsh-client-runtime/client'
+import { isAppendSurfaceEvent, toAssistantBlocks } from '@freddie/freddie-client-runtime/client'
 import { deriveTurnMetrics } from '../chat/turn-metrics.js'
 import { CHAT_SYNTHETIC_SEQ_OFFSETS, chatNode } from './common.js'
 

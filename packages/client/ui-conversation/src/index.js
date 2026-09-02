@@ -1,6 +1,6 @@
 /** Host registration for browser conversation preferences. */
 
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import { settingsNamespace } from '@freddie/freddie-settings'
 import { CONVERSATION_SETTINGS_NAMESPACE, ConversationSettingsSchema } from './submission-settings.js'
 
 export {

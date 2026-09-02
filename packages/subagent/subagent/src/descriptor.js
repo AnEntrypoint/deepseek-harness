@@ -18,10 +18,10 @@
  * durable descriptor, so it neither restores the prior budget nor inherits
  * the parent's current one; the resumed route's defaults apply instead.
  *
- * @module @deepseek-ai/dsh-subagent/descriptor
+ * @module @freddie/freddie-subagent/descriptor
  */
 
-import { snapshotJsonValue } from '@deepseek-ai/dsh-session'
+import { snapshotJsonValue } from '@freddie/freddie-session'
 
 /**
  * The current descriptor format version, stamped into every appended

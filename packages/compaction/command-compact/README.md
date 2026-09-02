@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-command-compact
+# @freddie/freddie-command-compact
 
 Human-facing `/compact` control over [`ctx.compaction`](../compaction/README.md). The plugin registers one global command through [`ctx.commands`](../../interaction/commands/README.md), so every composed command adapter discovers and executes it without a model turn. The [queued manual compaction Agent Note](../../../.agents/notes/implemented/feature/2026-07-30-queued-manual-compaction.md) owns the admission, lock, and durability decisions.
 
@@ -32,11 +32,11 @@ The producer injects `commands` and `compact`. Mount the command registry, one b
 
 ```yaml
 - id: commands
-  name: '@deepseek-ai/dsh-commands'
+  name: '@freddie/freddie-commands'
 - id: compaction-basic
-  name: '@deepseek-ai/dsh-compaction-basic'
+  name: '@freddie/freddie-compaction-basic'
 - id: command-compact
-  name: '@deepseek-ai/dsh-command-compact'
+  name: '@freddie/freddie-command-compact'
 ```
 
 The shipped `dsh` base mounts it beside `compaction-basic`, and the Web client provides the command adapter. Automation surfaces that compose no command adapter keep automatic compaction only.

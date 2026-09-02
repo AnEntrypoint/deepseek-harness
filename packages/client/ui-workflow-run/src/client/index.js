@@ -1,6 +1,6 @@
 /** Browser plugin for durable workflow-run Conversation Nodes. */
 
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { en, NS, zh } from './locales.js'
 import { workflowRunDefinition } from './workflow-definition.js'
 

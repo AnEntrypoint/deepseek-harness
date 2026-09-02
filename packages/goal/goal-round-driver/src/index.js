@@ -1,10 +1,10 @@
 /**
  * Same-session goal-round driver over public agent, session, and goal services.
- * @module @deepseek-ai/dsh-goal-round-driver
+ * @module @freddie/freddie-goal-round-driver
  */
 
 import { isDeepStrictEqual } from 'node:util'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from '@freddie/freddie-llm'
 import { renderGoalRoundPrompt } from './prompt.js'
 
 /** Runtime mirror: FiberState is a cross-package const enum, erased at compile time by cordis's own build. */

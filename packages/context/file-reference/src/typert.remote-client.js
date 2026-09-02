@@ -9,10 +9,10 @@ const _deepseek_ai_dsh_file_reference_fileReferences_list_result$schema = z.arra
 }))
 
 export const TYPERT_REMOTE = {
-  package: '@deepseek-ai/dsh-file-reference',
+  package: '@freddie/freddie-file-reference',
   descriptors: [
     {
-      id: '@deepseek-ai/dsh-file-reference#fileReferences/list',
+      id: '@freddie/freddie-file-reference#fileReferences/list',
       service: 'fileReferences',
       namespace: 'fileReferences',
       method: 'list',
@@ -30,7 +30,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_file_reference_fileReferences_list_parameter_0$schema,
           },
         },
@@ -40,7 +40,7 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-file-reference#fileReferences/list:query',
+            typeSymbol: '@freddie/freddie-file-reference#fileReferences/list:query',
             schema: _deepseek_ai_dsh_file_reference_fileReferences_list_parameter_1$schema,
           },
         },
@@ -48,7 +48,7 @@ export const TYPERT_REMOTE = {
       cancellation: { parameter: 'signal' },
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-file-reference#fileReferences/list:result',
+        typeSymbol: '@freddie/freddie-file-reference#fileReferences/list:result',
         schema: _deepseek_ai_dsh_file_reference_fileReferences_list_result$schema,
       },
       sourceLocation: {"file":"packages/context/file-reference/src/index.ts","line":54,"column":3},

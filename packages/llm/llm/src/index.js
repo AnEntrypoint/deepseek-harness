@@ -3,10 +3,10 @@
  * API. Exports the `LlmRuntime` default, the abstract `LlmAdapter` for
  * provider backends, and `BlockAssembler` for chunk assembly.
  *
- * @module @deepseek-ai/dsh-llm
+ * @module @freddie/freddie-llm
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@freddie/cordis'
 import { freezeMessage } from './message.js'
 import { resolveRetryPolicy } from './retry-policy.js'
 import { callConfigEquals, deepFreeze } from './call-config.js'

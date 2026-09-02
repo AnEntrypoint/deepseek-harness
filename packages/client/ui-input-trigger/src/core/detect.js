@@ -3,7 +3,7 @@
  * the caret for a live trigger char under the guard tier and applies the
  * word-boundary rules. Zero React / DOM / cordis.
  */
-import { activeAtToken } from '@deepseek-ai/dsh-file-reference/grammar'
+import { activeAtToken } from '@freddie/freddie-file-reference/grammar'
 
 const WORD_CHAR = /[\p{L}\p{N}_]/u
 const WHITESPACE = /\s/u

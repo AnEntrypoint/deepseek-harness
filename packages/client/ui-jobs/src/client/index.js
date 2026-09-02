@@ -4,7 +4,7 @@
  * through the `jobsBySession` list mirror, so the plugin issues no RPC and
  * holds no state of its own beyond popover visibility.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './JobListAction.js'
 import { en, NS, zh } from './locales.js'
 

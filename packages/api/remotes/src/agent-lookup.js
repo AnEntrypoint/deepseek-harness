@@ -1,6 +1,6 @@
 /** Host BFF policy for resolving Remote Agent and Session identities. */
 
-import { TypertLookupFailure } from '@deepseek-ai/dsh-typert-protocol'
+import { TypertLookupFailure } from '@freddie/freddie-typert-protocol'
 
 /** Cold identity absent from the durable session store. */
 export class ApiRemoteSessionNotFound extends Error {}

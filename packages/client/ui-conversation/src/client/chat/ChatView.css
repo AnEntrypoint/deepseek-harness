@@ -17,7 +17,7 @@
   overflow-y: auto;
   /* Sides = composer clearance + 16px: on narrow viewports the transcript
      stays exactly 32px narrower than the input card (the shared width rule). */
-  padding: 16px calc(var(--dsh-composer-side-clearance) + 16px);
+  padding: 16px calc(var(--freddie-composer-side-clearance) + 16px);
   /* Inline-size query container: wide markdown tables size their breakout
      against this box's content width (100cqw in AssistantMarkdown's
      md-table-wide rule) — the CSS stand-in for deepsuite chat's JS-measured
@@ -37,11 +37,11 @@
   min-height: auto;
 }
 
-/* Message column: shared chat width (ConversationRoot --dsh-chat-content-width),
+/* Message column: shared chat width (ConversationRoot --freddie-chat-content-width),
    centered on the same axis as the input box (which caps at chat + 16px); the
    scroller itself stays full-bleed. */
 .dsh-chatView__column {
-  max-width: var(--dsh-chat-content-width);
+  max-width: var(--freddie-chat-content-width);
   width: 100%;
   margin: 0 auto;
   display: flex;
@@ -101,8 +101,8 @@
   font: var(--dsw-font-xs-13);
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  color: var(--dsw-alias-label-caption);
-  -webkit-text-fill-color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
+  -webkit-text-fill-color: var(--freddie-alias-label-caption);
 }
 
 @keyframes dsh-chatView__dsh-turn-status-shimmer {
@@ -120,13 +120,13 @@
 }
 
 .dsh-chatView__hint {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
 }
 
 .dsh-chatView__openError {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
   font-size: 12px;
   line-height: 18px;
 }
@@ -141,8 +141,8 @@
   border-radius: 14px;
   padding: 4px 12px;
   font-size: 12px;
-  color: var(--dsw-alias-label-secondary);
-  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--freddie-alias-label-secondary);
+  background: var(--freddie-alias-interactive-bg-hover-solid);
   cursor: pointer;
 }
 
@@ -163,16 +163,16 @@
   height: 0;
   display: flex;
   justify-content: flex-end;
-  padding-right: max(0px, calc((100% - var(--dsh-chat-content-width)) / 2));
+  padding-right: max(0px, calc((100% - var(--freddie-chat-content-width)) / 2));
   pointer-events: none;
 }
 
 [data-conversation-scroll] .dsh-chatView__toBottomSlot {
   /* Clears the sticky composer stack (docks + input card + stats): the live
-     height rides --dsh-composer-height (ConversationRoot's seat observer) so
+     height rides --freddie-composer-height (ConversationRoot's seat observer) so
      the control follows a growing textarea; the fallback covers the first
      paint before the observer fires. */
-  bottom: calc(var(--dsh-composer-height, 152px) + 16px);
+  bottom: calc(var(--freddie-composer-height, 152px) + 16px);
 }
 
 .dsh-chatView__toBottom {
@@ -183,17 +183,17 @@
   height: 34px;
   margin-top: -34px;
   padding: 0;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 100px;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-button-floating-fill);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-button-floating-fill);
   box-shadow: var(--dsw-shadow-lv2);
   cursor: pointer;
   pointer-events: auto;
 }
 
 .dsh-chatView__toBottom:hover {
-  background: var(--dsw-alias-button-floating-hover);
+  background: var(--freddie-alias-button-floating-hover);
 }
 
 /* Host open-path refusal: same dialog family as the workspace folder error. */

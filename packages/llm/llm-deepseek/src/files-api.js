@@ -1,6 +1,6 @@
 /** OpenAI-compatible DeepSeek Files API transport. @module dsh-llm-deepseek/files-api */
 
-import { attributionHeaders, LlmError } from '@deepseek-ai/dsh-llm'
+import { attributionHeaders, LlmError } from '@freddie/freddie-llm'
 import { DeepSeekFileId } from './file-id.js'
 
 /** Minimum provider-supported file lifetime. */

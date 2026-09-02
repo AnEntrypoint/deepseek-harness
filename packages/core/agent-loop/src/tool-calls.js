@@ -11,8 +11,8 @@
  * @module dsh-agent-loop/tool-calls
  */
 
-import { assertNever, createToolResultMessage } from '@deepseek-ai/dsh-llm'
-import { TOOL_ABORTED_BEFORE_DISPATCH, TOOL_RUNTIME_SCHEDULER } from '@deepseek-ai/dsh-tools'
+import { assertNever, createToolResultMessage } from '@freddie/freddie-llm'
+import { TOOL_ABORTED_BEFORE_DISPATCH, TOOL_RUNTIME_SCHEDULER } from '@freddie/freddie-tools'
 
 /**
  * Schedule one assistant step's tool calls by their live concurrency mode.

@@ -1,6 +1,6 @@
 /**
  * Bounded sharing and exclusive reservation of unpublished Sessions.
- * @module @deepseek-ai/dsh-session-persistence/preparations
+ * @module @freddie/freddie-session-persistence/preparations
  */
 
 /** Per-coordinator cold-read sharing, exclusive reservation, and ready-entry LRU. */

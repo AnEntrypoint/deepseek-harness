@@ -6,5 +6,5 @@
  * This module is pure compile-time type documentation in the TypeScript source
  * (interfaces/type aliases only, no runtime values) and is intentionally empty
  * at runtime after the buildless JS conversion.
- * @module @deepseek-ai/dsh-tools/src/presentation
+ * @module @freddie/freddie-tools/src/presentation
  */

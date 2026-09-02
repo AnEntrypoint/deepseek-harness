@@ -8,7 +8,7 @@
  *
  * The search card is result-time only: a search call has no matches or paths
  * before `execute`, so its pending state stays a `GenericCallView`
- * ({@link module:@deepseek-ai/dsh-tools/src/presentation}). This derivation
+ * ({@link module:@freddie/freddie-tools/src/presentation}). This derivation
  * therefore reads only `resultView` and returns null for a still-running call,
  * unlike the terminal card whose call view carries the command before
  * execution.

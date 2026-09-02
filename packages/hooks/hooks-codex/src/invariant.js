@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-hooks-codex`.
- * @module @deepseek-ai/dsh-hooks-codex/invariant
+ * Package-owned invariant companion for `@freddie/freddie-hooks-codex`.
+ * @module @freddie/freddie-hooks-codex/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-hooks-codex'
+const PACKAGE_NAME = '@freddie/freddie-hooks-codex'
 
 /** Cordis companion plugin name. */
 export const name = 'hooks-codex-invariant'

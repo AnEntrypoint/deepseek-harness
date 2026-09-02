@@ -18,7 +18,7 @@
  * expires — plugin-set changes take effect on restart; bundle content
  * changes reach the graph only through
  * {@link ClientModuleRegistry.rebuilt}.
- * @module @deepseek-ai/dsh-client-modules
+ * @module @freddie/freddie-client-modules
  */
 
 import { createHash } from 'node:crypto'
@@ -26,7 +26,7 @@ import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { optionalStringArray, stripClientSuffix } from './client/manifest.js'
 
 export { stripClientSuffix } from './client/manifest.js'
@@ -172,10 +172,10 @@ export function orderByModuleGraph(entries) {
 }
 
 /** Bootstrap package whose ordinary client bundle supplies the module-system implementation. */
-const CLIENT_MODULES_ID = '@deepseek-ai/dsh-client-modules'
+const CLIENT_MODULES_ID = '@freddie/freddie-client-modules'
 
 /** Dynamic package whose ordinary client bundle must be registered before plugin boot starts. */
-const CLIENT_RUNTIME_ID = '@deepseek-ai/dsh-client-runtime'
+const CLIENT_RUNTIME_ID = '@freddie/freddie-client-runtime'
 
 /** Ordinary dynamic bundles the HTML parser executes before the Vite shell. */
 const PARSER_PRELOAD_IDS = [CLIENT_MODULES_ID, CLIENT_RUNTIME_ID]

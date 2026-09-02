@@ -10,7 +10,7 @@
 
 import { release as osRelease } from 'node:os'
 import { extname } from 'node:path'
-import { runNativeCommand } from '@deepseek-ai/dsh-native-command'
+import { runNativeCommand } from '@freddie/freddie-native-command'
 
 /** Documents a browser renders, as opposed to ones an editor merely edits. */
 const BROWSER_DOCUMENTS = new Set(['.html', '.htm', '.xhtml', '.svg'])

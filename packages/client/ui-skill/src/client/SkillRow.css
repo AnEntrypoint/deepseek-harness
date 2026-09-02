@@ -26,7 +26,7 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
+    color-mix(in srgb, var(--freddie-alias-bg-base) 60%, transparent) 55%,
     transparent 100%
   );
   animation: dsh-skillRow__dsh-skill-row-sweep 2.6s ease-out infinite;
@@ -47,11 +47,11 @@
   align-items: center;
   justify-content: center;
   margin-right: 6px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-skillRow__chevron {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-skillRow__iconIdle {
@@ -80,7 +80,7 @@
   flex: none;
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-skillRow__separator {
@@ -89,7 +89,7 @@
   height: 2px;
   border-radius: 1px;
   margin: 0 8px;
-  background: var(--dsw-alias-label-caption);
+  background: var(--freddie-alias-label-caption);
 }
 
 .dsh-skillRow__summary {
@@ -100,11 +100,11 @@
   white-space: nowrap;
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-skillRow__errorSummary {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-skillRow__bodyWrap {
@@ -118,20 +118,20 @@
   max-height: 260px;
   margin: 4px 0 4px 4px;
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 1px solid var(--freddie-alias-border-l1);
   border-radius: 12px;
-  background: var(--dsw-alias-markdown-code-block);
+  background: var(--freddie-alias-markdown-code-block);
 }
 
 .dsh-skillRow__instructionsHeader {
   flex: none;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
-  background: var(--dsw-alias-markdown-code-block-banner);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
+  background: var(--freddie-alias-markdown-code-block-banner);
   font-size: 11px;
   font-weight: 500;
   line-height: 16px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -144,11 +144,11 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font: var(--dsw-font-markdown-code-block-small);
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-skillRow__instructions[data-error] {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-skillRow__instructions::-webkit-scrollbar-thumb {
@@ -168,10 +168,10 @@
   gap: 4px;
   margin: 4px 0 2px 4px;
   padding: 2px 8px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 999px;
-  background: var(--dsw-alias-bg-base);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-bg-base);
+  color: var(--freddie-alias-label-secondary);
   font-size: 11px;
   line-height: 16px;
   cursor: pointer;
@@ -185,8 +185,8 @@
 }
 
 .dsh-skillRow__inspectButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover-solid);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover-solid);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-skillRow__visuallyHidden {

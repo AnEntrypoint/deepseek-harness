@@ -1,15 +1,15 @@
 /**
  * E2B Service Provider for the subprocess capability seam. Each handle starts through the
  * shared sandbox and retains command output/status paths in that remote world.
- * @module @deepseek-ai/dsh-subprocess-e2b
+ * @module @freddie/freddie-subprocess-e2b
  */
 
 import { randomUUID } from 'node:crypto'
 import { posix } from 'node:path'
-import z from '@deepseek-ai/schemastery'
-import { SubprocessRuntime } from '@deepseek-ai/dsh-subprocess'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { e2bControlEnvs, quoteE2BShellArg } from '@deepseek-ai/dsh-e2b'
+import z from '@freddie/schemastery'
+import { SubprocessRuntime } from '@freddie/freddie-subprocess'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
+import { e2bControlEnvs, quoteE2BShellArg } from '@freddie/freddie-e2b'
 import { E2BSubprocessHandle } from './process.js'
 import { asError, signalOpts } from './remote.js'
 import { spawnE2BTerminal } from './terminal.js'

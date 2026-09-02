@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-goal-round-driver
+# @freddie/freddie-goal-round-driver
 
 Same-session continuation driver for [`ctx.goals`](../goal/README.md). It turns an active, armed goal into sequential [goal rounds](../../../docs/glossary.md#goal-round) through the public `Agent` and session services; the [same-session driver Agent Note](../../../.agents/notes/implemented/feature/2026-07-19-same-session-goal-round-driver.md) owns the race and lifecycle rationale.
 
@@ -6,13 +6,13 @@ Same-session continuation driver for [`ctx.goals`](../goal/README.md). It turns 
 
 ```yaml
 - id: goal
-  name: '@deepseek-ai/dsh-goal'
+  name: '@freddie/freddie-goal'
 
 - id: tool-goal
-  name: '@deepseek-ai/dsh-tool-goal'
+  name: '@freddie/freddie-tool-goal'
 
 - id: goal-round-driver
-  name: '@deepseek-ai/dsh-goal-round-driver'
+  name: '@freddie/freddie-goal-round-driver'
 ```
 
 The plugin has no tunable configuration. `maxGoalRounds` belongs to the goal definition, while the model-facing blocked threshold belongs to [`dsh-tool-goal`](../tool-goal/README.md); duplicating either value in the driver could produce divergent policy.

@@ -22,7 +22,7 @@
   border-radius: 24px;
   outline: none;
   background: transparent;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font-size: 13px;
   line-height: 20px;
   font-weight: 500;
@@ -30,15 +30,15 @@
 }
 
 .dsh-modelSelect__trigger:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-modelSelect__trigger:focus-visible {
-  box-shadow: 0 0 0 2px var(--dsw-alias-border-l3);
+  box-shadow: 0 0 0 2px var(--freddie-alias-border-l3);
 }
 
 .dsh-modelSelect__trigger:disabled {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--freddie-alias-label-dimmed);
   cursor: default;
 }
 
@@ -52,12 +52,12 @@
 /* Effort value beside the model name (mock's 'High': same 13/20/500, caption tone). */
 .dsh-modelSelect__triggerEffort {
   flex: 0 0 auto;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-modelSelect__chevron {
   flex: 0 0 auto;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   transition: transform 120ms ease;
 }
 
@@ -82,24 +82,24 @@
   padding: 4px;
   /* Surface tokens match the Menu primitive card (ui-primitives
    * Menu.module.css) so every dropdown reads as the same material. */
-  border: 1px solid var(--dsw-alias-border-inverted);
+  border: 1px solid var(--freddie-alias-border-inverted);
   border-radius: 12px;
   background: var(--dsw-specific-menu);
   box-shadow: var(--dsw-shadow-lv3);
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   /* Elevated surface: the scrollbar thumb takes the l2 elevation tokens.
      Declared here rather than on the scrolling `.groups` child so the
      elevation choice sits with the surface; the custom properties inherit
      down to whichever descendant actually scrolls (see ui-theme
      styles/scrollbar.css for the rebinding contract). */
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 }
 
 .dsh-modelSelect__status,
 .dsh-modelSelect__empty {
   padding: 10px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 13px;
   line-height: 20px;
 }
@@ -113,15 +113,15 @@
   margin-bottom: 4px;
   padding: 7px 8px;
   border-radius: 8px;
-  background: var(--dsw-alias-interactive-bg-hover-danger);
-  color: var(--dsw-alias-state-error-primary);
+  background: var(--freddie-alias-interactive-bg-hover-danger);
+  color: var(--freddie-alias-state-error-primary);
   font-size: 12px;
   line-height: 18px;
 }
 
 .dsh-modelSelect__warning {
-  background: var(--dsw-alias-bg-module-platform);
-  color: var(--dsw-alias-state-warn-label);
+  background: var(--freddie-alias-bg-module-platform);
+  color: var(--freddie-alias-state-warn-label);
 }
 
 .dsh-modelSelect__retry {
@@ -150,7 +150,7 @@
   z-index: 1;
   padding: 5px 8px 3px;
   background: var(--dsw-specific-menu);
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
   font-weight: 500;
@@ -176,7 +176,7 @@
 
 .dsh-modelSelect__option:hover:not(:disabled),
 .dsh-modelSelect__option:focus-visible {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 /* Selection marker is the trailing check, not a fill — matches the Menu
@@ -186,7 +186,7 @@
 }
 
 .dsh-modelSelect__option:disabled {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--freddie-alias-label-dimmed);
   cursor: default;
 }
 
@@ -209,7 +209,7 @@
 
 .dsh-modelSelect__description {
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
   text-overflow: ellipsis;
@@ -220,7 +220,7 @@
   display: grid;
   place-items: center;
   flex: 0 0 18px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 /* Two-level root cells (figma 496:26454 .Menu_cell): 40px row, 10px side
@@ -238,7 +238,7 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font-size: 14px;
   line-height: 22px;
   cursor: pointer;
@@ -246,7 +246,7 @@
 }
 
 .dsh-modelSelect__cell:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-modelSelect__cellLabel {
@@ -261,10 +261,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-modelSelect__cellChevron {
   flex: 0 0 auto;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }

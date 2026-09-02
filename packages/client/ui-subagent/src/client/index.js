@@ -1,5 +1,5 @@
 /** Web subagent catalog, navigation, and addressed-session composer owner. */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import {
   SubagentReadOnlyComposer,
 } from './SubagentReadOnlyComposer.js'

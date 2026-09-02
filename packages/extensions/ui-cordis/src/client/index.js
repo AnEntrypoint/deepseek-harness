@@ -1,6 +1,6 @@
 /** Cordis dynamic-plugin cards, inventory panel, business-view host, and `@pluginId` source. */
 
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { CordisActionRow } from './CordisActionRow.js'
 import './CordisDefineRow.js'
 import './CordisRunRow.js'

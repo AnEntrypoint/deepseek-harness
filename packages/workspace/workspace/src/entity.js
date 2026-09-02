@@ -5,7 +5,7 @@
  * `updatedAt` stamping and invalid-account pruning happen exactly once.
  * Not re-exported from the package entrypoint — consumers see only the
  * `Workspace` interface.
- * @module @deepseek-ai/dsh-workspace/src/entity
+ * @module @freddie/freddie-workspace/src/entity
  */
 
 import { stat } from 'node:fs/promises'

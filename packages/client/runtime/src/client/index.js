@@ -5,7 +5,7 @@ import { WorkspaceRuntime } from './workspaces/service.js'
 import { ConversationEventRegistry } from './conversation/event-registry.js'
 import { ConversationViewRegistry } from './conversation/view-registry.js'
 
-export { isAppendSurfaceEvent, isReplacementSurfaceEvent } from '@deepseek-ai/dsh-session/surface'
+export { isAppendSurfaceEvent, isReplacementSurfaceEvent } from '@freddie/freddie-session/surface'
 
 export { SlotRegistry } from './slots.js'
 export { ConversationEventRegistry } from './conversation/event-registry.js'

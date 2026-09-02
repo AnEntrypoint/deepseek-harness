@@ -1,5 +1,5 @@
 /**
  * Browser-safe subagent projection vocabulary.
  *
- * @module @deepseek-ai/dsh-subagent/client
+ * @module @freddie/freddie-subagent/client
  */

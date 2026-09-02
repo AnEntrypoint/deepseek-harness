@@ -1,6 +1,6 @@
 /**
  * Agent-scoped model selection shared by runtime entry points.
- * @module @deepseek-ai/dsh-agent/model-selection
+ * @module @freddie/freddie-agent/model-selection
  */
 
 /**

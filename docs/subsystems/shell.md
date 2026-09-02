@@ -6,7 +6,7 @@ Source: [`packages/shell/shell/src/types.ts`](../../packages/shell/shell/src/typ
 
 ## Managed shell environment namespace
 
-`DSH_*` variables are Harness-owned child-process facts. The model-facing bash tool collects them through `ctx.shellEnv` and passes them through `ShellExecRequest.dshEnv`; the subprocess service removes inherited `DSH_*` names before merging the current snapshot. The `DshEnvironmentKey`/`DshEnvironment` vocabulary is owned by the [subprocess seam](subprocess.md) and re-exported by `dsh-shell`.
+`FREDDIE_*` variables are Harness-owned child-process facts. The model-facing bash tool collects them through `ctx.shellEnv` and passes them through `ShellExecRequest.dshEnv`; the subprocess service removes inherited `FREDDIE_*` names before merging the current snapshot. The `DshEnvironmentKey`/`DshEnvironment` vocabulary is owned by the [subprocess seam](subprocess.md) and re-exported by `dsh-shell`.
 
 ## Request vs. spec: the `resolve()` split
 
@@ -51,8 +51,8 @@ interface ShellExecRequest {
    */
   env?: Record<string, string> | undefined
   /**
-   * Harness-owned `DSH_*` variables for this execution (typed to managed
-   * keys). Executors discard ambient `DSH_*` entries before merging this
+   * Harness-owned `FREDDIE_*` variables for this execution (typed to managed
+   * keys). Executors discard ambient `FREDDIE_*` entries before merging this
    * snapshot last, so an unavailable current fact cannot inherit a stale
    * value from the harness process and a caller {@link env} entry cannot
    * displace a managed one.
@@ -89,7 +89,7 @@ interface ShellExecSpec {
    * ordinary extra environment.
    */
   env?: Record<string, string> | undefined
-  /** Managed `DSH_*` snapshot (typed to managed keys); merges after {@link env}. */
+  /** Managed `FREDDIE_*` snapshot (typed to managed keys); merges after {@link env}. */
   dshEnv?: DshEnvironment | undefined
   /** Resolved sandbox policy; ignored by executors that do not confine. */
   sandboxPolicy: SandboxExecutionPolicy | undefined
@@ -138,7 +138,7 @@ Each stream is a `CollectedOutput` — the (possibly truncated) text plus recove
 
 ## File sandbox: `ShellSandboxInfo`
 
-A sandbox-consuming executor exposes its configured mode fallback through `ShellExecutor.sandboxMode`. The tool layer asks [`@deepseek-ai/dsh-sandbox-policy`](../../packages/sandbox/sandbox-policy/README.md) to resolve each calling session's durable `sandbox/mode` override and immutable cwd into `ShellExecRequest.sandboxPolicy`; a user-approved strictly wider call replaces only the mode. The mode/root/enforcement vocabulary is owned by the [`@deepseek-ai/dsh-sandbox` seam](sandbox.md); modes govern file effects only.
+A sandbox-consuming executor exposes its configured mode fallback through `ShellExecutor.sandboxMode`. The tool layer asks [`@freddie/freddie-sandbox-policy`](../../packages/sandbox/sandbox-policy/README.md) to resolve each calling session's durable `sandbox/mode` override and immutable cwd into `ShellExecRequest.sandboxPolicy`; a user-approved strictly wider call replaces only the mode. The mode/root/enforcement vocabulary is owned by the [`@freddie/freddie-sandbox` seam](sandbox.md); modes govern file effects only.
 
 A sandboxed run reports its mode, conservative denial classification, and enforcement completeness. `runnerFailed` marks a sandbox runner failure before the command ran; foreground execution throws `SANDBOX_UNAVAILABLE`, while a settled background process has only its facts channel.
 
@@ -270,7 +270,7 @@ Source: [`packages/shell/shell/src/index.ts`](../../packages/shell/shell/src/ind
 
 ### `ctx.shellEnv` — `ShellEnvRegistry`
 
-Registry (`ctx.shellEnv`) for trusted, per-execution `DSH_*` variables. The namespace is rebuilt for every model shell call: ambient `DSH_*` values are discarded by the executor, then the registry's current snapshot is injected. Built-in shell facts remain owned by the registry itself while plugins can register additional, enumerable facts with effect-scoped disposal.
+Registry (`ctx.shellEnv`) for trusted, per-execution `FREDDIE_*` variables. The namespace is rebuilt for every model shell call: ambient `FREDDIE_*` values are discarded by the executor, then the registry's current snapshot is injected. Built-in shell facts remain owned by the registry itself while plugins can register additional, enumerable facts with effect-scoped disposal.
 
 ```ts cordis-catalog
 /**
@@ -282,7 +282,7 @@ Registry (`ctx.shellEnv`) for trusted, per-execution `DSH_*` variables. The name
 register(contributor: BashEnvContributor): () => void
 
 /**
- * Build the trusted `DSH_*` snapshot for one shell tool execution.
+ * Build the trusted `FREDDIE_*` snapshot for one shell tool execution.
  * @param execution - the current tool execution.
  * @returns an immutable environment overlay containing built-ins and current contributions.
  */

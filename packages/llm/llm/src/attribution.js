@@ -4,7 +4,7 @@
  * `.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md`.
  *
  * App-attribution vocabulary for provider requests.
- * @module @deepseek-ai/dsh-llm/attribution
+ * @module @freddie/freddie-llm/attribution
  */
 
 import { createRequire } from 'node:module'
@@ -22,9 +22,9 @@ const { version } = createRequire(import.meta.url)('../package.json')
  * can suppress attribution entirely.
  */
 export const APP_IDENTITY = {
-  product: 'deepseek-harness',
+  product: 'freddie',
   version,
-  url: 'https://github.com/deepseek-ai/deepseek-harness',
+  url: 'https://github.com/lanmower/freddie',
 }
 
 /**

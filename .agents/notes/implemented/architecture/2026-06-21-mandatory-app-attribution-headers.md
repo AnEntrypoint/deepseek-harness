@@ -28,9 +28,9 @@ OpenRouter app attribution is deliberately not implemented. `HTTP-Referer`, `X-O
 
 The provider-neutral identity is owned by `dsh-llm` (`packages/llm/llm/src/attribution.ts`), not by individual adapters. `AppIdentity` contains only public product facts needed to build `User-Agent`, and the default `APP_IDENTITY` values:
 
-- product token for `User-Agent`: `deepseek-harness` (continuity with the pre-Agent Note wire value and the repo/org identity)
+- product token for `User-Agent`: `freddie` (continuity with the pre-Agent Note wire value and the repo/org identity)
 - version: read from the owning package's manifest via `createRequire`, never a hand-copied constant
-- app URL: `https://github.com/deepseek-ai/deepseek-harness` - the repository home
+- app URL: `https://github.com/lanmower/freddie` - the repository home
 
 The default is mandatory and non-empty. White-label deployments pass their own `AppIdentity` to `attributionHeaders(identity)` - the override hook is the function parameter, with no deployment config plumbing until a consumer needs it - and omission falls back to the harness default rather than suppressing attribution. There is no per-request API for the model, user prompt, session id, cwd, user email, API key owner, or local machine identity to influence these fields.
 
@@ -39,7 +39,7 @@ Wire mapping (`attributionHeaders`; header names lowercase in code - HTTP field 
 | Target | Mapping |
 |---|---|
 | All HTTP-based adapters | `User-Agent: {product}/{version} (+{url})` - the parenthesized `+url` comment stays within RFC 9110's conservative product/comment syntax. |
-| Direct DeepSeek endpoint | `User-Agent` for app attribution; `x-deepseek-harness-user-id` and conditional `x-deepseek-harness-session-id` are separate request identity under the DeepSeek-specific decision. Do not send OpenRouter-only headers unless DeepSeek documents an equivalent contract. |
+| Direct DeepSeek endpoint | `User-Agent` for app attribution; `x-freddie-user-id` and conditional `x-freddie-session-id` are separate request identity under the DeepSeek-specific decision. Do not send OpenRouter-only headers unless DeepSeek documents an equivalent contract. |
 | OpenRouter endpoints | `User-Agent` only for now. Do not send `HTTP-Referer`, `X-OpenRouter-Title`, `X-Title`, or `X-OpenRouter-Categories` under this decision. |
 | Future providers | `User-Agent` only unless a later provider-specific Agent Note accepts additional headers. Do not reuse `HTTP-Referer` by analogy. |
 
@@ -69,7 +69,7 @@ The landed contract:
 
 **Config-only opt-in attribution.** Rejected. A default-off setting is exactly how adapters keep drifting. The policy is mandatory default attribution with overrideable public values, not optional attribution.
 
-**SDK-named token (`deepseek-harness-sdk`).** Considered for the `User-Agent` token because the supported runtime client stack uses the SDK name. `deepseek-harness` won because it names the DeepSeek Harness product, matches the org/repo identity and package scope, and keeps wire attribution stable without calling the complete product an SDK.
+**SDK-named token (`freddie-sdk`).** Considered for the `User-Agent` token because the supported runtime client stack uses the SDK name. `freddie` won because it names the Freddie product, matches the org/repo identity and package scope, and keeps wire attribution stable without calling the complete product an SDK.
 
 ## Consequences
 

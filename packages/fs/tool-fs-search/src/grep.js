@@ -8,10 +8,10 @@
  * `--json` record parsing, per-line preview retention, match retention,
  * grouping, and formatting; process concerns stay behind `ctx.subprocess`.
  *
- * @module @deepseek-ai/dsh-tool-fs-search/grep
+ * @module @freddie/freddie-tool-fs-search/grep
  */
 
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@freddie/freddie-tools'
 import { SearchError, previewLine, retainGrepMatches, runRipgrep, toWorkdirRelative, trySaveFormattedResult } from './search-core.js'
 import { grepSearchMeta, searchViewFromMeta } from './presentation.js'
 import { acceptedDirectCallValue } from './direct-call.js'

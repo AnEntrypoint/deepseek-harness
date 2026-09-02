@@ -10,11 +10,11 @@
  * disposing the old instance and creating a new one; identical `serverName`
  * reproduces identical public tool names.
  *
- * @module @deepseek-ai/dsh-mcp-client
+ * @module @freddie/freddie-mcp-client
  */
 
-import z from '@deepseek-ai/schemastery'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import z from '@freddie/schemastery'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import { RECONNECT_DEFAULTS, resolveReconnectPolicy, startConnection } from './connection.js'
 
 /** Cordis plugin name used by loader diagnostics. */

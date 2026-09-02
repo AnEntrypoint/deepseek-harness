@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-atomic-write`.
- * @module @deepseek-ai/dsh-atomic-write/invariant
+ * Package-owned invariant companion for `@freddie/freddie-atomic-write`.
+ * @module @freddie/freddie-atomic-write/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-atomic-write'
+const PACKAGE_NAME = '@freddie/freddie-atomic-write'
 
 /** Cordis companion plugin name. */
 export const name = 'atomic-write-invariant'

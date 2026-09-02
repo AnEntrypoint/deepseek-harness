@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-app-boot`.
- * @module @deepseek-ai/dsh-app-boot/invariant
+ * Package-owned invariant companion for `@freddie/freddie-app-boot`.
+ * @module @freddie/freddie-app-boot/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-app-boot'
+const PACKAGE_NAME = '@freddie/freddie-app-boot'
 
 /** Cordis companion plugin name. */
 export const name = 'app-boot-invariant'

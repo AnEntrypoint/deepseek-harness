@@ -1,4 +1,4 @@
-import { isReplacementSurfaceEvent } from '@deepseek-ai/dsh-client-runtime/client'
+import { isReplacementSurfaceEvent } from '@freddie/freddie-client-runtime/client'
 import { chatNode } from './common.js'
 
 const COMPACT_PLUGIN = 'compact'

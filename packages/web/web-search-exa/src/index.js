@@ -1,15 +1,15 @@
 /**
- * `@deepseek-ai/dsh-web-search-exa`: registers an Exa-backed `WebSearchProvider`
+ * `@freddie/freddie-web-search-exa`: registers an Exa-backed `WebSearchProvider`
  * with `ctx.web`. A function/namespace plugin (NOT a default-export service):
  * a search provider does not own the `ctx.web` key — it registers INTO the
- * seam's provider registry, exactly as `@deepseek-ai/dsh-llm-deepseek`
- * registers an adapter into `ctx.llm`. The key is owned by `@deepseek-ai/dsh-web`.
+ * seam's provider registry, exactly as `@freddie/freddie-llm-deepseek`
+ * registers an adapter into `ctx.llm`. The key is owned by `@freddie/freddie-web`.
  *
- * @module @deepseek-ai/dsh-web-search-exa
+ * @module @freddie/freddie-web-search-exa
  */
 
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import z from '@deepseek-ai/schemastery'
+import { launchEnvironmentOf } from '@freddie/freddie-launch-environment'
+import z from '@freddie/schemastery'
 import {
   ExaSearchProvider,
   EXA_DEFAULT_BASE_URL,

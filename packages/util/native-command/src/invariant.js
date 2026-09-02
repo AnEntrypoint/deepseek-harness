@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-native-command`.
- * @module @deepseek-ai/dsh-native-command/invariant
+ * Package-owned invariant companion for `@freddie/freddie-native-command`.
+ * @module @freddie/freddie-native-command/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-native-command'
+const PACKAGE_NAME = '@freddie/freddie-native-command'
 
 /** Cordis companion plugin name. */
 export const name = 'native-command-invariant'

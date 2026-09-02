@@ -10,7 +10,7 @@
  * preset decides the tool schemas and prompt sections the model sees.
  *
  * Reconstruction reads {@link resolveSessionPreset}, never the header alone.
- * @module @deepseek-ai/dsh-agent-presets/session
+ * @module @freddie/freddie-agent-presets/session
  */
 
 /**

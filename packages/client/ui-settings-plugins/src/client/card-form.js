@@ -13,7 +13,7 @@
  * override equal to the composition default is still an override.
  */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 
 /**
  * A whole-number field. An empty draft clears the field; any other draft that

@@ -15,7 +15,7 @@
  * — a cold session's host Agent is already disposed while its client actx
  * stays alive for history viewing.
  */
-import { Context as CordisContext } from '@deepseek-ai/cordis'
+import { Context as CordisContext } from '@freddie/cordis'
 
 /** Context tag written by {@link createScope}. */
 const kScope = Symbol('dsh.client.scope')

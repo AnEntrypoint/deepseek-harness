@@ -10,7 +10,7 @@ The second alignment step for issue #2248, after the [attachment display note](2
 
 **Whole-page drop.** InputBar binds `dragenter`/`dragover`/`dragleave`/`drop` on the document (enter/leave depth counting, viewport-edge and `dragend` resets, `Files`-type gating so text drags keep their native textarea path) and renders the new `DropOverlay` atom in `ui-attachment`: a body-portaled, pointer-inert full-viewport layer (DeepSeek Chat's DragMask visuals — white/70% + 10px blur, dark `rgba(39,39,48,0.7)`, illustration, title, limits line) whose `disabled` variant announces a locked/busy composer. Pointer-inertness is load-bearing: drag events keep targeting the page below, so the depth count never sees the overlay itself. Document-level listener state is safe because the composer-bar slot is `kind: 'single'`.
 
-**Lightbox.** The close control is `ui-primitives`' `IconCloseOutline16` (the Modal precedent — an SVG centered in its viewBox needs no font metrics). The backdrop is the shared dialog mask (`--dsw-alias-bg-mask-1` + `--dsw-mask-blur`, black-based in both themes) painted on a separate sibling layer, because `backdrop-filter` on the container would blur the previewed image itself.
+**Lightbox.** The close control is `ui-primitives`' `IconCloseOutline16` (the Modal precedent — an SVG centered in its viewBox needs no font metrics). The backdrop is the shared dialog mask (`--freddie-alias-bg-mask-1` + `--dsw-mask-blur`, black-based in both themes) painted on a separate sibling layer, because `backdrop-filter` on the container would blur the previewed image itself.
 
 **History thumbnails (DeepSeek Chat rules).** A message's lone image renders at 240px on its long edge with the displayed ratio clamped to [0.25, 4], cropped by `cover` with the anchor at the top of very tall images and the left of very wide ones, never upscaled; several images render as fixed 64px square tiles in one wrapping row (10px gap, user messages right-aligned). Consecutive assistant `image` blocks merge into one gallery so they tile instead of each opening a one-image row.
 
@@ -22,7 +22,7 @@ The second alignment step for issue #2248, after the [attachment display note](2
 
 **Registering the projection unit in the attachment Service Definition's constructor.** The natural seam owner, and the first implementation — rejected by the dependency graph (the cycle above) and by a test-harness interaction: the base constructor calling `ctx.inject` made directly-constructed stores in specs trigger the global invariant host, which then double-mounted an `attachments` service into the same root.
 
-**`--dsw-alias-bg-mask-photo` (0.88 black, theme-stable, unused) for the lightbox.** The design system's photo-viewer token and dsweb's likely lightbox wash; the user chose consistency with the settings dialog mask (`bg-mask-1` + blur) — both fix the dark-mode inversion.
+**`--freddie-alias-bg-mask-photo` (0.88 black, theme-stable, unused) for the lightbox.** The design system's photo-viewer token and dsweb's likely lightbox wash; the user chose consistency with the settings dialog mask (`bg-mask-1` + blur) — both fix the dark-mode inversion.
 
 **Pre-checking inside `apply.ts`'s `addImages` inject.** The seam-purist placement, rejected for plumbing cost: the projection store has no non-React face exposed to the inject factory, while InputBar already consumes projections idiomatically and is the single caller of both gestures.
 

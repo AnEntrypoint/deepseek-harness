@@ -1,8 +1,8 @@
 /** Scoped model-facing tools for the opt-in Agent Teams runtime. */
 
-import z from '@deepseek-ai/schemastery'
-import { TeamTaskId } from '@deepseek-ai/dsh-experimental-agent-team'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import z from '@freddie/schemastery'
+import { TeamTaskId } from '@freddie/freddie-experimental-agent-team'
+import { defineTool } from '@freddie/freddie-tools'
 
 /** Cordis plugin name. */
 export const name = 'tool-agent-team'

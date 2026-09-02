@@ -23,7 +23,7 @@ import clsx from 'clsx'
 import {
   IconCheckOutline16, IconChevronDownOutline14, IconChevronRightOutline14,
   IconWarningOutline16, mountToast,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './ModelSelect.css.js'
 
 let nextId = 0

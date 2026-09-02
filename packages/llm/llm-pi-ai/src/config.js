@@ -14,10 +14,10 @@
  * @module dsh-llm-pi-ai/config
  */
 
-import z from '@deepseek-ai/schemastery'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { resolveRetryPolicy, RetryPolicySchema } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { credentialRef } from '@freddie/freddie-credentials'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
+import { resolveRetryPolicy, RetryPolicySchema } from '@freddie/freddie-llm'
 import {
   CACHE_CONTROL_FORMATS,
   CHAT_TEMPLATE_VARS,

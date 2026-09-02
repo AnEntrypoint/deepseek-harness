@@ -37,9 +37,9 @@ function consumerEnvironment(consumerRoot) {
   delete environment.NPM_CONFIG_USER_AGENT
   delete environment.NODE_OPTIONS
   delete environment.NODE_PATH
-  environment.DSH_HOME = resolve(consumerRoot, '.dsh')
-  environment.DSH_AGENTS_HOME = resolve(consumerRoot, '.agents')
-  environment.DSH_TELEMETRY_DISABLED = '1'
+  environment.FREDDIE_HOME = resolve(consumerRoot, '.dsh')
+  environment.FREDDIE_AGENTS_HOME = resolve(consumerRoot, '.agents')
+  environment.FREDDIE_TELEMETRY_DISABLED = '1'
   return environment
 }
 

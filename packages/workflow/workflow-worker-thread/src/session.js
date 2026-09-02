@@ -8,10 +8,10 @@
  * The session announces ready and waits for `go`, so cancellation racing startup can prevent even
  * the script's synchronous prefix. A cancel in place of `go` releases the gate into a cancelled
  * drive without executing the body.
- * @module @deepseek-ai/dsh-workflow-worker-thread/session
+ * @module @freddie/freddie-workflow-worker-thread/session
  */
 
-import { assertNever } from '@deepseek-ai/dsh-llm'
+import { assertNever } from '@freddie/freddie-llm'
 import { HostToWorkerType, WorkerToHostType } from './protocol.js'
 import { renderThrown } from './realm.js'
 import { WorkflowExecution } from './runtime.js'

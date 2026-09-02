@@ -15,7 +15,7 @@ The [buildless-workspace decision](../architecture/2026-09-02-buildless-workspac
 - `2026-06-22-subagent-snapshot-replay.md` — per-session-keyed replay for nested-agent snapshot scenarios; **partially superseded**, see below.
 - `2026-07-22-cross-platform-test-fixtures.md` — writing platform-neutral vitest fixtures (native path/URL construction, transport-failure injection, teardown semantics).
 - `2026-07-24-web-gui-browser-e2e-lane.md` — the keyless Playwright/Chromium replay lane for the web GUI (`apps/web/tests/`).
-- `2026-07-25-scriptable-llm-wire-fault-server.md` — `@deepseek-ai/dsh-llm-mock-server`, a scriptable HTTP/SSE fault-injection server package.
+- `2026-07-25-scriptable-llm-wire-fault-server.md` — `@freddie/freddie-llm-mock-server`, a scriptable HTTP/SSE fault-injection server package.
 - `2026-07-30-vitest-jsdom-webstorage-ownership.md` — `--no-webstorage` execArgv wiring so jsdom's isolated `Storage` wins over Node's process-wide Web Storage.
 - `2026-07-30-web-browser-snapshot-ci-gate.md` — the required Linux PR gate comparing committed browser ARIA goldens.
 - `2026-08-03-opt-in-reasoning-chunk-browser-stress.md` — mixed: the `Notifier.markFrameDirty()`/rAF-batched publication architecture is real shipped product code; the `pnpm run test:web:stress` opt-in browser stress lane is gone. **Partially superseded**, see below.
@@ -23,9 +23,9 @@ The [buildless-workspace decision](../architecture/2026-09-02-buildless-workspac
 - `2026-08-13-python-minimal-model-visible-snapshot.md` — the `sdk-minimal` Python scenario's model-visible-surface snapshot.
 - `2026-08-18-session-snapshot-envelope-projection.md` — the committed-snapshot-only projection that omitted `seq`/`time`/`seq0`/`time0` from snapshot fixture rows (the projection was a test-fixture convention, not a durable persistence format change — the runtime JSONL format was explicitly untouched by that decision).
 - `2026-07-20-gui-testing-system.md` (process) — the three-tier GUI test structure (protocol isomorphism / object-layer orchestration / assembled presentation) and its lane map.
-- `2026-07-31-coverage-exempt-heavy-suites.md` (process) — the `DSH_COVERAGE_EXEMPT_HEAVY` split sparing heavy suites from coverage instrumentation.
+- `2026-07-31-coverage-exempt-heavy-suites.md` (process) — the `FREDDIE_COVERAGE_EXEMPT_HEAVY` split sparing heavy suites from coverage instrumentation.
 - `2026-08-06-coverage-uncovered-locations.md` (process) — the custom istanbul reporter emitting exact uncovered line/column records.
-- `2026-08-18-in-job-partitioned-coverage.md` (process) — `DSH_COVERAGE_PARTITIONS` process-local Vitest sharding inside the coverage CI job.
+- `2026-08-18-in-job-partitioned-coverage.md` (process) — `FREDDIE_COVERAGE_PARTITIONS` process-local Vitest sharding inside the coverage CI job.
 
 Each was checked in full for genuinely reusable rationale, product-behavior facts, or named coverage gaps that could still inform future work, per the [Agent Note consolidation rule](../../README.md).
 

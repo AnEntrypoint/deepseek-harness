@@ -23,5 +23,5 @@
  * this buildless JS conversion. Every consumer imported it via `import type`
  * only (verified repo-wide) so no runtime caster is needed here.
  *
- * @module @deepseek-ai/dsh-brand
+ * @module @freddie/freddie-brand
  */

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-typert-registry`.
- * @module @deepseek-ai/dsh-typert-registry/invariant
+ * Package-owned invariant companion for `@freddie/freddie-typert-registry`.
+ * @module @freddie/freddie-typert-registry/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-typert-registry'
+const PACKAGE_NAME = '@freddie/freddie-typert-registry'
 
 /** Cordis companion plugin name. */
 export const name = 'typert-registry-invariant'

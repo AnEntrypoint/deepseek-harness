@@ -1,6 +1,6 @@
 /** Card-aware output body for the selected Tool call in details. */
 import { createElement as h, Fragment } from 'webjsx'
-import { DiffBlock, ReadBlock, SearchBlock, TerminalBlock, WebBlock } from '@deepseek-ai/dsh-client-ui-primitives'
+import { DiffBlock, ReadBlock, SearchBlock, TerminalBlock, WebBlock } from '@freddie/freddie-client-ui-primitives'
 import { diffCardModel } from './models/diff-card-model.js'
 import { readCardModel } from './models/read-card-model.js'
 import { searchCardModel } from './models/search-card-model.js'

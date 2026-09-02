@@ -6,11 +6,11 @@
  * owns EOF and signal exits. Keep named plugin exports with no default export so
  * Loader `unwrapExports` preserves `name`, `inject`, `Config`, and `apply`.
  *
- * @module @deepseek-ai/dsh-sdk-jsonrpc-server
+ * @module @freddie/freddie-sdk-jsonrpc-server
  */
 
-import Schema from '@deepseek-ai/schemastery'
-import { JsonRpcLineTransport } from '@deepseek-ai/dsh-sdk-protocol'
+import Schema from '@freddie/schemastery'
+import { JsonRpcLineTransport } from '@freddie/freddie-sdk-protocol'
 import { HarnessSdkJsonRpcServer } from './server.js'
 
 export * from './server.js'

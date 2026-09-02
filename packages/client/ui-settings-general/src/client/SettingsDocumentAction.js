@@ -1,7 +1,7 @@
 /** Optional settings-header action for opening a file-backed Host document. */
 
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button } from '@freddie/freddie-client-ui-primitives'
 import css from './SettingsDocumentAction.css.js'
 
 /** Header-action custom element: renders only after Host metadata confirms document availability. */

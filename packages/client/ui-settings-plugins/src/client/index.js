@@ -9,7 +9,7 @@
  * settings scope, which keeps them unaware of one another and of other tabs.
  */
 
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import { resolveSlotLabel } from '@freddie/freddie-client-ui-slots'
 import { AgentLoopCard } from './AgentLoopCard.js'
 import { BashCard } from './BashCard.js'
 import { ConfigurablePluginsTab } from './ConfigurablePluginsTab.js'

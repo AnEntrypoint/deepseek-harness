@@ -1,9 +1,9 @@
-/** Package-owned durable retry-event invariants. @module @deepseek-ai/dsh-llm-retry/invariant */
+/** Package-owned durable retry-event invariants. @module @freddie/freddie-llm-retry/invariant */
 
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import { providerForOpenStep } from './history.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-llm-retry'
+const PACKAGE_NAME = '@freddie/freddie-llm-retry'
 
 /** Cordis companion plugin name. */
 export const name = 'llm-retry-invariant'

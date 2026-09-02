@@ -1,6 +1,6 @@
 /** Read-only Host plugin inventory registered into Web Settings. */
 
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './PluginInventorySettingsTab.js'
 import { en, zh } from './locales.js'
 

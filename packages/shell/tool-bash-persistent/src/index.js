@@ -1,12 +1,12 @@
 /**
  * Model-facing persistent `bash` tool over the owner-scoped PTY seam.
- * @module @deepseek-ai/dsh-tool-bash-persistent
+ * @module @freddie/freddie-tool-bash-persistent
  */
 
 import { randomUUID } from 'node:crypto'
-import z from '@deepseek-ai/schemastery'
-import { deadline, timeoutOf } from '@deepseek-ai/dsh-timeout'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import z from '@freddie/schemastery'
+import { deadline, timeoutOf } from '@freddie/freddie-timeout'
+import { defineTool } from '@freddie/freddie-tools'
 
 // TODO: Replace the file-search advice; arbitrary command output need not come from a searchable file.
 const TRUNCATED_MESSAGE = '<response clipped><NOTE>To save on context only part of this file has been shown to you. You should retry this tool after you have searched inside the file with `grep -n` in order to find the line numbers of what you are looking for.</NOTE>'

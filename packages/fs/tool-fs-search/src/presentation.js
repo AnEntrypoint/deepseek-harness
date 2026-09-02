@@ -10,7 +10,7 @@
  * The canonical value never crosses the wire — only the model-facing render text
  * and this JSON `meta` do — so the structured shape a UI renders MUST ride in
  * `meta`. Each projection consumes the SAME retained matches/paths the
- * model-facing render consumes ({@link module:@deepseek-ai/dsh-tool-fs-search/search-core}
+ * model-facing render consumes ({@link module:@freddie/freddie-tool-fs-search/search-core}
  * `retainGrepMatches`/`retainGlobPaths`), so text and card agree about which
  * results survived the inline cap, and reports `total` (every result found) and
  * `truncated`, so a UI never presents a capped result as complete.
@@ -23,14 +23,14 @@
  * final output budget (`dsh-spill-policy`) only shrinks `content`, never `meta`,
  * so this projection owns keeping `meta` bounded.
  *
- * @module @deepseek-ai/dsh-tool-fs-search/presentation
+ * @module @freddie/freddie-tool-fs-search/presentation
  */
 
 /**
  * Group flat matches by file (first-seen order) into the structured by-file shape
  * a UI renders as expandable per-file groups. The grouping matches the
  * model-facing text grouping
- * ({@link module:@deepseek-ai/dsh-tool-fs-search/grep} `formatGrepMatches`), so
+ * ({@link module:@freddie/freddie-tool-fs-search/grep} `formatGrepMatches`), so
  * card and text agree about file order and membership.
  *
  * @param matches - the retained matches to group, in output order.

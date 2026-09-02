@@ -18,7 +18,7 @@ import { applyDiff, createElement as h } from 'webjsx'
 import clsx from 'clsx'
 import {
   IconChevronLeftOutline14, IconChevronRightOutline14, IconCloseFill14,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './AttachmentRail.css.js'
 
 /** Approximate pixels per wheel step for `deltaMode` LINE deltas (Firefox

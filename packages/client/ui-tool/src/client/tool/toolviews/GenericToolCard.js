@@ -7,7 +7,7 @@
 import { createElement as h, Fragment } from 'webjsx'
 import {
   IconApiOutline14, IconBrowseOutline16, IconCodeOutline16, IconEditOutline16, IconSearchOutline16, IconSparkle16,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { readCardModel } from '../models/read-card-model.js'
 import { diffCardModel } from '../models/diff-card-model.js'
 import { searchCardModel } from '../models/search-card-model.js'

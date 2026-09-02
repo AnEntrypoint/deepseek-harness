@@ -1,6 +1,6 @@
 /** Read-only projection of the current Cordis Loader plugin entries. */
 
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import { TypertRemoteService, Remote } from '@freddie/freddie-typert-protocol'
 
 /** Brand an existing Loader-tree entry id at the owning boundary. */
 function pluginEntryId(value) {

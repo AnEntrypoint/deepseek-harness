@@ -7,7 +7,7 @@
 // render in the composer takeover.
 
 import { createElement as h, Fragment } from 'webjsx'
-import { IconQuestionOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconQuestionOutline14 } from '@freddie/freddie-client-ui-primitives'
 import { toolRowModel } from '../models/tool-call-model.js'
 import { ToolRow } from '../components/ToolRow.js'
 import { CONVERSATION_NS as NS } from '../../locale.js'

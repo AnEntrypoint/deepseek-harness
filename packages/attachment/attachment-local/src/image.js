@@ -1,7 +1,7 @@
 /** Raster inspection: full decode at admission, header-only probe on verified reads. */
 
 import sharp from 'sharp'
-import { AttachmentError } from '@deepseek-ai/dsh-attachment'
+import { AttachmentError } from '@freddie/freddie-attachment'
 
 /**
  * Check alpha metadata for bytes produced by this package's encoders.

@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-storage-json",
-  "description": "JSON file KV storage backend for the DeepSeek Harness storage hub",
+  "name": "@freddie/freddie-storage-json",
+  "description": "JSON file KV storage backend for the Freddie storage hub",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/storage/storage-json"
   },
   "type": "module",
@@ -31,16 +31,16 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-storage": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@freddie/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-storage": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   }
 }

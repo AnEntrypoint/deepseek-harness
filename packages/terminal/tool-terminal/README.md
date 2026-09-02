@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-terminal
+# @freddie/freddie-tool-terminal
 
 Six model-facing tools over `ctx.terminals`: `terminal_open`, `terminal_send`, `terminal_read`, `terminal_signal`, `terminal_close`, and `terminal_list`. Every operation requires the exact initiating `Agent`, so a model cannot address another agent's terminal even if it learns the id.
 
@@ -66,4 +66,4 @@ Append-only; new results follow the reusable request prefix.
 ## Known Limitations and Deferred Work
 
 - No named key sequence, TUI, BEL, resize, auto-start, or cross-agent sharing schema is exposed.
-- Background mode requires both `@deepseek-ai/dsh-jobs` and its model-facing controller.
+- Background mode requires both `@freddie/freddie-jobs` and its model-facing controller.

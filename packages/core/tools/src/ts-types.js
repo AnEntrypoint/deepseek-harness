@@ -3,7 +3,7 @@
  * text the model programs against (the `tools:sdk` prompt section). Sibling of
  * `json-schema.js` — `schemas()` (native function calling) and this module (the generated
  * `declare const tools` API) are two projections of the same store.
- * @module @deepseek-ai/dsh-tools/src/ts-types
+ * @module @freddie/freddie-tools/src/ts-types
  */
 
 import { assertSupportedJsonSchema } from './json-schema.js'

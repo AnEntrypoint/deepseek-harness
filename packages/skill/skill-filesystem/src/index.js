@@ -6,7 +6,7 @@
  * user roots, parses YAML frontmatter, and loads bodies through `ctx.fs` when a
  * filesystem service is present.
  *
- * @module @deepseek-ai/dsh-skill-filesystem
+ * @module @freddie/freddie-skill-filesystem
  */
 
 import { access, lstat, readdir, readFile, stat } from 'node:fs/promises'
@@ -14,13 +14,13 @@ import { unwatchFile, watchFile } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { homedir } from 'node:os'
 import chokidar from 'chokidar'
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import { load as parseYaml } from 'js-yaml'
-import { canonicalizeWatchPath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { canonicalizeWatchPath, resolveDshHome } from '@freddie/freddie-home-paths'
 import {
   BUNDLED_SKILL_RANK,
   isSkillName,
-} from '@deepseek-ai/dsh-skill'
+} from '@freddie/freddie-skill'
 
 const PROJECT_DSH_RANK = 100
 const PROJECT_AGENTS_RANK = 200
@@ -85,7 +85,7 @@ export class FileSystemSkillProvider {
     this.name = config.providerName ?? 'filesystem'
     this.includeDefaultRoots = config.includeDefaultRoots ?? true
     this.dshHome = resolveDshHome(config.dshHome)
-    this.agentsHome = resolve(config.agentsHome ?? process.env.DSH_AGENTS_HOME ?? join(homedir(), '.agents'))
+    this.agentsHome = resolve(config.agentsHome ?? process.env.FREDDIE_AGENTS_HOME ?? join(homedir(), '.agents'))
     this.customSkillDirs = (config.customSkillDirs ?? []).map(root => resolve(root))
     this.watchManager = new SkillWatchManager(ctx, control.invalidate, resolveWatchConfig(config))
     control.signal.addEventListener('abort', () => { void this.dispose() }, { once: true })
@@ -93,7 +93,7 @@ export class FileSystemSkillProvider {
     // must see only its explicit roots, or every such provider would
     // re-discover the app's bundled skills under its own provider name.
     const bundledSkillDir = config.bundledSkillDir
-      ?? (this.includeDefaultRoots ? process.env.DSH_BUNDLED_SKILL_DIR : undefined)
+      ?? (this.includeDefaultRoots ? process.env.FREDDIE_BUNDLED_SKILL_DIR : undefined)
     this.bundledSkillDir = bundledSkillDir === undefined ? undefined : resolve(bundledSkillDir)
   }
 

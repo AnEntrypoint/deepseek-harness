@@ -1,25 +1,25 @@
 /**
- * Bundled `dsh-badge` skill provider.
+ * Bundled `freddie-badge` skill provider.
  *
- * @module @deepseek-ai/dsh-skill-badge
+ * @module @freddie/freddie-skill-badge
  */
 
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import {
   BUNDLED_SKILL_RANK,
-} from '@deepseek-ai/dsh-skill'
+} from '@freddie/freddie-skill'
 
-const PROVIDER_NAME = 'dsh-badge'
-const SKILL_BODY_URL = new URL('../assets/dsh-badge.md', import.meta.url)
+const PROVIDER_NAME = 'freddie-badge'
+const SKILL_BODY_URL = new URL('../assets/freddie-badge.md', import.meta.url)
 const RESOURCE_BASE = {
   kind: 'directory',
   path: fileURLToPath(new URL('../assets/', import.meta.url)),
 }
 const INVOCATION = { modelInvocable: true, userInvocable: true }
-const DESCRIPTION = 'Add the official “powered by dsh” badge to documents, pull requests, merge requests, and other content produced with DeepSeek Harness. Use whenever creating a pull request or merge request. Also use when the user asks for a dsh badge, powered-by-dsh attribution, or a reusable dsh badge asset or snippet.'
+const DESCRIPTION = 'Add the official “powered by dsh” badge to documents, pull requests, merge requests, and other content produced with Freddie. Use whenever creating a pull request or merge request. Also use when the user asks for a dsh badge, powered-by-dsh attribution, or a reusable dsh badge asset or snippet.'
 const CANDIDATE = {
-  name: 'dsh-badge',
+  name: 'freddie-badge',
   description: DESCRIPTION,
   invocation: INVOCATION,
   provider: PROVIDER_NAME,
@@ -50,7 +50,7 @@ export const name = 'skill-badge'
 /** Service required by the bundled provider. */
 export const inject = ['skills']
 
-/** Register the bundled `dsh-badge` provider on `ctx.skills`. */
+/** Register the bundled `freddie-badge` provider on `ctx.skills`. */
 export function apply(ctx) {
   ctx.skills.registerProvider(() => provider)
 }

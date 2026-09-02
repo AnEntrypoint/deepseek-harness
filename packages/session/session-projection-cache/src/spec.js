@@ -6,11 +6,11 @@
  * the storage-domain routing decides the medium (the shipped composition's
  * json backend lands it at `<root>/session_projcache.json`, beside
  * `workspace.json`).
- * @module @deepseek-ai/dsh-session-projection-cache/src/spec
+ * @module @freddie/freddie-session-projection-cache/src/spec
  */
 
 import { z } from 'zod'
-import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
+import { defineDomain, domainTable } from '@freddie/freddie-storage-domain'
 
 /**
  * One persisted checkpoint row (the RFC's `(sessionId, key, ver, seq, val)`

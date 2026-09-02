@@ -4,5 +4,5 @@
  * and an operation discriminant — never the old value (a diffing consumer
  * keeps its own previous snapshot). This is the event source for cross-process
  * change push (RPC frames) in a later phase.
- * @module @deepseek-ai/dsh-storage-domain/src/events
+ * @module @freddie/freddie-storage-domain/src/events
  */

@@ -1,9 +1,9 @@
 /** Canonical session URI and inline mention encoding. */
 
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { SessionId } from '@freddie/freddie-session'
 import { SessionReferenceError } from './config.js'
 
-/** URI scheme reserved for DeepSeek Harness session snapshots. */
+/** URI scheme reserved for Freddie session snapshots. */
 export const SESSION_REFERENCE_SCHEME = 'dsh-session:'
 
 /**

@@ -1,5 +1,5 @@
 import { applyDiff, createElement as h } from 'webjsx'
-import { IconCloseFill14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconCloseFill14 } from '@freddie/freddie-client-ui-primitives'
 import css from './PlanModeControl.css.js'
 
 /**

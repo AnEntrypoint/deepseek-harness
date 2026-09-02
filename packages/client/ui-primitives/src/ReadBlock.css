@@ -13,8 +13,8 @@
 
   position: relative;
   margin: 16px 0;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-markdown-code-block);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-markdown-code-block);
   border-radius: var(--dsl-read-radius);
 }
 
@@ -24,7 +24,7 @@
   align-items: center;
   gap: 12px;
   padding: 9px 14px;
-  background: var(--dsw-alias-markdown-code-block-banner);
+  background: var(--freddie-alias-markdown-code-block-banner);
   border-top-left-radius: var(--dsl-read-radius);
   border-top-right-radius: var(--dsl-read-radius);
 }
@@ -34,7 +34,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font-family: var(--ds-font-family-code);
   font-size: 12px;
   line-height: 18px;
@@ -48,12 +48,12 @@
 }
 
 .dsh-readBlock__count {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: var(--dsw-font-xs-13);
 }
 
 .dsh-readBlock__lang {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-family: var(--ds-font-family-code);
   font-size: 12px;
   line-height: 18px;
@@ -64,7 +64,7 @@
   border: none;
   padding: 0;
   margin: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   cursor: pointer;
   font: var(--dsw-font-xs-13);
 }
@@ -90,14 +90,14 @@
   width: var(--dsl-read-gutter);
   padding-right: 14px;
   text-align: right;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   /* The gutter is chrome, not content: keep it out of a text selection so a
      copy of the visible rows carries the source, not the line numbers. */
   user-select: none;
 }
 
 .dsh-readBlock__content {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-readBlock__expand {
@@ -106,12 +106,12 @@
   padding: 0 0 0 var(--dsl-read-gutter);
   border: none;
   background-color: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
   font: inherit;
   text-align: left;
 }
 
 .dsh-readBlock__expand:hover {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }

@@ -1,8 +1,8 @@
-# @deepseek-ai/dsh-web-search-exa
+# @freddie/freddie-web-search-exa
 
 An [Exa](https://exa.ai)-backed `WebSearchProvider` for the harness [web capability seam](../web/README.md) (`ctx.web`). It calls Exa's `POST /search` endpoint with highlight contents and maps the flat `results[]` into the seam's normalized `WebSearchResult`.
 
-This is an **implementation** package: it registers a provider into `ctx.web`, it does not own the `ctx.web` key and it does not register a model-facing tool (that is `@deepseek-ai/dsh-tool-web`). Like `@deepseek-ai/dsh-llm-deepseek`, it is a function/namespace plugin (`inject: ['web']`) that registers its backend, not a default-export service.
+This is an **implementation** package: it registers a provider into `ctx.web`, it does not own the `ctx.web` key and it does not register a model-facing tool (that is `@freddie/freddie-tool-web`). Like `@freddie/freddie-llm-deepseek`, it is a function/namespace plugin (`inject: ['web']`) that registers its backend, not a default-export service.
 
 ## Config
 
@@ -16,7 +16,7 @@ This is an **implementation** package: it registers a provider into `ctx.web`, i
 
 ```yaml
 - id: web-search-exa
-  name: '@deepseek-ai/dsh-web-search-exa'
+  name: '@freddie/freddie-web-search-exa'
   config:
     apiKey: !!js process.env.EXA_API_KEY
 ```

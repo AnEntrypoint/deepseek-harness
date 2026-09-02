@@ -1,6 +1,6 @@
-/** Durable attachment storage seam (`ctx.attachments`). @module @deepseek-ai/dsh-attachment */
+/** Durable attachment storage seam (`ctx.attachments`). @module @freddie/freddie-attachment */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { AttachmentError } from './error.js'
 
 export { AttachmentId, ImageVariantId } from './brand.js'

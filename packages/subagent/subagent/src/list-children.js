@@ -13,7 +13,7 @@
  * error. The module owns no catalog state and does not consult Activation,
  * Agent-registry, continuation-manager, or provider state.
  *
- * @module @deepseek-ai/dsh-subagent
+ * @module @freddie/freddie-subagent
  */
 
 import { SubagentError } from './error.js'
@@ -108,7 +108,7 @@ async function prepareListing(ctx, signal) {
   // deployment configuration error, never an empty success.
   if (projections === undefined) {
     throw new SubagentError(
-      'listing subagents requires the sessionProjections registry (load @deepseek-ai/dsh-session-projection)',
+      'listing subagents requires the sessionProjections registry (load @freddie/freddie-session-projection)',
       'SUBAGENT_CONTROL_PROJECTIONS_UNAVAILABLE',
     )
   }
@@ -118,7 +118,7 @@ async function prepareListing(ctx, signal) {
   const sessions = ctx.get('sessions')
   if (sessions === undefined) {
     throw new SubagentError(
-      'listing subagents requires the session store (load @deepseek-ai/dsh-session)',
+      'listing subagents requires the session store (load @freddie/freddie-session)',
       'SUBAGENT_CONTROL_SESSION_STORE_UNAVAILABLE',
     )
   }

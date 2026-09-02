@@ -29,7 +29,7 @@ import {
   Button, IconCloseFill14, IconPersonalizationOutline16,
   IconProjectAddOutline16, IconSearchOutline16, renderMenu,
   renderModal, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { deriveFlat, deriveGroups, deriveSearchResults, UNGROUPED_KEY } from './tree.js'
 import {
   DshProjectRowItem, DshSessionNodeItem, SearchResultItem,

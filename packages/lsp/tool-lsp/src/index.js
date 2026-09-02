@@ -7,14 +7,14 @@
  * imports no provider.
  *
  * Namespace plugin (named exports, no default export).
- * @module @deepseek-ai/dsh-tool-lsp
+ * @module @freddie/freddie-tool-lsp
  */
 
-import z from '@deepseek-ai/schemastery'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { assertNever } from '@deepseek-ai/dsh-llm'
-import { LspError } from '@deepseek-ai/dsh-lsp'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import z from '@freddie/schemastery'
+import { defineTool } from '@freddie/freddie-tools'
+import { assertNever } from '@freddie/freddie-llm'
+import { LspError } from '@freddie/freddie-lsp'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
 import {
   DEFAULT_MAX_LOCATIONS,
   DEFAULT_MAX_RESULT_CHARS,

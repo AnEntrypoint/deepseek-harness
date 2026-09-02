@@ -19,7 +19,7 @@ Visibility drives the label and actions: active shows "Ongoing Goal" with pause/
 
 The runtime session gains the goal surface the strip (and future UI) needs through the host-computed `goal` projection. The history tail seeds its whole current value, and `session/projection` frames update it when durable `agent/inbox/spliced` insertions commit goal snapshots or clear tombstones; later context admission is irrelevant to UI freshness. The four rendered mutation verbs fold transport failures into `{ ok: false }` results like every sibling session method.
 
-The strip's background is `--dsw-alias-interactive-bg-hover` rather than the mock's literal `#F5F6F7`: the translucent hover gray resolves to that value over the white light-theme base and lifts the strip off the composer card in dark mode, where a static light token would sink. All colors are `--dsw-*` tokens.
+The strip's background is `--freddie-alias-interactive-bg-hover` rather than the mock's literal `#F5F6F7`: the translucent hover gray resolves to that value over the white light-theme base and lifts the strip off the composer card in dark mode, where a static light token would sink. All colors are `--dsw-*` tokens.
 
 ## Testing
 

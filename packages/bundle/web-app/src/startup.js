@@ -3,11 +3,11 @@
  * family (`--host`, `--port`, `--trusted-host`, `--no-open`) and its `--help`
  * text, then provides the immutable values as {@link WEB_STARTUP_SERVICE}.
  * Ordinary rows inject that service before reading it from lazy config.
- * @module @deepseek-ai/dsh-web-app/startup
+ * @module @freddie/freddie-web-app/startup
  */
 
 import { Command } from 'commander'
-import { parseCmdline } from '@deepseek-ai/dsh-cmdline'
+import { parseCmdline } from '@freddie/freddie-cmdline'
 
 /** Stable Cordis plugin name. */
 export const name = 'web-startup'
@@ -33,7 +33,7 @@ export const WEB_STARTUP_SERVICE = 'webStartup'
 function webCommand() {
   return new Command()
     .name('dsh --profile web')
-    .description('Serve the DeepSeek Harness browser UI.')
+    .description('Serve the Freddie browser UI.')
     .helpOption('-h, --help', 'show this help')
     .option('--host <host>', 'bind host')
     .option('--no-open', 'do not open the Web UI in the default browser')

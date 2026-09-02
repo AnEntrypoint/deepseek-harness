@@ -1,12 +1,12 @@
 /**
  * Model-facing, workspace-authorized session-history search and read tools.
  *
- * @module @deepseek-ai/dsh-tool-session-query
+ * @module @freddie/freddie-tool-session-query
  */
 
-import z from '@deepseek-ai/schemastery'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import z from '@freddie/schemastery'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
+import { defineTool } from '@freddie/freddie-tools'
 import { toolInput } from './input.js'
 import { operations } from './operations.js'
 import { presentation } from './presentation.js'

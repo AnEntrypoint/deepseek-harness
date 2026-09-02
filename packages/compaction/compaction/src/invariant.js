@@ -1,9 +1,9 @@
-/** Package-owned compaction log-stream invariants. @module @deepseek-ai/dsh-compaction/invariant */
+/** Package-owned compaction log-stream invariants. @module @freddie/freddie-compaction/invariant */
 
-import { isReplacementSurfaceEvent } from '@deepseek-ai/dsh-session'
+import { isReplacementSurfaceEvent } from '@freddie/freddie-session'
 import { isCompactCheckpointSource } from './checkpoint.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-compaction'
+const PACKAGE_NAME = '@freddie/freddie-compaction'
 
 /** Cordis companion plugin name. */
 export const name = 'compaction-invariant'

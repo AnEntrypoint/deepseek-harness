@@ -8,16 +8,16 @@
  * anything, while an in-flight stream keeps the facts it started with. The
  * one registration-captured fact — the retry policy — re-registers the route
  * in place when it changes.
- * @module @deepseek-ai/dsh-llm-deepseek
+ * @module @freddie/freddie-llm-deepseek
  */
 
-import z from '@deepseek-ai/schemastery'
-import { assertUsableApiKey, LlmError, resolveRetryPolicy, RetryPolicySchema } from '@deepseek-ai/dsh-llm'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import { deepEqualJson, installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { getOrCreateAnonymousUserId } from '@deepseek-ai/dsh-anonymous-user-id'
+import z from '@freddie/schemastery'
+import { assertUsableApiKey, LlmError, resolveRetryPolicy, RetryPolicySchema } from '@freddie/freddie-llm'
+import { credentialRef } from '@freddie/freddie-credentials'
+import { launchEnvironmentOf } from '@freddie/freddie-launch-environment'
+import { deepEqualJson, installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
+import { MAX_TIMER_DELAY_MS } from '@freddie/freddie-timeout'
+import { getOrCreateAnonymousUserId } from '@freddie/freddie-anonymous-user-id'
 import {
   DEFAULT_CONTEXT_WINDOW,
   DEFAULT_FILE_EXPIRY_SECONDS,

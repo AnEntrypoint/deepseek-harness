@@ -10,8 +10,8 @@
 
   position: relative;
   margin: 16px 0;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-markdown-code-block);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-markdown-code-block);
   border-radius: var(--dsl-diff-radius);
 }
 
@@ -28,7 +28,7 @@
   border: none;
   padding: 0;
   margin: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   cursor: pointer;
   font: var(--dsw-font-xs-13);
 }
@@ -51,14 +51,14 @@
    line's end for it — a long path scrolls under the button otherwise, and the
    button's hit area would eat clicks on the path's tail. */
 .dsh-diffBlock__path {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font-weight: 600;
   padding-right: 56px;
 }
 
 /* A same-file second hunk's separator (a scattered edit), in the dim tone. */
 .dsh-diffBlock__gap {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 /* The diff's own meaning-carrying colors: removed on the error token, added on
@@ -66,20 +66,20 @@
    shown line agree, and so the sign reads without relying on color alone. */
 .dsh-diffBlock__del::before {
   content: '- ';
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-diffBlock__del {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-diffBlock__add::before {
   content: '+ ';
-  color: var(--dsw-alias-state-success-primary);
+  color: var(--freddie-alias-state-success-primary);
 }
 
 .dsh-diffBlock__add {
-  color: var(--dsw-alias-state-success-primary);
+  color: var(--freddie-alias-state-success-primary);
 }
 
 .dsh-diffBlock__expand {
@@ -88,14 +88,14 @@
   padding: 0;
   border: none;
   background-color: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
   font: inherit;
   text-align: left;
 }
 
 .dsh-diffBlock__expand:hover {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 /* The change summary, dim under the body: `└ +A -R · N file(s)`, the same
@@ -103,5 +103,5 @@
 .dsh-diffBlock__footer {
   padding: 0 14px 12px;
   font: var(--dsw-font-markdown-code-block);
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }

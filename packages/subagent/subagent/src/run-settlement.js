@@ -3,7 +3,7 @@
  * the one-shot background path uses Jobs; continuable children have no Task,
  * no per-message result, and no Task cancellation.
  *
- * @module @deepseek-ai/dsh-subagent/run-settlement
+ * @module @freddie/freddie-subagent/run-settlement
  */
 
 /** Flatten a child's final output blocks to the task's final text. */

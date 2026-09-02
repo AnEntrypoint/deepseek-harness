@@ -3,10 +3,10 @@
  * {@link agentEvents} couples the agent subject to its scope carrier, so the
  * scope key and the payload's `agent` cannot diverge; repeat dispatchers (the
  * loop driver) build it once in the agent's constructor and reuse it.
- * @module @deepseek-ai/dsh-agent/dispatch
+ * @module @freddie/freddie-agent/dispatch
  */
 
-import { scopeTarget } from '@deepseek-ai/dsh-scope'
+import { scopeTarget } from '@freddie/freddie-scope'
 
 /**
  * Build the fused scope carrier for one agent subject.

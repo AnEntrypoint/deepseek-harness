@@ -2,10 +2,10 @@
  * Per-harness-home anonymous user id shared by telemetry and feedback.
  *
  * The id is a random UUID persisted as a bare line in `.anonymous-user-id` inside the
- * harness home resolved by {@link resolveDshHome} (`$DSH_HOME` > `~/.dsh`),
+ * harness home resolved by {@link resolveDshHome} (`$FREDDIE_HOME` > `~/.dsh`),
  * and never derived from the hostname, network address, git remote, or any
  * other identifying source. It is scoped to the harness home, not the
- * machine: every process sharing one `$DSH_HOME` reports the same id, and
+ * machine: every process sharing one `$FREDDIE_HOME` reports the same id, and
  * deleting the file mints a fresh identity on the next launch.
  *
  * Reads and writes are synchronous so boot-time and command consumers can
@@ -13,13 +13,13 @@
  * touches the disk once, and a file deleted mid-run keeps the process's id
  * until the next launch.
  *
- * @module @deepseek-ai/dsh-anonymous-user-id
+ * @module @freddie/freddie-anonymous-user-id
  */
 
 import { randomUUID } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { resolveDshHome } from '@freddie/freddie-home-paths'
 
 /** File inside the harness home storing the id: a bare UUID line, no wrapper format. */
 export const ANONYMOUS_USER_ID_FILE_NAME = '.anonymous-user-id'

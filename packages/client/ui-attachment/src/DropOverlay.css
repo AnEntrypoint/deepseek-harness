@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background-color: var(--dsw-alias-bg-mask-drop);
+  background-color: var(--freddie-alias-bg-mask-drop);
   backdrop-filter: blur(10px);
   animation: dsh-dropOverlay__fade-in 160ms ease-out;
 }
@@ -32,7 +32,7 @@
   align-items: center;
   margin-top: -3%;
   padding: 0 40px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   text-align: center;
 }
 
@@ -49,6 +49,6 @@
 .dsh-dropOverlay__desc {
   margin-top: 16px;
   font: var(--dsw-font-s-14);
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   white-space: pre-wrap;
 }

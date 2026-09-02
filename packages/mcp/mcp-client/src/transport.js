@@ -8,11 +8,11 @@
 
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
+import { scrubbedParentEnv } from '@freddie/freddie-subprocess'
 
 /**
  * The subprocess seam's scrubbed parent env (credential-shaped and stale
- * `DSH_*` names dropped), plus the spec's explicit env. The MCP SDK owns the
+ * `FREDDIE_*` names dropped), plus the spec's explicit env. The MCP SDK owns the
  * actual spawn, so this transport shares the scrub definition rather than the
  * spawn path.
  */

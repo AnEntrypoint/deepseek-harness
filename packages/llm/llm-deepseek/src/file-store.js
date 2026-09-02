@@ -1,6 +1,6 @@
 /** DeepSeek Files API upload reuse, invalidation, and quota recovery. @module dsh-llm-deepseek/file-store */
 
-import { LlmError } from '@deepseek-ai/dsh-llm'
+import { LlmError } from '@freddie/freddie-llm'
 import { DeepSeekFilesClient, isFilesQuotaError } from './files-api.js'
 import { deepSeekFileScope, DeepSeekUploadIndex } from './upload-index.js'
 

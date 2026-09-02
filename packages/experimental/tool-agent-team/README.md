@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-experimental-tool-agent-team
+# @freddie/freddie-experimental-tool-agent-team
 
 Scoped model-facing adapter for [`ctx.agentTeams`](../agent-team/README.md). It installs the Agent Teams policy and collaboration tools in each implicit Lead and durable teammate scope. Scoped Team definitions shadow same-named legacy global continuable-subagent controls, so a composition that mounts both must disable the legacy definitions.
 
@@ -6,7 +6,7 @@ Scoped model-facing adapter for [`ctx.agentTeams`](../agent-team/README.md). It 
 
 ```yaml
 - id: tool-agent-team
-  name: '@deepseek-ai/dsh-experimental-tool-agent-team'
+  name: '@freddie/freddie-experimental-tool-agent-team'
   config:
     freshProvider: spawn
     forkProvider: fork

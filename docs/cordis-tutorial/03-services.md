@@ -7,9 +7,9 @@ A **service** is a named capability one plugin provides and other plugins consum
 Create `greeter.ts` in `tmp/cordis-tutorial`:
 
 ```ts
-import { Service, type Context } from '@deepseek-ai/cordis'
+import { Service, type Context } from '@freddie/cordis'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@freddie/cordis' {
   interface Context {
     greeter: GreeterService
   }
@@ -35,7 +35,7 @@ export function apply(ctx: Context) {
 Two pieces work together:
 
 - **Runtime**: `super(ctx, 'greeter')` registers the instance under the name `greeter`. From then on, any plugin can reach it as `ctx.greeter`. The registration is an effect — unloading the provider removes the service.
-- **Compile time**: the `declare module '@deepseek-ai/cordis'` block is TypeScript declaration merging. It adds `greeter` to the `Context` interface so `ctx.greeter` typechecks everywhere. It generates no code; without it the service still works at runtime, but consumers lose type safety.
+- **Compile time**: the `declare module '@freddie/cordis'` block is TypeScript declaration merging. It adds `greeter` to the `Context` interface so `ctx.greeter` typechecks everywhere. It generates no code; without it the service still works at runtime, but consumers lose type safety.
 
 A `Service` subclass is itself a plugin (the class form from chapter 1), so `ctx.plugin(GreeterService)` mounts it like any other.
 
@@ -44,7 +44,7 @@ A `Service` subclass is itself a plugin (the class form from chapter 1), so `ctx
 Create `consumer.ts`:
 
 ```ts
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@freddie/cordis'
 
 export const name = 'consumer'
 export const inject = ['greeter']
@@ -93,4 +93,4 @@ Service names live in one flat namespace per application. Prefix or namespace yo
 
 Next: [Events](04-events.md) — communication without a shared service.
 
-[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/lanmower/freddie)

@@ -13,7 +13,7 @@
  * until the result arrives.
  * @module
  */
-import { abbreviateHomePath } from '@deepseek-ai/dsh-client-runtime/client'
+import { abbreviateHomePath } from '@freddie/freddie-client-runtime/client'
 import { relativizeToCwd } from './tool-call-model.js'
 
 /**

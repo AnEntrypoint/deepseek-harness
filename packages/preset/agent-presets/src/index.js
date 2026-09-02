@@ -18,15 +18,15 @@
  * agent factory's `setup(agentCtx)` hook is the one supported call site,
  * because only there is the join installed while the agent is still
  * unpublished, so a rejected composition rolls the whole creation back.
- * @module @deepseek-ai/dsh-agent-presets
+ * @module @freddie/freddie-agent-presets
  */
 
 import { stat } from 'node:fs/promises'
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { bindScopeParent, createScope, scopeOf } from '@deepseek-ai/dsh-scope'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { bindScopeParent, createScope, scopeOf } from '@freddie/freddie-scope'
+import { settingsNamespace } from '@freddie/freddie-settings'
+import { dshHomePath } from '@freddie/freddie-home-paths'
 import { discoverPresets, USER_PRESET_DIR } from './discovery.js'
 import { copyComposition, deleteComposition, readComposition } from './authoring.js'
 import { mountPreset, serviceForAgent, standingMountFor } from './mount.js'

@@ -1,9 +1,9 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-host-frontend-static`.
- * @module @deepseek-ai/dsh-host-frontend-static/invariant
+ * Package-owned invariant companion for `@freddie/freddie-host-frontend-static`.
+ * @module @freddie/freddie-host-frontend-static/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-host-frontend-static'
+const PACKAGE_NAME = '@freddie/freddie-host-frontend-static'
 
 /** Cordis companion plugin name. */
 export const name = 'host-frontend-static-invariant'

@@ -7,7 +7,7 @@
  * @module dsh-session/request-header
  */
 
-import { callConfigEquals } from '@deepseek-ai/dsh-llm'
+import { callConfigEquals } from '@freddie/freddie-llm'
 
 /**
  * Normalize a header to canonical form: an empty system prompt and empty tool

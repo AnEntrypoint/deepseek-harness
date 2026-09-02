@@ -10,7 +10,7 @@ import {
   JsonTree,
   MarkdownText,
   Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { structuredPatch } from 'diff'
 import { formatElapsedSeconds, trajectoryRecordId } from './trajectory-record.js'
 import {

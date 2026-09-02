@@ -1,6 +1,6 @@
-/** Package-owned tool-pipeline invariants. @module @deepseek-ai/dsh-tools/invariant */
+/** Package-owned tool-pipeline invariants. @module @freddie/freddie-tools/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-tools'
+const PACKAGE_NAME = '@freddie/freddie-tools'
 
 /** Cordis companion plugin name. */
 export const name = 'tools-invariant'

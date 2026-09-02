@@ -4,7 +4,7 @@ import scrollbar from '../styles/scrollbar.css.js'
 import gradientShadowText from '../styles/gradient-shadow-text.css.js'
 import shiki from '../styles/shiki.css.js'
 
-const PLUGIN_ID = '@deepseek-ai/dsh-client-ui-theme'
+const PLUGIN_ID = '@freddie/freddie-client-ui-theme'
 
 const STYLES = [
   ['base.css', base],

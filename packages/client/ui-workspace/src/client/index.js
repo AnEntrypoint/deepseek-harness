@@ -8,7 +8,7 @@
  * client half (see the contract module doc). Export discipline:
  * packages/client/AGENTS.md.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { createWorkspaceViewStore } from './stores.js'
 import './WorkspaceBrowser.js'
 import './WorkspacePicker.js'

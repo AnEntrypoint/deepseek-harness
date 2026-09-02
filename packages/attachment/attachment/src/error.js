@@ -1,4 +1,4 @@
-/** Attachment failure class. @module @deepseek-ai/dsh-attachment/error */
+/** Attachment failure class. @module @freddie/freddie-attachment/error */
 
 const IMAGE_ADMISSION_ERROR_CODES = [
   'TOO_MANY_IMAGES',
@@ -19,7 +19,7 @@ const IMAGE_ADMISSION_ERROR_CODE_SET = new Set(IMAGE_ADMISSION_ERROR_CODES)
  * Stable failures suitable for host RPC error mapping.
  *
  * Deliberately re-implements the `HarnessError` shape instead of extending it:
- * the base lives in `@deepseek-ai/dsh-llm`, which itself depends on this
+ * the base lives in `@freddie/freddie-llm`, which itself depends on this
  * package (`ImageBlock` references `ImageAttachmentRef`), so sharing the base
  * would create a dependency cycle. Consumers route on `code`, never on the
  * prototype chain, so the shapes stay interchangeable at the wire boundary.

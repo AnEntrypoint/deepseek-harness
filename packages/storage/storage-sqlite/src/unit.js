@@ -4,10 +4,10 @@
  * `unit_globals` table. Each primitive is a single statement, so atomicity
  * comes from SQLite itself — no explicit transactions, and no write queue
  * (write ordering is the caller's responsibility per the KV contract).
- * @module @deepseek-ai/dsh-storage-sqlite/unit
+ * @module @freddie/freddie-storage-sqlite/unit
  */
 
-import { StorageError } from '@deepseek-ai/dsh-storage'
+import { StorageError } from '@freddie/freddie-storage'
 import { recordTableName } from './schema.js'
 
 /**

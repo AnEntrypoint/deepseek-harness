@@ -3,11 +3,11 @@
  * continuable in-process child's unpublished context. Roots, one-shot children,
  * remote providers, and agentless executions never see the registration.
  *
- * @module @deepseek-ai/dsh-tool-subagent-report
+ * @module @freddie/freddie-tool-subagent-report
  */
 
-import z from '@deepseek-ai/schemastery'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import z from '@freddie/schemastery'
+import { defineTool } from '@freddie/freddie-tools'
 
 export const name = 'tool-subagent-report'
 // The contribution registers only through childCtx.tools and

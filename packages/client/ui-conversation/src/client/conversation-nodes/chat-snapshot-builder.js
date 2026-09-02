@@ -1,4 +1,4 @@
-import { sessionRecallLabels } from '@deepseek-ai/dsh-client-runtime/client'
+import { sessionRecallLabels } from '@freddie/freddie-client-runtime/client'
 import { isRunningTool } from '../contract/chat-nodes.js'
 
 const EMPTY_KEYS = []

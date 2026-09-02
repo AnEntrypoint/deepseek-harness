@@ -2,7 +2,7 @@
  * Pure session projections for subagent identity (mode/label) and active-turn
  * duration.
  *
- * @module @deepseek-ai/dsh-subagent/projection
+ * @module @freddie/freddie-subagent/projection
  */
 
 import { z } from 'zod'

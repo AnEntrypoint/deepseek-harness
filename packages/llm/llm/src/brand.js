@@ -2,12 +2,12 @@
  * dsh-llm's owned branded ids: tool-call correlation and provider request
  * diagnostics.
  *
- * The `Branded<B>` primitive itself lives in `@deepseek-ai/dsh-brand` (a
+ * The `Branded<B>` primitive itself lives in `@freddie/freddie-brand` (a
  * zero-dependency type-only package) so every owner of a cross-boundary id can
  * brand it without depending on dsh-llm; see that package's README for the
  * nominal-typing policy.
  *
- * @module @deepseek-ai/dsh-llm/brand
+ * @module @freddie/freddie-llm/brand
  */
 
 /**

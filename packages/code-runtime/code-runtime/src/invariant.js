@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-code-runtime`.
- * @module @deepseek-ai/dsh-code-runtime/invariant
+ * Package-owned invariant companion for `@freddie/freddie-code-runtime`.
+ * @module @freddie/freddie-code-runtime/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-code-runtime'
+const PACKAGE_NAME = '@freddie/freddie-code-runtime'
 
 /** Cordis companion plugin name. */
 export const name = 'code-runtime-invariant'

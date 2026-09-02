@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-session-query
+# @freddie/freddie-session-query
 
 `SessionQueryEngine` is the combined abstract `ctx.sessionQuery` contract. It implements exact session-history retrieval, relationship tracing, and provider-independent filtering over live `ctx.sessions` plus optional dynamically mounted `ctx.sessionPersistence`; concrete backends implement its two full-text methods. Matching ids produce one record: live events win, while `live` and `persisted` report both source availabilities. Conflicting immutable headers fail with `SESSION_QUERY_SOURCE_CONFLICT`.
 
@@ -27,7 +27,7 @@ The text clause is deliberately independent of FTS providers: caller text is esc
 
 `SessionQueryEngine.searchSessions(request, exec?)` groups the logical corpus by strongest matching event; `searchEvents(request, exec?)` searches one logical session. These are the service's only abstract methods. Both return pages whose continuation is an owned branded `SessionSearchCursor`, accept optional cancellation, and expose snippets without provider-specific numeric scores. An event-search page also carries the cloned target header from the same indexed generation as its hits, allowing authorization consumers to bind policy to the payload observation. Search requests accept only metadata event filters, because literal-text filtering is the scan path described above.
 
-The package has no provider coordinator, fallback implementation, or standalone concrete plugin. A concrete service backend inherits the implemented reads, filters, and traces while owning full-text observation, reconciliation, ranking, cursor generations, and query execution; the first implementation is [`@deepseek-ai/dsh-session-query-sqlite`](../session-query-sqlite/README.md).
+The package has no provider coordinator, fallback implementation, or standalone concrete plugin. A concrete service backend inherits the implemented reads, filters, and traces while owning full-text observation, reconciliation, ranking, cursor generations, and query execution; the first implementation is [`@freddie/freddie-session-query-sqlite`](../session-query-sqlite/README.md).
 
 `SessionQueryError.code` is a closed union covering request validation, missing targets, malformed surfaces, source conflicts, persistence/index failures, cancellation, and invalid or stale cursors; the exact literals are defined in [`src/config.ts`](src/config.ts).
 

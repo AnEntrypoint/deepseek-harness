@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-workflow-worker-thread
+# @freddie/freddie-workflow-worker-thread
 
 This package implements `WorkflowEngine` with one Node worker thread per run. The worker executes the orchestration script; child agents remain on the host and are reached through `ctx.subagents` over a typed host/worker protocol.
 

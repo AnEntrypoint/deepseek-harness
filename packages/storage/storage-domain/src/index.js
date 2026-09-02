@@ -4,11 +4,11 @@
  * layer — consumers depend on this package and never touch backends directly.
  * Plugin `Config` is schemastery; record schemas inside domain specs are zod
  * (see `src/spec.js` for the split rationale).
- * @module @deepseek-ai/dsh-storage-domain
+ * @module @freddie/freddie-storage-domain
  */
 
-import z from '@deepseek-ai/schemastery'
-import { storageBackendServiceKey } from '@deepseek-ai/dsh-storage'
+import z from '@freddie/schemastery'
+import { storageBackendServiceKey } from '@freddie/freddie-storage'
 import { DomainError } from './error.js'
 import { descriptorOf } from './spec.js'
 import { DomainImpl } from './domain.js'

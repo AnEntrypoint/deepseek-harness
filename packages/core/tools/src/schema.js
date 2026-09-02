@@ -1,6 +1,6 @@
 /** Unified JSON-value schema DSL, inference, compilation, and typed tool helper. @module dsh-tools/schema */
 
-import { HarnessError } from '@deepseek-ai/dsh-llm'
+import { HarnessError } from '@freddie/freddie-llm'
 import { assertSupportedJsonSchema, isJsonSchemaRecord, isPlainJsonArray, JsonSchemaError, validateJsonSchemaValue } from './json-schema.js'
 
 const ANNOTATION_KEYS = ['description', 'title', 'default', 'examples']

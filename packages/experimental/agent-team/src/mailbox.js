@@ -1,8 +1,8 @@
 /** Durable Team mailbox admission, target-local dispatch, acknowledgement, and recovery. */
 
 import { randomUUID } from 'node:crypto'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { SessionId } from '@freddie/freddie-session'
 import { errorMessage, TeamError } from './error.js'
 import { resolveActiveMember } from './roster.js'
 import { messageAccepted } from './session-message.js'

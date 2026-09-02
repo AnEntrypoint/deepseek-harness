@@ -1,14 +1,14 @@
 /**
  * Same-session goal domain: event-sourced state, compare-and-set mutations,
  * and process-local continuation activation.
- * @module @deepseek-ai/dsh-goal
+ * @module @freddie/freddie-goal
  */
 
 import { randomUUID } from 'node:crypto'
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import { z as zod } from 'zod'
-import { agentEvents } from '@deepseek-ai/dsh-agent'
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import { agentEvents } from '@freddie/freddie-agent'
+import { TypertRemoteService, Remote } from '@freddie/freddie-typert-protocol'
 import {
   applyGoalEvent,
   decodeGoalChange,

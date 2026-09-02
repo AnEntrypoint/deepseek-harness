@@ -4,7 +4,7 @@
  * version this controller last observed, and a `version-conflict` reply carries
  * the authoritative item, so a lost race reconciles from the reply itself
  * instead of refetching the whole Session.
- * @module @deepseek-ai/dsh-client-ui-message-feedback/client/controller
+ * @module @freddie/freddie-client-ui-message-feedback/client/controller
  */
 
 /** Load state of the one list read that seeds every per-message control. */

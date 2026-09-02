@@ -4,7 +4,7 @@ import {
   SessionQueryError,
   materializeSessionEventResultFilters,
   materializeSessionResultFilters,
-} from '@deepseek-ai/dsh-session-query'
+} from '@freddie/freddie-session-query'
 
 /** Collision-free marker inserted before an FTS5 match by `highlight()`. */
 export const FTS_HIGHLIGHT_START = '﷐'

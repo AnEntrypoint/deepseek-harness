@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-subagent-in-process-driver`.
- * @module @deepseek-ai/dsh-subagent-in-process-driver/invariant
+ * Package-owned invariant companion for `@freddie/freddie-subagent-in-process-driver`.
+ * @module @freddie/freddie-subagent-in-process-driver/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-subagent-in-process-driver'
+const PACKAGE_NAME = '@freddie/freddie-subagent-in-process-driver'
 
 /** Cordis companion plugin name. */
 export const name = 'subagent-in-process-driver-invariant'

@@ -1,11 +1,11 @@
 /**
  * Package-owned strict Schedule stream invariant.
- * @module @deepseek-ai/dsh-schedule/invariant
+ * @module @freddie/freddie-schedule/invariant
  */
 
 import { foldScheduleEvents, ScheduleLogError } from './domain.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-schedule'
+const PACKAGE_NAME = '@freddie/freddie-schedule'
 
 /** Cordis invariant-companion plugin name. */
 export const name = 'tool-schedule-invariant'

@@ -2,11 +2,11 @@
  * The background-job Service Definition (`ctx.jobs`). It owns the contract for
  * job ids, session-scoped access, lifecycle state, completion listeners, and
  * owner cleanup while producers retain their execution resources. The
- * process-local registry lives in `@deepseek-ai/dsh-jobs-local`.
- * @module @deepseek-ai/dsh-jobs
+ * process-local registry lives in `@freddie/freddie-jobs-local`.
+ * @module @freddie/freddie-jobs
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 export { JobId } from './types.js'
 
@@ -43,7 +43,7 @@ export class JobRegistry extends Service {
     // would register a ctx.jobs with no method implementations and fail far
     // from the misconfiguration. Fail loud at load instead.
     if (new.target === JobRegistry) {
-      throw new Error('@deepseek-ai/dsh-jobs is the abstract job registry seam; load an implementation such as @deepseek-ai/dsh-jobs-local instead')
+      throw new Error('@freddie/freddie-jobs is the abstract job registry seam; load an implementation such as @freddie/freddie-jobs-local instead')
     }
     super(ctx, 'jobs')
   }
@@ -57,7 +57,7 @@ export class JobRegistry extends Service {
    * @param spec - job identity, owner, and synchronous starter.
    * @returns the registry-issued `<kind>-N` id.
    */
-  start(spec) { throw new Error('@deepseek-ai/dsh-jobs: start() is abstract; implement it in a JobRegistry subclass') }
+  start(spec) { throw new Error('@freddie/freddie-jobs: start() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * List caller-owned and unowned jobs in registration order without exposing
@@ -65,7 +65,7 @@ export class JobRegistry extends Service {
    * @param caller - reading agent; a non-agent caller sees only unowned jobs.
    * @returns fresh snapshots.
    */
-  list(caller) { throw new Error('@deepseek-ai/dsh-jobs: list() is abstract; implement it in a JobRegistry subclass') }
+  list(caller) { throw new Error('@freddie/freddie-jobs: list() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * Return a non-consuming snapshot without changing its read cursor or notice
@@ -74,7 +74,7 @@ export class JobRegistry extends Service {
    * @param caller - reading agent checked against the owner.
    * @returns a fresh snapshot.
    */
-  get(id, caller) { throw new Error('@deepseek-ai/dsh-jobs: get() is abstract; implement it in a JobRegistry subclass') }
+  get(id, caller) { throw new Error('@freddie/freddie-jobs: get() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * Read the next stream delta, or the idempotent final output after settlement.
@@ -84,7 +84,7 @@ export class JobRegistry extends Service {
    * @param caller - reading agent checked against the owner.
    * @returns output text and the post-read snapshot.
    */
-  read(id, caller) { throw new Error('@deepseek-ai/dsh-jobs: read() is abstract; implement it in a JobRegistry subclass') }
+  read(id, caller) { throw new Error('@freddie/freddie-jobs: read() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * Request cancellation, then mark the job stopping and reported. A producer
@@ -95,7 +95,7 @@ export class JobRegistry extends Service {
    * @param reason - logged reason forwarded to the producer.
    * @returns `requested` for live work, otherwise `already-finished`.
    */
-  kill(id, caller, reason) { throw new Error('@deepseek-ai/dsh-jobs: kill() is abstract; implement it in a JobRegistry subclass') }
+  kill(id, caller, reason) { throw new Error('@freddie/freddie-jobs: kill() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * Wait for settlement or timeout without cancelling the job. Caller abort
@@ -108,7 +108,7 @@ export class JobRegistry extends Service {
    * @param signal - optional cancellation of the wait itself.
    * @returns snapshot at settlement or timeout.
    */
-  wait(id, timeoutMs, caller, signal) { throw new Error('@deepseek-ai/dsh-jobs: wait() is abstract; implement it in a JobRegistry subclass') }
+  wait(id, timeoutMs, caller, signal) { throw new Error('@freddie/freddie-jobs: wait() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * Register an effect-scoped completion listener. It receives the settlements
@@ -118,7 +118,7 @@ export class JobRegistry extends Service {
    * @param listener - receives each terminal snapshot and its exact owner.
    * @returns disposer that unregisters the listener.
    */
-  onJobDone(listener) { throw new Error('@deepseek-ai/dsh-jobs: onJobDone() is abstract; implement it in a JobRegistry subclass') }
+  onJobDone(listener) { throw new Error('@freddie/freddie-jobs: onJobDone() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * Register an effect-scoped observer of visible-set changes. It fires after
@@ -141,7 +141,7 @@ export class JobRegistry extends Service {
    *   `undefined` when an unowned job changed and every caller's set did.
    * @returns disposer that unregisters the listener.
    */
-  onJobsChanged(listener) { throw new Error('@deepseek-ai/dsh-jobs: onJobsChanged() is abstract; implement it in a JobRegistry subclass') }
+  onJobsChanged(listener) { throw new Error('@freddie/freddie-jobs: onJobsChanged() is abstract; implement it in a JobRegistry subclass') }
 
   /**
    * Attach an effect-scoped controller that can read and stop jobs. It serves the
@@ -150,7 +150,7 @@ export class JobRegistry extends Service {
    * @param name - diagnostic label; duplicate names remain independent.
    * @returns disposer that detaches this controller.
    */
-  attachController(name) { throw new Error('@deepseek-ai/dsh-jobs: attachController() is abstract; implement it in a JobRegistry subclass') }
+  attachController(name) { throw new Error('@freddie/freddie-jobs: attachController() is abstract; implement it in a JobRegistry subclass') }
 }
 
 export default JobRegistry

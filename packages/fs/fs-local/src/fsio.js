@@ -2,7 +2,7 @@
  * Cordis-free local filesystem mechanics. This provider layer returns validated UTF-8 text,
  * streams large files, and rejects binary data; line windows belong to `dsh-tool-fs`. Writes
  * stage an exclusive owner-only file in a private sibling directory and atomically publish it.
- * @module @deepseek-ai/dsh-fs-local/fsio
+ * @module @freddie/freddie-fs-local/fsio
  */
 
 import { randomUUID } from 'node:crypto'
@@ -10,7 +10,7 @@ import { createReadStream } from 'node:fs'
 import { chmod, link, lstat, mkdir, open, readFile, realpath, readdir, rename, rm, stat } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { TextDecoder } from 'node:util'
-import { FsError, FsTargetKey, FsVersion } from '@deepseek-ai/dsh-fs'
+import { FsError, FsTargetKey, FsVersion } from '@freddie/freddie-fs'
 import { copyFileDaclWin32, replaceFileWin32 } from './win32.js'
 
 const BINARY_SAMPLE_BYTES = 8192

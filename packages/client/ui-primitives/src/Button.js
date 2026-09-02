@@ -1,4 +1,4 @@
-// Button: token-styled button atom. Variants map to the --dsw-alias-button-*
+// Button: token-styled button atom. Variants map to the --freddie-alias-button-*
 // fill families; no framework imports, all behavior via props.
 
 import { createElement as h } from 'webjsx'

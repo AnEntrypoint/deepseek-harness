@@ -14,7 +14,7 @@
  * more than the row it targeted.
  */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 import { beginRosterRead, messageOf, writeDefaultPreset } from './settings-store.js'
 
 /** Ids a preset directory may be named, mirroring the host's own rule. */

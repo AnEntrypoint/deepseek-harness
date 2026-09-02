@@ -2,10 +2,10 @@
  * Model-facing literal edit, unique-match by default. It obtains an optional guard from the
  * single intent slot, calls `ctx.fs.editText` without a separate stat, then records the observed
  * version; no policy means an unconditional atomic edit.
- * @module @deepseek-ai/dsh-tool-fs/src/edit
+ * @module @freddie/freddie-tool-fs/src/edit
  */
 
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@freddie/freddie-tools'
 import { computeHunkDiffs, diffsFromMeta } from './diff.js'
 import { remediateFsError } from './error.js'
 import { sessionResolveOptions } from './session-cwd.js'

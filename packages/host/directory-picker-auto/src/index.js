@@ -8,7 +8,7 @@
  * entries, so the surface is discovered exactly as a config-row's would be
  * and one resolved choice still swaps both faces; pinning an interaction
  * remains composing that pair directly instead of this row.
- * @module @deepseek-ai/dsh-host-directory-picker-auto
+ * @module @freddie/freddie-host-directory-picker-auto
  */
 
 import { canExecute, hasLinuxChooserBinary } from './probe.js'
@@ -29,8 +29,8 @@ export const inject = ['webServer', 'loader']
  * app composing this chooser to declare both values as dependencies.
  */
 export const BACKEND_PACKAGES = {
-  native: '@deepseek-ai/dsh-host-directory-picker-native',
-  browse: '@deepseek-ai/dsh-host-directory-picker-browse',
+  native: '@freddie/freddie-host-directory-picker-native',
+  browse: '@freddie/freddie-host-directory-picker-browse',
 }
 
 /**
@@ -42,8 +42,8 @@ export const BACKEND_PACKAGES = {
  * workspace.
  */
 export const SURFACE_PACKAGES = {
-  native: '@deepseek-ai/dsh-client-ui-directory-picker-native',
-  browse: '@deepseek-ai/dsh-client-ui-directory-picker-browse',
+  native: '@freddie/freddie-client-ui-directory-picker-native',
+  browse: '@freddie/freddie-client-ui-directory-picker-browse',
 }
 
 /**

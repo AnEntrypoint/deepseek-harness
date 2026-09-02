@@ -11,7 +11,7 @@
  * neither entry because those Agent-bound RPCs would activate persisted
  * history outside the direct-parent continuation path.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { ModelDirectoryResolver } from './service.js'
 export { ModelSelect } from './ModelSelect.js'
 import { en, zh } from './locales.js'

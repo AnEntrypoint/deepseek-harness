@@ -10,8 +10,8 @@
  * (`LlmRuntime.registerAdapter`), not the single-service bash executor.
  *
  * This package owns the Service Definition role of the capability seam. Service Providers
- * (`@deepseek-ai/dsh-subagent-spawn-in-process`, `-fork`, `-acp`) and the model-facing
- * consumer (`@deepseek-ai/dsh-tool-subagent`) are separate packages.
+ * (`@freddie/freddie-subagent-spawn-in-process`, `-fork`, `-acp`) and the model-facing
+ * consumer (`@freddie/freddie-tool-subagent`) are separate packages.
  *
  * Public operations express caller intent: `start` returns one published owned
  * one-shot run, `startContinuable` establishes a durable continuable child, and
@@ -28,12 +28,12 @@
  * serialization and hostile-input validation belong at real process, worker,
  * persistence, and model boundaries.
  *
- * @module @deepseek-ai/dsh-subagent
+ * @module @freddie/freddie-subagent
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { scopeTarget } from '@deepseek-ai/dsh-scope'
-import { assertObjectJsonSchema } from '@deepseek-ai/dsh-tools'
+import { Service } from '@freddie/cordis'
+import { scopeTarget } from '@freddie/freddie-scope'
+import { assertObjectJsonSchema } from '@freddie/freddie-tools'
 import { SubagentError } from './error.js'
 import { assertSubagentMaxDepth } from './depth.js'
 import { createActivationObserver, createLifecycleEmitter, observeRun } from './lifecycle.js'

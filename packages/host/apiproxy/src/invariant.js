@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-host-apiproxy`.
- * @module @deepseek-ai/dsh-host-apiproxy/invariant
+ * Package-owned invariant companion for `@freddie/freddie-host-apiproxy`.
+ * @module @freddie/freddie-host-apiproxy/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-host-apiproxy'
+const PACKAGE_NAME = '@freddie/freddie-host-apiproxy'
 
 export const name = 'host-apiproxy-invariant'
 export const inject = ['invariants']

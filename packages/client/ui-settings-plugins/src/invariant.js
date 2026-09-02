@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-ui-settings-plugins`.
- * @module @deepseek-ai/dsh-client-ui-settings-plugins/invariant
+ * Package-owned invariant companion for `@freddie/freddie-client-ui-settings-plugins`.
+ * @module @freddie/freddie-client-ui-settings-plugins/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-ui-settings-plugins'
+const PACKAGE_NAME = '@freddie/freddie-client-ui-settings-plugins'
 
 /** Cordis companion plugin name. */
 export const name = 'client-ui-settings-plugins-invariant'

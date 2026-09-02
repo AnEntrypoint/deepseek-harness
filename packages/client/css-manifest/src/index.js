@@ -1,8 +1,8 @@
 /**
- * @deepseek-ai/dsh-client-css-manifest — serves the buildless plain CSS files
+ * @freddie/freddie-client-css-manifest — serves the buildless plain CSS files
  * (converted off CSS Modules) that {@link cssManifest} lists, and injects one
  * `<link rel="stylesheet">` per entry into the page head.
- * @module @deepseek-ai/dsh-client-css-manifest
+ * @module @freddie/freddie-client-css-manifest
  */
 
 import { readFile } from 'node:fs/promises'

@@ -2,7 +2,7 @@
 
 // Value import from the inline-safe wire layer (not the connection plugin):
 // plugin-to-plugin value imports are a bundle purity error.
-import { transportError } from '@deepseek-ai/dsh-host-apiproxy/api'
+import { transportError } from '@freddie/freddie-host-apiproxy/api'
 import { ConversationNodeAssembler } from './conversation-assembler.js'
 import { EMPTY_CHAT_SNAPSHOT } from './conversation.js'
 import { PendingWait } from './pending.js'

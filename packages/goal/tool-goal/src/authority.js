@@ -1,6 +1,6 @@
 /** Execution-time authority checks for the model-facing goal tools. */
 
-import { HarnessError } from '@deepseek-ai/dsh-llm'
+import { HarnessError } from '@freddie/freddie-llm'
 
 /** Throw one structured tool-policy failure. */
 function reject(message, code = 'GOAL_TOOL_AUTHORITY_REQUIRED') {

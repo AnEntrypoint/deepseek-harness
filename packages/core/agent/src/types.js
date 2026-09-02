@@ -8,6 +8,6 @@
  * event-shape documentation live on now only in the .ts history and in
  * runtime validation elsewhere (see inbox.js).
  *
- * @module @deepseek-ai/dsh-agent/types
+ * @module @freddie/freddie-agent/types
  */
 export {}

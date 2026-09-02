@@ -1,11 +1,11 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-workspace`.
- * @module @deepseek-ai/dsh-workspace/invariant
+ * Package-owned invariant companion for `@freddie/freddie-workspace`.
+ * @module @freddie/freddie-workspace/invariant
  */
 
-import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
+import { WorkspaceId } from '@freddie/freddie-workspace'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-workspace'
+const PACKAGE_NAME = '@freddie/freddie-workspace'
 
 /** Cordis companion plugin name. */
 export const name = 'workspace-invariant'

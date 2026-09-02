@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-layout",
+  "name": "@freddie/freddie-client-ui-layout",
   "description": "Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels)",
   "version": "0.1.1-rc.2",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/client/ui-layout"
   },
   "type": "module",
@@ -28,8 +28,8 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-theme"
+        "@freddie/freddie-client-runtime",
+        "@freddie/freddie-client-ui-theme"
       ],
       "platform": "web"
     }
@@ -43,18 +43,18 @@
     "webjsx": "^0.0.73"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-theme": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-client-runtime": "workspace:^",
+    "@freddie/freddie-client-ui-theme": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-theme": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-client-locale": "workspace:^",
+    "@freddie/freddie-client-runtime": "workspace:^",
+    "@freddie/freddie-client-ui-slots": "workspace:^",
+    "@freddie/freddie-client-ui-theme": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "files": [
     "src/index.js",

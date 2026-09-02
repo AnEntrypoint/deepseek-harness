@@ -3,13 +3,13 @@
  * the derived LLM message history. Persistence is a plugin concern (subscribe
  * to `session/event`, drain on `session/flush`).
  *
- * @module @deepseek-ai/dsh-session
+ * @module @freddie/freddie-session
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { isAbsolute } from 'node:path'
-import { deepFreeze } from '@deepseek-ai/dsh-llm'
-import { scopeOf, scopeTarget } from '@deepseek-ai/dsh-scope'
+import { deepFreeze } from '@freddie/freddie-llm'
+import { scopeOf, scopeTarget } from '@freddie/freddie-scope'
 import { SESSION_FORMAT_VERSION, SessionId } from './types.js'
 import { snapshotJsonValue } from './json.js'
 import { deriveEventMessage, SurfaceManager } from './surface.js'
@@ -688,8 +688,8 @@ export class SessionStore extends Service {
       typeCtx.typert.lookups.register('session', {
         parameter: 'session',
         wire: 'sessionId',
-        hostTypeSymbol: '@deepseek-ai/dsh-session#Session',
-        wireTypeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+        hostTypeSymbol: '@freddie/freddie-session#Session',
+        wireTypeSymbol: '@freddie/freddie-session/types#SessionId',
         resolve: sessionId => this.get(sessionId),
       })
     })

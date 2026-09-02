@@ -13,7 +13,7 @@
  * as trusted as the host process that accepted its definition.
  */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@freddie/cordis'
 
 /** Facade verbs beyond declared services (host CTX_VERBS twin). */
 const CTX_VERBS = new Set([
@@ -125,7 +125,7 @@ function guardedTheme(theme, env, ctx) {
         if (tokens === undefined && typeof source === 'object' && source !== null) {
           return rejectGuard(env,
             'theme.overrideTokens(source, tokens) takes two arguments; source is replaced with your package id, '
-            + 'so pass any string first and the token map second: overrideTokens(\'mine\', { \'--dsw-alias-…\': { light: \'…\', dark: \'…\' } })',
+            + 'so pass any string first and the token map second: overrideTokens(\'mine\', { \'--freddie-alias-…\': { light: \'…\', dark: \'…\' } })',
           )
         }
         const method = Reflect.get(target, 'overrideTokens', target)

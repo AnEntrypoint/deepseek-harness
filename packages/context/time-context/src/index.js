@@ -2,11 +2,11 @@
  * Opt-in request clock context. Eligible steps add durable,
  * source-attributed time readings to the request history.
  *
- * @module @deepseek-ai/dsh-time-context
+ * @module @freddie/freddie-time-context
  */
 
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { createUserMessage } from '@freddie/freddie-llm'
 import {
   deriveBrowserTimeZoneContext,
   renderBrowserTimeZoneContext,

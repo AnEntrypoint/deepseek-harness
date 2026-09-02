@@ -2,13 +2,13 @@
  * Agent service: live registry, factory delegation, and process-local
  * initiator scope. Concrete creation and driving belong to the loop.
  *
- * @module @deepseek-ai/dsh-agent
+ * @module @freddie/freddie-agent
  */
 
-import { getTraceable, Service, symbols } from '@deepseek-ai/cordis'
+import { getTraceable, Service, symbols } from '@freddie/cordis'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { isPromise } from 'node:util/types'
-import { scopeTarget } from '@deepseek-ai/dsh-scope'
+import { scopeTarget } from '@freddie/freddie-scope'
 
 /** Runtime mirror: FiberState is a cross-package const enum, erased at compile time by cordis's own build. */
 const FiberState = { PENDING: 0, LOADING: 1, ACTIVE: 2, FAILED: 3, DISPOSED: 4, UNLOADING: 5 }
@@ -29,7 +29,7 @@ const DISPOSED_INITIATOR_MESSAGE = 'agent initiator scope is disposed'
  * Agent service (`ctx.agents`): tracks live agents and carries the initiating
  * Agent through one process-local asynchronous driver chain. Agent *creation*
  * is provided by whichever plugin implements the AgentFactory
- * (`@deepseek-ai/dsh-agent-loop`), registered via {@link setFactory}.
+ * (`@freddie/freddie-agent-loop`), registered via {@link setFactory}.
  *
  * Initiator methods provide same-process causal attribution only. Ambient
  * presence is neither liveness proof nor authorization; subjects and owners
@@ -53,13 +53,13 @@ export class AgentRegistry extends Service {
       typeCtx.typert.lookups.register('agent', {
         parameter: 'agent',
         wire: 'agentId',
-        hostTypeSymbol: '@deepseek-ai/dsh-agent#Agent',
-        wireTypeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+        hostTypeSymbol: '@freddie/freddie-agent#Agent',
+        wireTypeSymbol: '@freddie/freddie-session/types#SessionId',
         resolve: sessionId => this.get(sessionId),
       })
       typeCtx.typert.contexts.registerHost('agent', {
         wire: 'agentId',
-        wireTypeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+        wireTypeSymbol: '@freddie/freddie-session/types#SessionId',
         resolve: sessionId => this.get(sessionId)?.ctx,
       })
     })

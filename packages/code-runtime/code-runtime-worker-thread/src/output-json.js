@@ -1,4 +1,4 @@
-/** JSON string-prefix accounting for the outer-output ledger. @module @deepseek-ai/dsh-code-runtime-worker-thread/output-json */
+/** JSON string-prefix accounting for the outer-output ledger. @module @freddie/freddie-code-runtime-worker-thread/output-json */
 
 const intrinsicReflectApply = Reflect.apply
 const intrinsicArrayIsArray = Array.isArray

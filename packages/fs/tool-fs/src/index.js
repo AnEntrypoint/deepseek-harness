@@ -2,10 +2,10 @@
  * Model-facing read, read_image, write, and edit tools over `ctx.fs`. This package owns schemas, validation,
  * read windows, formatting, and observation events, never a concrete provider. An optional
  * event policy supplies mutation guards; without one the tools use unconditional provider calls.
- * @module @deepseek-ai/dsh-tool-fs
+ * @module @freddie/freddie-tool-fs
  */
 
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import { applyReadTool, READ_LIMIT, STREAM_MIN_SIZE } from './read.js'
 import { applyWriteTool } from './write.js'
 import { applyEditTool } from './edit.js'

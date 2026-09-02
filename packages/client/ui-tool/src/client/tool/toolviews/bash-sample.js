@@ -17,7 +17,7 @@ import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
 import {
   IconApiOutline14, IconChevronDownOutline14, IconInspectOutline12, StateDot, TerminalBlock,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { terminalBlockLabels, terminalCardModel, terminalFailed } from '../models/terminal-card-model.js'
 import { toolRowModel } from '../models/tool-call-model.js'
 import { CONVERSATION_NS as NS } from '../../locale.js'

@@ -1,6 +1,6 @@
-/** Package-owned durable todo-snapshot invariants. @module @deepseek-ai/dsh-tool-todo/invariant */
+/** Package-owned durable todo-snapshot invariants. @module @freddie/freddie-tool-todo/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-todo'
+const PACKAGE_NAME = '@freddie/freddie-tool-todo'
 const TODO_STATUSES = new Set(['pending', 'in_progress', 'completed'])
 
 /** Cordis companion plugin name. */

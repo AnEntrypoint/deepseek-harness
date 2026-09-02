@@ -3,10 +3,10 @@
  * Only command hooks run; other hook types are returned as skipped so the
  * bridge can warn. Plugin-root and project-directory substitutions are applied
  * to commands at parse time.
- * @module @deepseek-ai/dsh-hooks-claude-code/config
+ * @module @freddie/freddie-hooks-claude-code/config
  */
 
-import { matcherDiagnostic } from '@deepseek-ai/dsh-hook-protocol'
+import { matcherDiagnostic } from '@freddie/freddie-hook-protocol'
 
 const CLAUDE_EVENTS = [
   'SessionStart',

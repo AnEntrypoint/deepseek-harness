@@ -3,17 +3,17 @@
  *
  * This package owns the Service Definition role of the skill capability seam.
  * Concrete
- * providers such as `@deepseek-ai/dsh-skill-filesystem` decide where skills come
+ * providers such as `@freddie/freddie-skill-filesystem` decide where skills come
  * from; this service only merges provider catalogs, resolves the winning skill
  * for a name, and exposes the winning summaries and definitions to consumers.
  *
- * @module @deepseek-ai/dsh-skill
+ * @module @freddie/freddie-skill
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { assertNever } from '@deepseek-ai/dsh-llm'
-import { NamedEntries, ScopedLayers, scopeChainOf, scopeOf } from '@deepseek-ai/dsh-scope'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import { assertNever } from '@freddie/freddie-llm'
+import { NamedEntries, ScopedLayers, scopeChainOf, scopeOf } from '@freddie/freddie-scope'
+import z from '@freddie/schemastery'
 
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DEFAULT_COLLECT_CACHE_ENTRIES = 128

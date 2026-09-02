@@ -5,7 +5,7 @@
  * reads each entry's `label` option for aria text.
  */
 import { createElement as h, Fragment } from 'webjsx'
-import { IconSettingsOutline14, IconSettingsOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconSettingsOutline14, IconSettingsOutline16 } from '@freddie/freddie-client-ui-primitives'
 import css from './chrome.css.js'
 
 /**

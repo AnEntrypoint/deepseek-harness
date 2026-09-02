@@ -1,12 +1,12 @@
 /**
  * Service Definition for the `ctx.shell` capability seam, covering foreground commands and background process
  * handles. Job ids, ownership, polling, and notices belong to
- * `@deepseek-ai/dsh-jobs`, keeping executors independent of sessions.
- * @module @deepseek-ai/dsh-shell
+ * `@freddie/freddie-jobs`, keeping executors independent of sessions.
+ * @module @freddie/freddie-shell
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import { Service } from '@freddie/cordis'
+import { settingsNamespace } from '@freddie/freddie-settings'
 
 /**
  * Settings namespace of this capability, owned here rather than by either
@@ -19,7 +19,7 @@ import { settingsNamespace } from '@deepseek-ai/dsh-settings'
  */
 export const SHELL_SETTINGS_NAMESPACE = settingsNamespace('shell')
 
-export { DSH_ENV_PREFIX } from './types.js'
+export { FREDDIE_ENV_PREFIX } from './types.js'
 export { parseExitStatus } from './render.js'
 
 /**

@@ -6,15 +6,15 @@
  * blocking decisions are honored. Shared execution and parsing live in
  * `dsh-hook-protocol`; see the
  * [hook-bridges Agent Note](../../../../.agents/notes/implemented/feature/2026-06-30-hook-bridges.md).
- * @module @deepseek-ai/dsh-hooks-codex
+ * @module @freddie/freddie-hooks-codex
  */
 
 // Each dialect bridge keeps its complete dependency list visible at the entry
 // point; a cross-package facade for imports alone would add indirection.
 /* jscpd:ignore-start */
 import { readFileSync } from 'node:fs'
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { createUserMessage } from '@freddie/freddie-llm'
 import {
   appendHookInvoked,
   appendHookResult,
@@ -24,7 +24,7 @@ import {
   matchesMatcher,
   mergeHookOutputs,
   runHook,
-} from '@deepseek-ai/dsh-hook-protocol'
+} from '@freddie/freddie-hook-protocol'
 import { parseCodexConfig } from './config.js'
 /* jscpd:ignore-end */
 

@@ -4,11 +4,11 @@
  * instance owns one `(provider id, canonical workspace)` process. Queries serialize through a single
  * queue so a cancellation that fails to stop the server can terminate it without killing unrelated
  * work; distinct instances run in parallel.
- * @module @deepseek-ai/dsh-lsp-stdio/instance
+ * @module @freddie/freddie-lsp-stdio/instance
  */
 
-import { LspError } from '@deepseek-ai/dsh-lsp'
-import { deadline } from '@deepseek-ai/dsh-timeout'
+import { LspError } from '@freddie/freddie-lsp'
+import { deadline } from '@freddie/freddie-timeout'
 import { abortable, abortError } from './abort.js'
 import { LspConnection } from './connection.js'
 import {

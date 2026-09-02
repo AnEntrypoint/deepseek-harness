@@ -15,10 +15,10 @@
  * data. The decoder validates before expanding and fails loud on a malformed
  * row-tagged value instead of silently dropping a whole run.
  *
- * @module @deepseek-ai/dsh-session/chunk-rows
+ * @module @freddie/freddie-session/chunk-rows
  */
 
-import { CallId, assertNever } from '@deepseek-ai/dsh-llm'
+import { CallId, assertNever } from '@freddie/freddie-llm'
 
 /**
  * Minimum members before a run packs. Below it a row's envelope rivals the

@@ -1,4 +1,4 @@
-import { isAppendSurfaceEvent } from '@deepseek-ai/dsh-client-runtime/client'
+import { isAppendSurfaceEvent } from '@freddie/freddie-client-runtime/client'
 import { chatNode } from './common.js'
 
 /** Unclaimed append-surface fallback Definition. */

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
-    from deepseek_harness import RunResult
+    from freddie import RunResult
 
 
 EXPECTED_TEXT = "runtime smoke ok"
@@ -80,13 +80,13 @@ MINIMAL_SNAPSHOT_DIRECTORY = (
 MINIMAL_SNAPSHOT_FILENAMES = ("model-visible.json",)
 # The agent loop's dynamic runtime-context snapshot is the one model-visible message this
 # expected output cannot carry: the same composition emits it on macOS and not on Linux
-# (deepseek-harness#2488), and the file must replay on both. Everything else is compared.
+# (freddie#2488), and the file must replay on both. Everything else is compared.
 RUNTIME_CONTEXT_PREFIX = "Current runtime context"
 CUSTOM_CORDIS = """\
 - id: sdk-jsonrpc-server
-  name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+  name: '@freddie/freddie-sdk-jsonrpc-server'
 - id: agent-core
-  name: '@deepseek-ai/dsh-agent-spine-demo'
+  name: '@freddie/freddie-agent-spine-demo'
   config:
     workspaceContext: false
     skills:
@@ -95,38 +95,38 @@ CUSTOM_CORDIS = """\
     tools:
       mode: both
 - id: sessions
-  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  name: '@freddie/freddie-session-persistence-jsonl'
   config:
     root: !!js process.env.DSH_SESSION_ROOT
     compression: 'none'
 - id: code-runtime
-  name: '@deepseek-ai/dsh-code-runtime-worker-thread'
+  name: '@freddie/freddie-code-runtime-worker-thread'
 - id: subagents
-  name: '@deepseek-ai/dsh-subagent'
+  name: '@freddie/freddie-subagent'
 - id: subagent-spawn-in-process
-  name: '@deepseek-ai/dsh-subagent-spawn-in-process'
+  name: '@freddie/freddie-subagent-spawn-in-process'
   config:
     providerName: spawn
 - id: subagent-tool
-  name: '@deepseek-ai/dsh-tool-subagent'
+  name: '@freddie/freddie-tool-subagent'
   config:
     provider: spawn
 - id: workflow-engine
-  name: '@deepseek-ai/dsh-workflow-worker-thread'
+  name: '@freddie/freddie-workflow-worker-thread'
   config:
     provider: spawn
 - id: workflow-tool
-  name: '@deepseek-ai/dsh-tool-workflow'
+  name: '@freddie/freddie-tool-workflow'
 - id: cordis-host-runner
-  name: '@deepseek-ai/dsh-cordis-host-runner'
+  name: '@freddie/freddie-cordis-host-runner'
 - id: cordis-tool
-  name: '@deepseek-ai/dsh-tool-cordis'
+  name: '@freddie/freddie-tool-cordis'
 """
 FS_SEARCH_CORDIS = """\
 - id: sdk-jsonrpc-server
-  name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+  name: '@freddie/freddie-sdk-jsonrpc-server'
 - id: agent-core
-  name: '@deepseek-ai/dsh-agent-spine-demo'
+  name: '@freddie/freddie-agent-spine-demo'
   config:
     workspaceContext: false
     skills:
@@ -134,14 +134,14 @@ FS_SEARCH_CORDIS = """\
     toolBash: false
     toolJobs: false
 - id: sessions
-  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  name: '@freddie/freddie-session-persistence-jsonl'
   config:
     root: !!js process.env.DSH_SESSION_ROOT
     compression: 'none'
 - id: subprocess
-  name: '@deepseek-ai/dsh-subprocess-local'
+  name: '@freddie/freddie-subprocess-local'
 - id: fs-search
-  name: '@deepseek-ai/dsh-tool-fs-search'
+  name: '@freddie/freddie-tool-fs-search'
   config:
     sampleOverCapGlobResults: false
 """
@@ -228,11 +228,11 @@ def mcp_cordis(server_script: Path) -> str:
     return json.dumps([
         {
             "id": "sdk-jsonrpc-server",
-            "name": "@deepseek-ai/dsh-sdk-jsonrpc-server",
+            "name": "@freddie/freddie-sdk-jsonrpc-server",
         },
         {
             "id": "agent-core",
-            "name": "@deepseek-ai/dsh-agent-spine-demo",
+            "name": "@freddie/freddie-agent-spine-demo",
             "config": {
                 "workspaceContext": False,
                 "skills": {"enabled": False},
@@ -241,12 +241,12 @@ def mcp_cordis(server_script: Path) -> str:
         },
         {
             "id": "sessions",
-            "name": "@deepseek-ai/dsh-session-persistence-jsonl",
+            "name": "@freddie/freddie-session-persistence-jsonl",
             "config": {"root": "./sessions", "compression": "none"},
         },
         {
             "id": "mcp-fixture",
-            "name": "@deepseek-ai/dsh-mcp-client",
+            "name": "@freddie/freddie-mcp-client",
             "config": {
                 "serverName": "fixture",
                 "transport": "stdio",
@@ -718,7 +718,7 @@ def main() -> None:
 
 
 def smoke_sdk_default(base_url: str) -> None:
-    from deepseek_harness import DeepSeekHarness
+    from freddie import DeepSeekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-default-") as temporary:
         root = Path(temporary).resolve()
@@ -738,7 +738,7 @@ def smoke_sdk_default(base_url: str) -> None:
 
 
 def smoke_sdk_custom(base_url: str, executable: Path) -> None:
-    from deepseek_harness import DeepSeekHarness
+    from freddie import DeepSeekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-custom-") as temporary:
         root = Path(temporary).resolve()
@@ -767,7 +767,7 @@ def smoke_sdk_custom(base_url: str, executable: Path) -> None:
 
 def smoke_sdk_minimal(base_url: str, executable: Path, update_snapshots: bool) -> None:
     """Exercise the checked-in minimal composition through the packaged executable."""
-    from deepseek_harness import DeepSeekHarness
+    from freddie import DeepSeekHarness
 
     # One mock model serves every scenario of a run, so the snapshot takes this turn's slice.
     first_request = len(MockModelHandler.requests)
@@ -804,7 +804,7 @@ def smoke_sdk_minimal(base_url: str, executable: Path, update_snapshots: bool) -
 
 def smoke_sdk_fs_search(base_url: str, executable: Path) -> None:
     """Exercise real grep and glob spawns through the packaged executable."""
-    from deepseek_harness import DeepSeekHarness
+    from freddie import DeepSeekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-fs-search-") as temporary:
         root = Path(temporary).resolve()
@@ -831,7 +831,7 @@ def smoke_sdk_fs_search(base_url: str, executable: Path) -> None:
 
 def smoke_sdk_mcp(base_url: str, executable: Path | None) -> None:
     """Discover and call an external stdio MCP tool through the packaged client."""
-    from deepseek_harness import DeepSeekHarness
+    from freddie import DeepSeekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-mcp-") as temporary:
         root = Path(temporary).resolve()
@@ -866,7 +866,7 @@ def smoke_sdk_mcp(base_url: str, executable: Path | None) -> None:
 
 def smoke_sdk_snapshot(base_url: str, executable: Path, update_snapshots: bool) -> None:
     """Drive and compare the advanced SDK/executable behavioral snapshot."""
-    from deepseek_harness import DeepSeekHarness
+    from freddie import DeepSeekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-snapshot-") as temporary:
         root = Path(temporary).resolve()

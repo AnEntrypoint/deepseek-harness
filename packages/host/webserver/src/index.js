@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import { renderIndexInjections } from './injections.js'
 
 export { renderIndexInjections } from './injections.js'

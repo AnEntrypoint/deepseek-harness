@@ -1,6 +1,6 @@
-/** Package-owned permission-preset event invariants. @module @deepseek-ai/dsh-permission-presets/invariant */
+/** Package-owned permission-preset event invariants. @module @freddie/freddie-permission-presets/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-permission-presets'
+const PACKAGE_NAME = '@freddie/freddie-permission-presets'
 
 /** Cordis companion plugin name. */
 export const name = 'permission-presets-invariant'

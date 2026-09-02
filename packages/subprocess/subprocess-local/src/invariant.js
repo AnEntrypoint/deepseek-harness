@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-subprocess-local`.
- * @module @deepseek-ai/dsh-subprocess-local/invariant
+ * Package-owned invariant companion for `@freddie/freddie-subprocess-local`.
+ * @module @freddie/freddie-subprocess-local/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-subprocess-local'
+const PACKAGE_NAME = '@freddie/freddie-subprocess-local'
 
 /** Cordis companion plugin name. */
 export const name = 'subprocess-local-invariant'

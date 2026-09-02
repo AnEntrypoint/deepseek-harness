@@ -15,13 +15,13 @@
  * (ui-primitives' factory-function conversion of the same hook), the note
  * popover's document.body mount replaces createPortal, and re-render is an
  * explicit applyDiff(this, vdom) call (Toast.tsx's pattern).
- * @module @deepseek-ai/dsh-client-ui-message-feedback/client/MessageFeedbackActions
+ * @module @freddie/freddie-client-ui-message-feedback/client/MessageFeedbackActions
  */
 
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
   createAnchoredPosition, IconDislikeOutline16, IconLikeOutline16, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './MessageFeedbackActions.css.js'
 
 /** Safe distance kept between the panel and the viewport edges (the Menu portal margin). */

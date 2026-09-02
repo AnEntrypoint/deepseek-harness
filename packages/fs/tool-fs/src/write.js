@@ -2,10 +2,10 @@
  * Model-facing full-file write. It obtains an optional intent from the single policy slot, calls
  * `ctx.fs.writeText` without a stat, then records the resulting version; no policy means an
  * unconditional atomic create-or-overwrite.
- * @module @deepseek-ai/dsh-tool-fs/src/write
+ * @module @freddie/freddie-tool-fs/src/write
  */
 
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@freddie/freddie-tools'
 import { computeHunkDiffs, diffsFromMeta } from './diff.js'
 import { remediateFsError } from './error.js'
 import { sessionResolveOptions } from './session-cwd.js'

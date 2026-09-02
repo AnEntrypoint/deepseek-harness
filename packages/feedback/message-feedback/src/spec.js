@@ -1,10 +1,10 @@
 /**
  * Durable storage-domain declaration for lifecycle-bound message feedback.
- * @module @deepseek-ai/dsh-message-feedback/src/spec
+ * @module @freddie/freddie-message-feedback/src/spec
  */
 
 import { z } from 'zod'
-import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
+import { defineDomain, domainTable } from '@freddie/freddie-storage-domain'
 
 const nonNegativeSafeInteger = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
 

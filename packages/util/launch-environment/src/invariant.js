@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-launch-environment`.
- * @module @deepseek-ai/dsh-launch-environment/invariant
+ * Package-owned invariant companion for `@freddie/freddie-launch-environment`.
+ * @module @freddie/freddie-launch-environment/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-launch-environment'
+const PACKAGE_NAME = '@freddie/freddie-launch-environment'
 
 /** Cordis companion plugin name. */
 export const name = 'launch-environment-invariant'

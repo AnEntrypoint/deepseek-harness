@@ -1,7 +1,7 @@
 /**
  * Incremental projection of durable agent inbox events.
  *
- * @module @deepseek-ai/dsh-agent/inbox
+ * @module @freddie/freddie-agent/inbox
  */
 
 /** A replay-once projection that incrementally consumes later inbox splices. */

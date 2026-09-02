@@ -1,6 +1,6 @@
 import {
   emptyAssistantBlock, isAppendSurfaceEvent, isTokenDelta, toAssistantBlock, toAssistantBlocks,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-runtime/client'
 import { CHAT_SYNTHETIC_SEQ_OFFSETS, chatNode } from './common.js'
 
 function initialState(turn, step) {

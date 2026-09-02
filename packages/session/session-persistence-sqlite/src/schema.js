@@ -1,18 +1,18 @@
 /**
  * SQLite schema ownership and durable-row validation.
- * @module @deepseek-ai/dsh-session-persistence-sqlite/schema
+ * @module @freddie/freddie-session-persistence-sqlite/schema
  */
 
 import { randomUUID } from 'node:crypto'
 import { isAbsolute } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { setTimeout as delay } from 'node:timers/promises'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { SessionId } from '@freddie/freddie-session'
 import { sql } from './sql.js'
 
 /** Current physical-record schema with packed and compressed event rows. */
 export const SCHEMA_VERSION = 17
-/** Application id reserved for DeepSeek Harness SQLite session databases. */
+/** Application id reserved for Freddie SQLite session databases. */
 export const SESSION_PERSISTENCE_SQLITE_APPLICATION_ID = 0x44534850
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu

@@ -20,7 +20,7 @@ import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
 import {
   createAnchoredMaxHeight, IconCheckOutline16, renderRiskConfirmation,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { filterOptions } from './popup.js'
 import css from './PopupSelectView.css.js'
 

@@ -1,9 +1,9 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-cmdline`.
- * @module @deepseek-ai/dsh-cmdline/invariant
+ * Package-owned invariant companion for `@freddie/freddie-cmdline`.
+ * @module @freddie/freddie-cmdline/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-cmdline'
+const PACKAGE_NAME = '@freddie/freddie-cmdline'
 
 /** Cordis companion plugin name. */
 export const name = 'cmdline-invariant'

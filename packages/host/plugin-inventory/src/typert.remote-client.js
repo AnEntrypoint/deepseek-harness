@@ -11,10 +11,10 @@ const _deepseek_ai_dsh_host_plugin_inventory_pluginInventory_list_result$schema 
 })
 
 export const TYPERT_REMOTE = {
-  package: '@deepseek-ai/dsh-host-plugin-inventory',
+  package: '@freddie/freddie-host-plugin-inventory',
   descriptors: [
     {
-      id: '@deepseek-ai/dsh-host-plugin-inventory#pluginInventory/list',
+      id: '@freddie/freddie-host-plugin-inventory#pluginInventory/list',
       service: 'pluginInventory',
       namespace: 'pluginInventory',
       method: 'list',
@@ -23,7 +23,7 @@ export const TYPERT_REMOTE = {
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-host-plugin-inventory/types#PluginInventorySnapshot',
+        typeSymbol: '@freddie/freddie-host-plugin-inventory/types#PluginInventorySnapshot',
         schema: _deepseek_ai_dsh_host_plugin_inventory_pluginInventory_list_result$schema,
       },
       sourceLocation: {"file":"packages/host/plugin-inventory/src/index.ts","line":57,"column":3},

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-web-search-perplexity`.
- * @module @deepseek-ai/dsh-web-search-perplexity/invariant
+ * Package-owned invariant companion for `@freddie/freddie-web-search-perplexity`.
+ * @module @freddie/freddie-web-search-perplexity/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-web-search-perplexity'
+const PACKAGE_NAME = '@freddie/freddie-web-search-perplexity'
 
 /** Cordis companion plugin name. */
 export const name = 'web-search-perplexity-invariant'

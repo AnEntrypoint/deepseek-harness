@@ -1,4 +1,4 @@
-import { BrandWordmark, FishLogo } from '@deepseek-ai/dsh-client-ui-primitives'
+import { BrandWordmark, FishLogo } from '@freddie/freddie-client-ui-primitives'
 import { createElement as h } from 'webjsx'
 
 /**

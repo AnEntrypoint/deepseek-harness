@@ -1,4 +1,4 @@
-/** Attachment identifier brand. @module @deepseek-ai/dsh-attachment/brand */
+/** Attachment identifier brand. @module @freddie/freddie-attachment/brand */
 
 /**
  * Brand a validated storage identifier.

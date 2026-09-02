@@ -10,7 +10,7 @@ A blanket statement that the checkout is not the working directory would also be
 
 ## Decision
 
-The section identifies the path as the “DeepSeek Harness implementation checkout.” It says that the checkout location and current working directory are separate values that may differ, forbids inferring the working directory from the checkout path, directs the model to use `pwd`, and limits the checkout's purpose to inspecting or extending DSH itself.
+The section identifies the path as the “Freddie implementation checkout.” It says that the checkout location and current working directory are separate values that may differ, forbids inferring the working directory from the checkout path, directs the model to use `pwd`, and limits the checkout's purpose to inspecting or extending FREDDIE itself.
 
 The path derivation, global `harness:source` ownership, and `-99` ordering remain unchanged. Describing the values as conceptually separate rather than always unequal keeps the instruction accurate in both ordinary project sessions and `dsh meta`.
 
@@ -24,7 +24,7 @@ The `dsh-app-boot` unit test pins the exact text and its ordering. The CLI keyle
 
 **Put the current working directory in the global source section.** Rejected because the source section is launcher-global while the working directory belongs to each session; combining them would duplicate the loop's `cwd` ownership and make a stable source fact vary per agent.
 
-**Remove the source path from the prompt.** Rejected because self-referential DSH tools still need a reliable checkout location when the launcher starts from an unrelated project.
+**Remove the source path from the prompt.** Rejected because self-referential FREDDIE tools still need a reliable checkout location when the launcher starts from an unrelated project.
 
 ## Consequences
 

@@ -4,10 +4,10 @@
  * guards from that state, and the provider performs the atomic freshness/no-clobber check. Without
  * this plugin, tools retain the bare provider's unconditional mutation behavior. See the package
  * README for composition rules.
- * @module @deepseek-ai/dsh-fs-observation-policy
+ * @module @freddie/freddie-fs-observation-policy
  */
 
-import { FsError } from '@deepseek-ai/dsh-fs'
+import { FsError } from '@freddie/freddie-fs'
 
 /**
  * Per-context observed-file state and the three `fs/*` decisions over it. One

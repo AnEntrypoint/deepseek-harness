@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-locale`.
- * @module @deepseek-ai/dsh-client-locale/invariant
+ * Package-owned invariant companion for `@freddie/freddie-client-locale`.
+ * @module @freddie/freddie-client-locale/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-locale'
+const PACKAGE_NAME = '@freddie/freddie-client-locale'
 
 /** Cordis companion plugin name. */
 export const name = 'client-locale-invariant'

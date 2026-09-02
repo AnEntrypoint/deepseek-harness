@@ -1,16 +1,16 @@
 /**
  * `LocalSpillStore`: the host-filesystem implementation of the
- * `@deepseek-ai/dsh-spill` storage seam. Persists a tool's oversized text to a
+ * `@freddie/freddie-spill` storage seam. Persists a tool's oversized text to a
  * private, session-scoped file (see `./store.js` for the traversal-safe naming
  * and exclusive owner-only write) and returns a path locator plus local
  * read/grep retrieval guidance.
  *
- * @module @deepseek-ai/dsh-spill-local
+ * @module @freddie/freddie-spill-local
  */
 
 import { resolve } from 'node:path'
-import z from '@deepseek-ai/schemastery'
-import { SpillLocator, SpillStore } from '@deepseek-ai/dsh-spill'
+import z from '@freddie/schemastery'
+import { SpillLocator, SpillStore } from '@freddie/freddie-spill'
 import { privateRoot, saveTextFile } from './store.js'
 
 export { encodeSegment, privateRoot, saveTextFile, sessionDir } from './store.js'

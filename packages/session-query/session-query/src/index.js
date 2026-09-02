@@ -1,12 +1,12 @@
 /**
  * Service Definition for combined session-history reads, traces, filters, and full-text search.
  *
- * @module @deepseek-ai/dsh-session-query
+ * @module @freddie/freddie-session-query
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { Session, snapshotSessionEvent } from '@deepseek-ai/dsh-session'
-import { foldSessionTitle } from '@deepseek-ai/dsh-session-title'
+import { Service } from '@freddie/cordis'
+import { Session, snapshotSessionEvent } from '@freddie/freddie-session'
+import { foldSessionTitle } from '@freddie/freddie-session-title'
 import {
   SESSION_QUERY_DEFAULT_PERSISTED_INSPECT_CONCURRENCY,
   SESSION_QUERY_READ_WINDOW_MAX,

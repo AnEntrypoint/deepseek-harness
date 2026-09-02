@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
  * @returns the spawned child process.
  */
 export function spawnDialogWorker(data) {
-  const env = { ...process.env, DSH_DIALOG_TITLE: data.title }
+  const env = { ...process.env, FREDDIE_DIALOG_TITLE: data.title }
   const stdio = ['ignore', 'inherit', 'inherit', 'ipc']
   return spawn(process.execPath, [fileURLToPath(new URL('./win32-dialog-worker.js', import.meta.url))], { env, stdio, windowsHide: true })
 }

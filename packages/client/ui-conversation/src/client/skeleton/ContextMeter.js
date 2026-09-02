@@ -11,7 +11,7 @@
  * explicit applyDiff(this, vdom) call (Toast.tsx's pattern). */
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Tooltip } from '@freddie/freddie-client-ui-primitives'
 import { contextOccupancy, formatTokens } from '../chat/StatsLine.js'
 import css from './ContextMeter.css.js'
 

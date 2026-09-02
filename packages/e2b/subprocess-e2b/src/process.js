@@ -9,7 +9,7 @@ import {
   FileNotFoundError,
   SandboxNotFoundError,
   quoteE2BShellArg,
-} from '@deepseek-ai/dsh-e2b'
+} from '@freddie/freddie-e2b'
 import { bootstrapEnvironment, readRemoteEnvironment, serializeRemoteEnvironment } from './environment.js'
 import { E2BBase64Decoder, E2B_OUTPUT_COMPLETE_FRAME, E2BOutputReader } from './output.js'
 import { asError, commandOpts, signalRemoteGroups, waitTick } from './remote.js'

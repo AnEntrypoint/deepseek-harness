@@ -1,8 +1,8 @@
-/** Package-owned approval audit-stream invariants. @module @deepseek-ai/dsh-user-approval/invariant */
+/** Package-owned approval audit-stream invariants. @module @freddie/freddie-user-approval/invariant */
 
 import { APPROVAL_POLICIES } from './index.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-user-approval'
+const PACKAGE_NAME = '@freddie/freddie-user-approval'
 const APPROVAL_OUTCOMES = ['allowed-once', 'rejected', 'cancelled', 'unavailable']
 
 /** Cordis companion plugin name. */

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from deepseek_harness import DeepSeekHarness, HarnessClient, HarnessConfig, Notification, SdkProtocolError
+from freddie import DeepSeekHarness, HarnessClient, HarnessConfig, Notification, SdkProtocolError
 
 
 def test_high_level_sdk_runs_turn_and_collects_final_response(tmp_path: Path) -> None:
@@ -812,7 +812,7 @@ for line in sys.stdin:
 
 
 def test_public_signatures_omit_unsupported_wire_parameters() -> None:
-    from deepseek_harness import DeepSeekHarnessConfig, Session
+    from freddie import DeepSeekHarnessConfig, Session
 
     assert "session_root" not in inspect.signature(HarnessClient.initialize).parameters
     assert "system_prompt" not in inspect.signature(HarnessClient.initialize).parameters
@@ -942,7 +942,7 @@ for line in sys.stdin:
     runtime.chmod(0o755)
 
     default_config = tmp_path / "default-cordis.yml"
-    module_dir = tmp_path / "deepseek_harness_runtime"
+    module_dir = tmp_path / "freddie_runtime"
     module_dir.mkdir()
     (module_dir / "__init__.py").write_text(
         f"""
@@ -956,7 +956,7 @@ def bundled_default_config_path():
     )
 
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.delitem(sys.modules, "deepseek_harness_runtime", raising=False)
+    monkeypatch.delitem(sys.modules, "freddie_runtime", raising=False)
     return default_config
 
 
@@ -994,8 +994,8 @@ def test_client_respects_explicit_config_over_bundled_default(
 
 
 def test_client_reports_missing_bundled_runtime_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(sys.modules, "deepseek_harness_runtime", raising=False)
+    monkeypatch.delitem(sys.modules, "freddie_runtime", raising=False)
     monkeypatch.setattr(sys, "path", [])
 
-    with pytest.raises(FileNotFoundError, match="Install deepseek-harness-runtime-bin"):
+    with pytest.raises(FileNotFoundError, match="Install freddie-runtime-bin"):
         HarnessClient().start()

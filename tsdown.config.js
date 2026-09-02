@@ -3,7 +3,7 @@ import { defineConfig } from 'tsdown'
 function isBuildFaceClient(value) {
   if (value === undefined || value === 'host') return false
   if (value === 'client') return true
-  throw new Error(`tsdown: --env.DSH_BUILD_FACE must be host or client, received ${String(value)}`)
+  throw new Error(`tsdown: --env.FREDDIE_BUILD_FACE must be host or client, received ${String(value)}`)
 }
 
 /**
@@ -24,7 +24,7 @@ function isBuildFaceClient(value) {
  * package's own ./typert export points at.
  */
 export default defineConfig(({ env }) => {
-  const client = isBuildFaceClient(env?.DSH_BUILD_FACE)
+  const client = isBuildFaceClient(env?.FREDDIE_BUILD_FACE)
   return {
     workspace: ['vendor/*', 'packages/*/*', 'apps/cli'],
     // Most packages ship plain buildless src/*.js directly; vendor/* stays

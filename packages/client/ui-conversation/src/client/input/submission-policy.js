@@ -3,7 +3,7 @@
  * preference and resolves keyboard gestures into queue/steer delivery modes;
  * Host and Agent keep the actual delivery-window authority.
  */
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 import { BUSY_ENTER_FIELD, DEFAULT_BUSY_ENTER_BEHAVIOR } from '../../submission-settings.js'
 
 export { DEFAULT_BUSY_ENTER_BEHAVIOR } from '../../submission-settings.js'

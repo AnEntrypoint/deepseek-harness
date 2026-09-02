@@ -7,7 +7,7 @@
  * fatal close, and exposes tree-scoped termination through the handle so the
  * instance owns teardown; group/tree mechanics live in the subprocess
  * Service Provider.
- * @module @deepseek-ai/dsh-lsp-stdio/connection
+ * @module @freddie/freddie-lsp-stdio/connection
  */
 
 import { encodeMessage, MessageDecoder } from './framing.js'
@@ -56,7 +56,7 @@ export class LspConnection {
       },
       graceMs: spec.killGraceMs,
       // The seam merges explicit config entries after its ambient scrub, so a
-      // configured credential or DSH_* fact reaches the child deliberately.
+      // configured credential or FREDDIE_* fact reaches the child deliberately.
       env: spec.env,
     })
     /* v8 ignore start -- 'pipe' dispositions expose both streams by the seam contract; defensive. */

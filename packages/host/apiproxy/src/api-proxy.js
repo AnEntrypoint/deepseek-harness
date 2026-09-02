@@ -8,22 +8,22 @@ import { mkdir, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname } from 'node:path'
 import { z as zod } from 'zod'
-import { installModelSelection } from '@deepseek-ai/dsh-agent'
-import { AttachmentError, admitEncodedImages } from '@deepseek-ai/dsh-attachment'
-import { createUserMessage, freezeMessage, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { errorChain } from '@deepseek-ai/dsh-llm'
-import { isAppendSurfaceEvent, isJsonValue } from '@deepseek-ai/dsh-session'
-import { SessionQueryError } from '@deepseek-ai/dsh-session-query'
-import { SubagentError } from '@deepseek-ai/dsh-subagent'
-import { isUserInvocable } from '@deepseek-ai/dsh-skill'
+import { installModelSelection } from '@freddie/freddie-agent'
+import { AttachmentError, admitEncodedImages } from '@freddie/freddie-attachment'
+import { createUserMessage, freezeMessage, ReasoningEffortId } from '@freddie/freddie-llm'
+import { errorChain } from '@freddie/freddie-llm'
+import { isAppendSurfaceEvent, isJsonValue } from '@freddie/freddie-session'
+import { SessionQueryError } from '@freddie/freddie-session-query'
+import { SubagentError } from '@freddie/freddie-subagent'
+import { isUserInvocable } from '@freddie/freddie-skill'
 import {
   workspaceDomainState, workspaceRecord, WorkspaceId as brandWorkspaceId,
   WorkspaceMoveInvalidError, WorkspaceOrderInvalidError, WorkspaceUnknownSessionError,
-} from '@deepseek-ai/dsh-workspace'
+} from '@freddie/freddie-workspace'
 import {
   InvalidPresetIdError, PresetExistsError, PresetMountError,
   PresetNotWritableError, resolveSessionPreset, UnknownPresetError,
-} from '@deepseek-ai/dsh-agent-presets'
+} from '@freddie/freddie-agent-presets'
 import {
   DEFAULT_SESSION_LOG_COMPRESSION_LEVEL,
   flushLiveSessionLog,
@@ -37,20 +37,20 @@ import {
   truncateUnicodeCodePoints,
 } from './api/session-search.js'
 // GoalError narrows domain rejections to their stable codes at the wire boundary.
-import { GoalError } from '@deepseek-ai/dsh-goal'
+import { GoalError } from '@freddie/freddie-goal'
 // The settings/credentials seams: brand guards run at this wire boundary; the
 // service reads stay optional (`ctx.get`) so a composition without either
 // provider still serves every other domain.
-import { SettingsConflictError, settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
+import { SettingsConflictError, settingsNamespace } from '@freddie/freddie-settings'
+import { credentialRef } from '@freddie/freddie-credentials'
 // Value edge: the rename impl narrows the title service's validation failure; the import also resolves `ctx.get('sessionTitle')`.
-import { SessionTitleInvalidError } from '@deepseek-ai/dsh-session-title'
+import { SessionTitleInvalidError } from '@freddie/freddie-session-title'
 import { approvalResponsePayloadSchema } from './api/approvals.schema.js'
 import { imageLimitsProjectionSchema, sessionListMetadataProjectionSchema } from './api/sessions.schema.js'
 import { questionResponsePayloadSchema } from './api/questions.schema.js'
 import { RpcId } from './api/rpc.js'
-import { UserQuestionError } from '@deepseek-ai/dsh-user-questions'
-import { DirectoryPickerError } from '@deepseek-ai/dsh-host-directory-picker'
+import { UserQuestionError } from '@freddie/freddie-user-questions'
+import { DirectoryPickerError } from '@freddie/freddie-host-directory-picker'
 import {
   ApiRemoteSessionNotFound as SessionNotFound,
   ApiRemoteSubagentSessionOwnership as SubagentSessionOwnership,
@@ -59,7 +59,7 @@ import {
   createApiRemoteAgentResolver,
   hasApiRemoteSubagentOwner,
   inspectApiRemoteSession,
-} from '@deepseek-ai/dsh-api-remotes'
+} from '@freddie/freddie-api-remotes'
 import { canOpenNativePath, openNativePath, openNativeTextFile } from './native-path-opener.js'
 
 /** Page size when history is called without maxMessages. */
@@ -693,7 +693,7 @@ function subagentPromptError(request, error, signal) {
 function projectionsUnavailableError() {
   return {
     code: 'internal',
-    message: 'subagent catalog is unavailable: this deployment does not mount the sessionProjections registry (load @deepseek-ai/dsh-session-projection)',
+    message: 'subagent catalog is unavailable: this deployment does not mount the sessionProjections registry (load @freddie/freddie-session-projection)',
     details: {},
   }
 }
@@ -1482,7 +1482,7 @@ export function createApiProxy(ctx, defaults) {
     const presets = ctx.get('agentPresets')
     const goals = presets?.serviceFor(agent, 'goals') ?? ctx.get('goals')
     if (goals === undefined) {
-      return { error: { code: 'internal', message: 'goal service is absent: neither this session\'s agent preset nor the host composition mounts @deepseek-ai/dsh-goal', details: {} } }
+      return { error: { code: 'internal', message: 'goal service is absent: neither this session\'s agent preset nor the host composition mounts @freddie/freddie-goal', details: {} } }
     }
     return goals
   }
@@ -1548,7 +1548,7 @@ export function createApiProxy(ctx, defaults) {
 
   /** Missing-service report shared by the settings domain (skills-domain stance). */
   function settingsAbsent() {
-    return { code: 'internal', message: 'settings service is absent: this deployment does not mount a settings provider (e.g. @deepseek-ai/dsh-settings-file) in its composition', details: {} }
+    return { code: 'internal', message: 'settings service is absent: this deployment does not mount a settings provider (e.g. @freddie/freddie-settings-file) in its composition', details: {} }
   }
 
   /** Open one Host-resolved target and map native failures onto the wire vocabulary. */
@@ -1595,7 +1595,7 @@ export function createApiProxy(ctx, defaults) {
 
   /** Missing-service report shared by the credentials domain. */
   function credentialsAbsent() {
-    return { code: 'internal', message: 'credentials service is absent: this deployment does not mount a credential provider (e.g. @deepseek-ai/dsh-credentials-local) in its composition', details: {} }
+    return { code: 'internal', message: 'credentials service is absent: this deployment does not mount a credential provider (e.g. @freddie/freddie-credentials-local) in its composition', details: {} }
   }
 
   /** Map one redacted settings descriptor to its wire view. */
@@ -1682,7 +1682,7 @@ export function createApiProxy(ctx, defaults) {
         if (sessionQuery === undefined) {
           return err(request, {
             code: 'internal',
-            message: 'session search is unavailable: this deployment does not mount @deepseek-ai/dsh-session-query',
+            message: 'session search is unavailable: this deployment does not mount @freddie/freddie-session-query',
             details: {},
           })
         }
@@ -2862,7 +2862,7 @@ export function createApiProxy(ctx, defaults) {
         // (an undeclared `ctx.skills` property read fails the reflect proxy).
         const skillRegistry = scoped ?? ctx.get('skills')
         if (skillRegistry === undefined) {
-          return err(request, { code: 'internal', message: 'skill registry is absent: neither this session\'s agent preset nor the host composition mounts @deepseek-ai/dsh-skill', details: {} })
+          return err(request, { code: 'internal', message: 'skill registry is absent: neither this session\'s agent preset nor the host composition mounts @freddie/freddie-skill', details: {} })
         }
         // The scope presenters resolve in — the live agent, else the recorded
         // preset's standing key, else the global layer — so a cold session's

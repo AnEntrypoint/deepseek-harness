@@ -1,6 +1,6 @@
-/** Package-owned LLM stream-protocol invariants. @module @deepseek-ai/dsh-llm/invariant */
+/** Package-owned LLM stream-protocol invariants. @module @freddie/freddie-llm/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-llm'
+const PACKAGE_NAME = '@freddie/freddie-llm'
 
 /** Cordis companion plugin name. */
 export const name = 'llm-invariant'

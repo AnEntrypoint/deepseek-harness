@@ -6,12 +6,12 @@
  * `updatedInput` is logged and warned but not honored. Bespoke behavior should
  * use typed native plugins on the same extension points; see the
  * [hook-bridges Agent Note](../../../../.agents/notes/implemented/feature/2026-06-30-hook-bridges.md).
- * @module @deepseek-ai/dsh-hooks-claude-code
+ * @module @freddie/freddie-hooks-claude-code
  */
 
 import { readFileSync } from 'node:fs'
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { createUserMessage } from '@freddie/freddie-llm'
 import {
   appendHookInvoked,
   appendHookResult,
@@ -21,7 +21,7 @@ import {
   matchesMatcher,
   mergeHookOutputs,
   runHook,
-} from '@deepseek-ai/dsh-hook-protocol'
+} from '@freddie/freddie-hook-protocol'
 import { parseClaudeCodeConfig } from './config.js'
 
 export const name = 'hooks-claude-code'

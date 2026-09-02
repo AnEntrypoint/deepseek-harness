@@ -19,7 +19,7 @@
  */
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, Modal } from '@freddie/freddie-client-ui-primitives'
 import { formatCapacity, parseCapacity } from './DeepSeekModelsEditor.js'
 import { messageOf } from './store.js'
 import styles from './ModelsSection.css.js'

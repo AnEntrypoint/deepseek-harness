@@ -3,10 +3,10 @@
  * becomes `content`; sources prefer structured `search_results[]` and fall back to URL-only
  * `citations[]`. The wire format and native `fetch` client are provider-private and do not use
  * `ctx.llm`.
- * @module @deepseek-ai/dsh-web-search-perplexity/provider
+ * @module @freddie/freddie-web-search-perplexity/provider
  */
 
-import { WebError } from '@deepseek-ai/dsh-web'
+import { WebError } from '@freddie/freddie-web'
 
 /** Stable id this provider registers under. */
 export const PERPLEXITY_PROVIDER_ID = 'perplexity'
@@ -21,7 +21,7 @@ export const PERPLEXITY_DEFAULT_MODEL = 'sonar'
 export const PERPLEXITY_DEFAULT_MAX_TOKENS = 1024
 
 /** Attribution header sent on every request. Bump with the package version. */
-const USER_AGENT = 'deepseek-harness/0.0.1'
+const USER_AGENT = 'freddie/0.0.1'
 
 /**
  * Map one structured Perplexity search result to a normalized source.

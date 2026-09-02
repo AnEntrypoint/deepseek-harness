@@ -9,13 +9,13 @@
  * per-item nulls. Every returned promise has a rejection consumer so dropped script promises cannot
  * kill the worker. A cancelled script that never settles emits nothing; the host force-settles the
  * run within grace and terminates the thread.
- * @module @deepseek-ai/dsh-workflow-worker-thread/runtime
+ * @module @freddie/freddie-workflow-worker-thread/runtime
  */
 
 import * as vm from 'node:vm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { assertObjectJsonSchema, JsonSchemaError } from '@deepseek-ai/dsh-tools'
-import { isFatalWorkflowError, WorkflowError } from '@deepseek-ai/dsh-workflow'
+import { SessionId } from '@freddie/freddie-session'
+import { assertObjectJsonSchema, JsonSchemaError } from '@freddie/freddie-tools'
+import { isFatalWorkflowError, WorkflowError } from '@freddie/freddie-workflow'
 import { materializeFromRealm, MaterializeError, renderThrown } from './realm.js'
 
 /** The `agent()` options the script may pass; everything else rejects loud. */

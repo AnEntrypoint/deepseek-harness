@@ -1,11 +1,11 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-session-persistence-sqlite`.
- * @module @deepseek-ai/dsh-session-persistence-sqlite/invariant
+ * Package-owned invariant companion for `@freddie/freddie-session-persistence-sqlite`.
+ * @module @freddie/freddie-session-persistence-sqlite/invariant
  */
 
 /* jscpd:ignore-start */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-session-persistence-sqlite'
+const PACKAGE_NAME = '@freddie/freddie-session-persistence-sqlite'
 
 /** Cordis companion plugin name. */
 export const name = 'session-persistence-sqlite-invariant'

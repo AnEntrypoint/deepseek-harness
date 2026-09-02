@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-sdk-jsonrpc-demo`.
- * @module @deepseek-ai/dsh-sdk-jsonrpc-demo/invariant
+ * Package-owned invariant companion for `@freddie/freddie-sdk-jsonrpc-demo`.
+ * @module @freddie/freddie-sdk-jsonrpc-demo/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-sdk-jsonrpc-demo'
+const PACKAGE_NAME = '@freddie/freddie-sdk-jsonrpc-demo'
 
 /** Cordis companion plugin name. */
 export const name = 'sdk-jsonrpc-demo-invariant'

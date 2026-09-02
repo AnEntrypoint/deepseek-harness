@@ -1,7 +1,7 @@
 /** Deterministic provider-independent image normalization. */
 
 import sharp from 'sharp'
-import { AttachmentError } from '@deepseek-ai/dsh-attachment'
+import { AttachmentError } from '@freddie/freddie-attachment'
 import { encodeFirstWithinLimit, isExhaustedEncoding } from './encoding.js'
 import { detectImage, encodedAlphaIsCompatible } from './image.js'
 

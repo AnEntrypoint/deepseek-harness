@@ -30,10 +30,10 @@ const _deepseek_ai_dsh_commands_commands_list_result$schema = z.array(z.object({
 }))
 
 export const TYPERT_REMOTE = {
-  package: '@deepseek-ai/dsh-commands',
+  package: '@freddie/freddie-commands',
   descriptors: [
     {
-      id: '@deepseek-ai/dsh-commands#commands/execute',
+      id: '@freddie/freddie-commands#commands/execute',
       service: 'commands',
       namespace: 'commands',
       method: 'execute',
@@ -50,7 +50,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_commands_commands_execute_parameter_0$schema,
           },
         },
@@ -60,7 +60,7 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-commands#commands/execute:line',
+            typeSymbol: '@freddie/freddie-commands#commands/execute:line',
             schema: _deepseek_ai_dsh_commands_commands_execute_parameter_1$schema,
           },
         },
@@ -70,7 +70,7 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-commands#commands/execute:images',
+            typeSymbol: '@freddie/freddie-commands#commands/execute:images',
             schema: _deepseek_ai_dsh_commands_commands_execute_parameter_2$schema,
           },
         },
@@ -78,13 +78,13 @@ export const TYPERT_REMOTE = {
       cancellation: { parameter: 'signal' },
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-commands#commands/execute:result',
+        typeSymbol: '@freddie/freddie-commands#commands/execute:result',
         schema: _deepseek_ai_dsh_commands_commands_execute_result$schema,
       },
       sourceLocation: {"file":"packages/interaction/commands/src/index.ts","line":329,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-commands#commands/list',
+      id: '@freddie/freddie-commands#commands/list',
       service: 'commands',
       namespace: 'commands',
       method: 'list',
@@ -101,14 +101,14 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_commands_commands_list_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-commands#commands/list:result',
+        typeSymbol: '@freddie/freddie-commands#commands/list:result',
         schema: _deepseek_ai_dsh_commands_commands_list_result$schema,
       },
       sourceLocation: {"file":"packages/interaction/commands/src/index.ts","line":285,"column":3},

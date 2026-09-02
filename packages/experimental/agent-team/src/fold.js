@@ -1,7 +1,7 @@
 /** Strict replay fold for Agent Teams log-only events. */
 
 import { z } from 'zod'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { SessionId } from '@freddie/freddie-session'
 import {
   TeamId as toTeamId,
   TeamMessageId as toTeamMessageId,

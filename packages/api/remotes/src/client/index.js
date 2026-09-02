@@ -1,12 +1,12 @@
 /** Platform-neutral assembly of generated Host Remote contributions. */
 
-import commandsRemote from '@deepseek-ai/dsh-commands/remote'
-import goalsRemote from '@deepseek-ai/dsh-goal/remote'
-import dynamicRemote from '@deepseek-ai/dsh-cordis-host-runner/remote'
-import fileReferencesRemote from '@deepseek-ai/dsh-file-reference/remote'
-import pluginInventoryRemote from '@deepseek-ai/dsh-host-plugin-inventory/remote'
-import messageFeedbackRemote from '@deepseek-ai/dsh-message-feedback/remote'
-import sessionReferencesRemote from '@deepseek-ai/dsh-session-reference/remote'
+import commandsRemote from '@freddie/freddie-commands/remote'
+import goalsRemote from '@freddie/freddie-goal/remote'
+import dynamicRemote from '@freddie/freddie-cordis-host-runner/remote'
+import fileReferencesRemote from '@freddie/freddie-file-reference/remote'
+import pluginInventoryRemote from '@freddie/freddie-host-plugin-inventory/remote'
+import messageFeedbackRemote from '@freddie/freddie-message-feedback/remote'
+import sessionReferencesRemote from '@freddie/freddie-session-reference/remote'
 
 /** Required service: the typed Client Remote contribution mount. */
 export const inject = ['remote']

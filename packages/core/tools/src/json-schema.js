@@ -11,8 +11,8 @@
  * @module dsh-tools/json-schema
  */
 
-import { assertNever, HarnessError } from '@deepseek-ai/dsh-llm'
-import { isJsonValue } from '@deepseek-ai/dsh-session'
+import { assertNever, HarnessError } from '@freddie/freddie-llm'
+import { isJsonValue } from '@freddie/freddie-session'
 
 /**
  * Thrown when a raw schema falls outside the enforced subset. `violations`

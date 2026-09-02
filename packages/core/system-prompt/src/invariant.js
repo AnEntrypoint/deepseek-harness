@@ -1,6 +1,6 @@
-/** Package-owned prompt-assembly invariants. @module @deepseek-ai/dsh-system-prompt/invariant */
+/** Package-owned prompt-assembly invariants. @module @freddie/freddie-system-prompt/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-system-prompt'
+const PACKAGE_NAME = '@freddie/freddie-system-prompt'
 const VARIABLE_NAME = /^[a-z][a-z0-9_]*$/
 
 /** Cordis companion plugin name. */

@@ -1,5 +1,5 @@
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-host-webserver'
+const PACKAGE_NAME = '@freddie/freddie-host-webserver'
 
 export const name = 'host-webserver-invariant'
 export const inject = ['invariants']

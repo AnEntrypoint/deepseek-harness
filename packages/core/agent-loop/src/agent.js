@@ -4,7 +4,7 @@
  * @module dsh-agent-loop/agent
  */
 
-import { Inbox, agentEvents, assembleContextFor } from '@deepseek-ai/dsh-agent'
+import { Inbox, agentEvents, assembleContextFor } from '@freddie/freddie-agent'
 import {
   BlockAssembler,
   LlmError,
@@ -12,10 +12,10 @@ import {
   deepFreeze,
   errorChain,
   markAgentLoopRequest,
-} from '@deepseek-ai/dsh-llm'
-import { createScope } from '@deepseek-ai/dsh-scope'
-import { canonicalHeader, headerEquals } from '@deepseek-ai/dsh-session'
-import { joinContextSections, renderContextSections, renderPrompt } from '@deepseek-ai/dsh-system-prompt'
+} from '@freddie/freddie-llm'
+import { createScope } from '@freddie/freddie-scope'
+import { canonicalHeader, headerEquals } from '@freddie/freddie-session'
+import { joinContextSections, renderContextSections, renderPrompt } from '@freddie/freddie-system-prompt'
 import { RuntimeContextProjection } from './runtime-context.js'
 import { executeToolCalls } from './tool-calls.js'
 

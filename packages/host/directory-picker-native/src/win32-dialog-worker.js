@@ -12,8 +12,8 @@
 import { loadWin32DialogBindings } from './win32-dialog-bindings.js'
 import { runFolderDialog } from './win32-dialog-logic.js'
 
-const title = process.env.DSH_DIALOG_TITLE ?? ''
-if (title === '') throw new Error('win32-dialog-worker: DSH_DIALOG_TITLE is required')
+const title = process.env.FREDDIE_DIALOG_TITLE ?? ''
+if (title === '') throw new Error('win32-dialog-worker: FREDDIE_DIALOG_TITLE is required')
 if (process.send === undefined) throw new Error('win32-dialog-worker must run as a child process with an IPC channel')
 // node's internal `send` reads `this.connected`, so bind the receiver.
 const send = process.send.bind(process)

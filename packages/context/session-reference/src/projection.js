@@ -1,8 +1,8 @@
 /** Current-surface projection and byte-bounded rendering. */
 
-import { isCompactCheckpointSource } from '@deepseek-ai/dsh-compaction'
-import { assertNever } from '@deepseek-ai/dsh-llm'
-import { TextRetainer } from '@deepseek-ai/dsh-output-retention'
+import { isCompactCheckpointSource } from '@freddie/freddie-compaction'
+import { assertNever } from '@freddie/freddie-llm'
+import { TextRetainer } from '@freddie/freddie-output-retention'
 import { stringifyTagSafeJson } from './serialization.js'
 
 /** Project current user/assistant conversation while excluding tools, reasoning, and injected context. */

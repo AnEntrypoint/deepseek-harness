@@ -7,19 +7,19 @@
    mid-slide. */
 
 .dsh-sidebarRoot__root {
-  --dsh-sidebar-inline-padding: 12px;
+  --freddie-sidebar-inline-padding: 12px;
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 6px var(--dsh-sidebar-inline-padding);
+  padding: 6px var(--freddie-sidebar-inline-padding);
   box-sizing: border-box;
   background: var(--dsw-specific-sidebar-fill);
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font-size: 14px;
   /* The sidebar is elevated above the conversation surface, so a revealed
      scrollbar uses the l2 pair. .quietBars hides it without changing layout. */
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 }
 
 /* Rail geometry (figma rail spec): 36x36 control boxes centered in the 56px
@@ -38,8 +38,8 @@
    revealing the thumb never reflows a row. Rebinding contract and the two
    rendering paths it reaches: ui-theme's README. */
 .dsh-sidebarRoot__root.dsh-sidebarRoot__quietBars {
-  --dsh-scrollbar-thumb: transparent;
-  --dsh-scrollbar-thumb-hover: transparent;
+  --freddie-scrollbar-thumb: transparent;
+  --freddie-scrollbar-thumb-hover: transparent;
 }
 
 /* Collapse phase 1: the whole frozen-width content fades out in place over
@@ -171,11 +171,11 @@
   padding: 0;
   background: transparent;
   cursor: pointer;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-sidebarRoot__iconButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-sidebarRoot__collapsed .dsh-sidebarRoot__iconButton {
@@ -207,7 +207,7 @@
 /* Rail icons ride the primary ink (figma rail spec); expanded keeps the
    secondary icon-button ink. */
 .dsh-sidebarRoot__collapsed .dsh-sidebarRoot__iconButton {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-sidebarRoot__buildRevision {
@@ -216,8 +216,8 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 3px;
-  color: var(--dsw-alias-label-primary-inverted);
-  background: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary-inverted);
+  background: var(--freddie-alias-label-primary);
   font-family: var(--ds-font-family-code);
   font-size: 8px;
   font-weight: 500;
@@ -236,10 +236,10 @@
   padding: 8px 16px;
   margin: 0 2px 8px;
   box-sizing: border-box;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 12px;
-  background: var(--dsw-alias-button-elevated-fill);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-button-elevated-fill);
+  color: var(--freddie-alias-label-primary);
   font-size: 14px;
   font-weight: 500;
   line-height: 22px;
@@ -248,7 +248,7 @@
 }
 
 .dsh-sidebarRoot__newSession:hover {
-  background: var(--dsw-alias-button-floating-hover);
+  background: var(--freddie-alias-button-floating-hover);
 }
 
 .dsh-sidebarRoot__collapsed .dsh-sidebarRoot__newSession {
@@ -263,7 +263,7 @@
 }
 
 .dsh-sidebarRoot__collapsed .dsh-sidebarRoot__newSession:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-sidebarRoot__newSessionLabel {
@@ -285,7 +285,7 @@
   display: flex;
   flex-direction: column;
   margin-left: -4px;
-  margin-right: calc(-1 * var(--dsh-sidebar-inline-padding));
+  margin-right: calc(-1 * var(--freddie-sidebar-inline-padding));
   padding-left: 4px;
   overflow: hidden;
 }

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-session-title-llm`.
- * @module @deepseek-ai/dsh-session-title-llm/invariant
+ * Package-owned invariant companion for `@freddie/freddie-session-title-llm`.
+ * @module @freddie/freddie-session-title-llm/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-session-title-llm'
+const PACKAGE_NAME = '@freddie/freddie-session-title-llm'
 
 /** Cordis companion plugin name. */
 export const name = 'session-title-llm-invariant'

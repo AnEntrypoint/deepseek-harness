@@ -1,4 +1,4 @@
-# `@deepseek-ai/dsh`
+# `@freddie/freddie`
 
 The `dsh` command is the product launcher for profiles: ordered stacks of plugin-bundle patch layers under the user's own overrides. [`src/args.ts`](src/args.ts) owns the command grammar, and [`src/bin.ts`](src/bin.ts) loads only the selected runner. Invalid commands, options from another mode, configuration errors, and boot failures exit nonzero.
 
@@ -6,7 +6,7 @@ The `dsh` command is the product launcher for profiles: ordered stacks of plugin
 
 | Command | Purpose |
 |---|---|
-| `dsh --profile <name>` | Boot the named profile under `$DSH_HOME/profiles/<name>`. |
+| `dsh --profile <name>` | Boot the named profile under `$FREDDIE_HOME/profiles/<name>`. |
 | `dsh --profile headless "job"` | Run one fresh persisted session, print the final answer, and exit. |
 | `dsh web` | Alias of `--profile web`. |
 | `dsh plugin --profile <name> <pnpm args>` | Manage a profile's plugins by forwarding to pnpm in the profile directory. |
@@ -31,10 +31,10 @@ A profile directory holds a `package.json` (out-of-tree plugin dependencies plus
 
 The tree composes over an empty root:
 - each bundle's patch in `dsh.profile.bundles` order
-- then the profile's `cordis.patch.yml`, then the home-level `$DSH_HOME/cordis.patch.yml`
+- then the profile's `cordis.patch.yml`, then the home-level `$FREDDIE_HOME/cordis.patch.yml`
 - then `--patch` overlays
 
-Bundles named in `dsh.profile.bundles` resolve from the dsh installation first (`@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`, `@deepseek-ai/dsh-headless`), then from the profile's own `node_modules`, where pnpm installs out-of-tree plugins.
+Bundles named in `dsh.profile.bundles` resolve from the dsh installation first (`@freddie/freddie-base`, `@freddie/freddie-web-app`, `@freddie/freddie-headless`), then from the profile's own `node_modules`, where pnpm installs out-of-tree plugins.
 
 Use `--dump-default-config` and `--dump-config` to inspect the composed tree without booting it.
 

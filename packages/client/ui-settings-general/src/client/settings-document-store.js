@@ -1,6 +1,6 @@
 /** State owner for the optional local settings-document action. */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 
 function messageOf(error) {
   return error instanceof Error ? error.message : String(error)

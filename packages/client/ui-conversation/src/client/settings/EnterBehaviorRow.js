@@ -4,7 +4,7 @@
  * becomes an instance field and re-render is an explicit applyDiff(this,
  * vdom) call (Toast.tsx's pattern). */
 import { applyDiff, createElement as h } from 'webjsx'
-import { IconChevronDownOutline14, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, Menu } from '@freddie/freddie-client-ui-primitives'
 import css from './EnterBehaviorRow.css.js'
 
 const OPTIONS = [

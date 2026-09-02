@@ -8,7 +8,7 @@
  * their CAS ref reads the session's current projected value at call time.
  * Goal creation stays on the /goal host command.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { GoalCommandInputView } from './GoalCommandInputView.js'
 import { goalCommandInputDefinition } from './goal-command-input.js'
 import { en, zh } from './locales.js'

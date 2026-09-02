@@ -1,13 +1,13 @@
 /**
  * Single replay-aware token-meter service for request and surface pressure.
  *
- * @module @deepseek-ai/dsh-token-meter
+ * @module @freddie/freddie-token-meter
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { BlockAssembler, deepFreeze } from '@deepseek-ai/dsh-llm'
-import { canonicalHeader, headerEquals, isSurfaceEvent } from '@deepseek-ai/dsh-session'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { BlockAssembler, deepFreeze } from '@freddie/freddie-llm'
+import { canonicalHeader, headerEquals, isSurfaceEvent } from '@freddie/freddie-session'
 import { contextBreakdownProjectionDefinition } from './breakdown-projection.js'
 import { contextPressureProjectionDefinition, tokenUsageProjectionDefinition } from './usage-projection.js'
 import { estimateContent, estimateHeader, estimateMessage, ROLE_OVERHEAD } from './estimate.js'

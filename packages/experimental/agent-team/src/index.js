@@ -1,7 +1,7 @@
 /** Agent Teams service façade over roster, mailbox, task, and runtime lifecycle owners. */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import { TeamActivity } from './activity.js'
 import { errorMessage, TeamError } from './error.js'
 import { TeamJournal } from './journal.js'

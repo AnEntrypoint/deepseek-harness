@@ -6,7 +6,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
   font: var(--dsw-font-markdown-base);
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-markdownText__markdown strong {
@@ -59,7 +59,7 @@
   /* deepsuite markdown.css uses brand-text (blue in newDesign); this sheet
      keeps design-platform brand-text as near-black, so links use the blue
      business-primary alias instead. */
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
   transition: box-shadow var(--ds-transition-duration) var(--ds-ease-in-out);
   position: relative;
   text-decoration: none;
@@ -75,11 +75,11 @@
 .dsh-markdownText__markdown a:hover,
 .dsh-markdownText__markdown a:focus {
   outline: none;
-  text-decoration: underline var(--dsw-alias-state-business-primary);
+  text-decoration: underline var(--freddie-alias-state-business-primary);
 }
 
 .dsh-markdownText__markdown a:focus-visible {
-  box-shadow: 0 0 0 2px var(--dsw-alias-state-business-primary);
+  box-shadow: 0 0 0 2px var(--freddie-alias-state-business-primary);
 }
 
 .dsh-markdownText__markdown :where(ul, ol) {
@@ -97,7 +97,7 @@
 
 .dsh-markdownText__markdown li::marker {
   line-height: 28px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 /* Nested ol under ul/ol: markers inside (models sometimes emit this shape). */
@@ -128,11 +128,11 @@
   border: none;
   height: 1px;
   margin: 32px 0;
-  background: var(--dsw-alias-border-l2);
+  background: var(--freddie-alias-border-l2);
 }
 
 .dsh-markdownText__markdown blockquote {
-  border-left: 2px solid var(--dsw-alias-label-caption);
+  border-left: 2px solid var(--freddie-alias-label-caption);
   margin: 16px 0 0;
   padding-left: 14px;
 }
@@ -150,7 +150,7 @@
   font: var(--dsw-font-markdown-code);
   font-family: var(--ds-font-family-code);
   font-size: 0.875em !important;
-  background-color: var(--dsw-alias-markdown-inline-code);
+  background-color: var(--freddie-alias-markdown-inline-code);
   border-radius: 6px;
   padding: 0 5px;
 }
@@ -168,7 +168,7 @@
 
 .dsh-markdownText__markdown input[type='checkbox'] {
   margin: 0 8px 0 0;
-  accent-color: var(--dsw-alias-label-secondary);
+  accent-color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-markdownText__tableScroll {
@@ -188,7 +188,7 @@
    already the hover that re-enables `auto`. */
 .dsh-markdownText__tableScroll.md-table-wide {
   overflow-x: hidden;
-  padding-bottom: var(--dsh-scrollbar-width, 8px);
+  padding-bottom: var(--freddie-scrollbar-width, 8px);
 }
 
 .dsh-markdownText__tableScroll.md-table-wide:hover,
@@ -201,7 +201,7 @@
    the sheet's link focus color. */
 .dsh-markdownText__tableScroll:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--dsw-alias-state-business-primary);
+  box-shadow: 0 0 0 2px var(--freddie-alias-state-business-primary);
 }
 
 /* Many-column tables (the renderer's `md-table-wide` hook) keep their
@@ -225,7 +225,7 @@
 .dsh-markdownText__tableScroll th {
   text-align: start;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--dsw-alias-border-l3);
+  border-bottom: 1px solid var(--freddie-alias-border-l3);
   border-top: none;
   font: var(--dsw-font-markdown-table-head);
   max-width: 320px;
@@ -235,7 +235,7 @@
 
 .dsh-markdownText__tableScroll td {
   padding: 10px 16px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
   font: var(--dsw-font-markdown-table);
   max-width: 320px;
   max-width: min(30vw, 320px);
@@ -266,7 +266,7 @@
 }
 
 .dsh-markdownText__imageAlt {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-style: italic;
 }
 
@@ -277,7 +277,7 @@
   height: auto;
   margin: 0;
   border-radius: 8px;
-  background: var(--dsw-alias-bg-base);
+  background: var(--freddie-alias-bg-base);
   object-fit: contain;
 }
 
@@ -291,7 +291,7 @@
   border: none;
   background: none;
   font: inherit;
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
   text-decoration: none;
   cursor: pointer;
 }
@@ -299,6 +299,6 @@
 .dsh-markdownText__fileMention:hover,
 .dsh-markdownText__fileMention:focus {
   outline: none;
-  text-decoration: underline var(--dsw-alias-state-business-primary);
+  text-decoration: underline var(--freddie-alias-state-business-primary);
   text-underline-offset: 3px;
 }

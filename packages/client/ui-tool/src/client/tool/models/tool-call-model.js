@@ -6,7 +6,7 @@
  * a terminal card gets its expanded body from the views instead, through
  * `terminalCardModel` in terminal-card-model.ts.
  */
-import { abbreviateHomePath } from '@deepseek-ai/dsh-client-runtime/client'
+import { abbreviateHomePath } from '@freddie/freddie-client-runtime/client'
 
 /** Figma row titles per variant (design literals, not translatable copy). */
 export const VARIANT_TITLES = {

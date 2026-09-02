@@ -1,7 +1,7 @@
 /** Persistent PTY session over the subprocess seam's terminal primitive. */
 
 import { Buffer } from 'node:buffer'
-import { TerminalError } from '@deepseek-ai/dsh-terminal'
+import { TerminalError } from '@freddie/freddie-terminal'
 import { CONTROLLED_PROMPT, TerminalSanitizer } from './sanitize.js'
 
 function utf8Tail(text, maxBytes) {

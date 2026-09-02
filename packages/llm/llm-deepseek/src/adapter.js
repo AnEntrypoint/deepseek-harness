@@ -8,8 +8,8 @@
  * @module dsh-llm-deepseek/adapter
  */
 
-import { attributionHeaders, contentHasImage, CONTEXT_WINDOW_EXCEEDED_CODE, isContextWindowExceededError, isQuotaExceededError, LlmAdapter, LlmError, offloadRequestImagesWithPolicy, ProviderRequestId, QUOTA_EXCEEDED_CODE, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { deadline, idleWatchdog, timeoutOf } from '@deepseek-ai/dsh-timeout'
+import { attributionHeaders, contentHasImage, CONTEXT_WINDOW_EXCEEDED_CODE, isContextWindowExceededError, isQuotaExceededError, LlmAdapter, LlmError, offloadRequestImagesWithPolicy, ProviderRequestId, QUOTA_EXCEEDED_CODE, ReasoningEffortId } from '@freddie/freddie-llm'
+import { deadline, idleWatchdog, timeoutOf } from '@freddie/freddie-timeout'
 import { serializeRequest, serializeRequestWithImages } from './serialize.js'
 import { DeepSeekFileStore } from './file-store.js'
 import { parseSse } from './sse.js'
@@ -368,12 +368,12 @@ export class DeepSeekAdapter extends LlmAdapter {
       'content-type': 'application/json',
       'accept': 'text/event-stream',
       ...attributionHeaders(),
-      'x-deepseek-harness-user-id': String(userId),
+      'x-freddie-user-id': String(userId),
       ...options.sessionId !== undefined
-        ? { 'x-deepseek-harness-session-id': String(options.sessionId) }
+        ? { 'x-freddie-session-id': String(options.sessionId) }
         : {},
       ...options.purpose === 'compaction'
-        ? { 'x-deepseek-harness-compact': '1' }
+        ? { 'x-freddie-compact': '1' }
         : {},
     }
 

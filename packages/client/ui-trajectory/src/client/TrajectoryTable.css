@@ -1,6 +1,6 @@
 .dsh-trajectoryTable__split {
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 
   position: relative;
   display: flex;
@@ -8,7 +8,7 @@
   width: 100%;
   min-height: 0;
   overflow: hidden;
-  background: var(--dsw-alias-bg-layer-1);
+  background: var(--freddie-alias-bg-layer-1);
   container-type: inline-size;
 }
 
@@ -18,7 +18,7 @@
   min-width: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: var(--dsh-trajectory-bottom-clearance, 0px);
+  padding-bottom: var(--freddie-trajectory-bottom-clearance, 0px);
   container: dsh-trajectoryTable__trajectory-table / inline-size;
 }
 
@@ -39,9 +39,9 @@
   justify-content: center;
   gap: 6px;
   box-sizing: border-box;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
-  background: var(--dsw-alias-bg-layer-1);
-  color: var(--dsw-alias-label-secondary);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
+  background: var(--freddie-alias-bg-layer-1);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-xxs-12);
 }
 
@@ -49,8 +49,8 @@
   width: 10px;
   height: 10px;
   box-sizing: border-box;
-  border: 1.5px solid var(--dsw-alias-border-l2);
-  border-top-color: var(--dsw-alias-state-business-primary);
+  border: 1.5px solid var(--freddie-alias-border-l2);
+  border-top-color: var(--freddie-alias-state-business-primary);
   border-radius: 50%;
   animation: dsh-trajectoryTable__history-loading-spin 700ms linear infinite;
 }
@@ -73,19 +73,19 @@
   justify-content: center;
   gap: 6px;
   border: 0;
-  background: var(--dsw-alias-bg-layer-1);
-  color: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-bg-layer-1);
+  color: var(--freddie-alias-label-secondary);
   cursor: pointer;
   font: var(--dsw-font-xxs-12);
 }
 
 .dsh-trajectoryTable__historyLoadButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__historyLoadButton:focus-visible {
-  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline: 2px solid var(--freddie-alias-state-business-primary);
   outline-offset: -2px;
 }
 
@@ -120,15 +120,15 @@
   --trajectory-turn-accent: color-mix(
     in srgb,
     var(--dsw-static-blue-500) 22%,
-    var(--dsw-alias-bg-layer-1)
+    var(--freddie-alias-bg-layer-1)
   );
 
   width: 100%;
   min-width: 0;
   border-spacing: 0;
   table-layout: fixed;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-bg-layer-1);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-bg-layer-1);
   font: var(--dsw-font-xxs-12);
 }
 
@@ -148,8 +148,8 @@
   height: 30px;
   padding: 0 8px;
   overflow: hidden;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
-  color: var(--dsw-alias-label-tertiary);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
+  color: var(--freddie-alias-label-tertiary);
   background: var(--dsw-specific-sidebar-fill);
   font: var(--dsw-font-xxs-12);
   font-weight: 500;
@@ -169,7 +169,7 @@
   height: 30px;
   padding: 0 8px;
   overflow: hidden;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
+  border-bottom: 1px solid var(--freddie-alias-border-l1);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -197,7 +197,7 @@
 }
 
 .dsh-trajectoryTable__table tbody tr:not([data-collapsed-summary]):not([data-virtual-spacer]):not([data-history-load]):not([data-selected='true']):hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-trajectoryTable__table tbody tr[data-request-only='true']:hover {
@@ -222,11 +222,11 @@
 }
 
 .dsh-trajectoryTable__table tbody tr:not([data-collapsed-summary]):focus-visible {
-  box-shadow: inset 0 0 0 1px var(--dsw-alias-state-business-primary);
+  box-shadow: inset 0 0 0 1px var(--freddie-alias-state-business-primary);
 }
 
 .dsh-trajectoryTable__table tbody tr[data-selected='true'] {
-  background: var(--dsw-alias-interactive-bg-active);
+  background: var(--freddie-alias-interactive-bg-active);
 }
 
 .dsh-trajectoryTable__requestBoundaryControl {
@@ -251,9 +251,9 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--dsw-alias-label-caption);
+  background: var(--freddie-alias-label-caption);
   box-shadow:
-    0 0 0 2px var(--dsw-alias-bg-layer-1),
+    0 0 0 2px var(--freddie-alias-bg-layer-1),
     0 0 0 3px transparent;
   content: '';
   transition:
@@ -267,10 +267,10 @@
   left: 17px;
   width: max-content;
   padding: 0 4px;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 1px solid var(--freddie-alias-border-l1);
   border-radius: 2px;
-  color: var(--dsw-alias-label-secondary);
-  background: var(--dsw-alias-bg-layer-1);
+  color: var(--freddie-alias-label-secondary);
+  background: var(--freddie-alias-bg-layer-1);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   content: attr(data-label);
   font: 9px/12px var(--ds-font-family-code);
@@ -286,7 +286,7 @@
 
 .dsh-trajectoryTable__requestBoundaryControl:hover::before,
 .dsh-trajectoryTable__requestBoundaryControl:focus-visible::before {
-  background: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+  background: var(--freddie-alias-brand-primary-new-colorprimary-new-color);
 }
 
 .dsh-trajectoryTable__requestBoundaryControlActive::before,
@@ -294,16 +294,16 @@
 .dsh-trajectoryTable__requestBoundaryControlActive:focus-visible::before {
   background: color-mix(
     in srgb,
-    var(--dsw-alias-brand-primary-new-colorprimary-new-color) 18%,
-    var(--dsw-alias-bg-layer-1)
+    var(--freddie-alias-brand-primary-new-colorprimary-new-color) 18%,
+    var(--freddie-alias-bg-layer-1)
   );
-  box-shadow: 0 0 0 1.5px var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+  box-shadow: 0 0 0 1.5px var(--freddie-alias-brand-primary-new-colorprimary-new-color);
 }
 
 .dsh-trajectoryTable__requestBoundaryControl[data-request-status='error']::before,
 .dsh-trajectoryTable__requestBoundaryControl[data-request-status='error']:hover::before,
 .dsh-trajectoryTable__requestBoundaryControl[data-request-status='error']:focus-visible::before {
-  background: var(--dsw-alias-state-error-primary);
+  background: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-trajectoryTable__requestBoundaryControl:hover::after,
@@ -328,7 +328,7 @@
 .dsh-trajectoryTable__selectionRail {
   position: absolute;
   left: 0;
-  background: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+  background: var(--freddie-alias-brand-primary-new-colorprimary-new-color);
   pointer-events: none;
 }
 
@@ -354,13 +354,13 @@
 .dsh-trajectoryTable__table tbody tr[data-error='true'] .dsh-trajectoryTable__turnRail {
   background: color-mix(
     in srgb,
-    var(--dsw-alias-state-error-primary) 22%,
-    var(--dsw-alias-bg-layer-1)
+    var(--freddie-alias-state-error-primary) 22%,
+    var(--freddie-alias-bg-layer-1)
   );
 }
 
 .dsh-trajectoryTable__table tbody tr[data-error='true'] .dsh-trajectoryTable__selectionRail {
-  background: var(--dsw-alias-state-error-primary);
+  background: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-trajectoryTable__table tbody tr[data-turn-start='true'] td {
@@ -375,7 +375,7 @@
   right: 0;
   left: 0;
   height: 2px;
-  background: var(--dsw-alias-border-l1);
+  background: var(--freddie-alias-border-l1);
   content: '';
   pointer-events: none;
   transform: translateY(-50%);
@@ -399,8 +399,8 @@
   width: max-content;
   padding: 1px 5px;
   border-radius: 0 0 2px;
-  color: var(--dsw-alias-label-tertiary);
-  background: var(--dsw-alias-bg-module-platform);
+  color: var(--freddie-alias-label-tertiary);
+  background: var(--freddie-alias-bg-module-platform);
   font: 8px/10px var(--ds-font-family-code);
   font-variant-numeric: tabular-nums;
   user-select: none;
@@ -425,7 +425,7 @@
   color: color-mix(
     in srgb,
     var(--dsw-static-blue-500) 55%,
-    var(--dsw-alias-label-tertiary)
+    var(--freddie-alias-label-tertiary)
   );
   background: var(--trajectory-turn-accent);
 }
@@ -447,15 +447,15 @@
 }
 
 .dsh-trajectoryTable__kindSlot [role='tooltip'] {
-  border: 1px solid var(--dsw-alias-border-l2);
-  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--freddie-alias-border-l2);
+  background: var(--freddie-alias-bg-layer-2);
   box-shadow: var(--dsw-shadow-lv2);
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__content {
   padding-left: 4px !important;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__kindTag {
@@ -590,27 +590,27 @@
 }
 
 .dsh-trajectoryTable__user {
-  color: var(--dsw-alias-state-business-primary);
-  background: var(--dsw-alias-state-business-tertiary);
+  color: var(--freddie-alias-state-business-primary);
+  background: var(--freddie-alias-state-business-tertiary);
 }
 
 .dsh-trajectoryTable__systemNeutral {
-  color: var(--dsw-alias-label-secondary);
-  background: var(--dsw-alias-bg-module-platform);
+  color: var(--freddie-alias-label-secondary);
+  background: var(--freddie-alias-bg-module-platform);
 }
 
 .dsh-trajectoryTable__contextGreen {
   color: color-mix(
     in srgb,
-    var(--dsw-alias-state-success-primary) 68%,
-    var(--dsw-alias-label-secondary)
+    var(--freddie-alias-state-success-primary) 68%,
+    var(--freddie-alias-label-secondary)
   );
-  background: var(--dsw-alias-state-success-tertiary);
+  background: var(--freddie-alias-state-success-tertiary);
 }
 
 .dsh-trajectoryTable__compacted {
-  color: var(--dsw-alias-label-secondary);
-  background: var(--dsw-alias-bg-module-platform);
+  color: var(--freddie-alias-label-secondary);
+  background: var(--freddie-alias-bg-module-platform);
 }
 
 .dsh-trajectoryTable__compactedSummary {
@@ -634,7 +634,7 @@
 
 .dsh-trajectoryTable__promptDiffTitle {
   margin: 0 0 6px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-xs-strong-13);
   user-select: none;
 }
@@ -642,8 +642,8 @@
 .dsh-trajectoryTable__promptDiff {
   margin: 0;
   overflow: auto;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-bg-layer-1);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-bg-layer-1);
   font: 11px/17px var(--ds-font-family-code);
   white-space: pre;
 }
@@ -655,65 +655,65 @@
 }
 
 .dsh-trajectoryTable__promptDiffLinemeta {
-  color: var(--dsw-alias-label-caption);
-  background: var(--dsw-alias-bg-module-platform);
+  color: var(--freddie-alias-label-caption);
+  background: var(--freddie-alias-bg-module-platform);
   user-select: none;
 }
 
 .dsh-trajectoryTable__promptDiffLinecontext {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-trajectoryTable__promptDiffLineadded {
   color: color-mix(
     in srgb,
-    var(--dsw-alias-state-success-primary) 72%,
-    var(--dsw-alias-label-primary)
+    var(--freddie-alias-state-success-primary) 72%,
+    var(--freddie-alias-label-primary)
   );
-  background: var(--dsw-alias-state-success-tertiary);
+  background: var(--freddie-alias-state-success-tertiary);
 }
 
 .dsh-trajectoryTable__promptDiffLineremoved {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
   background: color-mix(
     in srgb,
-    var(--dsw-alias-state-error-primary) 12%,
-    var(--dsw-alias-bg-layer-1)
+    var(--freddie-alias-state-error-primary) 12%,
+    var(--freddie-alias-bg-layer-1)
   );
 }
 
 .dsh-trajectoryTable__assistantVioletBright {
   color: color-mix(
     in srgb,
-    var(--dsw-alias-brand-primary-new-colorprimary-new-color) 60%,
-    var(--dsw-alias-state-error-secondary)
+    var(--freddie-alias-brand-primary-new-colorprimary-new-color) 60%,
+    var(--freddie-alias-state-error-secondary)
   );
   background: color-mix(
     in srgb,
     color-mix(
       in srgb,
-      var(--dsw-alias-brand-primary-new-colorprimary-new-color) 55%,
-      var(--dsw-alias-state-error-secondary)
+      var(--freddie-alias-brand-primary-new-colorprimary-new-color) 55%,
+      var(--freddie-alias-state-error-secondary)
     ) 15%,
-    var(--dsw-alias-bg-layer-1)
+    var(--freddie-alias-bg-layer-1)
   );
 }
 
 .dsh-trajectoryTable__toolAmber {
-  color: var(--dsw-alias-state-warn-label);
-  background: var(--dsw-alias-state-warn-tertiary);
+  color: var(--freddie-alias-state-warn-label);
+  background: var(--freddie-alias-state-warn-tertiary);
 }
 
 .dsh-trajectoryTable__subtoolAmber {
   color: color-mix(
     in srgb,
-    var(--dsw-alias-state-warn-label) 62%,
-    var(--dsw-alias-label-tertiary)
+    var(--freddie-alias-state-warn-label) 62%,
+    var(--freddie-alias-label-tertiary)
   );
   background: color-mix(
     in srgb,
-    var(--dsw-alias-state-warn-tertiary) 58%,
-    var(--dsw-alias-bg-layer-1)
+    var(--freddie-alias-state-warn-tertiary) 58%,
+    var(--freddie-alias-bg-layer-1)
   );
 }
 
@@ -726,7 +726,7 @@
 }
 
 .dsh-trajectoryTable__toolCallOnly {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-trajectoryTable__table tbody tr[data-collapsed-summary='turn'] td,
@@ -741,18 +741,18 @@
 }
 
 .dsh-trajectoryTable__table tbody tr[data-collapsed-summary]:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-trajectoryTable__table tbody tr[data-collapsed-summary]:focus-visible {
-  box-shadow: inset 0 0 0 1px var(--dsw-alias-state-business-primary);
+  box-shadow: inset 0 0 0 1px var(--freddie-alias-state-business-primary);
 }
 
 .dsh-trajectoryTable__collapsedTurnContent {
   display: flex;
   align-items: center;
   min-width: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font-size: 12px;
   line-height: 16px;
 }
@@ -760,7 +760,7 @@
 .dsh-trajectoryTable__collapsedTurnEllipsis {
   flex: none;
   margin-right: 6px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font-weight: 600;
   user-select: none;
 }
@@ -795,14 +795,14 @@
 }
 
 .dsh-trajectoryTable__toolCallNameTypeface {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font: 400 12px/18px Menlo, Consolas, 'Liberation Mono', 'PingFang SC',
     'Microsoft YaHei';
 }
 
 .dsh-trajectoryTable__toolCallPayload {
   margin-left: 7px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: 400 12px/18px var(--ds-font-family-code);
 }
 
@@ -822,29 +822,29 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-trajectoryTable__noOutputText {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-trajectoryTable__arrow {
   flex: none;
   margin-right: 8px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-trajectoryTable__error {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-trajectoryTable__overview dd.dsh-trajectoryTable__error {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-trajectoryTable__details .dsh-trajectoryTable__errorPayload {
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-trajectoryTable__details .dsh-trajectoryTable__errorPayload .dsh-trajectoryTable__resultBlockText {
@@ -853,12 +853,12 @@
 
 .dsh-trajectoryTable__details .dsh-trajectoryTable__jsonPayload.dsh-trajectoryTable__errorPayload,
 .dsh-trajectoryTable__details .dsh-trajectoryTable__jsonPreview.dsh-trajectoryTable__errorPayload {
-  --json-tree-property: var(--dsw-alias-state-error-primary);
-  --json-tree-string: var(--dsw-alias-state-error-primary);
-  --json-tree-number: var(--dsw-alias-state-error-primary);
-  --json-tree-keyword: var(--dsw-alias-state-error-primary);
-  --json-tree-punctuation: var(--dsw-alias-state-error-primary);
-  --json-tree-icon: var(--dsw-alias-state-error-primary);
+  --json-tree-property: var(--freddie-alias-state-error-primary);
+  --json-tree-string: var(--freddie-alias-state-error-primary);
+  --json-tree-number: var(--freddie-alias-state-error-primary);
+  --json-tree-keyword: var(--freddie-alias-state-error-primary);
+  --json-tree-punctuation: var(--freddie-alias-state-error-primary);
+  --json-tree-icon: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-trajectoryTable__details {
@@ -870,8 +870,8 @@
   max-width: calc(100% - 280px);
   min-width: 0;
   min-height: 0;
-  border-left: 1px solid var(--dsw-alias-border-l2);
-  background: var(--dsw-alias-bg-layer-1);
+  border-left: 1px solid var(--freddie-alias-border-l2);
+  background: var(--freddie-alias-bg-layer-1);
 }
 
 .dsh-trajectoryTable__detailsResizeHandle {
@@ -901,7 +901,7 @@
   box-sizing: border-box;
   height: 42px;
   padding: 0 8px 0 12px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
 }
 
 .dsh-trajectoryTable__detailsTitle {
@@ -909,7 +909,7 @@
   align-items: center;
   min-width: 0;
   gap: 8px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__requestDetailsDot {
@@ -917,7 +917,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--dsw-alias-label-secondary);
+  background: var(--freddie-alias-label-secondary);
 }
 
 .dsh-trajectoryTable__requestDetailsName {
@@ -928,7 +928,7 @@
 .dsh-trajectoryTable__detailsLocation {
   min-width: 0;
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: 11px/16px var(--ds-font-family-code);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -944,7 +944,7 @@
   padding: 0;
   border: 0;
   border-radius: 6px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   background: transparent;
   cursor: pointer;
   font-size: 18px;
@@ -952,8 +952,8 @@
 }
 
 .dsh-trajectoryTable__close:hover {
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-trajectoryTable__detailTabs {
@@ -968,7 +968,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   gap: 1px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
   overscroll-behavior-x: contain;
   scrollbar-width: none;
   white-space: nowrap;
@@ -983,19 +983,19 @@
   flex: none;
   padding: 0 9px;
   border: 0;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   background: transparent;
   cursor: pointer;
   font: var(--dsw-font-xs-13);
 }
 
 .dsh-trajectoryTable__detailTab:hover {
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-trajectoryTable__detailTabActive {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-trajectoryTable__detailTabActive::after {
@@ -1005,13 +1005,13 @@
   left: 9px;
   height: 2px;
   border-radius: 1px 1px 0 0;
-  background: var(--dsw-alias-state-business-primary);
+  background: var(--freddie-alias-state-business-primary);
   content: '';
 }
 
 .dsh-trajectoryTable__close:focus-visible,
 .dsh-trajectoryTable__detailTab:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: -1px;
 }
 
@@ -1020,7 +1020,7 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: var(--dsh-trajectory-bottom-clearance, 0px);
+  padding-bottom: var(--freddie-trajectory-bottom-clearance, 0px);
   scrollbar-gutter: stable;
 }
 
@@ -1028,7 +1028,7 @@
   display: flex;
   box-sizing: border-box;
   flex-direction: column;
-  padding-bottom: calc(12px + var(--dsh-trajectory-bottom-clearance, 0px));
+  padding-bottom: calc(12px + var(--freddie-trajectory-bottom-clearance, 0px));
   overflow: hidden;
 }
 
@@ -1046,14 +1046,14 @@
 }
 
 .dsh-trajectoryTable__summaryScrollRegion {
-  --dsh-scrollbar-thumb: transparent;
-  --dsh-scrollbar-thumb-hover: transparent;
+  --freddie-scrollbar-thumb: transparent;
+  --freddie-scrollbar-thumb-hover: transparent;
 }
 
 .dsh-trajectoryTable__summaryScrollRegion:hover,
 .dsh-trajectoryTable__summaryScrollRegion:focus-within {
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 }
 
 .dsh-trajectoryTable__compactedSummary .dsh-trajectoryTable__markdownPayload {
@@ -1075,7 +1075,7 @@
   all: unset;
   display: inline-flex;
   align-items: center;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   cursor: pointer;
   font: inherit;
   gap: 1px;
@@ -1083,22 +1083,22 @@
 }
 
 .dsh-trajectoryTable__overviewHierarchyNavLink:hover {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__overviewHierarchyJumpIconTight {
   flex: none;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-trajectoryTable__overviewHierarchyNavLink:hover .dsh-trajectoryTable__overviewHierarchyJumpIconTight,
 .dsh-trajectoryTable__overviewHierarchyNavLink:focus-visible .dsh-trajectoryTable__overviewHierarchyJumpIconTight {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__overviewHierarchyNavLink:focus-visible {
-  color: var(--dsw-alias-label-primary);
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-label-primary);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: 2px;
 }
 
@@ -1125,7 +1125,7 @@
 .dsh-trajectoryTable__usageHeading {
   margin: 0;
   padding: 4px 14px 1px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-xs-strong-13);
   user-select: none;
 }
@@ -1135,14 +1135,14 @@
 }
 
 .dsh-trajectoryTable__overview dt {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-trajectoryTable__overview dd {
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1156,7 +1156,7 @@
 }
 
 .dsh-trajectoryTable__timestampToggle:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: 2px;
 }
 
@@ -1191,8 +1191,8 @@
   height: 28px;
   margin: 0;
   padding: 0 0 3px 14px;
-  color: var(--dsw-alias-label-secondary);
-  background: var(--dsw-alias-bg-layer-1);
+  color: var(--freddie-alias-label-secondary);
+  background: var(--freddie-alias-bg-layer-1);
   font: var(--dsw-font-xs-strong-13);
   user-select: none;
 }
@@ -1216,20 +1216,20 @@
 
 .dsh-trajectoryTable__overviewTitleIcon {
   flex: none;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-trajectoryTable__overviewTitle:hover .dsh-trajectoryTable__overviewTitleIcon {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__overviewTitle:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: 2px;
 }
 
 .dsh-trajectoryTable__overviewTitle:focus-visible .dsh-trajectoryTable__overviewTitleIcon {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-trajectoryTable__overviewPreview {
@@ -1237,7 +1237,7 @@
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  background: var(--dsw-alias-bg-layer-1);
+  background: var(--freddie-alias-bg-layer-1);
 }
 
 .dsh-trajectoryTable__overviewPreview > :last-child {
@@ -1264,7 +1264,7 @@
 
 .dsh-trajectoryTable__markdownPreview,
 .dsh-trajectoryTable__markdownPayload {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__markdownPreview > div,
@@ -1342,8 +1342,8 @@
 .dsh-trajectoryTable__thinkingQuote {
   margin: 6px 14px 0 12px;
   padding-left: 6px;
-  border-left: 2px solid var(--dsw-alias-markdown-citation);
-  color: var(--dsw-alias-label-secondary);
+  border-left: 2px solid var(--freddie-alias-markdown-citation);
+  color: var(--freddie-alias-label-secondary);
   background: transparent;
 }
 
@@ -1362,7 +1362,7 @@
   height: 18px;
   padding: 0;
   border: 0;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   background: transparent;
   cursor: pointer;
   font: 600 12px/18px var(--dsw-font-family);
@@ -1380,11 +1380,11 @@
 }
 
 .dsh-trajectoryTable__thinkingToggle:hover {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-trajectoryTable__thinkingToggle:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: 2px;
 }
 
@@ -1393,12 +1393,12 @@
 .dsh-trajectoryTable__thinkingQuote .dsh-trajectoryTable__payload {
   min-height: 0;
   padding: 2px 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   background: transparent;
 }
 
 .dsh-trajectoryTable__assistantOutput {
-  background: var(--dsw-alias-bg-layer-1);
+  background: var(--freddie-alias-bg-layer-1);
 }
 
 .dsh-trajectoryTable__markdownPreview {
@@ -1420,7 +1420,7 @@
 
 .dsh-trajectoryTable__schema {
   min-height: 100%;
-  background: var(--dsw-alias-bg-layer-1);
+  background: var(--freddie-alias-bg-layer-1);
 }
 
 .dsh-trajectoryTable__schemaPreview {
@@ -1437,13 +1437,13 @@
 
 .dsh-trajectoryTable__schemaName {
   margin: 0;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font: 600 12px/18px var(--ds-font-family-code);
 }
 
 .dsh-trajectoryTable__schemaDescription {
   margin: 2px 0 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-xs-13);
   white-space: pre-wrap;
 }
@@ -1455,7 +1455,7 @@
 .dsh-trajectoryTable__schemaParametersTitle {
   margin: 0;
   padding: 4px 14px 2px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: 600 11px/16px var(--dsw-font-family);
   user-select: none;
 }
@@ -1470,8 +1470,8 @@
   margin: 0;
   padding: 14px;
   overflow-wrap: anywhere;
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-markdown-code-block);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-markdown-code-block);
   font: 12px/19px var(--ds-font-family-code);
   tab-size: 2;
   white-space: pre-wrap;
@@ -1514,17 +1514,17 @@
 }
 
 .dsh-trajectoryTable__sourceBlockLabel {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: 11px/16px var(--ds-font-family-code);
 }
 
 .dsh-trajectoryTable__sourceBlockJumpIcon {
   flex: none;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-trajectoryTable__sourceBlockJumpTarget:hover .dsh-trajectoryTable__sourceBlockJumpIcon {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-trajectoryTable__sourceBlockJumpTarget:focus-visible {
@@ -1532,13 +1532,13 @@
 }
 
 .dsh-trajectoryTable__sourceBlockJumpTarget:focus-visible .dsh-trajectoryTable__sourceBlockJumpIcon {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
 }
 
 .dsh-trajectoryTable__sourceBlockContent {
   margin: 0;
   overflow-wrap: anywhere;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   background: transparent;
   font: 12px/19px var(--ds-font-family-code);
   tab-size: 2;
@@ -1566,7 +1566,7 @@
   max-height: 320px;
   margin: 0;
   border-radius: inherit;
-  background: var(--dsw-alias-bg-base);
+  background: var(--freddie-alias-bg-base);
   object-fit: contain;
 }
 
@@ -1591,7 +1591,7 @@
   max-width: 100%;
   margin: 2px 14px 12px;
   padding: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: 11px/17px var(--ds-font-family-code);
   list-style: none;
 }
@@ -1620,24 +1620,24 @@
 }
 
 .dsh-trajectoryTable__assistantToolCallButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-trajectoryTable__assistantToolCallButton:focus-visible {
-  background: var(--dsw-alias-interactive-bg-hover);
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  background: var(--freddie-alias-interactive-bg-hover);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: -1px;
 }
 
 .dsh-trajectoryTable__assistantToolCallIcon {
   flex: none;
   margin-right: 5px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-trajectoryTable__assistantToolCallButton:hover .dsh-trajectoryTable__assistantToolCallIcon,
 .dsh-trajectoryTable__assistantToolCallButton:focus-visible .dsh-trajectoryTable__assistantToolCallIcon {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-trajectoryTable__assistantToolCallText {
@@ -1651,14 +1651,14 @@
 .dsh-trajectoryTable__assistantToolCallName {
   flex: none;
   margin-right: 5px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font-weight: 500;
 }
 
 .dsh-trajectoryTable__assistantToolCallArgs {
   min-width: 0;
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1673,7 +1673,7 @@
 }
 
 .dsh-trajectoryTable__toolCatalogItem {
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
+  border-bottom: 1px solid var(--freddie-alias-border-l1);
 }
 
 .dsh-trajectoryTable__toolCatalogSummary {
@@ -1694,18 +1694,18 @@
 }
 
 .dsh-trajectoryTable__toolCatalogSummary:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-trajectoryTable__toolCatalogSummary:focus-visible {
-  background: var(--dsw-alias-interactive-bg-hover);
-  outline: 1px solid var(--dsw-alias-state-business-primary);
+  background: var(--freddie-alias-interactive-bg-hover);
+  outline: 1px solid var(--freddie-alias-state-business-primary);
   outline-offset: -1px;
 }
 
 .dsh-trajectoryTable__toolCatalogChevron,
 .dsh-trajectoryTable__toolCatalogIcon {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-trajectoryTable__toolCatalogChevron {
@@ -1717,14 +1717,14 @@
 }
 
 .dsh-trajectoryTable__toolCatalogName {
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   font: 500 12px/18px var(--ds-font-family-code);
 }
 
 .dsh-trajectoryTable__toolCatalogDescription {
   min-width: 0;
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: var(--dsw-font-xs-13);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1732,13 +1732,13 @@
 
 .dsh-trajectoryTable__toolCatalogDefinition {
   padding: 0 0 8px 29px;
-  background: var(--dsw-alias-bg-base);
+  background: var(--freddie-alias-bg-base);
 }
 
 .dsh-trajectoryTable__toolCatalogFullDescription {
   margin: 0;
   padding: 7px 14px 4px 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: var(--dsw-font-xs-13);
   white-space: pre-wrap;
 }
@@ -1766,7 +1766,7 @@
 .dsh-trajectoryTable__resultBlockText {
   margin: 0;
   overflow-wrap: anywhere;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   background: transparent;
   font: 12px/19px var(--ds-font-family-code);
   tab-size: 2;
@@ -1780,7 +1780,7 @@
 .dsh-trajectoryTable__noPayload {
   margin: 0;
   padding: 18px 14px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   font: var(--dsw-font-xs-13);
 }
 
@@ -1793,7 +1793,7 @@
     bottom: 0;
     width: min(92%, 420px);
     max-width: 92%;
-    border-left-color: var(--dsw-alias-border-l3);
+    border-left-color: var(--freddie-alias-border-l3);
     box-shadow: -12px 0 32px rgba(0, 0, 0, 0.14);
   }
 }

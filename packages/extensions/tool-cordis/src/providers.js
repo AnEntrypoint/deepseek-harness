@@ -1,6 +1,6 @@
 /** First-party Host inspect providers registered by the Cordis tool package. */
 
-import { HOST_BUILTIN_INSPECTION } from '@deepseek-ai/dsh-cordis-host-runner'
+import { HOST_BUILTIN_INSPECTION } from '@freddie/freddie-cordis-host-runner'
 import { EVENT_API, queryEventApi, queryServiceApi } from './api-catalog.js'
 
 const EMPTY_INPUT = { type: 'object', properties: {}, additionalProperties: false }

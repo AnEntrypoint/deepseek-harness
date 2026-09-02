@@ -1,6 +1,6 @@
 /** Host registration for the browser locale preference. */
 
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import { settingsNamespace } from '@freddie/freddie-settings'
 import { LOCALE_SETTINGS_NAMESPACE, LocaleSettingsSchema } from './locale-settings.js'
 
 export {

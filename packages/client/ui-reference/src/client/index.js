@@ -3,9 +3,9 @@
  * the cancellable generated Remote namespaces in parallel with deterministic
  * ordering and labels.
  *
- * @module @deepseek-ai/dsh-client-ui-reference/client
+ * @module @freddie/freddie-client-ui-reference/client
  */
-import { formatFileMention } from '@deepseek-ai/dsh-file-reference/grammar'
+import { formatFileMention } from '@freddie/freddie-file-reference/grammar'
 import { en, NS, zh } from './locales.js'
 
 /** Required services: the trigger registry, the Remote namespaces, and the copy. */

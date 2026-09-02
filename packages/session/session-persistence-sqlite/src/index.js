@@ -1,18 +1,18 @@
 /**
  * Opt-in SQLite persistence provider. Logical sessions remain unchanged;
  * the physical backend packs eligible chunk runs into schema-17 rows.
- * @module @deepseek-ai/dsh-session-persistence-sqlite
+ * @module @freddie/freddie-session-persistence-sqlite
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import {
   DEFAULT_PREPARED_SESSION_CACHE_SIZE,
   DEFAULT_WRITE_BATCH_MAX_DELAY_MS,
   MAX_WRITE_BATCH_DELAY_MS,
   PersistenceCoordinator,
   SessionPersistence,
-} from '@deepseek-ai/dsh-session-persistence'
+} from '@freddie/freddie-session-persistence'
 import { SqliteStore } from './store.js'
 
 export { SCHEMA_VERSION } from './schema.js'

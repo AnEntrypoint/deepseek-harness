@@ -107,10 +107,10 @@ const _deepseek_ai_dsh_goal_goals_resume_result$schema = z.object({
 })
 
 export const TYPERT_REMOTE = {
-  package: '@deepseek-ai/dsh-goal',
+  package: '@freddie/freddie-goal',
   descriptors: [
     {
-      id: '@deepseek-ai/dsh-goal#goals/clear',
+      id: '@freddie/freddie-goal#goals/clear',
       service: 'goals',
       namespace: 'goals',
       method: 'clear',
@@ -127,7 +127,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_goal_goals_clear_parameter_0$schema,
           },
         },
@@ -137,20 +137,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-goal/client#GoalRef',
+            typeSymbol: '@freddie/freddie-goal/client#GoalRef',
             schema: _deepseek_ai_dsh_goal_goals_clear_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-goal/client#GoalRef',
+        typeSymbol: '@freddie/freddie-goal/client#GoalRef',
         schema: _deepseek_ai_dsh_goal_goals_clear_result$schema,
       },
       sourceLocation: {"file":"packages/goal/goal/src/index.ts","line":377,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-goal#goals/complete',
+      id: '@freddie/freddie-goal#goals/complete',
       service: 'goals',
       namespace: 'goals',
       method: 'complete',
@@ -167,7 +167,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_goal_goals_complete_parameter_0$schema,
           },
         },
@@ -177,20 +177,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-goal/client#GoalRef',
+            typeSymbol: '@freddie/freddie-goal/client#GoalRef',
             schema: _deepseek_ai_dsh_goal_goals_complete_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-goal/client#GoalView',
+        typeSymbol: '@freddie/freddie-goal/client#GoalView',
         schema: _deepseek_ai_dsh_goal_goals_complete_result$schema,
       },
       sourceLocation: {"file":"packages/goal/goal/src/index.ts","line":337,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-goal#goals/create',
+      id: '@freddie/freddie-goal#goals/create',
       service: 'goals',
       namespace: 'goals',
       method: 'create',
@@ -208,7 +208,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_goal_goals_create_parameter_0$schema,
           },
         },
@@ -218,20 +218,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-goal/client#CreateGoalRequest',
+            typeSymbol: '@freddie/freddie-goal/client#CreateGoalRequest',
             schema: _deepseek_ai_dsh_goal_goals_create_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-goal/client#CreateGoalResult',
+        typeSymbol: '@freddie/freddie-goal/client#CreateGoalResult',
         schema: _deepseek_ai_dsh_goal_goals_create_result$schema,
       },
       sourceLocation: {"file":"packages/goal/goal/src/index.ts","line":586,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-goal#goals/edit',
+      id: '@freddie/freddie-goal#goals/edit',
       service: 'goals',
       namespace: 'goals',
       method: 'edit',
@@ -248,7 +248,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_goal_goals_edit_parameter_0$schema,
           },
         },
@@ -258,7 +258,7 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-goal/client#GoalRef',
+            typeSymbol: '@freddie/freddie-goal/client#GoalRef',
             schema: _deepseek_ai_dsh_goal_goals_edit_parameter_1$schema,
           },
         },
@@ -268,20 +268,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-goal/client#EditGoalRequest',
+            typeSymbol: '@freddie/freddie-goal/client#EditGoalRequest',
             schema: _deepseek_ai_dsh_goal_goals_edit_parameter_2$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-goal/client#GoalView',
+        typeSymbol: '@freddie/freddie-goal/client#GoalView',
         schema: _deepseek_ai_dsh_goal_goals_edit_result$schema,
       },
       sourceLocation: {"file":"packages/goal/goal/src/index.ts","line":277,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-goal#goals/pause',
+      id: '@freddie/freddie-goal#goals/pause',
       service: 'goals',
       namespace: 'goals',
       method: 'pause',
@@ -298,7 +298,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_goal_goals_pause_parameter_0$schema,
           },
         },
@@ -308,20 +308,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-goal/client#GoalRef',
+            typeSymbol: '@freddie/freddie-goal/client#GoalRef',
             schema: _deepseek_ai_dsh_goal_goals_pause_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-goal/client#GoalView',
+        typeSymbol: '@freddie/freddie-goal/client#GoalView',
         schema: _deepseek_ai_dsh_goal_goals_pause_result$schema,
       },
       sourceLocation: {"file":"packages/goal/goal/src/index.ts","line":299,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-goal#goals/resume',
+      id: '@freddie/freddie-goal#goals/resume',
       service: 'goals',
       namespace: 'goals',
       method: 'resume',
@@ -338,7 +338,7 @@ export const TYPERT_REMOTE = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_goal_goals_resume_parameter_0$schema,
           },
         },
@@ -348,14 +348,14 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-goal/client#GoalRef',
+            typeSymbol: '@freddie/freddie-goal/client#GoalRef',
             schema: _deepseek_ai_dsh_goal_goals_resume_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-goal/client#GoalView',
+        typeSymbol: '@freddie/freddie-goal/client#GoalView',
         schema: _deepseek_ai_dsh_goal_goals_resume_result$schema,
       },
       sourceLocation: {"file":"packages/goal/goal/src/index.ts","line":311,"column":3},

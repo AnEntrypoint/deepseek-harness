@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-`dsh` shipped two full config trees that were 43 rows the same. `apps/cli/cordis.yml` composed the web surface as 74 flat rows, while the TUI booted `examples/tui-agent/cordis.yml`, whose single `@deepseek-ai/dsh-tui-demo` row mounted twelve plugins and re-declared their configuration as its own twenty-key pass-through `Config`.
+`dsh` shipped two full config trees that were 43 rows the same. `apps/cli/cordis.yml` composed the web surface as 74 flat rows, while the TUI booted `examples/tui-agent/cordis.yml`, whose single `@freddie/freddie-tui-demo` row mounted twelve plugins and re-declared their configuration as its own twenty-key pass-through `Config`.
 
 Neither file was what its location claimed. `examples/tui-agent` was not an example: `apps/cli/src/tui.ts` hardcoded it as the product's default config, and it owned the TUI PTY smoke, the eight terminal snapshot scenarios, and the PTY harness the `cordis-agent` leaf imported. `dsh-tui-demo` was not a demo either — it was the application, mounted by the shipped binary from `packages/examples/`.
 
@@ -36,7 +36,7 @@ A patch replaces its target row's whole `config` rather than merging. Therefore,
 
 ## Consequences
 
-An overlay or `--config` tree that named `@deepseek-ai/dsh-tui-demo`, or patched the `tui-agent` row, no longer resolves. Overlays now patch the row that owns each key: the model route on `agent-loop`, the persona on `system-prompt`, presentation on `tui`.
+An overlay or `--config` tree that named `@freddie/freddie-tui-demo`, or patched the `tui-agent` row, no longer resolves. Overlays now patch the row that owns each key: the model route on `agent-loop`, the persona on `system-prompt`, presentation on `tui`.
 
 A patch whose `id` matches no row stays a no-op rather than an error. That is deliberate: one personal overlay is shared across surfaces, and `insert` rows match nothing by design, so a row that exists only under `web` must not fail the TUI's boot.
 

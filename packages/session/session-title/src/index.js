@@ -1,12 +1,12 @@
 /**
  * Log-backed session title service, deterministic fallback, and provider contract.
- * @module @deepseek-ai/dsh-session-title
+ * @module @freddie/freddie-session-title
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import { z as zod } from 'zod'
-import { assertNever, deepFreeze, isAgentLoopRequest } from '@deepseek-ai/dsh-llm'
+import { assertNever, deepFreeze, isAgentLoopRequest } from '@freddie/freddie-llm'
 import { fallbackSessionTitle, normalizeSessionTitle } from './normalize.js'
 
 /** Runtime mirror: FiberState is a cross-package const enum, erased at compile time by cordis's own build. */

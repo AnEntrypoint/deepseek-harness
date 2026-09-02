@@ -3,7 +3,7 @@
  * model-free: the vocabulary is the mutation tools' own follow-along
  * `locations`, never the closing prose.
  */
-import { isAppendSurfaceEvent } from '@deepseek-ai/dsh-client-runtime/client'
+import { isAppendSurfaceEvent } from '@freddie/freddie-client-runtime/client'
 
 /**
  * Paths a call view reports having created or changed, by render intent rather

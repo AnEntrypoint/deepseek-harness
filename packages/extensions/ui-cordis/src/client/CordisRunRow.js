@@ -10,7 +10,7 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconCodeOutline16, IconInspectOutline12, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { cordisRunCard } from './card-model.js'
 import { cordisToolViewKey } from './run-card-index.js'
 import { cordisVisibleStatus } from './status.js'

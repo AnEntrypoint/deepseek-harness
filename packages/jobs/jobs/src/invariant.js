@@ -1,6 +1,6 @@
-/** Package-owned background-job snapshot invariants. @module @deepseek-ai/dsh-jobs/invariant */
+/** Package-owned background-job snapshot invariants. @module @freddie/freddie-jobs/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-jobs'
+const PACKAGE_NAME = '@freddie/freddie-jobs'
 const TERMINAL_STATUSES = new Set(['completed', 'killed', 'failed'])
 
 /** Cordis companion plugin name. */

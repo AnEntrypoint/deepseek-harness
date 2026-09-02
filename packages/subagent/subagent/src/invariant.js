@@ -1,6 +1,6 @@
-/** Package-owned subagent registry and lifecycle invariants. @module @deepseek-ai/dsh-subagent/invariant */
+/** Package-owned subagent registry and lifecycle invariants. @module @freddie/freddie-subagent/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-subagent'
+const PACKAGE_NAME = '@freddie/freddie-subagent'
 
 /** Cordis companion plugin name. */
 export const name = 'subagent-invariant'

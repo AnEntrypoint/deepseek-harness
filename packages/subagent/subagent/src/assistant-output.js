@@ -7,7 +7,7 @@
  * select the accumulated assistant text. Selection is independent of the
  * run's stop reason.
  *
- * @module @deepseek-ai/dsh-subagent/assistant-output
+ * @module @freddie/freddie-subagent/assistant-output
  */
 
 /**

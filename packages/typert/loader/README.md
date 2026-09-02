@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-typert-loader
+# @freddie/freddie-typert-loader
 
 Node-only Loader integration for generated Typert artifacts. The plugin requires `ctx.loader` and `ctx.typert`; it does not provide the registry itself.
 

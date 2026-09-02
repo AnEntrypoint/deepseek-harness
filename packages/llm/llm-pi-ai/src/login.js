@@ -8,7 +8,7 @@
  */
 
 import { createModels } from '@earendil-works/pi-ai'
-import { isCredentialKeySegment } from '@deepseek-ai/dsh-credentials'
+import { isCredentialKeySegment } from '@freddie/freddie-credentials'
 import { catalogProvider, catalogProviderIds } from './catalog.js'
 import { recordKeyFor } from './auth.js'
 

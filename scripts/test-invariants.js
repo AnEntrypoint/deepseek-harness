@@ -6,9 +6,9 @@
  */
 
 import { expect } from 'vitest'
-import { FiberState, Inject, RegistryService, ValidationError } from '@deepseek-ai/cordis'
-import { AttachmentStore } from '@deepseek-ai/dsh-attachment'
-import InvariantRegistry from '@deepseek-ai/dsh-invariants'
+import { FiberState, Inject, RegistryService, ValidationError } from '@freddie/cordis'
+import { AttachmentStore } from '@freddie/freddie-attachment'
+import InvariantRegistry from '@freddie/freddie-invariants'
 
 /** Private service dependency that holds ordinary root plugins until invariant startup completes. */
 export const TEST_INVARIANT_READY_SERVICE = 'testInvariantReady'

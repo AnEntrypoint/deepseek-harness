@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-token-meter`.
- * @module @deepseek-ai/dsh-token-meter/invariant
+ * Package-owned invariant companion for `@freddie/freddie-token-meter`.
+ * @module @freddie/freddie-token-meter/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-token-meter'
+const PACKAGE_NAME = '@freddie/freddie-token-meter'
 
 /** Cordis companion plugin name. */
 export const name = 'token-meter-invariant'

@@ -1,10 +1,10 @@
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
   indexSubagentDescendants,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-runtime/client'
 import {
   IconChevronDownOutline14, IconChevronRightOutline14, IconRefreshOutline14, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './SubagentHeaderLineage.css.js'
 
 function diagnosticReason(

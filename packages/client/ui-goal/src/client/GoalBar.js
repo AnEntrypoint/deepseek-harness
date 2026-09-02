@@ -17,7 +17,7 @@ import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconCheckOutline16, IconCloseOutline16, IconEditOutline16, IconGoalOutline16,
   IconPauseOutline16, IconPlayOutline16, IconTrashOutline16, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './GoalBar.css.js'
 
 /** Strip label keys per visible phase; complete goals render nothing. */

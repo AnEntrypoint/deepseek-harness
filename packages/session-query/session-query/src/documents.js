@@ -1,6 +1,6 @@
 /** Shared event metadata and semantic-document projection. */
 
-import { foldSurface } from '@deepseek-ai/dsh-session'
+import { foldSurface } from '@freddie/freddie-session'
 import { SessionQueryError } from './config.js'
 import { extractSessionEventText } from './extraction.js'
 

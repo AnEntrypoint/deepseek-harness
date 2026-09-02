@@ -5,7 +5,7 @@
  * settings surface.
  */
 import { applyDiff, createElement as h } from 'webjsx'
-import { IconChevronDownOutline14, renderMenu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, renderMenu } from '@freddie/freddie-client-ui-primitives'
 import css from './LanguageRow.css.js'
 
 /** Language preference row, as a custom element (owns the menu open state). */

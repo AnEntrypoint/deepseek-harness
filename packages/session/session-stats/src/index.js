@@ -6,7 +6,7 @@
  * compaction cannot change. The plugin owns only the fold; delivery is the
  * seam's.
  *
- * @module @deepseek-ai/dsh-session-stats
+ * @module @freddie/freddie-session-stats
  */
 
 import { sessionStatsProjectionDefinition } from './projection.js'

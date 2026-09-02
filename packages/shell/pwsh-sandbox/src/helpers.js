@@ -1,9 +1,9 @@
 /**
  * Internal sandbox-result classification helpers — deliberate call-for-call
- * mirror of `@deepseek-ai/dsh-bash-sandbox/src/helpers.js` (the pwsh twin of
+ * mirror of `@freddie/freddie-bash-sandbox/src/helpers.js` (the pwsh twin of
  * the bash consumer shares the identical classification dialect).
  *
- * @module @deepseek-ai/dsh-pwsh-sandbox/helpers
+ * @module @freddie/freddie-pwsh-sandbox/helpers
  */
 
 /* jscpd:ignore-start */

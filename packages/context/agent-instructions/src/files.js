@@ -1,14 +1,14 @@
 /**
  * Instruction-file discovery and bounded, abort-aware provider reads.
  *
- * @module @deepseek-ai/dsh-agent-instructions/files
+ * @module @freddie/freddie-agent-instructions/files
  */
 
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
-import { assertNever } from '@deepseek-ai/dsh-llm'
-import { dshHomeDisplay } from '@deepseek-ai/dsh-home-paths'
+import { assertNever } from '@freddie/freddie-llm'
+import { dshHomeDisplay } from '@freddie/freddie-home-paths'
 import { resolveConfig, resolveDiscoveryConfig } from './config.js'
 import { trimmedInstructionDigest } from './digest.js'
 import {

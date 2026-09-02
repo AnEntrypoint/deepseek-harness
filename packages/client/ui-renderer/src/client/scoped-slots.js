@@ -29,7 +29,7 @@
 import { createElement as h, Fragment, applyDiff } from 'webjsx'
 import {
   SlotOwnershipError, StaleAuthorizationError, webjsxSlotTagOf,
-} from '@deepseek-ai/dsh-client-ui-slots'
+} from '@freddie/freddie-client-ui-slots'
 import {
   SlotAssemblyError, currentSessionMaybeProvideInfo, maybeObservableHook, observableHook, projectionHook,
   sessionProviderFor,

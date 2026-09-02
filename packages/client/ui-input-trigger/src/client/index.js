@@ -4,7 +4,7 @@
  * self-registers into the conversation.input.overlay slot. Frozen pipeline
  * contract in ./contract.js; sources register through ctx.inputTriggers alone.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import { InputTriggerService } from './service.js'
 import './MenuView.js'
 import { en, zh } from './locales.js'

@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-timeout`.
- * @module @deepseek-ai/dsh-timeout/invariant
+ * Package-owned invariant companion for `@freddie/freddie-timeout`.
+ * @module @freddie/freddie-timeout/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-timeout'
+const PACKAGE_NAME = '@freddie/freddie-timeout'
 
 /** Cordis companion plugin name. */
 export const name = 'timeout-invariant'

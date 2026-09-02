@@ -84,7 +84,7 @@ export class DshConversationRoot extends HTMLElement {
     const scroller = seat?.parentElement ?? null
     if (seat === null || scroller === null) return
     this.#seatObserver = new ResizeObserver(() => {
-      scroller.style.setProperty('--dsh-composer-height', `${seat.offsetHeight}px`)
+      scroller.style.setProperty('--freddie-composer-height', `${seat.offsetHeight}px`)
     })
     this.#seatObserver.observe(seat)
   }

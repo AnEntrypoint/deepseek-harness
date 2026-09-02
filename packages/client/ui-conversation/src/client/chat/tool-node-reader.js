@@ -1,4 +1,4 @@
-import { conversationContextKey } from '@deepseek-ai/dsh-client-runtime/client'
+import { conversationContextKey } from '@freddie/freddie-client-runtime/client'
 
 function toolNode(node) {
   return node?.kind === 'tool-call' ? node : undefined

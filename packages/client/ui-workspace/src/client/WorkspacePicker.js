@@ -12,7 +12,7 @@ import { applyDiff, createElement as h } from 'webjsx'
 import {
   Button, IconFolderClose16, IconPlusOutline16, renderMenu,
   renderModal,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import css from './WorkspacePicker.css.js'
 
 const ADD_WORKSPACE = '::add-workspace'

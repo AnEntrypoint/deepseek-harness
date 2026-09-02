@@ -1,8 +1,8 @@
 /** Browser API carrier: HTTP upstream plus one WebSocket per downstream event stream. */
 
 import { AbstractApiClient } from './api.js'
-import { hostFrameSchema, muxFrameSchema } from '@deepseek-ai/dsh-host-apiproxy/api/events.schema'
-import { serverRequestSchema } from '@deepseek-ai/dsh-host-apiproxy/api/rpc.schema'
+import { hostFrameSchema, muxFrameSchema } from '@freddie/freddie-host-apiproxy/api/events.schema'
+import { serverRequestSchema } from '@freddie/freddie-host-apiproxy/api/rpc.schema'
 import { HOST_EVENTS_PATH, MUX_EVENTS_PATH } from '../api-path.js'
 
 /** Browser platform subclass: unary/respond use fetch; mux/host use downlink-only WebSockets. */

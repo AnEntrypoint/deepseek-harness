@@ -1,17 +1,17 @@
 /**
- * @deepseek-ai/dsh-headless — one-shot direct Agent driver. The bundle patch
+ * @freddie/freddie-headless — one-shot direct Agent driver. The bundle patch
  * rides over dsh-base without Host, HTTP, or browser plugins; this runner
  * creates one Agent through the core registry, drives the task to quiescence,
  * flushes its Session, prints the final assistant text, and exits.
  *
- * @module @deepseek-ai/dsh-headless
+ * @module @freddie/freddie-headless
  */
 
 import { randomUUID } from 'node:crypto'
-import z from '@deepseek-ai/schemastery'
-import { installModelSelection } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import z from '@freddie/schemastery'
+import { installModelSelection } from '@freddie/freddie-agent'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { SessionId } from '@freddie/freddie-session'
 
 /** Stable Cordis plugin name. */
 export const name = 'headless-runner'
@@ -79,7 +79,7 @@ async function run(ctx, task, io) {
   // This bundle composes no preset roster, so the model-facing rows sit in the
   // host plane and the agent reads them from the global layer. A deployment
   // that DOES configure one has to join it here first
-  // (@deepseek-ai/dsh-agent-presets README, "Composing a child agent").
+  // (@freddie/freddie-agent-presets README, "Composing a child agent").
   const { agent } = await agents.create({
     sessionId: SessionId(`session-${randomUUID()}`),
     meta: { cwd: process.cwd() },

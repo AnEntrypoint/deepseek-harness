@@ -10,7 +10,7 @@
  */
 
 import { createElement as h } from 'webjsx'
-import { Modal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Modal } from '@freddie/freddie-client-ui-primitives'
 import css from './OnboardingModal.css.js'
 
 const ignoreImplicitDismiss = () => {}

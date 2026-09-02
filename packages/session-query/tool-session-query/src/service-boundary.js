@@ -1,11 +1,11 @@
 /**
  * Session-query service error containment and model-safe translation.
  *
- * @module @deepseek-ai/dsh-tool-session-query/service-boundary
+ * @module @freddie/freddie-tool-session-query/service-boundary
  */
 
-import { HarnessError } from '@deepseek-ai/dsh-llm'
-import { SessionQueryError } from '@deepseek-ai/dsh-session-query'
+import { HarnessError } from '@freddie/freddie-llm'
+import { SessionQueryError } from '@freddie/freddie-session-query'
 
 const UNPRINTABLE_SERVICE_ERROR = '[unprintable session query failure]'
 

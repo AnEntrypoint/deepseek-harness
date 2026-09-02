@@ -7,8 +7,8 @@
 // session snapshot — no data of its own.
 
 import { createElement as h } from 'webjsx'
-import { CodeBlock } from '@deepseek-ai/dsh-client-ui-primitives'
-import { shallowEqual } from '@deepseek-ai/dsh-client-runtime/client'
+import { CodeBlock } from '@freddie/freddie-client-ui-primitives'
+import { shallowEqual } from '@freddie/freddie-client-runtime/client'
 import { findToolCall } from '../chat/tool-node-reader.js'
 import css from './DetailsPanel.css.js'
 

@@ -11,8 +11,8 @@ import {
   HoverCard, IconArchiveOutline20, IconBranchOutline16, IconEditOutline16,
   IconEllipsisOutline16, IconFolderClose16, IconFolderOpen16, IconPlusOutline16,
   IconTrashOutline16, IconTriangleRightFill14, Menu, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import { abbreviateHomePath } from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-ui-primitives'
+import { abbreviateHomePath } from '@freddie/freddie-client-runtime/client'
 import { relativeTime } from '../tree.js'
 import css from './Rows.css.js'
 

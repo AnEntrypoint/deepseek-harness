@@ -4,5 +4,5 @@
  * (repo discipline), so `./client` projects the same single-source content
  * `./types` serves to host consumers — zero duplication.
  *
- * @module @deepseek-ai/dsh-permission-presets/client
+ * @module @freddie/freddie-permission-presets/client
  */

@@ -4,8 +4,8 @@ import { deepStrictEqual } from 'node:assert'
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { packChunkRuns } from '@deepseek-ai/dsh-session'
-import { parseSessionLog } from '@deepseek-ai/dsh-llm-replay'
+import { packChunkRuns } from '@freddie/freddie-session'
+import { parseSessionLog } from '@freddie/freddie-llm-replay'
 
 function isSessionHeader(value) {
   return value !== null && typeof value === 'object' && (value).type === 'session'

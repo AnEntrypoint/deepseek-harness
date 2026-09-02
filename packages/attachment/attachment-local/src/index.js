@@ -1,9 +1,9 @@
-/** Local durable attachment backend rooted below `DSH_HOME`. @module @deepseek-ai/dsh-attachment-local */
+/** Local durable attachment backend rooted below `FREDDIE_HOME`. @module @freddie/freddie-attachment-local */
 
 import { join, resolve } from 'node:path'
-import z from '@deepseek-ai/schemastery'
-import { AttachmentStore } from '@deepseek-ai/dsh-attachment'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import z from '@freddie/schemastery'
+import { AttachmentStore } from '@freddie/freddie-attachment'
+import { resolveDshHome } from '@freddie/freddie-home-paths'
 import { CompressionLimiter } from './compression-limiter.js'
 import { commitPreparedImageFile, prepareImageFile, readImageFile, validateImageFile } from './store.js'
 import { readRequestImageFile, requestImageVariantId } from './request-image.js'

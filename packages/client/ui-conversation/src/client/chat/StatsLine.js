@@ -10,7 +10,7 @@
 // tags — the group list uses a plain array instead.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Tooltip } from '@freddie/freddie-client-ui-primitives'
 import { formatTokensPerSecond } from './message-chrome.js'
 import { assistantStepReading } from './turn-metrics.js'
 import css from './StatsLine.css.js'

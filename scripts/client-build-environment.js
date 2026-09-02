@@ -11,22 +11,22 @@ import {
 import { dirname, resolve } from 'node:path'
 
 /** Prefix reserved for build-time values that may be embedded in browser artifacts. */
-const CLIENT_BUILD_ENV_PREFIX = 'DSH_CLIENT_'
+const CLIENT_BUILD_ENV_PREFIX = 'FREDDIE_CLIENT_'
 
 /** Non-public selector used by build orchestration to request a named client profile. */
-export const CLIENT_BUILD_PROFILE_SELECTOR = 'DSH_BUILD_CLIENT_PROFILE'
+export const CLIENT_BUILD_PROFILE_SELECTOR = 'FREDDIE_BUILD_CLIENT_PROFILE'
 
-/** Public client environment required by official DSH artifacts. */
+/** Public client environment required by official FREDDIE artifacts. */
 const OFFICIAL_CLIENT_BUILD_ENVIRONMENT = {
-  DSH_CLIENT_BUILD_PROFILE: 'official',
-  DSH_CLIENT_TITLE: 'DeepSeek Harness',
+  FREDDIE_CLIENT_BUILD_PROFILE: 'official',
+  FREDDIE_CLIENT_TITLE: 'Freddie',
 }
 
 /** Public variable carrying the source commit embedded in client artifacts. */
-const CLIENT_COMMIT_HASH_VARIABLE = 'DSH_CLIENT_COMMIT_HASH'
+const CLIENT_COMMIT_HASH_VARIABLE = 'FREDDIE_CLIENT_COMMIT_HASH'
 
 /** Repository-relative path of the complete client build record. */
-export const CLIENT_BUILD_RECORD_PATH = '.dsh-build/client-build-environment.json'
+export const CLIENT_BUILD_RECORD_PATH = '.freddie-build/client-build-environment.json'
 
 const CLIENT_BUILD_RECORD_FORMAT = 1
 const CLIENT_ARTIFACT_PATTERNS = [
@@ -64,7 +64,7 @@ export function officialClientBuildEnvironment(
   environment = process.env,
 ) {
   return {
-    DSH_CLIENT_COMMIT_HASH: repositoryCommitHash(root, environment),
+    FREDDIE_CLIENT_COMMIT_HASH: repositoryCommitHash(root, environment),
     ...OFFICIAL_CLIENT_BUILD_ENVIRONMENT,
   }
 }
@@ -72,7 +72,7 @@ export function officialClientBuildEnvironment(
 /**
  * Collect the public client environment in deterministic key order.
  * @param environment - environment inherited by the build process.
- * @returns defined `DSH_CLIENT_*` values only.
+ * @returns defined `FREDDIE_CLIENT_*` values only.
  */
 function clientBuildEnvironment(environment) {
   return Object.fromEntries(Object.entries(environment)
@@ -96,7 +96,7 @@ export function resolveClientBuildEnvironment(
     if (commitHash === undefined) {
       throw new Error(`${CLIENT_COMMIT_HASH_VARIABLE} is required for the official client build profile`)
     }
-    return { DSH_CLIENT_COMMIT_HASH: commitHash, ...OFFICIAL_CLIENT_BUILD_ENVIRONMENT }
+    return { FREDDIE_CLIENT_COMMIT_HASH: commitHash, ...OFFICIAL_CLIENT_BUILD_ENVIRONMENT }
   }
   throw new Error(`unknown client build profile ${JSON.stringify(profile)}; expected "official"`)
 }

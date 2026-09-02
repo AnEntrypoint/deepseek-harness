@@ -1,7 +1,7 @@
 /**
  * Types shared by PTY backends, the owner-scoped registry, and tool consumers.
  * Runtime service code lives in `./index.js`.
- * @module @deepseek-ai/dsh-terminal/types
+ * @module @freddie/freddie-terminal/types
  */
 
 /**

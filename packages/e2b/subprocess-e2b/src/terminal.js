@@ -10,7 +10,7 @@ import {
   FileNotFoundError,
   SandboxNotFoundError,
   quoteE2BShellArg,
-} from '@deepseek-ai/dsh-e2b'
+} from '@freddie/freddie-e2b'
 import {
   bootstrapEnvironment,
   readRemoteEnvironment,

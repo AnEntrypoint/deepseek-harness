@@ -1,6 +1,6 @@
 import { clientBundle } from '../tsdown.client.js'
 
 export default clientBundle(
-  '@deepseek-ai/dsh-client-ui-attachment',
+  '@freddie/freddie-client-ui-attachment',
   ['src/index.js', 'src/invariant.js'],
 )

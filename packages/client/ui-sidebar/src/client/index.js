@@ -1,5 +1,5 @@
 /** Registers the sidebar shell into the layout-owned slot. */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './SidebarRoot.js'
 import { en, zh } from './locales.js'
 

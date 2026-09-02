@@ -5,7 +5,7 @@
  * Converted to buildless JS: the type-only augmentation is intentionally
  * dropped (no runtime equivalent exists for a `declare module` merge).
  *
- * @module @deepseek-ai/dsh-session-title/types
+ * @module @freddie/freddie-session-title/types
  */
 
 export {}

@@ -1,7 +1,7 @@
 /** Package-owned invariant companion for the workflow-run UI plugin. */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-ui-workflow-run'
+const PACKAGE_NAME = '@freddie/freddie-client-ui-workflow-run'
 
 /** Cordis companion plugin name. */
 export const name = 'client-ui-workflow-run-invariant'

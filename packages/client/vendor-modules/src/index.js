@@ -1,9 +1,9 @@
 /**
- * @deepseek-ai/dsh-client-vendor-modules — serves the vendored ESM copies of
+ * @freddie/freddie-client-vendor-modules — serves the vendored ESM copies of
  * every bare-specifier npm package the client bundle imports at runtime, and
  * injects the `<script type="importmap">` row that resolves those specifiers
  * to their `/vendor/` URLs.
- * @module @deepseek-ai/dsh-client-vendor-modules
+ * @module @freddie/freddie-client-vendor-modules
  */
 
 import { readFile } from 'node:fs/promises'
@@ -87,7 +87,7 @@ function renderImportMap() {
   return `<script type="importmap">${json}</script>`
 }
 
-// @deepseek-ai/cordis-plugin-loader (vendored, host-oriented) reads
+// @freddie/cordis-plugin-loader (vendored, host-oriented) reads
 // `process.env.CORDIS_SHARED`, `process.execArgv`, and
 // `process.versions.node` unconditionally in module-level or
 // field-initializer code, even on the browser boot path that never actually
@@ -97,10 +97,10 @@ function renderImportMap() {
 // instead — a minimal process stand-in, not a general Node polyfill.
 const PROCESS_SHIM = "<script>globalThis.process ??= { env: {}, execArgv: [], versions: { node: '0.0.0' } }</script>"
 
-const DEFAULT_CLIENT_TITLE = 'DSH Local Build'
+const DEFAULT_CLIENT_TITLE = 'FREDDIE Local Build'
 
 function renderTitle() {
-  const title = escapeHtmlAttribute(process.env.DSH_CLIENT_TITLE ?? DEFAULT_CLIENT_TITLE)
+  const title = escapeHtmlAttribute(process.env.FREDDIE_CLIENT_TITLE ?? DEFAULT_CLIENT_TITLE)
   return `<title>${title}</title>`
 }
 

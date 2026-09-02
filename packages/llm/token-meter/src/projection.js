@@ -1,5 +1,5 @@
 /**
  * Pure client-safe token-projection vocabulary.
  *
- * @module @deepseek-ai/dsh-token-meter/projection
+ * @module @freddie/freddie-token-meter/projection
  */

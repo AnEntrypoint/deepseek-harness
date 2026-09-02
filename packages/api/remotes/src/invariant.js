@@ -1,7 +1,7 @@
-/** Package-owned invariant companion for `@deepseek-ai/dsh-api-remotes`. */
+/** Package-owned invariant companion for `@freddie/freddie-api-remotes`. */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-api-remotes'
+const PACKAGE_NAME = '@freddie/freddie-api-remotes'
 
 /** Cordis companion plugin name. */
 export const name = 'api-remotes-invariant'

@@ -3,7 +3,7 @@
 import {
   RpcId,
   serverResponseSchema,
-} from '@deepseek-ai/dsh-host-apiproxy/api'
+} from '@freddie/freddie-host-apiproxy/api'
 import { randomUuid } from './random-uuid.js'
 
 const INTERNAL_BASE = 'http://dsh.internal'

@@ -3,14 +3,14 @@
  * an escapable vm context on a fresh worker and bridges `agent()` calls to host
  * subagents. The thread prevents synchronous script work from blocking the host
  * and permits forced termination, but it is containment rather than a security boundary.
- * @module @deepseek-ai/dsh-workflow-worker-thread
+ * @module @freddie/freddie-workflow-worker-thread
  */
 
 import { randomUUID } from 'node:crypto'
 import { availableParallelism } from 'node:os'
 import * as vm from 'node:vm'
-import z from '@deepseek-ai/schemastery'
-import WorkflowEngine, { WorkflowError, WorkflowRunId } from '@deepseek-ai/dsh-workflow'
+import z from '@freddie/schemastery'
+import WorkflowEngine, { WorkflowError, WorkflowRunId } from '@freddie/freddie-workflow'
 import { WorkerRun } from './host.js'
 import { validateMeta } from './meta.js'
 

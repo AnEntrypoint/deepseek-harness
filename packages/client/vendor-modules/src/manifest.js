@@ -91,7 +91,7 @@ export const vendorPackages = [
     "version": "2.0.2"
   },
   {
-    "name": "@deepseek-ai/dsh-client-web",
+    "name": "@freddie/freddie-client-web",
     "version": "0.1.1-rc.2"
   },
   {
@@ -135,19 +135,19 @@ export const vendorPackages = [
     "version": "2.0.1"
   },
   {
-    "name": "@deepseek-ai/cordis",
+    "name": "@freddie/cordis",
     "version": "4.0.1"
   },
   {
-    "name": "@deepseek-ai/cordis-plugin-loader",
+    "name": "@freddie/cordis-plugin-loader",
     "version": "1.0.2"
   },
   {
-    "name": "@deepseek-ai/dsh-client-ui-slots",
+    "name": "@freddie/freddie-client-ui-slots",
     "version": "0.1.1-rc.2"
   },
   {
-    "name": "@deepseek-ai/dsh-client-ui-primitives",
+    "name": "@freddie/freddie-client-ui-primitives",
     "version": "0.1.1-rc.2"
   },
   {
@@ -255,7 +255,7 @@ export const vendorPackages = [
     "version": "2.0.1"
   },
   {
-    "name": "@deepseek-ai/cosmokit",
+    "name": "@freddie/cosmokit",
     "version": "1.8.2"
   },
   {
@@ -408,7 +408,7 @@ export const importMapExact = {
   "micromark-util-sanitize-uri": "/vendor/micromark-util-sanitize-uri@2.0.1/index.js",
   "micromark-util-symbol": "/vendor/micromark-util-symbol@2.0.1/lib/default.js",
   "micromark-util-types": "/vendor/micromark-util-types@2.0.2/index.js",
-  "@deepseek-ai/dsh-client-web": "/vendor/@deepseek-ai/dsh-client-web@0.1.1-rc.2/lib/index.js",
+  "@freddie/freddie-client-web": "/vendor/@freddie/freddie-client-web@0.1.1-rc.2/lib/index.js",
   "@shikijs/core": "/vendor/@shikijs/core@4.3.1/dist/index.mjs",
   "@shikijs/engine-javascript": "/vendor/@shikijs/engine-javascript@4.3.1/dist/index.mjs",
   "micromark-util-combine-extensions": "/vendor/micromark-util-combine-extensions@2.0.1/index.js",
@@ -419,10 +419,10 @@ export const importMapExact = {
   "micromark-extension-gfm-tagfilter": "/vendor/micromark-extension-gfm-tagfilter@2.0.0/index.js",
   "micromark-extension-gfm-task-list-item": "/vendor/micromark-extension-gfm-task-list-item@2.1.0/index.js",
   "micromark-util-encode": "/vendor/micromark-util-encode@2.0.1/index.js",
-  "@deepseek-ai/cordis": "/vendor/@deepseek-ai/cordis@4.0.1/lib/index.js",
-  "@deepseek-ai/cordis-plugin-loader": "/vendor/@deepseek-ai/cordis-plugin-loader@1.0.2/lib/index.js",
-  "@deepseek-ai/dsh-client-ui-slots": "/vendor/@deepseek-ai/dsh-client-ui-slots@0.1.1-rc.2/lib/index.js",
-  "@deepseek-ai/dsh-client-ui-primitives": "/vendor/@deepseek-ai/dsh-client-ui-primitives@0.1.1-rc.2/lib/index.js",
+  "@freddie/cordis": "/vendor/@freddie/cordis@4.0.1/lib/index.js",
+  "@freddie/cordis-plugin-loader": "/vendor/@freddie/cordis-plugin-loader@1.0.2/lib/index.js",
+  "@freddie/freddie-client-ui-slots": "/vendor/@freddie/freddie-client-ui-slots@0.1.1-rc.2/lib/index.js",
+  "@freddie/freddie-client-ui-primitives": "/vendor/@freddie/freddie-client-ui-primitives@0.1.1-rc.2/lib/index.js",
   "@shikijs/types": "/vendor/@shikijs/types@4.3.1/dist/index.mjs",
   "@shikijs/primitive": "/vendor/@shikijs/primitive@4.3.1/dist/index.mjs",
   "@shikijs/vscode-textmate": "/vendor/@shikijs/vscode-textmate@10.0.2/dist/index.js",
@@ -449,7 +449,7 @@ export const importMapExact = {
   "micromark-factory-title": "/vendor/micromark-factory-title@2.0.1/index.js",
   "micromark-factory-whitespace": "/vendor/micromark-factory-whitespace@2.0.1/index.js",
   "micromark-util-html-tag-name": "/vendor/micromark-util-html-tag-name@2.0.1/index.js",
-  "@deepseek-ai/cosmokit": "/vendor/@deepseek-ai/cosmokit@1.8.2/lib/index.js",
+  "@freddie/cosmokit": "/vendor/@freddie/cosmokit@1.8.2/lib/index.js",
   "oniguruma-to-es": "/vendor/oniguruma-to-es@4.3.6/dist/esm/index.js",
   "character-entities": "/vendor/character-entities@2.0.2/index.js",
   "html-void-elements": "/vendor/html-void-elements@3.0.0/index.js",

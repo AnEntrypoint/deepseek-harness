@@ -86,7 +86,7 @@ const ENTRY_SPECIFIERS = [
   // this is new scope the buildless conversion itself introduces, since a
   // browser cannot resolve any bare specifier, workspace or npm, without an
   // import map.
-  '@deepseek-ai/dsh-client-web',
+  '@freddie/freddie-client-web',
 ]
 
 function packageNameOf(specifier) {
@@ -112,8 +112,8 @@ function resolverFor(specifier) {
   if (pkg === 'webjsx') return (spec) => require.resolve(spec, { paths: webjsxPaths, conditions: ESM_CONDITIONS })
   if (pkg === 'immer' || pkg === 'zustand') return (spec) => runtimeRequire.resolve(spec, resolveOpts)
   if (pkg === 'diff' || pkg === '@tanstack/virtual-core') return (spec) => uiTrajectoryRequire.resolve(spec, resolveOpts)
-  if (pkg === '@deepseek-ai/dsh-client-web') return (spec) => appsWebRequire.resolve(spec, resolveOpts)
-  if (pkg.startsWith('@deepseek-ai/')) return (spec) => clientWebRequire.resolve(spec, resolveOpts)
+  if (pkg === '@freddie/freddie-client-web') return (spec) => appsWebRequire.resolve(spec, resolveOpts)
+  if (pkg.startsWith('@freddie/')) return (spec) => clientWebRequire.resolve(spec, resolveOpts)
   return (spec) => uiPrimitivesRequire.resolve(spec, resolveOpts)
 }
 
@@ -294,10 +294,10 @@ while (queue.length > 0) {
 
   // Every specifier this loop resolves gets its own import-map entry, not
   // only the hand-listed ENTRY_SPECIFIERS: a transitively-discovered
-  // package (e.g. @deepseek-ai/cosmokit, pulled in only by cordis/loader,
+  // package (e.g. @freddie/cosmokit, pulled in only by cordis/loader,
   // never imported directly by workspace source) still needs to resolve
   // when cordis's own compiled output does `import ... from
-  // '@deepseek-ai/cosmokit'` in the browser. Resolving each specifier
+  // '@freddie/cosmokit'` in the browser. Resolving each specifier
   // through the same graph traversal that already copied its file, instead
   // of a separate guess-a-root fallback pass, is what makes this correct —
   // there is no second resolution attempt that can silently swallow a
@@ -332,7 +332,7 @@ copyKatexAssets()
 
 // node:module resolves to a browser stub this script writes directly (never
 // hand-maintained under vendor/, so a `rm -rf vendor` regenerate can't lose
-// it) — @deepseek-ai/cordis-plugin-loader's only Node import, unreachable in
+// it) — @freddie/cordis-plugin-loader's only Node import, unreachable in
 // the browser boot path (mirrors apps/web's former Vite alias to the same
 // effect).
 const NODE_MODULE_STUB = `// Browser stand-in for node:module. createRequire is unreachable in the\n// configured loader path (the browser boot never takes that branch) and\n// fails loud if that assumption changes.\nexport const createRequire = () => {\n  throw new Error('node:module is not available in the browser')\n}\n`

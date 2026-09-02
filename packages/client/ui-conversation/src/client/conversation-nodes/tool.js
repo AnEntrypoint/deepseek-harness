@@ -1,4 +1,4 @@
-import { isAppendSurfaceEvent } from '@deepseek-ai/dsh-client-runtime/client'
+import { isAppendSurfaceEvent } from '@freddie/freddie-client-runtime/client'
 import { CHAT_SYNTHETIC_SEQ_OFFSETS, chatNode } from './common.js'
 
 const MAX_DEPTH = 256

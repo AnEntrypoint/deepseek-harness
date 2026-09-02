@@ -11,11 +11,11 @@
  * between this module and one in-package caller, not something a plugin may
  * depend on.
  *
- * @module @deepseek-ai/dsh-subagent/lifecycle
+ * @module @freddie/freddie-subagent/lifecycle
  */
 
 import { randomUUID } from 'node:crypto'
-import { foldConsumedWork } from '@deepseek-ai/dsh-agent'
+import { foldConsumedWork } from '@freddie/freddie-agent'
 import { finalAssistantOutput } from './assistant-output.js'
 import { SubagentRunId } from './types.js'
 

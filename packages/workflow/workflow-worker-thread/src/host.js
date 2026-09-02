@@ -3,14 +3,14 @@
  * cancellation-grace expiry owns settlement and closes message admission.
  * Pending starts share one abort signal; published children share idempotent
  * cleanup, and quiescence waits for both while synthesizing any missing end events.
- * @module @deepseek-ai/dsh-workflow-worker-thread/host
+ * @module @freddie/freddie-workflow-worker-thread/host
  */
 
 import { tmpdir } from 'node:os'
 import { Worker } from 'node:worker_threads'
 import { fileURLToPath } from 'node:url'
-import { assertNever } from '@deepseek-ai/dsh-llm'
-import { snapshotJsonValue } from '@deepseek-ai/dsh-session'
+import { assertNever } from '@freddie/freddie-llm'
+import { snapshotJsonValue } from '@freddie/freddie-session'
 import { renderThrown } from './realm.js'
 import { HostToWorkerType, WorkerToHostType } from './protocol.js'
 

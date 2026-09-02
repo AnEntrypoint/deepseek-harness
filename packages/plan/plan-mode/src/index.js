@@ -20,14 +20,14 @@
  * Agent Note:
  * - .agents/notes/implemented/simplification/2026-07-22-plan-specific-collaboration-state.md
  *
- * @module @deepseek-ai/dsh-plan-mode
+ * @module @freddie/freddie-plan-mode
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { z as zod } from 'zod'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { UserQuestionError } from '@deepseek-ai/dsh-user-questions'
+import { createUserMessage } from '@freddie/freddie-llm'
+import { defineTool } from '@freddie/freddie-tools'
+import { UserQuestionError } from '@freddie/freddie-user-questions'
 
 /**
  * The model-facing exit tool's name. It stays registered while plan mode is

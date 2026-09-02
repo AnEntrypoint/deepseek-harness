@@ -10,7 +10,7 @@
 // summary line alone.
 
 import { createElement as h, Fragment } from 'webjsx'
-import { IconBrowseOutline16, IconGlobeOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconBrowseOutline16, IconGlobeOutline14 } from '@freddie/freddie-client-ui-primitives'
 import { webCardModel } from '../models/web-card-model.js'
 import { toolRowModel } from '../models/tool-call-model.js'
 import { ToolRow } from '../components/ToolRow.js'

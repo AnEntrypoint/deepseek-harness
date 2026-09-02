@@ -4,10 +4,10 @@
  * {@link CompactionEngine}. This interface necessarily depends on session and LLM
  * vocabulary; the rationale is in the
  * [compaction Agent Note](../../../../.agents/notes/implemented/feature/2026-06-18-compaction-capability-seam.md).
- * @module @deepseek-ai/dsh-compaction
+ * @module @freddie/freddie-compaction
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 
 export { CompactionId } from './brand.js'
 export { toolPairingBalancedAfter, toolPairingBalancedBefore } from './tool-pairing.js'

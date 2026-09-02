@@ -201,13 +201,13 @@ const _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_undefineFromPanel_
 })])
 
 export const TYPERT = {
-  package: '@deepseek-ai/dsh-cordis-host-runner',
+  package: '@freddie/freddie-cordis-host-runner',
   face: 'host',
   schemas: [
   ],
   invocations: [
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/getClientCode',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/getClientCode',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'getClientCode',
@@ -224,7 +224,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_getClientCode_parameter_0$schema,
           },
         },
@@ -234,7 +234,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_getClientCode_parameter_1$schema,
           },
         },
@@ -244,20 +244,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginRunId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginRunId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_getClientCode_parameter_2$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisClientSource',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisClientSource',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_getClientCode_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":384,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/inventory',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/inventory',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'inventory',
@@ -266,13 +266,13 @@ export const TYPERT = {
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/inventory:result',
+        typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/inventory:result',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_inventory_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":525,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/invoke',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/invoke',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'invoke',
@@ -284,7 +284,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_invoke_parameter_0$schema,
           },
         },
@@ -294,7 +294,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginRunId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginRunId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_invoke_parameter_1$schema,
           },
         },
@@ -304,7 +304,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/invoke:method',
+            typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/invoke:method',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_invoke_parameter_2$schema,
           },
         },
@@ -314,20 +314,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#JsonValue',
+            typeSymbol: '@freddie/freddie-session/types#JsonValue',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_invoke_parameter_3$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisInvokeResult',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisInvokeResult',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_invoke_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":741,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/reportClientGuardFailure',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/reportClientGuardFailure',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'reportClientGuardFailure',
@@ -344,7 +344,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportClientGuardFailure_parameter_0$schema,
           },
         },
@@ -354,7 +354,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportClientGuardFailure_parameter_1$schema,
           },
         },
@@ -364,7 +364,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginRunId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginRunId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportClientGuardFailure_parameter_2$schema,
           },
         },
@@ -374,20 +374,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisErrorDetails',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisErrorDetails',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportClientGuardFailure_parameter_3$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/reportClientGuardFailure:result',
+        typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/reportClientGuardFailure:result',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportClientGuardFailure_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":718,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/reportRenderFailure',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/reportRenderFailure',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'reportRenderFailure',
@@ -404,7 +404,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportRenderFailure_parameter_0$schema,
           },
         },
@@ -414,7 +414,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportRenderFailure_parameter_1$schema,
           },
         },
@@ -424,7 +424,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginRunId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginRunId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportRenderFailure_parameter_2$schema,
           },
         },
@@ -434,20 +434,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisRenderFailure',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisRenderFailure',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportRenderFailure_parameter_3$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/reportRenderFailure:result',
+        typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/reportRenderFailure:result',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_reportRenderFailure_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":684,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/resolveInspectQuery',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/resolveInspectQuery',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'resolveInspectQuery',
@@ -464,7 +464,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_resolveInspectQuery_parameter_0$schema,
           },
         },
@@ -474,7 +474,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisInspectRequestId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisInspectRequestId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_resolveInspectQuery_parameter_1$schema,
           },
         },
@@ -484,20 +484,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisInspectQueryResolution',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisInspectQueryResolution',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_resolveInspectQuery_parameter_2$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisInspectResolveAck',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisInspectResolveAck',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_resolveInspectQuery_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":511,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/resolveRequestRun',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/resolveRequestRun',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'resolveRequestRun',
@@ -509,7 +509,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#ApprovalRequestId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#ApprovalRequestId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_resolveRequestRun_parameter_0$schema,
           },
         },
@@ -519,20 +519,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisRunResolution',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisRunResolution',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_resolveRequestRun_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisResolveAck',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisResolveAck',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_resolveRequestRun_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":413,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/runHostHalf',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/runHostHalf',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'runHostHalf',
@@ -549,7 +549,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_runHostHalf_parameter_0$schema,
           },
         },
@@ -559,7 +559,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_runHostHalf_parameter_1$schema,
           },
         },
@@ -569,7 +569,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPackageId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPackageId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_runHostHalf_parameter_2$schema,
           },
         },
@@ -579,7 +579,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicRunMode',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicRunMode',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_runHostHalf_parameter_3$schema,
           },
         },
@@ -589,7 +589,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/runHostHalf:requestId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/runHostHalf:requestId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_runHostHalf_parameter_4$schema,
           },
         },
@@ -599,20 +599,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/runHostHalf:approveFutureVersions',
+            typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/runHostHalf:approveFutureVersions',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_runHostHalf_parameter_5$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisHostHalfResult',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisHostHalfResult',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_runHostHalf_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":325,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/settleUserRun',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/settleUserRun',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'settleUserRun',
@@ -629,7 +629,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_settleUserRun_parameter_0$schema,
           },
         },
@@ -639,7 +639,7 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_settleUserRun_parameter_1$schema,
           },
         },
@@ -649,20 +649,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisRunResolution',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisRunResolution',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_settleUserRun_parameter_2$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisRunResponse',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisRunResponse',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_settleUserRun_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":438,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/stopFromPanel',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/stopFromPanel',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'stopFromPanel',
@@ -679,7 +679,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_stopFromPanel_parameter_0$schema,
           },
         },
@@ -689,20 +689,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_stopFromPanel_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisStopResponse',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisStopResponse',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_stopFromPanel_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":480,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/syncInspectManifest',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/syncInspectManifest',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'syncInspectManifest',
@@ -714,20 +714,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/syncInspectManifest:providers',
+            typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/syncInspectManifest:providers',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_syncInspectManifest_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/syncInspectManifest:result',
+        typeSymbol: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/syncInspectManifest:result',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_syncInspectManifest_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":498,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-cordis-host-runner#dynamicCordisRunner/undefineFromPanel',
+      id: '@freddie/freddie-cordis-host-runner#dynamicCordisRunner/undefineFromPanel',
       service: 'dynamicCordisRunner',
       namespace: 'dynamicCordisRunner',
       method: 'undefineFromPanel',
@@ -744,7 +744,7 @@ export const TYPERT = {
           lookup: 'agent',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-session/types#SessionId',
+            typeSymbol: '@freddie/freddie-session/types#SessionId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_undefineFromPanel_parameter_0$schema,
           },
         },
@@ -754,14 +754,14 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#CordisDynamicPluginId',
+            typeSymbol: '@freddie/freddie-cordis-host-runner/types#CordisDynamicPluginId',
             schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_undefineFromPanel_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-cordis-host-runner/types#DynamicCordisUndefineReceipt',
+        typeSymbol: '@freddie/freddie-cordis-host-runner/types#DynamicCordisUndefineReceipt',
         schema: _deepseek_ai_dsh_cordis_host_runner_dynamicCordisRunner_undefineFromPanel_result$schema,
       },
       sourceLocation: {"file":"packages/extensions/cordis-host-runner/src/index.ts","line":227,"column":9},

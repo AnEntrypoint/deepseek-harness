@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-subagent-control`.
- * @module @deepseek-ai/dsh-tool-subagent-control/invariant
+ * Package-owned invariant companion for `@freddie/freddie-tool-subagent-control`.
+ * @module @freddie/freddie-tool-subagent-control/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-subagent-control'
+const PACKAGE_NAME = '@freddie/freddie-tool-subagent-control'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-subagent-control-invariant'

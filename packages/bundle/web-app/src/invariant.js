@@ -1,9 +1,9 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-web-app`.
- * @module @deepseek-ai/dsh-web-app/invariant
+ * Package-owned invariant companion for `@freddie/freddie-web-app`.
+ * @module @freddie/freddie-web-app/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-web-app'
+const PACKAGE_NAME = '@freddie/freddie-web-app'
 
 /** Cordis companion plugin name. */
 export const name = 'web-app-invariant'

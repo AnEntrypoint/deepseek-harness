@@ -3,11 +3,11 @@
  * fetch. Duplicate ids are rejected. At execution time, a configured provider must exist and
  * be usable; without one, exactly one usable provider is required, so selection never depends
  * on registration order.
- * @module @deepseek-ai/dsh-web
+ * @module @freddie/freddie-web
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import { WebError } from './types.js'
 
 export {
@@ -29,7 +29,7 @@ export {
 export class WebRuntime extends Service {
   /**
    * Provider selection config. Operational env overrides feed the SAME fields:
-   * `$DSH_WEB_SEARCH_PROVIDER` / `$DSH_WEB_FETCH_PROVIDER` are equivalent to
+   * `$FREDDIE_WEB_SEARCH_PROVIDER` / `$FREDDIE_WEB_FETCH_PROVIDER` are equivalent to
    * `searchProvider` / `fetchProvider` and are NOT a hidden priority chain.
    */
   static Config = z.object({
@@ -44,8 +44,8 @@ export class WebRuntime extends Service {
 
   constructor(ctx, config = {}) {
     super(ctx, 'web')
-    this.searchProviderId = config.searchProvider ?? process.env.DSH_WEB_SEARCH_PROVIDER
-    this.fetchProviderId = config.fetchProvider ?? process.env.DSH_WEB_FETCH_PROVIDER
+    this.searchProviderId = config.searchProvider ?? process.env.FREDDIE_WEB_SEARCH_PROVIDER
+    this.fetchProviderId = config.fetchProvider ?? process.env.FREDDIE_WEB_FETCH_PROVIDER
   }
 
   /**

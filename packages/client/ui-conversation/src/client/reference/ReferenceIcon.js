@@ -1,7 +1,7 @@
 import { createElement as h } from 'webjsx'
 import {
   IconBrowseOutline16, IconFolderClose16,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 
 /** Reference domains with distinct composer and transcript glyphs. */
 

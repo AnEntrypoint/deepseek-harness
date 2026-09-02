@@ -3,7 +3,7 @@
  * pure context-breakdown projection, so both surfaces price identical content
  * to identical numbers.
  *
- * @module @deepseek-ai/dsh-token-meter/estimate
+ * @module @freddie/freddie-token-meter/estimate
  */
 
 /** Fixed text-density estimate used until exact tokenization is needed. */

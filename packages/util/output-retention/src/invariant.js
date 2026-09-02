@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-output-retention`.
- * @module @deepseek-ai/dsh-output-retention/invariant
+ * Package-owned invariant companion for `@freddie/freddie-output-retention`.
+ * @module @freddie/freddie-output-retention/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-output-retention'
+const PACKAGE_NAME = '@freddie/freddie-output-retention'
 
 /** Cordis companion plugin name. */
 export const name = 'output-retention-invariant'

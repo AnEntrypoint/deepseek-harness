@@ -3,7 +3,7 @@
  * profile's patch layers through the include plugin's patch algorithm without
  * booting or evaluating `!!js`, with one source layer per bundle, the
  * profile's own patch file, and each `--patch` overlay.
- * @module @deepseek-ai/dsh/dump-config
+ * @module @freddie/freddie/dump-config
  */
 
 import { existsSync } from 'node:fs'
@@ -12,7 +12,7 @@ import {
   loadOptionalPatches,
   loadOverlayPatches,
   renderConfigDump,
-} from '@deepseek-ai/dsh-app-boot'
+} from '@freddie/freddie-app-boot'
 import { homePatchPath, prepareProfile, PROFILE_ROOT_FILENAME } from './profile-boot.js'
 
 const NAME = 'dsh'

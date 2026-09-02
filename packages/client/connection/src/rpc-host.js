@@ -1,10 +1,10 @@
 /** Host registry and HTTP adapter for generic Connection RPC channels. */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import {
   clientRequestSchema,
   RpcId,
-} from '@deepseek-ai/dsh-host-apiproxy/api'
+} from '@freddie/freddie-host-apiproxy/api'
 import { bridge } from './http-bridge.js'
 import { isTrustedApiRequest } from './api-request-trust.js'
 import { API_PATH } from './api-path.js'

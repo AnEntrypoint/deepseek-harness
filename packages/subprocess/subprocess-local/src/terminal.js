@@ -23,7 +23,7 @@ function signalName(number) {
  * synchronously under the hood (node-pty write, ps-based inspection). A first
  * genuinely asynchronous step in any handle call must add the tracking a
  * remote provider needs.
- * @implements {import('@deepseek-ai/dsh-subprocess').SubprocessTerminalHandle}
+ * @implements {import('@freddie/freddie-subprocess').SubprocessTerminalHandle}
  */
 export class LocalTerminalHandle {
   pid

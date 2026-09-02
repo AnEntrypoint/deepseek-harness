@@ -2,16 +2,16 @@
  * Concrete agent-loop plugin: creates scoped ReactLoopAgents, publishes them
  * through the agent/session registries, and owns their ordered teardown.
  *
- * @module @deepseek-ai/dsh-agent-loop
+ * @module @freddie/freddie-agent-loop
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { randomUUID } from 'node:crypto'
-import z from '@deepseek-ai/schemastery'
-import { emitAgentEvent } from '@deepseek-ai/dsh-agent'
-import { errorChain } from '@deepseek-ai/dsh-llm'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { SessionId, SessionPreparation } from '@deepseek-ai/dsh-session'
+import z from '@freddie/schemastery'
+import { emitAgentEvent } from '@freddie/freddie-agent'
+import { errorChain } from '@freddie/freddie-llm'
+import { installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
+import { SessionId, SessionPreparation } from '@freddie/freddie-session'
 import { ReactLoopAgent } from './agent.js'
 
 /** Runtime mirror: FiberState is a cross-package const enum, erased at compile time by cordis's own build. */

@@ -7,7 +7,7 @@
  * with the runtime sessions service. A second effect seats the theme
  * presenter, which projects ctx.theme snapshots onto document.body.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './AppFrame.js'
 import { createLayoutStore } from './stores.js'
 import { LayoutController } from './service.js'

@@ -1,6 +1,6 @@
 /** Model and UI rendering for persistent terminal tool results. */
 
-import { TextRetainer } from '@deepseek-ai/dsh-output-retention'
+import { TextRetainer } from '@freddie/freddie-output-retention'
 
 const encoder = new TextEncoder()
 const TRUNCATED = '\n[output truncated]'

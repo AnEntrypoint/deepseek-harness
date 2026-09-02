@@ -11,7 +11,7 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconChevronDownOutline14, renderMenu, renderRiskConfirmation,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { FULL_ACCESS_PRESET } from './presentation.js'
 import css from './PermissionRow.css.js'
 

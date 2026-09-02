@@ -6,7 +6,7 @@
 // framework-free. Visual: figma 772:51905 / 772:52972 / 772:53419.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { IconChecklistOutline14, IconChevronDownOutline14, IconChevronUpOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChecklistOutline14, IconChevronDownOutline14, IconChevronUpOutline14 } from '@freddie/freddie-client-ui-primitives'
 import { NS } from '../locales.js'
 import css from './TodoPanel.css.js'
 

@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-fs-e2b",
-  "description": "E2B filesystem implementation for DeepSeek Harness",
+  "name": "@freddie/freddie-fs-e2b",
+  "description": "E2B filesystem implementation for Freddie",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/e2b/fs-e2b"
   },
   "type": "module",
@@ -28,15 +28,15 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-e2b": "workspace:^",
-    "@deepseek-ai/dsh-fs": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-e2b": "workspace:^",
+    "@freddie/freddie-fs": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-e2b": "workspace:^",
-    "@deepseek-ai/dsh-fs": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-e2b": "workspace:^",
+    "@freddie/freddie-fs": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   }
 }

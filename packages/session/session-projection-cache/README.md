@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-session-projection-cache
+# @freddie/freddie-session-projection-cache
 
 The persisted projection cache (`ctx.sessionProjectionCache`): durable checkpoints of every projection unit's state, one record per session on the domain data form (`session_projcache` domain — the shipped json backend lands it beside `workspace.json` under the configured storage root). Design authority: the [session-projection RFC](../../../.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.md) (persisted projection cache section).
 
@@ -38,7 +38,7 @@ The read ladder, zero full-log load on the happy path: cached rows → `sessionP
 
 ```yaml
 - id: session-projection-cache
-  name: '@deepseek-ai/dsh-session-projection-cache'
+  name: '@freddie/freddie-session-projection-cache'
   config:
     writeEveryEvents: 200
     writeIntervalMs: 5000

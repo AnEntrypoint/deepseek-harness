@@ -4,7 +4,7 @@
  * unions derived from them. Payloads are plain JSON by construction for structured clone. Both
  * directions are closed engine protocols whose receivers use `assertNever`; generic typed senders
  * make tag/payload mismatches compile-time errors rather than silently skipped messages.
- * @module @deepseek-ai/dsh-workflow-worker-thread/protocol
+ * @module @freddie/freddie-workflow-worker-thread/protocol
  */
 
 /** Message tags the worker sends the host (the wire values are the tag strings). */

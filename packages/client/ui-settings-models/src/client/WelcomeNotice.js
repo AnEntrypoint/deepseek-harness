@@ -11,7 +11,7 @@
  */
 
 import { createElement as h } from 'webjsx'
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button } from '@freddie/freddie-client-ui-primitives'
 import { OnboardingModal } from './OnboardingModal.js'
 import css from './WelcomeNotice.css.js'
 

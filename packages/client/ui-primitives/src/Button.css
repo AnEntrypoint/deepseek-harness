@@ -11,7 +11,7 @@
   cursor: pointer;
   font-size: 14px;
   line-height: 22px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   background: transparent;
   padding: 0 14px;
 }
@@ -36,38 +36,38 @@
 }
 
 .dsh-button__primary {
-  background: var(--dsw-alias-button-primary-fill);
-  color: var(--dsw-alias-label-primary-foreground);
+  background: var(--freddie-alias-button-primary-fill);
+  color: var(--freddie-alias-label-primary-foreground);
 }
 
 .dsh-button__primary:hover:not(:disabled) {
-  background: var(--dsw-alias-button-primary-hover);
+  background: var(--freddie-alias-button-primary-hover);
 }
 
 .dsh-button__ghost:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-button__ghost:active:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-active);
+  background: var(--freddie-alias-interactive-bg-active);
 }
 
 /* Dialog Cancel (figma 451:18655): bordered capsule on transparent fill. */
 .dsh-button__outline {
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   background: transparent;
 }
 
 .dsh-button__outline:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-button__toolbar {
-  background: var(--dsw-alias-button-tool-bar-fill);
+  background: var(--freddie-alias-button-tool-bar-fill);
 }
 
 .dsh-button__toolbar:hover:not(:disabled) {
-  background: var(--dsw-alias-button-tool-bar-hover);
+  background: var(--freddie-alias-button-tool-bar-hover);
 }
 
 .dsh-button__icon {

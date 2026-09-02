@@ -5,7 +5,7 @@
 // disconnectedCallback.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconCloseOutline16 } from '@freddie/freddie-client-ui-primitives'
 import css from './ImageLightbox.css.js'
 
 /**

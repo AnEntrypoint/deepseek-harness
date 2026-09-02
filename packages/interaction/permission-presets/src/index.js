@@ -10,12 +10,12 @@
  * @module dsh-permission-presets
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import { z as zod } from 'zod'
-import { SANDBOX_MODES, effectiveSandboxMode, setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
-import { APPROVAL_POLICIES, effectiveApprovalPolicy, setApprovalPolicy } from '@deepseek-ai/dsh-user-approval'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import { SANDBOX_MODES, effectiveSandboxMode, setSandboxMode } from '@freddie/freddie-sandbox-policy'
+import { APPROVAL_POLICIES, effectiveApprovalPolicy, setApprovalPolicy } from '@freddie/freddie-user-approval'
+import { installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
 
 /**
  * Fold the last selected preset from the durable log; replay needs no catch-up

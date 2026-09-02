@@ -4,7 +4,7 @@
  * preference row into the settings General section — the locale feature owns
  * its own settings surface.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import {
   LOCALE_PREFERENCE_FIELD, LOCALE_SETTINGS_NAMESPACE,
 } from '../locale-settings.js'
@@ -133,7 +133,7 @@ export class LocaleRuntime {
    * locale, because the active value may be a provisional browser-derived or
    * fallback resolution that nothing has stored yet. Picking the language
    * already on screen is still an explicit choice, and it must survive a
-   * different browser sharing the same DSH home. Only the render notification
+   * different browser sharing the same FREDDIE home. Only the render notification
    * is conditional: republishing an unchanged locale would churn every
    * subscriber for nothing.
    * @param id - a registered locale id; unknown ids throw.

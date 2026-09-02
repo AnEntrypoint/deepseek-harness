@@ -7,7 +7,7 @@
  * projection pair through the standard-kit `useProjection`; zero client-side
  * plan state.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 export { PlanChip } from './PlanModeControl.js'
 import { en, zh } from './locales.js'
 

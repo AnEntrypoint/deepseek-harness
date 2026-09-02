@@ -8,7 +8,7 @@
 import { globSync, readFileSync } from 'node:fs'
 import { dirname, resolve, sep } from 'node:path'
 
-const SCOPE = '@deepseek-ai/dsh-'
+const SCOPE = '@freddie/freddie-'
 
 /** One harness package and its in-repo peer-dependency edges. */
 

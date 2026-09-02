@@ -7,7 +7,7 @@
  * both sides of the native interaction with one cordis.yml row; no client
  * code branches on a capability kind.
  */
-import { webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
+import { webjsxSlot } from '@freddie/freddie-client-ui-slots'
 import './flow.js'
 
 

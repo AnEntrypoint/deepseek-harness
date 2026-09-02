@@ -1,9 +1,9 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-headless`.
- * @module @deepseek-ai/dsh-headless/invariant
+ * Package-owned invariant companion for `@freddie/freddie-headless`.
+ * @module @freddie/freddie-headless/invariant
  */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-headless'
+const PACKAGE_NAME = '@freddie/freddie-headless'
 
 /** Cordis companion plugin name. */
 export const name = 'headless-invariant'

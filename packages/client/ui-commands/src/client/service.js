@@ -7,7 +7,7 @@
  * addresses the session's agent by sessionId — sessions are always
  * agent-backed.
  */
-import { Service } from '@deepseek-ai/cordis'
+import { Service } from '@freddie/cordis'
 import { CommandDirectory } from './directory.js'
 import { PopupSelectController } from './popup.js'
 

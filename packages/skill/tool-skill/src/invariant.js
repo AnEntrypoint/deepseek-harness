@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-skill`.
- * @module @deepseek-ai/dsh-tool-skill/invariant
+ * Package-owned invariant companion for `@freddie/freddie-tool-skill`.
+ * @module @freddie/freddie-tool-skill/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-skill'
+const PACKAGE_NAME = '@freddie/freddie-tool-skill'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-skill-invariant'

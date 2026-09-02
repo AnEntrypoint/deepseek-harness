@@ -22,8 +22,8 @@
  * @module dsh-llm-pi-ai/discovery
  */
 
-import { INVALID_CREDENTIAL_CODE, LlmError, normalizeApiKey } from '@deepseek-ai/dsh-llm'
-import { attributionHeaders } from '@deepseek-ai/dsh-llm'
+import { INVALID_CREDENTIAL_CODE, LlmError, normalizeApiKey } from '@freddie/freddie-llm'
+import { attributionHeaders } from '@freddie/freddie-llm'
 import { catalogModels } from './catalog.js'
 
 /**

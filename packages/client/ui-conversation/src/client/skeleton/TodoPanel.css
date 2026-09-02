@@ -10,21 +10,21 @@
   margin: 0 auto;
   width: calc(
     100% -
-    var(--dsh-composer-side-clearance) -
-    var(--dsh-composer-side-clearance) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset)
+    var(--freddie-composer-side-clearance) -
+    var(--freddie-composer-side-clearance) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset)
   );
   max-width: calc(
-    var(--dsh-composer-card-max-width) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset) -
-    var(--dsh-composer-dock-inset)
+    var(--freddie-composer-card-max-width) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset) -
+    var(--freddie-composer-dock-inset)
   );
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 1px solid var(--freddie-alias-border-l1);
   border-radius: 12px;
   background: var(--dsw-specific-tip);
   /* Elevated surface: `--dsw-specific-tip` is the same dark rung as the menu
@@ -32,8 +32,8 @@
      elevation tokens. Declared here because the elevation belongs to the
      surface, and the custom properties inherit down to `.list` (see ui-theme
      styles/scrollbar.css for the rebinding contract). */
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --freddie-scrollbar-thumb: var(--freddie-alias-scrollbar-bg-l2);
+  --freddie-scrollbar-thumb-hover: var(--freddie-alias-scrollbar-hover-l2);
 }
 
 .dsh-todoPanel__body {
@@ -59,7 +59,7 @@
   display: grid;
   flex: none;
   place-items: center;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-todoPanel__title {
@@ -67,7 +67,7 @@
   font-size: 13px;
   line-height: 24px;
   font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
 }
 
 .dsh-todoPanel__progress {
@@ -77,7 +77,7 @@
   font-size: 13px;
   line-height: 20px;
   font-weight: 400;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -86,7 +86,7 @@
   display: grid;
   flex: none;
   place-items: center;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 .dsh-todoPanel__list {
@@ -107,7 +107,7 @@
   min-width: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-todoPanel__glyph {
@@ -119,15 +119,15 @@
 }
 
 .dsh-todoPanel__glyphCompleted {
-  color: var(--dsw-alias-state-success-primary);
+  color: var(--freddie-alias-state-success-primary);
 }
 
 .dsh-todoPanel__glyphPending {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-todoPanel__glyphProgress {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--freddie-alias-state-business-primary);
   animation: dsh-todoPanel__todo-progress-spin 1s linear infinite;
 }
 

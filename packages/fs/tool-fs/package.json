@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-tool-fs",
-  "description": "Model-facing filesystem tools (read, write, edit) over the DeepSeek Harness filesystem seam (ctx.fs)",
+  "name": "@freddie/freddie-tool-fs",
+  "description": "Model-facing filesystem tools (read, write, edit) over the Freddie filesystem seam (ctx.fs)",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/lanmower/freddie.git",
     "directory": "packages/fs/tool-fs"
   },
   "type": "module",
@@ -39,37 +39,37 @@
   "license": "MIT",
   "dependencies": {
     "diff": "^9.0.0",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@freddie/schemastery": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-attachment": "workspace:^",
-    "@deepseek-ai/dsh-fs": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-attachment": "workspace:^",
+    "@freddie/freddie-fs": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-llm": "workspace:^",
+    "@freddie/freddie-sandbox": "workspace:^",
+    "@freddie/freddie-sandbox-policy": "workspace:^",
+    "@freddie/freddie-session": "workspace:^",
+    "@freddie/freddie-system-prompt": "workspace:^",
+    "@freddie/freddie-tools": "workspace:^",
+    "@freddie/freddie-user-approval": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-attachment": "workspace:^",
-    "@deepseek-ai/dsh-fs": "workspace:^",
-    "@deepseek-ai/dsh-fs-local": "workspace:^",
-    "@deepseek-ai/dsh-fs-observation-policy": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@freddie/freddie-agent": "workspace:^",
+    "@freddie/freddie-agent-loop": "workspace:^",
+    "@freddie/freddie-attachment": "workspace:^",
+    "@freddie/freddie-fs": "workspace:^",
+    "@freddie/freddie-fs-local": "workspace:^",
+    "@freddie/freddie-fs-observation-policy": "workspace:^",
+    "@freddie/freddie-invariants": "workspace:^",
+    "@freddie/freddie-llm": "workspace:^",
+    "@freddie/freddie-llm-deepseek": "workspace:^",
+    "@freddie/freddie-sandbox": "workspace:^",
+    "@freddie/freddie-sandbox-policy": "workspace:^",
+    "@freddie/freddie-session": "workspace:^",
+    "@freddie/freddie-system-prompt": "workspace:^",
+    "@freddie/freddie-tools": "workspace:^",
+    "@freddie/freddie-user-approval": "workspace:^",
+    "@freddie/cordis": "workspace:^"
   }
 }

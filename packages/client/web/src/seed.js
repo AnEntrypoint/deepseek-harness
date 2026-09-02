@@ -7,9 +7,9 @@
  * imports so every bundle sees the same instance.
  */
 import * as Webjsx from 'webjsx'
-import * as Cordis from '@deepseek-ai/cordis'
-import * as UiSlots from '@deepseek-ai/dsh-client-ui-slots'
-import * as UiPrimitives from '@deepseek-ai/dsh-client-ui-primitives'
+import * as Cordis from '@freddie/cordis'
+import * as UiSlots from '@freddie/freddie-client-ui-slots'
+import * as UiPrimitives from '@freddie/freddie-client-ui-primitives'
 
 /**
  * Build the static table handed to the module loader at boot.
@@ -18,8 +18,8 @@ import * as UiPrimitives from '@deepseek-ai/dsh-client-ui-primitives'
 export function getStaticModules() {
   return {
     'webjsx': Webjsx,
-    '@deepseek-ai/cordis': Cordis,
-    '@deepseek-ai/dsh-client-ui-slots': UiSlots,
-    '@deepseek-ai/dsh-client-ui-primitives': UiPrimitives,
+    '@freddie/cordis': Cordis,
+    '@freddie/freddie-client-ui-slots': UiSlots,
+    '@freddie/freddie-client-ui-primitives': UiPrimitives,
   }
 }

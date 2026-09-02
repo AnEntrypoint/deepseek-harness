@@ -23,8 +23,8 @@
      container that clips it. Owning the reservation here keeps the invariant
      with the component that depends on it. */
   padding-left: var(--dsl-terminal-gutter);
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-markdown-code-block);
+  color: var(--freddie-alias-label-primary);
+  background: var(--freddie-alias-markdown-code-block);
   border-radius: var(--dsl-terminal-radius);
   /* Clip the banner to the card's own radius: when a consumer adds a border,
      the banner's equal corner radius no longer nests inside it and leaves a
@@ -68,7 +68,7 @@
    divider the IN/OUT card draws between its sections. A running card is
    banner-only, so it draws none. */
 .dsh-terminalBlock__block:not([data-running]) .dsh-terminalBlock__header {
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  border-bottom: 1px solid var(--freddie-alias-border-l2);
 }
 
 /* One row per command line. The prompt column is the only element allowed to
@@ -113,7 +113,7 @@
 
 .dsh-terminalBlock__cwd {
   flex: none;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }
 
 /* `pre`, not `nowrap`: the prompt row renders the command verbatim, and
@@ -121,7 +121,7 @@
    continuation. Both hold the single row and the ellipsis. */
 .dsh-terminalBlock__command {
   min-width: 0;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: pre;
@@ -136,7 +136,7 @@
   position: sticky;
   top: 0;
   height: var(--dsl-terminal-line-height);
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-terminalBlock__copyButton {
@@ -145,11 +145,11 @@
   top: 0;
   /* Card surface, not transparent: the control is sticky over the banner's
      own scroll, so scrolled command text must not bleed through it. */
-  background-color: var(--dsw-alias-markdown-code-block);
+  background-color: var(--freddie-alias-markdown-code-block);
   border: none;
   padding: 0;
   margin: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   cursor: pointer;
   font: var(--dsw-font-xs-13);
   line-height: var(--dsl-terminal-line-height);
@@ -194,18 +194,18 @@
   padding: 0;
   border: none;
   background-color: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   cursor: pointer;
   font: inherit;
   text-align: left;
 }
 
 .dsh-terminalBlock__expand:hover {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-terminalBlock__empty {
   padding: 12px 14px 12px 0;
   font: var(--dsl-terminal-font);
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
 }

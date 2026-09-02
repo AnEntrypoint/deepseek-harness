@@ -2,11 +2,11 @@
  * Projection from the shared managed-process handle to the official Claude
  * Agent SDK's custom-spawn process interface.
  *
- * @module @deepseek-ai/dsh-subagent-claude-code/process
+ * @module @freddie/freddie-subagent-claude-code/process
  */
 
 import { EventEmitter } from 'node:events'
-import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
+import { scrubbedParentEnv } from '@freddie/freddie-subprocess'
 
 function thrown(value) {
   /* v8 ignore next -- the subprocess seam rejects with Error. */

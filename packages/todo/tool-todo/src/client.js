@@ -8,6 +8,6 @@
  * re-export is now a no-op at runtime; kept as a module for import-site
  * stability.
  *
- * @module @deepseek-ai/dsh-tool-todo/client
+ * @module @freddie/freddie-tool-todo/client
  */
 export {}

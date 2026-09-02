@@ -2,11 +2,11 @@
  * Provider-routed model-request retry policy on the agent loop's request
  * recovery extension point. Each scheduled retry is durable before its cancellable wait.
  *
- * @module @deepseek-ai/dsh-llm-retry
+ * @module @freddie/freddie-llm-retry
  */
 
 import { randomUUID } from 'node:crypto'
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import { RetryId } from './brand.js'
 
 export { RetryId } from './brand.js'

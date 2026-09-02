@@ -1,14 +1,14 @@
 /**
  * Package-owned relational invariants for the session event log. Load this
- * companion beside `@deepseek-ai/dsh-invariants` to enable the checks.
+ * companion beside `@freddie/freddie-invariants` to enable the checks.
  *
- * @module @deepseek-ai/dsh-session/invariant
+ * @module @freddie/freddie-session/invariant
  */
 
-import { assertNever } from '@deepseek-ai/dsh-llm'
+import { assertNever } from '@freddie/freddie-llm'
 import { TOOL_NOT_STARTED } from './repair.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-session'
+const PACKAGE_NAME = '@freddie/freddie-session'
 
 /** Cordis companion plugin name. */
 export const name = 'session-invariant'

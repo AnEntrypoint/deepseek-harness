@@ -1,7 +1,7 @@
 /** Host HTTP bridge for browser-client RPC. */
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 // Activates the webServer Context merge used below.
-import { toFetchHandler } from '@deepseek-ai/dsh-host-apiproxy'
+import { toFetchHandler } from '@freddie/freddie-host-apiproxy'
 import { API_PATH, HOST_EVENTS_PATH, MUX_EVENTS_PATH } from './api-path.js'
 import { bridge, DEFAULT_MAX_REQUEST_BODY_BYTES } from './http-bridge.js'
 import { assertTrustedAuthority, isTrustedApiRequest } from './api-request-trust.js'

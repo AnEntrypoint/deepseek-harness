@@ -15,11 +15,11 @@
  * absent `ctx.shell`, or a failed query is a no-op, never an error: an executor
  * rejection is contained and logged as a warning so the turn continues.
  *
- * @module @deepseek-ai/dsh-tmux-context
+ * @module @freddie/freddie-tmux-context
  */
 
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { createUserMessage } from '@freddie/freddie-llm'
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'tmux-context'

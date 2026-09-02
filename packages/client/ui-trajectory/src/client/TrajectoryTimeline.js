@@ -1,7 +1,7 @@
 /** Chrome-Network-style overview timeline for focusing the trajectory ledger. */
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Tooltip } from '@freddie/freddie-client-ui-primitives'
 import {
   deriveTrajectoryTimeline,
   formatTimelineOffset,

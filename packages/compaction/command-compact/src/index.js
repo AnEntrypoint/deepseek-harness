@@ -1,9 +1,9 @@
 /**
  * Human-facing `/compact` command over the backend-independent compaction seam.
- * @module @deepseek-ai/dsh-command-compact
+ * @module @freddie/freddie-command-compact
  */
 
-import { ManualCompactionError } from '@deepseek-ai/dsh-compaction'
+import { ManualCompactionError } from '@freddie/freddie-compaction'
 
 export const name = 'command-compact'
 export const inject = ['commands', 'compaction']

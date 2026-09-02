@@ -2,7 +2,7 @@
 
 import { randomUUID } from 'node:crypto'
 import WebSocket, { WebSocketServer } from 'ws'
-import { RpcId } from '@deepseek-ai/dsh-host-apiproxy/api'
+import { RpcId } from '@freddie/freddie-host-apiproxy/api'
 
 function serverRequest(frame) {
   return {

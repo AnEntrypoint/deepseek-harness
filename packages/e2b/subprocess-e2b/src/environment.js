@@ -2,8 +2,8 @@
 
 import { Buffer } from 'node:buffer'
 import { posix } from 'node:path'
-import { e2bControlEnvs } from '@deepseek-ai/dsh-e2b'
-import { SENSITIVE_ENV_PATTERN } from '@deepseek-ai/dsh-subprocess'
+import { e2bControlEnvs } from '@freddie/freddie-e2b'
+import { SENSITIVE_ENV_PATTERN } from '@freddie/freddie-subprocess'
 
 const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
 
@@ -61,7 +61,7 @@ export async function readRemoteEnvironment(sandbox, signal) {
 export function scrubRemoteEnvironment(raw) {
   const environment = new Map()
   for (const [name, value] of remoteEnvironmentEntries(raw)) {
-    if (name.startsWith('DSH_') || SENSITIVE_ENV_PATTERN.test(name)) continue
+    if (name.startsWith('FREDDIE_') || SENSITIVE_ENV_PATTERN.test(name)) continue
     environment.set(name, value)
   }
   return environment
@@ -75,7 +75,7 @@ export function scrubRemoteEnvironment(raw) {
 export function bootstrapEnvironment(raw) {
   const environment = { TERM: 'dumb' }
   for (const [name] of remoteEnvironmentEntries(raw)) {
-    if (name.startsWith('DSH_') || SENSITIVE_ENV_PATTERN.test(name)) environment[name] = ''
+    if (name.startsWith('FREDDIE_') || SENSITIVE_ENV_PATTERN.test(name)) environment[name] = ''
   }
   return environment
 }

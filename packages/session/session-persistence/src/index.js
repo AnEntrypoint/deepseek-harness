@@ -2,11 +2,11 @@
  * Durable session-persistence Service Definition (`ctx.sessionPersistence`). Backends store
  * {@link SessionEvent}s as the event-sourced log and carry non-replayable
  * {@link SessionHeader} metadata separately.
- * @module @deepseek-ai/dsh-session-persistence
+ * @module @freddie/freddie-session-persistence
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { SessionPreparation } from '@deepseek-ai/dsh-session'
+import { Service } from '@freddie/cordis'
+import { SessionPreparation } from '@freddie/freddie-session'
 
 // Re-export the metadata vocabulary so Consumers import it from the Service Definition.
 export { SessionPersistenceRevision } from './revision.js'

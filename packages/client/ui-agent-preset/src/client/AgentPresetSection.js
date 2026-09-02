@@ -21,7 +21,7 @@ import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
   Button, IconBrowseOutline16, IconCopyOutline16, IconFolderOpenOutline16, IconPlusOutline16, IconTrashOutline16,
   renderModal, renderTooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { draftBlocker } from './section-store.js'
 import { presetDisplayText } from './locales.js'
 import css from './AgentPresetSection.css.js'

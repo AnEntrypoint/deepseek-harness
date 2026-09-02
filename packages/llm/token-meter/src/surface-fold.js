@@ -8,10 +8,10 @@
  * price is derived from THIS fold's nodes by the replace producer. A
  * projection replacement without a claim deliberately folds with zero delta.
  *
- * @module @deepseek-ai/dsh-token-meter/surface-fold
+ * @module @freddie/freddie-token-meter/surface-fold
  */
 
-import { deriveEventMessage } from '@deepseek-ai/dsh-session'
+import { deriveEventMessage } from '@freddie/freddie-session'
 import { estimateMessage } from './estimate.js'
 
 /**

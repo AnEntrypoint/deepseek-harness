@@ -20,11 +20,11 @@
  * time stays uncounted in every time figure — matching the window, which
  * renders it as an untimed interrupted node.
  *
- * @module @deepseek-ai/dsh-session-stats/projection
+ * @module @freddie/freddie-session-stats/projection
  */
 
 import { z } from 'zod'
-import { isTokenDelta } from '@deepseek-ai/dsh-llm/message'
+import { isTokenDelta } from '@freddie/freddie-llm/message'
 
 const sessionStatsSchema = z.object({
   turns: z.number().int().nonnegative(),

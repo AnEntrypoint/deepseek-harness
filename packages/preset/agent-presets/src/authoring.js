@@ -9,13 +9,13 @@
  * No caller supplies composition text: the inputs are ids the host resolves
  * against its own roots plus an optional display name, so authoring grants no
  * capability the copied preset did not already carry.
- * @module @deepseek-ai/dsh-agent-presets/authoring
+ * @module @freddie/freddie-agent-presets/authoring
  */
 
 import { chmod, cp, readdir, readFile, rm, stat } from 'node:fs/promises'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
-import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
-import { expandHomePath } from '@deepseek-ai/dsh-home-paths'
+import { writeFileAtomic } from '@freddie/freddie-atomic-write'
+import { expandHomePath } from '@freddie/freddie-home-paths'
 import { METADATA_FILE, renderPresetMetadata } from './metadata.js'
 import { PRESET_ID } from './preset.js'
 

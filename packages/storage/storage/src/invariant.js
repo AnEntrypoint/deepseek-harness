@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-storage`.
- * @module @deepseek-ai/dsh-storage/invariant
+ * Package-owned invariant companion for `@freddie/freddie-storage`.
+ * @module @freddie/freddie-storage/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-storage'
+const PACKAGE_NAME = '@freddie/freddie-storage'
 
 /** Cordis companion plugin name. */
 export const name = 'storage-invariant'

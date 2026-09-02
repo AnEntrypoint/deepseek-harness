@@ -1,6 +1,6 @@
-/** Package-owned invariant companion for the subprocess seam. @module @deepseek-ai/dsh-subprocess/invariant */
+/** Package-owned invariant companion for the subprocess seam. @module @freddie/freddie-subprocess/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-subprocess'
+const PACKAGE_NAME = '@freddie/freddie-subprocess'
 
 /** Cordis companion plugin name. */
 export const name = 'subprocess-invariant'

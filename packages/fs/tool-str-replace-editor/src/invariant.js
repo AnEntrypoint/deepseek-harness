@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-str-replace-editor`.
- * @module @deepseek-ai/dsh-tool-str-replace-editor/invariant
+ * Package-owned invariant companion for `@freddie/freddie-tool-str-replace-editor`.
+ * @module @freddie/freddie-tool-str-replace-editor/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-str-replace-editor'
+const PACKAGE_NAME = '@freddie/freddie-tool-str-replace-editor'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-str-replace-editor-invariant'

@@ -1,12 +1,12 @@
 /**
- * File-backed credentials provider over `$DSH_HOME/.credentials.yaml`, layered
+ * File-backed credentials provider over `$FREDDIE_HOME/.credentials.yaml`, layered
  * against the environment by how much each layer is trusted:
  *
  * ```text
  * inherited process environment      (read-only, wins)
- * > $DSH_HOME/.credentials.yaml      (provider-managed, writable)
+ * > $FREDDIE_HOME/.credentials.yaml      (provider-managed, writable)
  * > <invocation cwd>/.env            (read-only fallback)
- * > $DSH_HOME/.env                   (read-only fallback)
+ * > $FREDDIE_HOME/.env                   (read-only fallback)
  * ```
  *
  * The inherited environment wins because `DEEPSEEK_API_KEY=… dsh`, a CI
@@ -32,19 +32,19 @@
  * as the user's environment layer; a store that doubled as the environment
  * layer would shadow non-secret entries behind its precedence, making them
  * silently unreachable.
- * @module @deepseek-ai/dsh-credentials-local
+ * @module @freddie/freddie-credentials-local
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
 import { watch as chokidarWatch } from 'chokidar'
 import { mkdir, readFile, stat } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { Document, isMap, isScalar, parseDocument } from 'yaml'
-import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
-import { canonicalizeWatchPath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import { CredentialProvider, credentialRef, parseCredentialKey } from '@deepseek-ai/dsh-credentials'
+import { withFileLock, writeFileAtomic } from '@freddie/freddie-atomic-write'
+import { canonicalizeWatchPath, resolveDshHome } from '@freddie/freddie-home-paths'
+import { launchEnvironmentOf } from '@freddie/freddie-launch-environment'
+import { CredentialProvider, credentialRef, parseCredentialKey } from '@freddie/freddie-credentials'
 
 /** Basename of the credentials document inside the harness home. */
 export const CREDENTIALS_FILENAME = '.credentials.yaml'
@@ -471,7 +471,7 @@ function sameJsonValue(left, right) {
     && sameJsonValue(left[key], right[key]))
 }
 
-/** File-backed credentials provider (`$DSH_HOME/.credentials.yaml`). */
+/** File-backed credentials provider (`$FREDDIE_HOME/.credentials.yaml`). */
 export class LocalCredentialProvider extends CredentialProvider {
   /* jscpd:ignore-start -- deliberate config-surface and lifecycle symmetry with
      settings-file (prefer symmetry for parallel values); extracting the shared

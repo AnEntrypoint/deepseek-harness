@@ -1,5 +1,5 @@
 import { createElement as h } from 'webjsx'
-import { JsonBlock } from '@deepseek-ai/dsh-client-ui-primitives'
+import { JsonBlock } from '@freddie/freddie-client-ui-primitives'
 import css from './ChatView.css.js'
 
 /** Subscribe and dispatch one stable Context key without observing sibling Nodes. */

@@ -1,11 +1,11 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-settings`.
- * @module @deepseek-ai/dsh-settings/invariant
+ * Package-owned invariant companion for `@freddie/freddie-settings`.
+ * @module @freddie/freddie-settings/invariant
  */
 
 import { deepEqualJson } from './index.js'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-settings'
+const PACKAGE_NAME = '@freddie/freddie-settings'
 
 /** Cordis companion plugin name. */
 export const name = 'settings-invariant'

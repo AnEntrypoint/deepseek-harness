@@ -1,5 +1,5 @@
 /**
- * OpenTelemetry Service Provider for the DeepSeek Harness telemetry capability.
+ * OpenTelemetry Service Provider for the Freddie telemetry capability.
  *
  * Composes the OTel JS SDK as-is — a `LoggerProvider` with a
  * `BatchLogRecordProcessor` and an OTLP/HTTP log exporter — and maps each
@@ -9,17 +9,17 @@
  * capture mode and an outer shutdown deadline: the SDK's export timeout does
  * not bound its preceding `forceFlush()` wait.
  *
- * @module @deepseek-ai/dsh-session-telemetry-otel
+ * @module @freddie/freddie-session-telemetry-otel
  */
 
 import { createRequire } from 'node:module'
-import z from '@deepseek-ai/schemastery'
+import z from '@freddie/schemastery'
 import {
   SessionTelemetryBackend,
   SessionTelemetryCoordinator,
-} from '@deepseek-ai/dsh-session-telemetry'
-import { APP_IDENTITY } from '@deepseek-ai/dsh-llm'
-import { getOrCreateAnonymousUserId } from '@deepseek-ai/dsh-anonymous-user-id'
+} from '@freddie/freddie-session-telemetry'
+import { APP_IDENTITY } from '@freddie/freddie-llm'
+import { getOrCreateAnonymousUserId } from '@freddie/freddie-anonymous-user-id'
 import {
   BatchLogRecordProcessor,
   LoggerProvider,
@@ -77,7 +77,7 @@ function sharingStatusFor(mode) {
 
 /**
  * Plugin configuration: one sharing policy, two verbatim SDK option objects,
- * and one DSH-owned shutdown bound. Uploading modes validate their endpoint
+ * and one FREDDIE-owned shutdown bound. Uploading modes validate their endpoint
  * and shutdown deadline at plugin load; `DISABLED` reads neither.
  */
 
@@ -187,8 +187,8 @@ export class OpenTelemetrySessionBackend extends SessionTelemetryBackend {
         }),
       ],
     })
-    const ledger = this.provider.getLogger('@deepseek-ai/dsh-session-telemetry-otel', version)
-    const ops = this.provider.getLogger('@deepseek-ai/dsh-session-telemetry-otel/ops', version)
+    const ledger = this.provider.getLogger('@freddie/freddie-session-telemetry-otel', version)
+    const ops = this.provider.getLogger('@freddie/freddie-session-telemetry-otel/ops', version)
     const enqueue = (record) => {
       const logger = record.channel === 'ops' ? ops : ledger
       logger.emit({

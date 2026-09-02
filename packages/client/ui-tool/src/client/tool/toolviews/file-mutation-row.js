@@ -9,7 +9,7 @@
 // section, its first line in the collapsed summary.
 
 import { createElement as h, Fragment } from 'webjsx'
-import { IconEditOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconEditOutline16 } from '@freddie/freddie-client-ui-primitives'
 import { diffCardModel } from '../models/diff-card-model.js'
 import { toolRowModel } from '../models/tool-call-model.js'
 import { ToolRow } from '../components/ToolRow.js'

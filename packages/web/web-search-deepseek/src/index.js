@@ -2,13 +2,13 @@
  * Register a DeepSeek-backed provider in `ctx.web`. It calls the Anthropic-compatible Messages
  * API with native `web_search_20250305`. The provider reuses `DEEPSEEK_API_KEY` but not
  * `DEEPSEEK_BASE_URL`, because search and chat-completions use different bases.
- * @module @deepseek-ai/dsh-web-search-deepseek
+ * @module @freddie/freddie-web-search-deepseek
  */
 
-import z from '@deepseek-ai/schemastery'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
+import z from '@freddie/schemastery'
+import { credentialRef } from '@freddie/freddie-credentials'
+import { installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
+import { launchEnvironmentOf } from '@freddie/freddie-launch-environment'
 import {
   DeepSeekSearchProvider,
   DEEPSEEK_DEFAULT_API_VERSION,

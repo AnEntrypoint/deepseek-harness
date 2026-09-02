@@ -8,13 +8,13 @@
  * composes and drives them directly, so this driver owns exactly one turn with
  * one result.
  *
- * @module @deepseek-ai/dsh-subagent-in-process-driver
+ * @module @freddie/freddie-subagent-in-process-driver
  */
 
 import { randomUUID } from 'node:crypto'
-import { foldConsumedWork } from '@deepseek-ai/dsh-agent'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { foldConsumedWork } from '@freddie/freddie-agent'
+import { SessionId } from '@freddie/freddie-session'
+import { createUserMessage } from '@freddie/freddie-llm'
 import {
   appendDelegatedPolicyOverrides,
   applyChildComposition,
@@ -24,7 +24,7 @@ import {
   finalAssistantOutput,
   resolveChildAgentOptions,
   resolveChildDepth,
-} from '@deepseek-ai/dsh-subagent'
+} from '@freddie/freddie-subagent'
 import {
   attachStructuredRuntime,
 } from './structured.js'

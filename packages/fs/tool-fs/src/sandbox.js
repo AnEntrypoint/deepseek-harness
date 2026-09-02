@@ -2,16 +2,16 @@
  * The sandbox-escalation API shared by the `write` and `edit` tools: the
  * per-call policy resolution, the advertised escalation fields, and the denial-marker
  * mapping — all delegating the vocabulary and the fail-closed approval
- * sequence to `@deepseek-ai/dsh-sandbox` (the same pieces `@deepseek-ai/dsh-tool-bash`
+ * sequence to `@freddie/freddie-sandbox` (the same pieces `@freddie/freddie-tool-bash`
  * uses), so bash and fs escalate identically. Built ONCE per plugin from
  * `ctx.fs.sandboxMode` (the capability fact — is a confining backend mounted?)
  * and shared by both mutating tools.
  *
- * @module @deepseek-ai/dsh-tool-fs/sandbox
+ * @module @freddie/freddie-tool-fs/sandbox
  */
 
-import { ESCALATION_TARGETS, approveEscalation, escalationHintMarker, sandboxDenialMarker, validateEscalationArgs } from '@deepseek-ai/dsh-sandbox'
-import { FsError } from '@deepseek-ai/dsh-fs'
+import { ESCALATION_TARGETS, approveEscalation, escalationHintMarker, sandboxDenialMarker, validateEscalationArgs } from '@freddie/freddie-sandbox'
+import { FsError } from '@freddie/freddie-fs'
 
 /**
  * The filesystem escalation API: advertisement gating, per-call policy

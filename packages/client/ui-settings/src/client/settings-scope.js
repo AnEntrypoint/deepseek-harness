@@ -8,8 +8,8 @@
  * over its snapshot.
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { Service } from '@freddie/cordis'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 import { SettingsDescribeMirror } from './settings-mirror.js'
 
 /**

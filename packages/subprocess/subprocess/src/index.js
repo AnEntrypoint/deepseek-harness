@@ -4,14 +4,14 @@
  * collected stdio, and one terminal-process primitive. Command defaulting,
  * shell semantics, deadlines, protocol framing, terminal readiness, and
  * presentation belong to consumers. The local implementation lives in
- * `@deepseek-ai/dsh-subprocess-local`.
- * @module @deepseek-ai/dsh-subprocess
+ * `@freddie/freddie-subprocess-local`.
+ * @module @freddie/freddie-subprocess
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import { DSH_ENV_PREFIX } from './types.js'
+import { Service } from '@freddie/cordis'
+import { FREDDIE_ENV_PREFIX } from './types.js'
 
-export { DSH_ENV_PREFIX } from './types.js'
+export { FREDDIE_ENV_PREFIX } from './types.js'
 
 /**
  * Credential-shaped environment names are NOT forwarded to children (the
@@ -24,13 +24,13 @@ export const SENSITIVE_ENV_PATTERN = /KEY|PASSWORD|SECRET|TOKEN/i
 
 /**
  * The ambient parent environment minus credential-shaped names and minus all
- * `DSH_*` names — the canonical base every harness child starts from. `PATH`,
+ * `FREDDIE_*` names — the canonical base every harness child starts from. `PATH`,
  * `HOME`, locale, and proxy variables survive, so child CLIs run normally;
  * harness identity never leaks implicitly (a deliberately forwarded
- * credential or current `DSH_*` fact goes through the spec's explicit `env`,
+ * credential or current `FREDDIE_*` fact goes through the spec's explicit `env`,
  * which merges after this scrub). Both scrubs match case-insensitively:
  * Windows environment names are case-insensitive, so a parent `dsh_*` entry
- * would otherwise survive and read back as `$env:DSH_*` in the child;
+ * would otherwise survive and read back as `$env:FREDDIE_*` in the child;
  * deliberate lowercase `dsh_*` names on POSIX are implausible. Exported as a plain function so spawners
  * that cannot route through the service (node-pty backends, SDK-managed
  * transports) share the one scrub definition.
@@ -39,7 +39,7 @@ export const SENSITIVE_ENV_PATTERN = /KEY|PASSWORD|SECRET|TOKEN/i
 export function scrubbedParentEnv() {
   const env = {}
   for (const [key, value] of Object.entries(process.env)) {
-    if (value !== undefined && !SENSITIVE_ENV_PATTERN.test(key) && !key.toUpperCase().startsWith(DSH_ENV_PREFIX)) env[key] = value
+    if (value !== undefined && !SENSITIVE_ENV_PATTERN.test(key) && !key.toUpperCase().startsWith(FREDDIE_ENV_PREFIX)) env[key] = value
   }
   return env
 }

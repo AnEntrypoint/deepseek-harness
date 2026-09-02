@@ -3,11 +3,11 @@
  * with logged model context without vetoing or rewriting calls. Configuration
  * and chain semantics live in the package README; rationale lives in the
  * repeat-tool-reminder Agent Note.
- * @module @deepseek-ai/dsh-repeat-tool-reminder
+ * @module @freddie/freddie-repeat-tool-reminder
  */
 
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import z from '@freddie/schemastery'
+import { createUserMessage } from '@freddie/freddie-llm'
 
 export const name = 'repeat-tool-reminder'
 

@@ -6,9 +6,9 @@
   height: 32px;
   padding: 6px 12px;
   gap: 4px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--freddie-alias-border-l2);
   border-radius: 18px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--freddie-alias-label-primary);
   background: transparent;
   font-family: var(--dsw-font-family);
   font-size: 13px;
@@ -18,11 +18,11 @@
 }
 
 .dsh-headerAction__sessionLogButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--freddie-alias-interactive-bg-hover);
 }
 
 .dsh-headerAction__sessionLogButton:disabled {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--freddie-alias-label-dimmed);
   cursor: wait;
 }
 

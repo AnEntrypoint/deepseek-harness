@@ -45,9 +45,9 @@ The command orchestration shape is:
 ```sh
 pnpm run build:
 tsc -b tsconfig.host.json
-tsdown --env.DSH_BUILD_FACE host
+tsdown --env.FREDDIE_BUILD_FACE host
 tsc -b tsconfig.client.json
-tsdown --env.DSH_BUILD_FACE client
+tsdown --env.FREDDIE_BUILD_FACE client
 pnpm run build:web
 
 pnpm run verify-node-next-types:

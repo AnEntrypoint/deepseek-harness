@@ -16,7 +16,7 @@ This note extends the [compaction capability seam](2026-06-18-compaction-capabil
 
 ### `/compact` is a command over a backend-independent seam
 
-`@deepseek-ai/dsh-command-compact` registers one argument-free human command through `ctx.commands`. It calls the third abstract `CompactionEngine` operation, `compactNow(agent, signal)`, and maps the closed `ManualCompactionError` taxonomy (`busy | changed | summary | commit | persistence`) to direct UI results. `command/run` and `command/done` preserve the command lifecycle without entering model history or consuming a model-loop turn.
+`@freddie/freddie-command-compact` registers one argument-free human command through `ctx.commands`. It calls the third abstract `CompactionEngine` operation, `compactNow(agent, signal)`, and maps the closed `ManualCompactionError` taxonomy (`busy | changed | summary | commit | persistence`) to direct UI results. `command/run` and `command/done` preserve the command lifecycle without entering model history or consuming a model-loop turn.
 
 The command plugin tracks each real handler promise independently of the command executor's abort-aware wait. Its composite lifecycle effect unregisters `/compact` before asynchronously draining handlers that already started, so root teardown reaches quiescence only after backend close and flush work settles.
 
@@ -51,7 +51,7 @@ Automatic and explicit-region work use the numeric owner recovered from the open
 
 Codex models manual compaction as a `CompactionTask` occupying its active-turn slot while automatic compaction runs inline. Pi uses the existence of a compaction abort controller as its mutex and appends compaction only after success. Claude Code shares one compaction routine between automatic and manual paths but constructs its boundary after summary streaming.
 
-DSH deliberately records `compaction/start` before calling the summarizer. A slow or crashed attempt is observable, automatic and manual paths share the same durable lock, and a later writer cannot mistake an in-flight summary for an unlocked session. This is a conscious divergence from summarize-first behavior, not an accidental event-order difference.
+FREDDIE deliberately records `compaction/start` before calling the summarizer. A slow or crashed attempt is observable, automatic and manual paths share the same durable lock, and a later writer cannot mistake an in-flight summary for an unlocked session. This is a conscious divergence from summarize-first behavior, not an accidental event-order difference.
 
 ### Markers are time points, not an event container
 

@@ -21,7 +21,7 @@ import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
 import {
   CodeBlock, DiffBlock, DisclosureRow, IconInspectOutline12, ReadBlock, SearchBlock, StateDot, TerminalBlock, WebBlock,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@freddie/freddie-client-ui-primitives'
 import { CHAT_DIFF_MAX_LINES } from '../models/diff-card-model.js'
 import { CHAT_READ_MAX_LINES } from '../models/read-card-model.js'
 import { CHAT_SEARCH_MAX_LINES } from '../models/search-card-model.js'

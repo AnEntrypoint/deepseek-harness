@@ -12,7 +12,7 @@
  * route regardless of what any client disables.
  */
 
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@freddie/freddie-client-runtime/client'
 
 /** The per-session composer-block registry (one instance per plugin fiber). */
 export class ComposerBlockRegistry {

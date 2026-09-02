@@ -7,8 +7,8 @@
 import { createElement as h } from 'webjsx'
 import {
   FishLogo, IconChevronDownOutline14, IconFolderClose16, IconFolderOpen16,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import { workspaceTitleOf } from '@deepseek-ai/dsh-client-runtime/client'
+} from '@freddie/freddie-client-ui-primitives'
+import { workspaceTitleOf } from '@freddie/freddie-client-runtime/client'
 import css from './HeroShell.css.js'
 
 /**

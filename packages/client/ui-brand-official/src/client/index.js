@@ -1,4 +1,4 @@
-/** Official DeepSeek Harness occupants for the generic browser-brand slots. */
+/** Official Freddie occupants for the generic browser-brand slots. */
 import { OfficialBrandMark, OfficialBrandName } from './Brand.js'
 
 /** Required service: the UI slot registry. */
@@ -9,7 +9,7 @@ export const inject = ['slots']
  * @param ctx - Client root context.
  */
 export function apply(ctx) {
-  if (process.env.DSH_CLIENT_BUILD_PROFILE !== 'official') return
+  if (process.env.FREDDIE_CLIENT_BUILD_PROFILE !== 'official') return
   ctx.slots.inject('sidebar.brand.mark', () =>
     ctx.slots.inject('sidebar.brand.name', () =>
       ctx.slots.inject('conversation.hero.brand.mark', function* () {

@@ -3,7 +3,7 @@
 
 .dsh-contextBody__text {
   margin: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   font: inherit;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -16,7 +16,7 @@
   gap: 2px;
   margin: 8px 0 0;
   padding-top: 8px;
-  border-top: 1px solid var(--dsw-alias-line-secondary);
+  border-top: 1px solid var(--freddie-alias-line-secondary);
 }
 
 .dsh-contextBody__field {
@@ -28,14 +28,14 @@
 .dsh-contextBody__fieldKey {
   flex: none;
   min-width: 96px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-contextBody__fieldValue {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   overflow-wrap: anywhere;
 }
 
@@ -57,18 +57,18 @@
 }
 
 .dsh-contextBody__filePath {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   overflow-wrap: anywhere;
 }
 
 .dsh-contextBody__fileAction {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 /* catalog: a replacement notice above one row per published entry. */
 .dsh-contextBody__catalogNotice {
   margin: 0 0 6px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 
@@ -89,14 +89,14 @@
 
 .dsh-contextBody__entryName {
   flex: none;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-contextBody__entryDescription {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--freddie-alias-label-tertiary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -117,12 +117,12 @@
 }
 
 .dsh-contextBody__sectionName {
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }
 
 .dsh-contextBody__sectionText {
   margin: 0;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -130,7 +130,7 @@
 /* relay: who sent this, above what they said. */
 .dsh-contextBody__relaySender {
   margin: 0 0 6px;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
   overflow-wrap: anywhere;
 }
 
@@ -151,11 +151,11 @@
 }
 
 .dsh-contextBody__recallLabel {
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
   overflow-wrap: anywhere;
 }
 
 .dsh-contextBody__recallCounts {
   flex: none;
-  color: var(--dsw-alias-label-caption);
+  color: var(--freddie-alias-label-caption);
 }

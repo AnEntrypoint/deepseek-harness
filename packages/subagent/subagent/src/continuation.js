@@ -18,12 +18,12 @@
  * disposed by then, and the release that wakes the parent's own settlement
  * watcher has already run. See {@link SubagentContinuationManager.notifySettlement}.
  *
- * @module @deepseek-ai/dsh-subagent
+ * @module @freddie/freddie-subagent
  */
 
 import { randomUUID } from 'node:crypto'
-import { boundContextSummary, createUserMessage, errorChain } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { boundContextSummary, createUserMessage, errorChain } from '@freddie/freddie-llm'
+import { SessionId } from '@freddie/freddie-session'
 import { foldSubagentDescriptor, snapshotSubagentDescriptor } from './descriptor.js'
 import {
   appendDelegatedPolicyOverrides,

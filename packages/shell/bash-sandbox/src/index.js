@@ -5,11 +5,11 @@
  * the command never ran: foreground calls throw `SANDBOX_UNAVAILABLE`, while
  * background processes carry `runnerFailed`; other spawn rejections retain
  * local-executor semantics. The tool owns approval and passes a complete per-call policy.
- * @module @deepseek-ai/dsh-bash-sandbox
+ * @module @freddie/freddie-bash-sandbox
  */
 
-import { SandboxUnavailableError } from '@deepseek-ai/dsh-sandbox'
-import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
+import { SandboxUnavailableError } from '@freddie/freddie-sandbox'
+import { LocalBashExecutor } from '@freddie/freddie-bash-local'
 import { classifyDenial, classifyRunnerFailure, isRunnerSpawnFailure, matchesSignature } from './helpers.js'
 
 /**

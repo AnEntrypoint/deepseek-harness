@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-session-persistence`.
- * @module @deepseek-ai/dsh-session-persistence/invariant
+ * Package-owned invariant companion for `@freddie/freddie-session-persistence`.
+ * @module @freddie/freddie-session-persistence/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-session-persistence'
+const PACKAGE_NAME = '@freddie/freddie-session-persistence'
 
 /** Cordis companion plugin name. */
 export const name = 'session-persistence-invariant'

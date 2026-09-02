@@ -12,11 +12,11 @@ It is a **library, not a service or plugin**: no `ctx`, registers nothing, emits
 import {
   ItemRetainer, TextRetainer,
   describeOmitted, formatRetentionNotice,
-} from '@deepseek-ai/dsh-output-retention'
+} from '@freddie/freddie-output-retention'
 import type {
   Omitted, PushDecision, RetainedItems, RetainedText,
   ItemRetentionStrategy, TextRetentionStrategy, RetentionNotice,
-} from '@deepseek-ai/dsh-output-retention'
+} from '@freddie/freddie-output-retention'
 ```
 
 | Export | Role |

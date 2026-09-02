@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-brand`.
- * @module @deepseek-ai/dsh-brand/invariant
+ * Package-owned invariant companion for `@freddie/freddie-brand`.
+ * @module @freddie/freddie-brand/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-brand'
+const PACKAGE_NAME = '@freddie/freddie-brand'
 
 /** Cordis companion plugin name. */
 export const name = 'brand-invariant'

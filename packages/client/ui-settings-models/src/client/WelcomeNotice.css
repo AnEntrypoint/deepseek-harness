@@ -1,7 +1,7 @@
 .dsh-welcomeNotice__copy {
   font-size: 14px;
   line-height: 24px;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--freddie-alias-label-secondary);
 }
 
 .dsh-welcomeNotice__copy p {
@@ -16,7 +16,7 @@
   margin: 16px 0 0;
   font-size: 14px;
   line-height: 22px;
-  color: var(--dsw-alias-state-error-primary);
+  color: var(--freddie-alias-state-error-primary);
 }
 
 .dsh-welcomeNotice__actions {

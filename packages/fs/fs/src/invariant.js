@@ -1,6 +1,6 @@
-/** Package-owned filesystem event-data invariants. @module @deepseek-ai/dsh-fs/invariant */
+/** Package-owned filesystem event-data invariants. @module @freddie/freddie-fs/invariant */
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-fs'
+const PACKAGE_NAME = '@freddie/freddie-fs'
 
 /** Cordis companion plugin name. */
 export const name = 'fs-invariant'

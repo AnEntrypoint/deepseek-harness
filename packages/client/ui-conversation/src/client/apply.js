@@ -1,6 +1,6 @@
 /** Registers the conversation components, shared store, and service callbacks. */
-import { resolveSlotLabel, webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
-import { resolveWorkspacePath } from '@deepseek-ai/dsh-client-runtime/client'
+import { resolveSlotLabel, webjsxSlot } from '@freddie/freddie-client-ui-slots'
+import { resolveWorkspacePath } from '@freddie/freddie-client-runtime/client'
 import { createChatStore } from './stores.js'
 import { ConversationController, UnsupportedImageMediaTypeError } from './service.js'
 import { ComposerBlockRegistry } from './input/blocks.js'

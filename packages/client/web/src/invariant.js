@@ -1,10 +1,10 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-web`.
- * @module @deepseek-ai/dsh-client-web/invariant
+ * Package-owned invariant companion for `@freddie/freddie-client-web`.
+ * @module @freddie/freddie-client-web/invariant
  */
 
 /* jscpd:ignore-start */
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-web'
+const PACKAGE_NAME = '@freddie/freddie-client-web'
 
 /** Cordis companion plugin name. */
 export const name = 'client-web-invariant'

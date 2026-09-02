@@ -1,21 +1,21 @@
 /**
- * Shared filesystem path helpers for DeepSeek Harness user data.
+ * Shared filesystem path helpers for Freddie user data.
  *
- * @module @deepseek-ai/dsh-home-paths
+ * @module @freddie/freddie-home-paths
  */
 
 import { opendir, realpath } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
-/** Directory name for the default DeepSeek Harness home under the OS home. */
-export const DSH_HOME_DIR_NAME = '.dsh'
+/** Directory name for the default Freddie home under the OS home. */
+export const FREDDIE_HOME_DIR_NAME = '.dsh'
 
-/** Stable user-facing display form for the default DeepSeek Harness home. */
-export const DEFAULT_DSH_HOME_DISPLAY = `~/${DSH_HOME_DIR_NAME}`
+/** Stable user-facing display form for the default Freddie home. */
+export const DEFAULT_DSH_HOME_DISPLAY = `~/${FREDDIE_HOME_DIR_NAME}`
 
-/** Environment variable that overrides the default DeepSeek Harness home. */
-export const DSH_HOME_ENV = 'DSH_HOME'
+/** Environment variable that overrides the default Freddie home. */
+export const FREDDIE_HOME_ENV = 'FREDDIE_HOME'
 
 /**
  * Give a native filesystem watcher one canonical spelling of a path, even
@@ -55,11 +55,11 @@ export async function canonicalizeWatchPath(path) {
 }
 
 /**
- * Resolve the default DeepSeek Harness home using Node's platform path rules.
+ * Resolve the default Freddie home using Node's platform path rules.
  * @returns the absolute default harness home path.
  */
 export function defaultDshHome() {
-  return join(homedir(), DSH_HOME_DIR_NAME)
+  return join(homedir(), FREDDIE_HOME_DIR_NAME)
 }
 
 /**
@@ -74,24 +74,24 @@ export function expandHomePath(path) {
 }
 
 /**
- * Resolve the single-root DeepSeek Harness home.
+ * Resolve the single-root Freddie home.
  *
- * Precedence, highest first: an explicit configured path, `$DSH_HOME`, then
+ * Precedence, highest first: an explicit configured path, `$FREDDIE_HOME`, then
  * `~/.dsh`. The harness keeps all user data under one root. An empty or
- * whitespace-only `$DSH_HOME` is treated as unset, so a blank override never
+ * whitespace-only `$FREDDIE_HOME` is treated as unset, so a blank override never
  * resolves the home to the current working directory.
  * @param configured - explicit harness-home override, which has highest precedence.
- * @param env - environment mapping used to read `DSH_HOME`.
+ * @param env - environment mapping used to read `FREDDIE_HOME`.
  * @returns the normalized absolute harness home path.
  */
 export function resolveDshHome(configured, env = process.env) {
-  const fromEnv = env[DSH_HOME_ENV]
+  const fromEnv = env[FREDDIE_HOME_ENV]
   const selected = configured ?? (fromEnv !== undefined && fromEnv.trim().length > 0 ? fromEnv : defaultDshHome())
   return resolve(expandHomePath(selected))
 }
 
 /**
- * Join path segments onto the resolved DeepSeek Harness home.
+ * Join path segments onto the resolved Freddie home.
  * @param segments - path segments appended to the Harness home; an empty list returns the home itself.
  * @returns the normalized absolute joined path.
  */
@@ -103,10 +103,10 @@ export function dshHomePath(...segments) {
  * Describe a resolved harness home symbolically for user-facing display.
  *
  * It never returns an absolute machine path: the default home is labelled
- * `~/.dsh`, and any configured home is labelled `$DSH_HOME`.
+ * `~/.dsh`, and any configured home is labelled `$FREDDIE_HOME`.
  * @param resolvedHome - the absolute path returned by {@link resolveDshHome}.
- * @returns `~/.dsh` for the default home, otherwise `$DSH_HOME`.
+ * @returns `~/.dsh` for the default home, otherwise `$FREDDIE_HOME`.
  */
 export function dshHomeDisplay(resolvedHome) {
-  return resolvedHome === resolve(defaultDshHome()) ? DEFAULT_DSH_HOME_DISPLAY : `$${DSH_HOME_ENV}`
+  return resolvedHome === resolve(defaultDshHome()) ? DEFAULT_DSH_HOME_DISPLAY : `$${FREDDIE_HOME_ENV}`
 }

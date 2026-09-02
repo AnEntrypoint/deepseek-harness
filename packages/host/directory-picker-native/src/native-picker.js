@@ -1,6 +1,6 @@
 /** Cross-platform native single-directory chooser behind the native backend's capability. */
 
-import { runNativeCommand } from '@deepseek-ai/dsh-native-command'
+import { runNativeCommand } from '@freddie/freddie-native-command'
 import { pickWin32Directory } from './win32-dialog.js'
 
 function outputPath(stdout) {

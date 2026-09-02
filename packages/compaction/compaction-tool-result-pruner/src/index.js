@@ -1,12 +1,12 @@
 /**
  * Replay-safe, model-free tool-result pruning service.
  *
- * @module @deepseek-ai/dsh-compaction-tool-result-pruner
+ * @module @freddie/freddie-compaction-tool-result-pruner
  */
 
-import { Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { freezeMessage } from '@deepseek-ai/dsh-llm'
+import { Service } from '@freddie/cordis'
+import z from '@freddie/schemastery'
+import { freezeMessage } from '@freddie/freddie-llm'
 import { codePointLength, DEFAULTS, PRUNE_MARKER, resolveConfig } from './config.js'
 
 export { codePointLength, DEFAULTS, PRUNE_MARKER, resolveConfig } from './config.js'
