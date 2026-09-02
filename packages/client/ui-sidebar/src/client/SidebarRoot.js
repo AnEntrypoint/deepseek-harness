@@ -225,7 +225,7 @@ export class DshSidebarRoot extends HTMLElement {
                 h('span', {class: css.brandName ?? ''},
                   asChild(renderSlot('sidebar.brand.name', {}, {
                     fallback: [
-                      h('span', {class: css.fallbackBrandName ?? ''}, 'DSH Local Build'),
+                      h('span', {class: css.fallbackBrandName ?? ''}, 'freddie'),
                       process.env.DSH_CLIENT_COMMIT_HASH
                         ? h('span', {class: css.buildRevision ?? ''}, process.env.DSH_CLIENT_COMMIT_HASH)
                         : null,
