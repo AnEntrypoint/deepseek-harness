@@ -134,9 +134,10 @@ export class DshContextMeter extends HTMLElement {
               onclick: () => { this.#setOpen(!open) },
             },
             h('svg', { viewBox: '0 0 14 14', width: '14', height: '14', 'aria-hidden': true },
-              h('circle', { class: css.track ?? '', cx: '7', cy: '7', r: String(RADIUS) }),
+              h('circle', { key: 'track', class: css.track ?? '', cx: '7', cy: '7', r: String(RADIUS) }),
               h('circle',
                 {
+                  key: 'fill',
                   class: css.fill ?? '',
                   cx: '7',
                   cy: '7',

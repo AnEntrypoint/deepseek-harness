@@ -69,6 +69,25 @@ index 62aeba89262af16790778d9723b6a670a3ced7c7..f8758f5597571d4418289efc8dbe2064
              if (isVElement(newVNode)) {
                  const oldProps = oldVNode?.props || {};
                  const newProps = newVNode.props;
+diff --git a/dist/attributes.js b/dist/attributes.js
+index c21f6261df1d4157e0fd2c4865de0bb42856ce28..cbaad135099dd1f058ddedfffe98d664f700b6e3 100644
+--- a/dist/attributes.js
++++ b/dist/attributes.js
+@@ -111,6 +111,14 @@ function updateAttributesCore(el, newProps, oldProps = {}) {
+                     delete el.__webjsx_listeners[eventName];
+                 }
+             }
++            else if (el.namespaceURI === "http://www.w3.org/2000/svg") {
++                // SVG attribute properties (e.g. `transform` on
++                // SVGGraphicsElement) are read-only accessors even when
++                // `key in el` is true -- assigning through them throws.
++                // SVG never has HTML-style settable DOM properties, so the
++                // attribute path is always correct here.
++                el.removeAttribute(key);
++            }
+             else if (key in el) {
+                 el[key] = undefined;
+             }
 diff --git a/dist/createDOMElement.js b/dist/createDOMElement.js
 index 4ddcf9a7d168ed65844d4112d8519f56c5d20cbe..5bad7efb6b6a18bbfeef34f4bb30c9a43293b1c6 100644
 --- a/dist/createDOMElement.js

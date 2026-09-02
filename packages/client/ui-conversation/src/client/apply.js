@@ -1,20 +1,20 @@
 /** Registers the conversation components, shared store, and service callbacks. */
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import { resolveSlotLabel, webjsxSlot } from '@deepseek-ai/dsh-client-ui-slots'
 import { resolveWorkspacePath } from '@deepseek-ai/dsh-client-runtime/client'
 import { createChatStore } from './stores.js'
 import { ConversationController, UnsupportedImageMediaTypeError } from './service.js'
 import { ComposerBlockRegistry } from './input/blocks.js'
 import { InputHub } from './input/hub.js'
 import { ComposerSubmissionPolicy } from './input/submission-policy.js'
-import { InputBar } from './skeleton/InputBar.js'
-import { EnterBehaviorRow } from './settings/EnterBehaviorRow.js'
-import { ChatView } from './chat/ChatView.js'
-import { StatsLine } from './chat/StatsLine.js'
+import './skeleton/InputBar.js'
+import './settings/EnterBehaviorRow.js'
+import './chat/ChatView.js'
+import './chat/StatsLine.js'
 import { ApprovalPanel } from './skeleton/ApprovalPanel.js'
 import { todoDockEntry } from './skeleton/TodoPanel.js'
 import { queueDockEntry } from './queue/QueueDock.js'
-import { ConversationRoot } from './skeleton/ConversationRoot.js'
-import { ConversationSession, ConversationSessionHeader } from './skeleton/ConversationSession.js'
+import './skeleton/ConversationRoot.js'
+import './skeleton/ConversationSession.js'
 import { DetailsPanel } from './skeleton/DetailsPanel.js'
 import { en, NS, zh } from './locales.js'
 import { registerConversationNodes } from './conversation-nodes/register.js'
@@ -117,7 +117,7 @@ export function apply(ctx) {
       hooks: { busyEnter: submissionPolicy.busyEnter },
       setBusyEnter: (behavior) => { submissionPolicy.setBusyEnter(behavior) },
     }),
-  }, EnterBehaviorRow))
+  }, webjsxSlot('dsh-enter-behavior-row')))
 
   // Chat semantic reader positions by session, surviving view switches and
   // width reflow when the tab ring remounts the view. Deliberately not
@@ -206,7 +206,7 @@ export function apply(ctx) {
         sessions.open(nextId)
       },
     }),
-  }, ConversationRoot)
+  }, webjsxSlot('dsh-conversation-root'))
 
   // The strict session body fills the resident scrollport without owning it;
   // the Hero/composer path therefore stays fixed while the first blank
@@ -225,7 +225,7 @@ export function apply(ctx) {
         bindDraftMirror: write => inputHub.shell(sessionId).bindMirror(write),
       }
     },
-  }, ConversationSession)
+  }, webjsxSlot('dsh-conversation-session'))
 
   // Header chrome sits above the resident scrollport but shares the same
   // per-session chat store (active view) as its body and view entries.
@@ -242,7 +242,7 @@ export function apply(ctx) {
       views,
       open: (id) => { sessions.open(id) },
     }),
-  }, ConversationSessionHeader)
+  }, webjsxSlot('dsh-conversation-session-header'))
 
   // The default composer body: its own single slot inside the composer
   // chain's fallback. Public machine surface arrives via the
@@ -336,7 +336,7 @@ export function apply(ctx) {
         },
       }
     },
-  }, InputBar)
+  }, webjsxSlot('dsh-input-bar'))
 
   // The approval takeover: a selector-routed entry of the chain this package
   // just declared (the ui-user-questions registration pattern; the entry lives here
@@ -399,10 +399,10 @@ export function apply(ctx) {
         },
       }
     },
-  }, ChatView)
+  }, webjsxSlot('dsh-chat-view'))
 
   // Session stats stick with the composer (composer.dock = stats-line family).
-  slots.register({ name: 'conversation.composer.dock', id: 'stats', order: 0, locale: NS }, StatsLine)
+  slots.register({ name: 'conversation.composer.dock', id: 'stats', order: 0, locale: NS }, webjsxSlot('dsh-stats-line'))
 
   // Class-plugin mount (packages/AGENTS.md service form): the service
   // registers itself as `conversation` and lives on its own child fiber.
