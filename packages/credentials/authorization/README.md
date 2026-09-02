@@ -18,7 +18,7 @@ import { credentialKey } from '@freddie/freddie-credentials'
 declare const ctx: Context
 declare const exchange: (signal: AbortSignal) => Promise<void>
 
-const key = credentialKey('llm-pi-ai', 'openai-codex')
+const key = credentialKey('llm-deepseek', 'deepseek-official')
 
 const dispose = ctx.authorization.registerFlow({
   key,

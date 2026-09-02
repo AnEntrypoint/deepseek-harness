@@ -40,8 +40,6 @@ flowchart LR
   cfg --> plugin_dsh_base_settings
   plugin_dsh_base_credentials["credentials<br/>@freddie/freddie-credentials-local"]
   cfg --> plugin_dsh_base_credentials
-  plugin_dsh_base_llm_pi_ai["llm-pi-ai<br/>@freddie/freddie-llm-pi-ai"]
-  cfg --> plugin_dsh_base_llm_pi_ai
   plugin_dsh_base_session_persistence_jsonl["session-persistence-jsonl<br/>@freddie/freddie-session-persistence-jsonl"]
   cfg --> plugin_dsh_base_session_persistence_jsonl
   plugin_dsh_base_attachment_local["attachment-local<br/>@freddie/freddie-attachment-local"]
@@ -184,7 +182,6 @@ flowchart LR
 | `llm-retry` | `@freddie/freddie-llm-retry` |
 | `settings` | `@freddie/freddie-settings-file` |
 | `credentials` | `@freddie/freddie-credentials-local` |
-| `llm-pi-ai` | `@freddie/freddie-llm-pi-ai` |
 | `session-persistence-jsonl` | `@freddie/freddie-session-persistence-jsonl` |
 | `attachment-local` | `@freddie/freddie-attachment-local` |
 | `session-query-sqlite` | `@freddie/freddie-session-query-sqlite` |

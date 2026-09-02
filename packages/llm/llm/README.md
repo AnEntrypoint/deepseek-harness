@@ -85,7 +85,7 @@ Every adapter that puts a credential in an HTTP header judges it the same way be
 
 ### Real adapters
 
-Two adapters implement `LlmAdapter` on different internals: [`@freddie/freddie-llm-deepseek`](../llm-deepseek) uses direct fetch with `eventsource-parser` SSE framing for the `deepseek-official` route, while [`@freddie/freddie-llm-pi-ai`](../llm-pi-ai) dynamically resolves configured provider/model pairs through `@earendil-works/pi-ai`. Both follow the `StreamChunk` conventions in `types.ts`: usage precedes finish and tool arguments remain raw strings. Adapter implementations may throw or emit a failure finish internally; `LlmRuntime` exposes both as a terminal failure finish. See [the twin LLM adapters](../../../.agents/notes/implemented/architecture/2026-06-13-twin-llm-adapters.md) for the adapter rationale and [the terminal-failure decision](../../../.agents/notes/implemented/architecture/2026-07-29-terminal-llm-stream-failures.md) for the service boundary.
+[`@freddie/freddie-llm-deepseek`](../llm-deepseek) implements `LlmAdapter` with direct fetch and `eventsource-parser` SSE framing for the `deepseek-official` route, following the `StreamChunk` conventions in `types.ts`: usage precedes finish and tool arguments remain raw strings. An adapter implementation may throw or emit a failure finish internally; `LlmRuntime` exposes both as a terminal failure finish. See [the terminal-failure decision](../../../.agents/notes/implemented/architecture/2026-07-29-terminal-llm-stream-failures.md) for the service boundary.
 
 ## Model Experience
 

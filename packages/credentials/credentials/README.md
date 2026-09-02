@@ -30,7 +30,7 @@ const info = await ctx.credentials.describe(ref)         // { configured, source
 await ctx.credentials.set(ref, 'sk-…')                   // rejects while a read-only source shadows the ref
 await ctx.credentials.unset(ref)                         // no-op when absent; same shadowing rule
 
-const key = credentialKey('llm-pi-ai', 'openai-codex')   // <owner>/<id>, branded
+const key = credentialKey('llm-deepseek', 'deepseek-official')   // <owner>/<id>, branded
 await ctx.credentials.readRecord(key)                    // CredentialRecord | undefined
 await ctx.credentials.describeRecord(key)                // { configured, kind?, writable } — never the value
 await ctx.credentials.listRecords()                      // [{ key, kind }] — never values

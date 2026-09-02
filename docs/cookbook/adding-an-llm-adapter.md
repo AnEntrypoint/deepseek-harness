@@ -1,6 +1,6 @@
 # Cookbook: adding an LLM adapter
 
-How to connect a new model provider. Reference implementations: `packages/llm/llm-deepseek` (direct HTTP, SSE framed by `eventsource-parser`) and `packages/llm/llm-pi-ai` (wrapping an LLM library). Read the `StreamChunk` doc in `packages/llm/llm/src/types.ts` first — it records the protocol conventions both adapters were verified against.
+How to connect a new model provider. Reference implementation: `packages/llm/llm-deepseek` (direct HTTP, SSE framed by `eventsource-parser`). Read the `StreamChunk` doc in `packages/llm/llm/src/types.ts` first — it records the protocol conventions the adapter was verified against.
 
 ## The shape
 
@@ -38,4 +38,4 @@ Keep wire types, request serialization, transport parsing, chunk translation, an
 
 ## Verification
 
-Verify live against the real provider: drive a real request/response round trip through the adapter and read the actual output, including the published entry path (`lib/index.js` under plain `node`, no build-time-only syntax).
+Verify live against the real provider: drive a real request/response round trip through the adapter and read the actual output, including the published entry path (`src/index.js` under plain `node` — the workspace is buildless, no compile step).
