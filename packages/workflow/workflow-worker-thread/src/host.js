@@ -18,18 +18,12 @@ import { HostToWorkerType, WorkerToHostType } from './protocol.js'
  * The scrubbed worker environment: no ambient credentials, no loader flags.
  * Windows derives `os.tmpdir()` from `TMP`/`TEMP` and falls back to the
  * literal relative path `undefined\temp` when the environment is empty, so
- * tsx's transform cache would land in a cwd-relative `undefined/temp`
- * directory; the host's real temp path (not a credential) is injected there.
- * The unbuilt shape additionally forwards `TSX_TSCONFIG_PATH` for path
- * resolution.
+ * the host's real temp path (not a credential) is injected there.
  * @param platform - host platform; overridable so tests exercise both peer arms.
- * @param tsconfigPath - the tsconfig pin to forward; only the unbuilt caller
- *   passes one, so the built worker never observes the host's pin.
  * @returns the scrubbed worker environment object.
  */
 export function workerSpawnEnv(
   platform = process.platform,
-  tsconfigPath,
 ) {
   const env = {}
   if (platform === 'win32') {
@@ -37,42 +31,19 @@ export function workerSpawnEnv(
     env.TMP = tmp
     env.TEMP = tmp
   }
-  if (tsconfigPath !== undefined) env.TSX_TSCONFIG_PATH = tsconfigPath
   return env
 }
 
 /**
- * Resolve a built worker bundle or an unbuilt bootstrap that installs both tsx
- * transforms inside the worker. Both shapes clear `execArgv` and the ambient
- * environment (the worker only sees the platform temp path and, unbuilt,
- * `TSX_TSCONFIG_PATH`).
+ * Resolve the built worker bundle: CommonJS because pkg's VFS Worker hook
+ * (the standalone-executable packaging path) compiles the worker in that
+ * format. `execArgv` and the ambient environment are cleared — the worker
+ * only sees the platform temp path.
  * @param init - the run payload, passed as `workerData`.
- * @returns the entry path or URL and the Worker options to spawn it with.
+ * @returns the entry path and the Worker options to spawn it with.
  */
 function resolveWorkerSpawn(init) {
-  /* v8 ignore next 3 -- the built-output arm: tests always run unbuilt (src/); the built-worker e2e exercises this shape for real */
-  if (!import.meta.url.endsWith('.ts')) {
-    return { entry: fileURLToPath(new URL('./worker.cjs', import.meta.url)), options: { workerData: init, env: workerSpawnEnv(), execArgv: [] } }
-  }
-  // Resolve tsx only for unbuilt consumers and install it before importing TS.
-  const workerEntry = new URL('./worker.js', import.meta.url)
-  const tsxEsmApiEntry = import.meta.resolve('tsx/esm/api')
-  const tsxCjsApiEntry = import.meta.resolve('tsx/cjs/api')
-  const bootstrap = [
-    `import { register as registerEsm } from ${JSON.stringify(tsxEsmApiEntry)}`,
-    `import { register as registerCjs } from ${JSON.stringify(tsxCjsApiEntry)}`,
-    'registerCjs()',
-    'registerEsm()',
-    `await import(${JSON.stringify(workerEntry.href)})`,
-  ].join('\n')
-  return {
-    entry: new URL(`data:text/javascript,${encodeURIComponent(bootstrap)}`),
-    options: {
-      workerData: init,
-      env: workerSpawnEnv(undefined, process.env.TSX_TSCONFIG_PATH),
-      execArgv: [],
-    },
-  }
+  return { entry: fileURLToPath(new URL('./worker.cjs', import.meta.url)), options: { workerData: init, env: workerSpawnEnv(), execArgv: [] } }
 }
 
 /**

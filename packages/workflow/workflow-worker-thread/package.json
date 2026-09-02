@@ -56,7 +56,6 @@
     "@deepseek-ai/dsh-system-prompt": "workspace:^",
     "@deepseek-ai/dsh-tools": "workspace:^",
     "@deepseek-ai/dsh-workflow": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^",
-    "tsx": "^4.19.2"
+    "@deepseek-ai/cordis": "workspace:^"
   }
 }

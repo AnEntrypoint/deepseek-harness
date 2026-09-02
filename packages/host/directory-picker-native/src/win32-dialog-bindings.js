@@ -3,7 +3,7 @@
  * behind {@link Win32DialogBindings} plus the cross-thread window closer the
  * driver uses to service aborts. The module loads on every platform; koffi
  * itself is imported lazily inside each function, so non-Windows processes
- * never load it — the same containment as the repo's other `win32.ts`
+ * never load it — the same containment as the repo's other `win32.js`
  * modules.
  *
  * The COM surface used here (IModalWindow/IFileDialog/IFileOpenDialog and

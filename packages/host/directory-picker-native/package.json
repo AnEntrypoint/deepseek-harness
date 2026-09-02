@@ -19,15 +19,11 @@
     "./invariant": {
       "default": "./src/invariant.js"
     },
-    "./worker": {
-      "default": "./lib/worker.cjs"
-    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "src/*.js",
-    "lib/worker.cjs"
+    "src/*.js"
   ],
   "license": "MIT",
   "dependencies": {
@@ -41,7 +37,6 @@
   },
   "devDependencies": {
     "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^",
-    "tsx": "^4.19.2"
+    "@deepseek-ai/cordis": "workspace:^"
   }
 }
