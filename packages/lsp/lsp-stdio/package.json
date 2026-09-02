@@ -50,7 +50,6 @@
     "@freddie/freddie-subprocess": "workspace:^",
     "@freddie/freddie-subprocess-local": "workspace:^",
     "@freddie/freddie-timeout": "workspace:^",
-    "@freddie/cordis": "workspace:^",
-    "typescript-language-server": "^5.0.0"
+    "@freddie/cordis": "workspace:^"
   }
 }

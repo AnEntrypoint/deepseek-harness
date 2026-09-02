@@ -39,19 +39,3 @@
             name: '@freddie/freddie-terminal-bash'
           - id: tool-terminal
             name: '@freddie/freddie-tool-terminal'
-          - id: lsp
-            name: '@freddie/freddie-lsp'
-          - id: lsp-stdio
-            name: '@freddie/freddie-lsp-stdio'
-            config:
-              servers:
-                typescript:
-                  command: npx
-                  args: [--yes, typescript-language-server@5.0.0, --stdio]
-                  extensionToLanguage:
-                    .ts: typescript
-                    .tsx: typescriptreact
-                    .js: javascript
-                    .jsx: javascriptreact
-          - id: tool-lsp
-            name: '@freddie/freddie-tool-lsp'

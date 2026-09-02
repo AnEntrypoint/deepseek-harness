@@ -1,52 +1,38 @@
-/** Run the complete repository build and bind its client artifacts to their public environment. */
+/**
+ * Build the repository's last real build artifacts: the two worker-thread
+ * packages whose lib/worker.cjs is loaded by file through @yao-pkg/pkg's VFS
+ * Worker hook (standalone .exe packaging), which only supports CJS-bundled
+ * worker threads. Every other package ships src/ as-authored — buildless,
+ * no compile step.
+ */
 
 import { spawnSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { parseArgs } from 'node:util'
-import {
-  CLIENT_BUILD_RECORD_PATH,
-  clientBuildProcessEnvironment,
-  repositoryCommitHash,
-  resolveClientBuildEnvironment,
-  writeClientBuildRecord,
-} from './client-build-environment.js'
 import { pnpmInvocation } from './pnpm-invocation.js'
 
-/** Run one package script through the package manager that invoked this build. */
-function runScript(script, environment) {
-  const invocation = pnpmInvocation(['run', script], environment)
+/** Packages whose lib/ output is a genuine build artifact, not dead weight. */
+const WORKER_THREAD_PACKAGES = [
+  'packages/code-runtime/code-runtime-worker-thread',
+  'packages/workflow/workflow-worker-thread',
+]
+
+/** Run tsdown inside one package directory. */
+function buildPackage(pkgDir, environment) {
+  const invocation = pnpmInvocation(['exec', 'tsdown'], environment)
   const result = spawnSync(invocation.command, invocation.args, {
-    cwd: resolve(import.meta.dirname, '..'),
+    cwd: resolve(import.meta.dirname, '..', pkgDir),
     env: environment,
     stdio: 'inherit',
   })
   if (result.error !== undefined) throw result.error
   if (result.status !== 0) {
-    throw new Error(`build: ${script} exited with ${String(result.status ?? result.signal)}`)
+    throw new Error(`build: ${pkgDir} exited with ${String(result.status ?? result.signal)}`)
   }
 }
 
-/** Run the full build selected by `--profile` or `FREDDIE_BUILD_CLIENT_PROFILE`. */
 function main() {
-  const { values } = parseArgs({
-    options: { profile: { type: 'string' } },
-    allowPositionals: false,
-  })
-  const root = resolve(import.meta.dirname, '..')
-  const parentEnvironment = {
-    ...process.env,
-    FREDDIE_CLIENT_COMMIT_HASH: repositoryCommitHash(root, process.env),
-  }
-  const clientEnvironment = resolveClientBuildEnvironment(parentEnvironment, values.profile)
-  const buildEnvironment = clientBuildProcessEnvironment(parentEnvironment, clientEnvironment)
-
-  rmSync(resolve(root, CLIENT_BUILD_RECORD_PATH), { force: true })
-  runScript('build:lib', buildEnvironment)
-  const record = writeClientBuildRecord(root, clientEnvironment)
-  console.log(
-    `build: recorded ${String(record.artifacts.fileCount)} client artifact(s) with ${String(Object.keys(record.environment).length)} public value(s)`,
-  )
+  for (const pkgDir of WORKER_THREAD_PACKAGES) buildPackage(pkgDir, process.env)
+  console.log(`build: built ${String(WORKER_THREAD_PACKAGES.length)} worker-thread package(s)`)
 }
 
 if (import.meta.main) main()

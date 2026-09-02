@@ -127,15 +127,17 @@ export function resolveLanTrust(bindHost, extra) {
 
 /** Model-visible orientation and acceptance boundary for sessions created through `dsh web`. */
 function webSurfacePrompt(webUrl) {
-  const updateContract = 'The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while '
-    + '`pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. '
-    + 'Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. '
+  const updateContract = 'Client-plugin changes reload without a refresh automatically: every package is served unbundled '
+    + 'straight from its own source tree, and the HMR receiver reloads a plugin the moment its served files change — no '
+    + 'separate watcher process or rebuild step is needed. '
+    + 'apps/web itself (the shell and plain packages) is also served buildless, straight from source; a shell change still '
+    + 'requires a page refresh to take effect, since the shell boots once rather than hot-swapping. '
   return `You are interacting with the user through the Freddie Web GUI at ${webUrl}. `
     + 'When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. '
     + 'The browser provides no implicit DOM, route, or screenshot context. '
     + updateContract
     + 'Starting another server does not update this GUI. '
-    + 'The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. '
+    + 'The apps/web entry is not a standalone application because only dsh web injects window.__DSH_BOOT__. '
     + 'Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.'
 }
 

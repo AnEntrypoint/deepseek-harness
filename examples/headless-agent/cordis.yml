@@ -15,11 +15,9 @@
 - id: credentials
   name: '@freddie/freddie-credentials-local'
 
-# The DeepSeek adapter. Swap to '@freddie/freddie-llm-pi-ai' for the pi-ai-backed
-# twin (a `providers` dict keyed by route; `reasoning: high` replaces
-# thinking/reasoningEffort). Shipped default: full thinking at max effort on
-# every request. Exact-model resolution materializes request defaults before
-# the request header is logged.
+# The DeepSeek adapter. Shipped default: full thinking at max effort on every
+# request. Exact-model resolution materializes request defaults before the
+# request header is logged.
 - id: llm-deepseek
   name: '@freddie/freddie-llm-deepseek'
   config:

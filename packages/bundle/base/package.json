@@ -58,7 +58,6 @@
     "@freddie/freddie-api-gateway": "workspace:^",
     "@freddie/freddie-llm": "workspace:^",
     "@freddie/freddie-llm-deepseek": "workspace:^",
-    "@freddie/freddie-llm-pi-ai": "workspace:^",
     "@freddie/freddie-llm-retry": "workspace:^",
     "@freddie/freddie-permission-presets": "workspace:^",
     "@freddie/freddie-plan-mode": "workspace:^",

@@ -84,15 +84,28 @@ function escapeHtmlAttribute(value) {
     .replaceAll('>', '&gt;')
 }
 
+/** Prefix reserved for build/runtime values a browser client may read from `process.env`. */
+const CLIENT_BUILD_ENV_PREFIX = 'FREDDIE_CLIENT_'
+
 // @freddie/cordis-plugin-loader (vendored, host-oriented) reads
 // `process.env.CORDIS_SHARED`, `process.execArgv`, and
 // `process.versions.node` unconditionally in module-level or
 // field-initializer code, even on the browser boot path that never actually
-// takes their Node-only branches. Vite's old build erased these through a
-// compile-time `define` (see the removed vite.config.ts); buildless has no
-// such step, so the same three values are supplied as a runtime global here
-// instead — a minimal process stand-in, not a general Node polyfill.
-const PROCESS_SHIM = "<script>globalThis.process ??= { env: {}, execArgv: [], versions: { node: '0.0.0' } }</script>"
+// takes their Node-only branches — a minimal process stand-in, not a general
+// Node polyfill. Buildless serving means no bundler `define` step bakes
+// FREDDIE_CLIENT_* values (title, build profile, commit hash — read directly
+// by packages/client/ui-brand-official, ui-renderer/DocumentTitle,
+// ui-sidebar/SidebarRoot) into served source, so the real values are handed
+// to this same runtime process.env shim instead — the server already has
+// them in its own real process.env.
+function renderProcessShim() {
+  const env = {}
+  for (const [name, value] of Object.entries(process.env)) {
+    if (name.startsWith(CLIENT_BUILD_ENV_PREFIX) && value !== undefined) env[name] = value
+  }
+  const json = JSON.stringify(env).replaceAll('<', '\\u003c')
+  return `<script>globalThis.process ??= { env: ${json}, execArgv: [], versions: { node: '0.0.0' } }</script>`
+}
 
 const DEFAULT_CLIENT_TITLE = 'FREDDIE Local Build'
 
@@ -117,7 +130,7 @@ export function apply(ctx) {
     table.push({
       kind: 'html',
       placement: 'head',
-      html: PROCESS_SHIM,
+      html: renderProcessShim(),
     })
     table.push({
       kind: 'importmap-entries',

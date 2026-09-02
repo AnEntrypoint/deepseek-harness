@@ -61,7 +61,6 @@
   "devDependencies": {
     "@freddie/freddie-host-webserver": "workspace:^",
     "@freddie/freddie-invariants": "workspace:^",
-    "@types/ws": "^8.18.1",
     "@freddie/cordis": "workspace:^",
     "@freddie/freddie-attachment": "workspace:^",
     "@freddie/freddie-host-apiproxy": "workspace:^",

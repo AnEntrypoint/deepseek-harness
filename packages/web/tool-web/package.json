@@ -44,7 +44,6 @@
   },
   "devDependencies": {
     "@freddie/freddie-agent": "workspace:^",
-    "@types/turndown": "^5.0.6",
     "@freddie/freddie-invariants": "workspace:^",
     "@freddie/freddie-llm": "workspace:^",
     "@freddie/freddie-session": "workspace:^",

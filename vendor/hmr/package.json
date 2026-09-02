@@ -46,8 +46,6 @@
     "@freddie/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@types/babel__code-frame": "^7.27.0",
-    "@types/picomatch": "^3.0.2",
     "esbuild": "^0.28.1"
   }
 }

@@ -11,10 +11,6 @@
 
 import { globSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import {
-  officialClientBuildEnvironment,
-  readClientBuildRecord,
-} from '../client-build-environment.js'
 import { validateTarballPayload } from '../publication-payload.js'
 
 /**
@@ -287,10 +283,12 @@ class DshFamily extends ReleaseFamily {
   patterns = ['packages/!(experimental)/*/package.json', 'apps/*/package.json']
   tagPrefix = 'dsh-v'
 
-  /** Require current artifacts from a complete official client build. */
-  verifyBuildArtifacts(root) {
-    readClientBuildRecord(root, officialClientBuildEnvironment(root))
-  }
+  // No build-artifact gate: every package ships src/ as-authored, buildless
+  // — the base class's no-op verifyBuildArtifacts applies unchanged. This
+  // family used to require a complete official client build (packages'
+  // browser lib/client.js bundles, hashed via readClientBuildRecord); that
+  // build no longer exists now that every client package is served
+  // unbundled.
 
   /**
    * Require one version across the family, the way a single tag can name it.
