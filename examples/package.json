@@ -42,8 +42,6 @@
     "@freddie/freddie-llm": "workspace:*",
     "@freddie/freddie-llm-deepseek": "workspace:*",
     "@freddie/freddie-llm-pi-ai": "workspace:*",
-    "@freddie/freddie-llm-replay": "workspace:*",
-    "@freddie/freddie-loader-smoke": "workspace:*",
     "@freddie/freddie-lsp": "workspace:*",
     "@freddie/freddie-lsp-stdio": "workspace:*",
     "@freddie/freddie-permission-presets": "workspace:*",
