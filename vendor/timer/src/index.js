@@ -1,36 +1,26 @@
-import { Context, Service } from '@freddie/cordis'
-
-declare module '@freddie/cordis' {
-  interface Context extends Pick<TimerService, 'interval' | 'timeout' | 'throttle' | 'debounce' | 'setTimeout' | 'setInterval'> {
-    timer: TimerService
-  }
-}
-
-type WithDispose<T> = T & { dispose: () => void }
+import { Service } from '@freddie/cordis'
 
 /** Disposable timer helpers mixed into Cordis contexts. */
 export class TimerService extends Service {
-  constructor(ctx: Context) {
+  constructor(ctx) {
     super(ctx, 'timer')
     ctx.mixin('timer', ['timeout', 'interval', 'throttle', 'debounce', 'setTimeout', 'setInterval'])
   }
 
   /** @deprecated use `ctx.timeout()` instead */
-  setTimeout(callback: () => void, delay: number) {
+  setTimeout(callback, delay) {
     return this.timeout(callback, delay)
   }
 
   /** @deprecated use `ctx.interval()` instead */
-  setInterval(callback: () => void, delay: number) {
+  setInterval(callback, delay) {
     return this.interval(callback, delay)
   }
 
   /** Run a callback once, or return a promise that resolves after `delay`. */
-  timeout(callback: () => void, delay: number): () => void
-  timeout(delay: number): Promise<void>
-  timeout(...args: any[]): any {
+  timeout(...args) {
     const callback = typeof args[0] === 'function' ? args.shift() : undefined
-    const delay = args[0] as number
+    const delay = args[0]
     if (callback) {
       const dispose = this.ctx.effect(() => {
         const timer = setTimeout(() => {
@@ -41,7 +31,7 @@ export class TimerService extends Service {
       }, 'ctx.timeout()')
       return dispose
     } else {
-      const { promise, resolve, reject } = Promise.withResolvers<void>()
+      const { promise, resolve, reject } = Promise.withResolvers()
       const dispose = this.ctx.effect(() => {
         const timer = setTimeout(resolve, delay)
         return () => {
@@ -54,19 +44,17 @@ export class TimerService extends Service {
   }
 
   /** Run a callback repeatedly, or return an async iterator of ticks. */
-  interval(callback: () => void, delay: number): () => void
-  interval<R = any>(delay: number): AsyncIterableIterator<void, R, void>
-  interval(...args: any[]): any {
+  interval(...args) {
     const callback = typeof args[0] === 'function' ? args.shift() : undefined
-    const delay = args[0] as number
+    const delay = args[0]
     if (callback) {
       return this.ctx.effect(() => {
         const timer = setInterval(callback, delay)
         return () => clearInterval(timer)
       }, 'ctx.interval()')
     } else {
-      let done: { kind: 'return'; value: any } | { kind: 'throw'; reason: any } | undefined
-      let nextTask: PromiseWithResolvers<IteratorResult<void>> | undefined
+      let done
+      let nextTask
       const dispose = this.ctx.effect(() => {
         const timer = setInterval(() => {
           nextTask?.resolve({ done: false, value: undefined })
@@ -99,17 +87,17 @@ export class TimerService extends Service {
         [Symbol.asyncIterator]() {
           return this
         },
-      } satisfies AsyncIterableIterator<void>
+      }
     }
   }
 
-  private _schedule(label: string, trigger: (args: any[], isDisposed: boolean) => any, isDisposed = false) {
-    let timer: number | NodeJS.Timeout | undefined
+  _schedule(label, trigger, isDisposed = false) {
+    let timer
     const dispose = this.ctx.effect(() => () => {
       isDisposed = true
       clearTimeout(timer)
     }, label)
-    const wrapper: any = (...args: any[]) => {
+    const wrapper = (...args) => {
       clearTimeout(timer)
       timer = trigger(args, isDisposed)
     }
@@ -118,9 +106,9 @@ export class TimerService extends Service {
   }
 
   /** Return a throttled function whose timer is disposed with the current fiber. */
-  throttle<F extends (...args: any[]) => void>(callback: F, delay: number, noTrailing?: boolean): WithDispose<F> {
+  throttle(callback, delay, noTrailing) {
     let lastCall = -Infinity
-    const execute = (...args: any[]) => {
+    const execute = (...args) => {
       lastCall = Date.now()
       callback(...args)
     }
@@ -136,7 +124,7 @@ export class TimerService extends Service {
   }
 
   /** Return a debounced function whose timer is disposed with the current fiber. */
-  debounce<F extends (...args: any[]) => void>(callback: F, delay: number): WithDispose<F> {
+  debounce(callback, delay) {
     return this._schedule('ctx.debounce()', (args, isDisposed) => {
       if (isDisposed) return
       return setTimeout(callback, delay, ...args)

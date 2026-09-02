@@ -1,42 +1,21 @@
-import { Context, Service, type Plugin } from '@freddie/cordis'
-import type { Dict } from '@freddie/cosmokit'
-import { ModuleLoader, type ModuleJob, type ResolveResult } from '@freddie/cordis-plugin-loader'
-import type { Include } from '@freddie/cordis-plugin-include'
-import { FSWatcher, watch, type ChokidarOptions } from 'chokidar'
+import { Context, Service } from '@freddie/cordis'
+import { ModuleLoader } from '@freddie/cordis-plugin-loader'
+import { FSWatcher, watch } from 'chokidar'
 import { dirname, relative, resolve } from 'node:path'
 import { realpath, stat } from 'node:fs/promises'
-import { handleError } from './error.ts'
-import type {} from '@freddie/cordis-plugin-timer'
+import { handleError } from './error.js'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
 import picomatch from 'picomatch'
 import z from '@freddie/schemastery'
 
-declare module '@freddie/cordis' {
-  interface Context {
-    hmr: Hmr
-  }
-
-  interface Events {
-    'hmr/change'(url: string): void
-    'hmr/reload'(reloads: Map<Plugin, Reload>): void
-    /**
-     * A watched config-file refresh failed.
-     * @param filename - Absolute path observed by HMR.
-     * @param error - Normalized refresh failure.
-     * @mode parallel
-     */
-    'hmr/config-update-failed'(filename: string, error: Error): Promise<void> | void
-  }
-}
-
 /**
  * Recursively collect all module dependencies from a ModuleJob.
  * Skips node: builtins and node_modules to focus on user code.
  */
-async function loadDependencies(job: ModuleJob, ignored = new Set<string>()) {
-  const dependencies = new Set<string>()
-  async function traverse(job: ModuleJob) {
+async function loadDependencies(job, ignored = new Set()) {
+  const dependencies = new Set()
+  async function traverse(job) {
     if (ignored.has(job.url) || dependencies.has(job.url)) return
     if (job.url.startsWith('node:') || job.url.includes('/node_modules/')) return
     dependencies.add(job.url)
@@ -47,21 +26,7 @@ async function loadDependencies(job: ModuleJob, ignored = new Set<string>()) {
   return dependencies
 }
 
-interface Reload {
-  filename: string
-  runtime?: Plugin.Runtime
-}
-
-interface ConfigRefresh {
-  dirty: boolean
-  running?: Promise<void>
-}
-
-interface ConfigRegistration {
-  watcher: FSWatcher
-}
-
-async function findWatchRoot(filename: string): Promise<{ filename: string; root: string; depth: number }> {
+async function findWatchRoot(filename) {
   let root = dirname(filename)
   let depth = 0
   while (true) {
@@ -74,7 +39,7 @@ async function findWatchRoot(filename: string): Promise<{ filename: string; root
         depth,
       }
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+      if (error.code !== 'ENOENT') throw error
       const parent = dirname(root)
       if (parent === root) throw error
       root = parent
@@ -86,37 +51,40 @@ async function findWatchRoot(filename: string): Promise<{ filename: string; root
 class Hmr extends Service {
   static inject = ['loader', 'timer']
 
-  public baseDir: string
+  baseDir
 
-  private internal: ModuleLoader
-  private watcher!: FSWatcher
-  private readonly configs = new Map<string, ConfigRegistration>()
-  private readonly configRefreshes = new WeakMap<object, ConfigRefresh>()
-  private readonly refreshTasks = new Set<Promise<void>>()
+  internal
+  watcher
+  configs = new Map()
+  configRefreshes = new WeakMap()
+  refreshTasks = new Set()
 
   /**
    * Changes from externals will always trigger a full reload.
    * Externals are the dependency tree of the CLI worker entry point.
    */
-  private externals!: Set<string>
+  externals
 
   /**
    * Files that should be reloaded (accepted changes).
    * Includes all stashed files and their dependents.
    */
-  private accepted!: Set<string>
+  accepted
 
   /**
    * Files that should NOT be reloaded.
    * Includes externals and files whose dependents are all declined.
    */
-  private declined!: Set<string>
+  declined
 
   /** Stashed file changes waiting to be processed */
-  private stashed = new Set<string>()
+  stashed = new Set()
 
-  constructor(ctx: Context, public config: Hmr.Config) {
+  config
+
+  constructor(ctx, config) {
     super(ctx, 'hmr')
+    this.config = config
     if (!this.ctx.loader.internal) {
       throw new Error('--expose-internals is required for HMR service')
     }
@@ -131,7 +99,7 @@ class Hmr extends Service {
    * @returns an asynchronous disposer once the exact watch is ready.
    * @throws when HMR is inactive, the path is already registered, or watcher startup fails.
    */
-  async registerConfig(filename: string, refresh: () => Promise<void> | void): Promise<() => Promise<void>> {
+  async registerConfig(filename, refresh) {
     if (!this.watcher) throw new Error('HMR is not active')
     filename = resolve(this.baseDir, filename)
     const target = await findWatchRoot(filename)
@@ -148,7 +116,7 @@ class Hmr extends Service {
     })
     const registration = { watcher }
     this.configs.set(watchFilename, registration)
-    const onChange = (path: string) => {
+    const onChange = (path) => {
       const observed = resolve(path)
       if (observed !== filename && observed !== watchFilename) return
       this.refreshConfig(registration, filename, refresh)
@@ -157,8 +125,8 @@ class Hmr extends Service {
     watcher.on('change', onChange)
     watcher.on('unlink', onChange)
 
-    const ready = Promise.withResolvers<void>()
-    let readyState: 'pending' | 'resolved' | 'rejected' = 'pending'
+    const ready = Promise.withResolvers()
+    let readyState = 'pending'
     watcher.once('ready', () => {
       readyState = 'resolved'
       ready.resolve()
@@ -189,7 +157,7 @@ class Hmr extends Service {
   /**
    * Resolve a module specifier to a URL, compatible with Node 22-24.
    */
-  private async _resolve(specifier: string, parentURL: string, attrs: ImportAttributes): Promise<ResolveResult> {
+  async _resolve(specifier, parentURL, attrs) {
     switch (this.internal.version) {
       case 'v1': return await this.internal.resolve(specifier, parentURL, attrs)
       case 'v2': return this.internal.resolveSync(parentURL, { specifier, attributes: attrs })
@@ -241,13 +209,13 @@ class Hmr extends Service {
 
     const partialReload = this.ctx.debounce(() => this.partialReload(), this.config.debounce)
 
-    const onChange = (kind: 'add' | 'change' | 'unlink', path: string) => {
+    const onChange = (kind, path) => {
       this.ctx.logger.debug('%s detected at %C', kind, path)
       const filename = resolve(watchBaseDir, path)
       const configuredFilename = resolve(this.baseDir, path)
       // Config reload: the file is a loader config file (e.g. cordis.yml).
       for (const entry of loader.entries()) {
-        const include = entry.subtree as Include | undefined
+        const include = entry.subtree
         if (include?.filename !== filename && include?.filename !== configuredFilename) continue
         this.refreshConfig(include, include.filename, () => include.refresh())
         return
@@ -262,7 +230,7 @@ class Hmr extends Service {
       // Partial reload: the file is in the ESM loadCache
       // In Node 24, both CJS and ESM modules imported via import() end up
       // in loadCache, so this check covers all module formats.
-      if (loader.internal!.loadCache.has(url)) {
+      if (loader.internal.loadCache.has(url)) {
         this.stashed.add(url)
         return partialReload()
       }
@@ -273,8 +241,8 @@ class Hmr extends Service {
     this.watcher.on('change', path => onChange('change', path))
     this.watcher.on('unlink', path => onChange('unlink', path))
 
-    const ready = Promise.withResolvers<void>()
-    let readyState: 'pending' | 'resolved' | 'rejected' = root.length === 0 ? 'resolved' : 'pending'
+    const ready = Promise.withResolvers()
+    let readyState = root.length === 0 ? 'resolved' : 'pending'
     if (root.length === 0) {
       ready.resolve()
     } else {
@@ -294,7 +262,7 @@ class Hmr extends Service {
     await ready.promise
   }
 
-  private refreshConfig(key: object, filename: string, refresh: () => Promise<void> | void) {
+  refreshConfig(key, filename, refresh) {
     const state = this.configRefreshes.get(key) ?? { dirty: false }
     this.configRefreshes.set(key, state)
     state.dirty = true
@@ -324,15 +292,15 @@ class Hmr extends Service {
   }
 
   // hide stack trace from HMR
-  getOuterStack = (): string[] => [
+  getOuterStack = () => [
     // '    at HMR.partialReload (<anonymous>)',
   ]
 
-  async getLinked(url: string) {
+  async getLinked(url) {
     const job = this.internal.loadCache.get(url)
     if (!job) return []
     const linked = await job.linked
-    return Array.prototype.map.call(linked, (job: ModuleJob) => job.url) as string[]
+    return Array.prototype.map.call(linked, (job) => job.url)
   }
 
   /**
@@ -342,13 +310,13 @@ class Hmr extends Service {
    * dependents are accepted. A file is declined if all its dependents are
    * declined or if it's an external.
    */
-  private async analyzeChanges() {
-    const pending: string[] = []
+  async analyzeChanges() {
+    const pending = []
 
     this.accepted = new Set(this.stashed)
     this.declined = new Set(this.externals)
 
-    const isExcluded = (url: string) => url.startsWith('node:') || url.includes('/node_modules/')
+    const isExcluded = (url) => url.startsWith('node:') || url.includes('/node_modules/')
 
     await Promise.all([...this.stashed].map(async (url) => {
       const children = await this.getLinked(url)
@@ -397,17 +365,17 @@ class Hmr extends Service {
     }
   }
 
-  private async partialReload() {
+  async partialReload() {
     await this.analyzeChanges()
 
-    const pending = new Map<ModuleJob, Plugin>()
-    const reloads = new Map<Plugin, Reload>()
+    const pending = new Map()
+    const reloads = new Map()
 
     // Build a map of plugin names per config tree URL.
     // Plugin entry files are treated as atomic reload units.
-    const nameMap: Dict<Set<string>> = Object.create(null)
+    const nameMap = Object.create(null)
     for (const entry of this.ctx.loader.entries()) {
-      (nameMap[entry.parent.tree.ctx.baseUrl!] ??= new Set()).add(entry.options.name)
+      (nameMap[entry.parent.tree.ctx.baseUrl] ??= new Set()).add(entry.options.name)
     }
 
     // Resolve each plugin name to its file URL and check if it needs reload
@@ -458,8 +426,8 @@ class Hmr extends Service {
      *   where .delete() only sets the type slot to undefined (doesn't remove the entry)
      * Using Map.prototype.delete ensures complete removal in both versions.
      */
-    const esmBackup: Dict = Object.create(null)
-    const cjsBackup: Dict = Object.create(null)
+    const esmBackup = Object.create(null)
+    const cjsBackup = Object.create(null)
     const require = createRequire(import.meta.url)
     for (const filename of this.accepted) {
       // Backup and clear ESM loadCache
@@ -489,7 +457,7 @@ class Hmr extends Service {
     }
 
     // Attempt to re-import all plugin entry files
-    const attempts: Dict = {}
+    const attempts = {}
     try {
       for (const [, { filename }] of reloads) {
         attempts[filename] = this.ctx.loader.unwrapExports(await this.ctx.loader.import(filename, this.getOuterStack))
@@ -499,7 +467,7 @@ class Hmr extends Service {
       return rollback()
     }
 
-    const reload = (plugin: any, runtime: Plugin.Runtime) => {
+    const reload = (plugin, runtime) => {
       if (!runtime) return
       for (const oldFiber of runtime.fibers) {
         const fiber = oldFiber.parent.registry.plugin(plugin, oldFiber._config, this.getOuterStack)
@@ -547,17 +515,11 @@ class Hmr extends Service {
     this.ctx.emit('hmr/reload', reloads)
     this.stashed = new Set()
   }
-}
 
-namespace Hmr {
-  export interface Config extends ChokidarOptions {
-    base?: string
-    root: string[]
-    debounce: number
-    ignored: string[]
-  }
-
-  export const Config: z<Config> = z.object({
+  // [freddie] vendored modification: removed `.i18n({ 'en-US': enUS, 'zh-CN': zhCN })`
+  // and the corresponding `./locales/*.yml` imports, to avoid a runtime YAML import hook
+  // (@cordisjs/unyaml) that we don't vendor. See vendor/README.md.
+  static Config = z.object({
     base: z.string(),
     root: z.array(String).role('table').default(['.']),
     ignored: z.array(String).role('table').default([
@@ -568,9 +530,6 @@ namespace Hmr {
     ]),
     debounce: z.natural().role('ms').default(100),
   })
-  // [freddie] vendored modification: removed `.i18n({ 'en-US': enUS, 'zh-CN': zhCN })`
-  // and the corresponding `./locales/*.yml` imports, to avoid a runtime YAML import hook
-  // (@cordisjs/unyaml) that we don't vendor. See vendor/README.md.
 }
 
 export default Hmr

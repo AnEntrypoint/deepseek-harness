@@ -1,14 +1,12 @@
-import { Context } from '@freddie/cordis'
-import type { BuildFailure } from 'esbuild'
 import { codeFrameColumns } from '@babel/code-frame'
 import { readFileSync } from 'node:fs'
 
-function isBuildFailure(e: any): e is BuildFailure {
-  return Array.isArray(e?.errors) && e.errors.every((error: any) => error.text)
+function isBuildFailure(e) {
+  return Array.isArray(e?.errors) && e.errors.every((error) => error.text)
 }
 
 /** Log HMR build failures with code frames when source locations are available. */
-export function handleError(ctx: Context, e: any) {
+export function handleError(ctx, e) {
   if (!isBuildFailure(e)) {
     ctx.logger.warn(e)
     return
