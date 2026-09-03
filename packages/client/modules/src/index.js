@@ -494,14 +494,24 @@ export class ClientModuleRegistry extends Service {
     if (clientRel === undefined) {
       throw new Error(`client-modules: ${pkgName} declares dsh.client but exports no "./client" entry`)
     }
-    // Buildless serving mirrors the whole entry-owning directory (src/client/
-    // in every real package) verbatim, so relative imports inside it resolve
-    // as real sibling-file fetches — clientRoot is that directory, clientPath
-    // its entry file within it (served at /plugins/<id>/client.js).
-    const clientPath = join(dirname(pkgPath), clientRel)
+    // Buildless serving mirrors the whole package's src/ tree verbatim (not
+    // just src/client/), so a client entry's relative imports resolve as
+    // real sibling-file fetches even when they legitimately reach outside
+    // src/client/ to share code with the package's own host half (e.g.
+    // src/client/index.js importing ../service.js -- a real, common,
+    // deliberate pattern: witnessed live in freddie-typert-registry,
+    // freddie-client-hmr, freddie-client-connection, freddie-client-locale,
+    // freddie-client-ui-settings-models -- every one of these 404s any
+    // browser session bundling the package, since clientRoot previously
+    // stopped at src/client/ itself). clientRoot is the package's src/ dir,
+    // never the package root itself -- widening past src/ would recurse
+    // hashClientTree/serveBundle into node_modules (real perf/hang risk on
+    // a workspace with deeply nested @freddie/* dependency trees).
+    const packageRoot = dirname(pkgPath)
+    const clientPath = join(packageRoot, clientRel)
     const meta = {
       clientPath,
-      clientRoot: dirname(clientPath),
+      clientRoot: join(packageRoot, 'src'),
       ...(decl.inject !== undefined ? { inject: decl.inject } : {}),
       external: decl.external ?? [],
       immediately: decl.immediately === true,
