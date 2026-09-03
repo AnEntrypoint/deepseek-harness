@@ -239,10 +239,6 @@ export const vendorPackages = [
     "version": "1.0.2"
   },
   {
-    "name": "@freddie/freddie-client-modules",
-    "version": "0.1.1-rc.2"
-  },
-  {
     "name": "@freddie/freddie-client-ui-slots",
     "version": "0.1.1-rc.2"
   },
@@ -439,7 +435,6 @@ export const importMapExact = {
   "micromark-util-html-tag-name": "/vendor/micromark-util-html-tag-name@2.0.1/index.js",
   "@freddie/cordis": "/vendor/@freddie/cordis@4.0.1/src/index.js",
   "@freddie/cordis-plugin-loader": "/vendor/@freddie/cordis-plugin-loader@1.0.2/src/index.js",
-  "@freddie/freddie-client-modules/client": "/vendor/@freddie/freddie-client-modules@0.1.1-rc.2/src/client/index.js",
   "@freddie/freddie-client-ui-slots": "/vendor/@freddie/freddie-client-ui-slots@0.1.1-rc.2/src/index.js",
   "@freddie/freddie-client-ui-primitives": "/vendor/@freddie/freddie-client-ui-primitives@0.1.1-rc.2/src/index.js",
   "oniguruma-to-es": "/vendor/oniguruma-to-es@4.3.6/dist/esm/index.js",
