@@ -67,10 +67,6 @@ flowchart LR
   cfg --> plugin_acp_fs_observation_policy
   plugin_acp_tool_fs["tool-fs<br/>@freddie/freddie-tool-fs"]
   cfg --> plugin_acp_tool_fs
-  plugin_acp_hooks_claude_code["hooks-claude-code<br/>@freddie/freddie-hooks-claude-code"]
-  cfg --> plugin_acp_hooks_claude_code
-  plugin_acp_hooks_codex["hooks-codex<br/>@freddie/freddie-hooks-codex"]
-  cfg --> plugin_acp_hooks_codex
 ```
 
 | Plugin id | Package / module |
@@ -101,8 +97,6 @@ flowchart LR
 | `fs-sandbox` | `@freddie/freddie-fs-sandbox` |
 | `fs-observation-policy` | `@freddie/freddie-fs-observation-policy` |
 | `tool-fs` | `@freddie/freddie-tool-fs` |
-| `hooks-claude-code` | `@freddie/freddie-hooks-claude-code` |
-| `hooks-codex` | `@freddie/freddie-hooks-codex` |
 
 Source config: [`examples/acp-agent/cordis.yml`](cordis.yml).
 
