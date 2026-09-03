@@ -15,6 +15,21 @@ import { pathToFileURL } from 'node:url'
 /** Daemon considered dead if `.status.json`'s `ts` is older than this. */
 const STALE_MS = 5 * 60 * 1000
 
+/** How long to poll for real readiness after a boot attempt before giving up. */
+const BOOT_READY_TIMEOUT_MS = 45_000
+const BOOT_READY_POLL_INTERVAL_MS = 500
+
+/**
+ * In-flight boot promise per `cwd`, so concurrent `ensureDaemon` calls
+ * against the same project share one boot attempt instead of each spawning
+ * its own daemon process (live-verified: three concurrent calls against a
+ * dead daemon spawned three separate processes, all reporting success,
+ * zero surviving — a thundering herd, not a corruption, but still wrong).
+ * Cleared once the in-flight attempt settles (success or failure) so a
+ * later, genuinely new boot attempt isn't wedged behind a stale promise.
+ */
+const inFlightBoots = new Map()
+
 /**
  * Read `.gm/exec-spool/.status.json` if present.
  * @param cwd - project root.
@@ -75,13 +90,37 @@ export async function isDaemonAlive(cwd) {
  * this function sets `CLAUDE_PROJECT_DIR` for the duration of the call so a
  * boot triggered by a `cwd` that isn't the current process's own working
  * directory still targets the right `.gm/exec-spool`.
+ *
+ * Two failure modes closed after live adversarial testing found them real:
+ * (1) `startSpoolDaemon()`'s own `{ok:true}` only means `spawn()` handed
+ * back a pid — it does NOT mean the runner actually came up (verified:
+ * spawned a pid that had already exited by the time `.status.json` was
+ * checked, and a caller trusting `{ok:true}` alone went on to wait out a
+ * full 120s dispatch timeout instead of getting an honest boot-failure
+ * error quickly). This function polls `isDaemonAlive` after spawn, up to
+ * `BOOT_READY_TIMEOUT_MS`, and throws a clear error if the daemon never
+ * comes up rather than reporting false success. (2) Concurrent callers
+ * against a dead daemon each spawned their own process (verified: three
+ * concurrent calls, three spawns, zero survivors) — `inFlightBoots` makes
+ * every concurrent call for the same `cwd` await one shared boot attempt.
  * @param cwd - project root that will own the `.gm/exec-spool` dispatch.
  * @returns `{ alreadyRunning }` after boot completes or is skipped.
- * @throws when `~/.gm-tools/bootstrap.js` is missing (gm has never been installed on this machine), or its wrapper isn't present yet (first-ever install not finished — run gm's own CLI once to complete that).
+ * @throws when `~/.gm-tools/bootstrap.js` is missing (gm has never been installed on this machine), its wrapper isn't present yet (first-ever install not finished — run gm's own CLI once to complete that), or the daemon fails to become ready within `BOOT_READY_TIMEOUT_MS` of a boot attempt.
  */
 export async function ensureDaemon(cwd) {
   if (await isDaemonAlive(cwd)) return { alreadyRunning: true }
 
+  const existing = inFlightBoots.get(cwd)
+  if (existing !== undefined) return existing
+
+  const attempt = bootAndAwaitReady(cwd).finally(() => {
+    if (inFlightBoots.get(cwd) === attempt) inFlightBoots.delete(cwd)
+  })
+  inFlightBoots.set(cwd, attempt)
+  return attempt
+}
+
+async function bootAndAwaitReady(cwd) {
   const bootstrapPath = join(homedir(), '.gm-tools', 'bootstrap.js')
   let bootstrap
   try {
@@ -102,14 +141,26 @@ export async function ensureDaemon(cwd) {
   }
   const previousProjectDir = process.env.CLAUDE_PROJECT_DIR
   process.env.CLAUDE_PROJECT_DIR = cwd
+  let started
   try {
-    const started = mod.startSpoolDaemon()
-    if (!started.ok) {
-      throw new Error(`gm-client: failed to start the gm daemon: ${started.error}`)
-    }
-    return { alreadyRunning: false, pid: started.pid }
+    started = mod.startSpoolDaemon()
   } finally {
     if (previousProjectDir === undefined) delete process.env.CLAUDE_PROJECT_DIR
     else process.env.CLAUDE_PROJECT_DIR = previousProjectDir
   }
+  if (!started.ok) {
+    throw new Error(`gm-client: failed to start the gm daemon: ${started.error}`)
+  }
+  const deadline = Date.now() + BOOT_READY_TIMEOUT_MS
+  while (Date.now() < deadline) {
+    if (await isDaemonAlive(cwd)) return { alreadyRunning: false, pid: started.pid }
+    await sleep(BOOT_READY_POLL_INTERVAL_MS)
+  }
+  throw new Error(
+    `gm-client: spawned the gm daemon (pid ${started.pid}) but it never became ready within ${BOOT_READY_TIMEOUT_MS}ms — check ${join(cwd, '.gm', 'exec-spool', '.watcher.log')}`,
+  )
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }

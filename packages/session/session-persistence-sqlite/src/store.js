@@ -39,8 +39,39 @@ export class SqliteStore {
   pathReady
   ready
 
+  /**
+   * Tail of a promise chain serializing every transaction taken against
+   * `this.db` (`appendBatch`/`commitRepair`/`readTransaction`'s
+   * BEGIN..COMMIT/ROLLBACK spans). One `libsql-plugkit-client` connection is
+   * held for this store's whole lifetime, and its BEGIN/COMMIT/ROLLBACK are
+   * connection-global, not scoped to a caller — two overlapping transactions
+   * on the shared connection can interleave, with a losing caller's
+   * ROLLBACK discarding a winning caller's still-open, uncommitted work.
+   * Adversarial testing this session reproduced this live via un-awaited
+   * parallel calls (the public async API alone does not protect against a
+   * caller that doesn't serialize its own awaits). Every transaction-taking
+   * method chains onto `this.txnQueue` so the class's own API is safe
+   * regardless of caller await discipline, rather than relying on every
+   * caller getting that right.
+   */
+  txnQueue = Promise.resolve()
+
   constructor(options) {
     this.options = options
+  }
+
+  /**
+   * Run `fn` after every previously queued transaction on this store has
+   * settled, chaining this call onto the tail so the next queued caller
+   * waits for this one too. A rejection propagates to THIS call's awaiter
+   * without breaking the chain for callers still queued behind it.
+   * @param fn - the transactional operation to serialize.
+   * @returns `fn`'s own return value.
+   */
+  runSerialized(fn) {
+    const result = this.txnQueue.then(fn, fn)
+    this.txnQueue = result.then(() => {}, () => {})
+    return result
   }
 
   /**
@@ -144,6 +175,10 @@ export class SqliteStore {
   async appendBatch(meta, events, isMaterialized) {
     await this.open()
     if (events.length === 0) return
+    return this.runSerialized(() => this.appendBatchTxn(meta, events, isMaterialized))
+  }
+
+  async appendBatchTxn(meta, events, isMaterialized) {
     await this.db.execute(sql('begin-immediate'))
     try {
       await validateSchemaForMutation(createClient, this.db, this.databasePath)
@@ -167,6 +202,10 @@ export class SqliteStore {
   async commitRepair(meta, tornMarker, closers) {
     await this.open()
     if (tornMarker === undefined && closers.length === 0) return
+    return this.runSerialized(() => this.commitRepairTxn(meta, tornMarker, closers))
+  }
+
+  async commitRepairTxn(meta, tornMarker, closers) {
     await this.db.execute(sql('begin-immediate'))
     try {
       await validateSchemaForMutation(createClient, this.db, this.databasePath)
@@ -242,7 +281,11 @@ export class SqliteStore {
     signal?.throwIfAborted()
   }
 
-  async readTransaction(read) {
+  readTransaction(read) {
+    return this.runSerialized(() => this.readTransactionTxn(read))
+  }
+
+  async readTransactionTxn(read) {
     await this.db.execute(sql('begin'))
     try {
       const value = await read()
