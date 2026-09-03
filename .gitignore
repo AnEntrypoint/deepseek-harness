@@ -16,11 +16,6 @@ examples/*/*.jsonl
 .sessions/
 examples/*/.sessions/
 coverage/
-.doc-typecheck-*/
-.node-next-types-*/
-.oxlint-contract-*/
-.oxlintrc.contract-*.json
-oxlint-contract-*.ts
 .humanize/
 tmp/
 .claude/commands/
@@ -31,10 +26,6 @@ tmp/
 .idea
 mise.toml
 dist-exe/
-python/sdk-runtime/src/freddie_runtime/runtime/freddie-jsonrpc-agent-*
-python/sdk-runtime/src/freddie_runtime/runtime/node/
-python/**/__pycache__/
-python/**/.pytest_cache/
 .artifacts/
 .freddie-build/
 .playwright-mcp/
@@ -43,3 +34,22 @@ python/**/.pytest_cache/
 worktrees/
 .agents/worktrees/
 .typert-*/
+
+# gm's own runtime/dispatch state -- pure per-session scratch (spool
+# in/out files, dispatch counters, timestamps, the local codesearch/
+# recall sqlite index and its embed-generation markers). .gm/memories/,
+# .gm/prd.yml, .gm/mutables.yml, .gm/disciplines/, and .gm/instructions/
+# are real, durable, repo-tracked content and are NOT covered by these
+# patterns -- gm's own design keeps memory following the codebase.
+.gm/exec-spool/
+.gm/gm.db
+.gm/last-dispatch-ts
+.gm/last-instruction-ts
+.gm/last-prompt.txt
+.gm/long-gap-retry-state
+.gm/next-step.md
+.gm/turn-state.json
+.gm/config-source-cache-default/
+.gm/config-source-cache-default.*.sync.json
+.gm/.embed-generation.*
+.agentplug-kv/
