@@ -588,15 +588,32 @@ export class ClientModuleRegistry extends Service {
   }
 
   /**
-   * Resolve a request path under `/plugins/` to an on-disk file: `<id>` may
-   * itself contain a scope slash (`@scope/name`), so the split point is
-   * found by matching the longest registered id that prefixes the pathname
-   * — the same ambiguity `clientPath`'s old exact-suffix match sidestepped
-   * by only ever recognizing `/client.js`(.map); serving the whole tree
-   * means the remainder after the id is an arbitrary relative path instead
-   * of one fixed suffix.
+   * Resolve a request path under `/plugins/` to an on-disk file or a
+   * same-origin redirect: `<id>` may itself contain a scope slash
+   * (`@scope/name`), so the split point is found by matching the longest
+   * registered id that prefixes the pathname.
+   *
+   * The graph's own URL names the entry file `client.js` regardless of its
+   * real on-disk basename/location (e.g. `src/client/index.js`) -- that
+   * fixed name is a REDIRECT to the entry's real nested path, not content
+   * served directly at the alias URL. Serving alias content directly
+   * (the previous behavior) broke every entry file with a same-directory
+   * sibling import (`./system.js`, `./manifest.js`, etc.): `import()`'s
+   * relative-URL resolution runs against the FETCHED url, not the real file
+   * location, so `./system.js` resolved to `/plugins/<id>/system.js`
+   * (package root) instead of the real `/plugins/<id>/client/system.js`,
+   * 404ing (witnessed live: freddie-client-modules' own client entry, the
+   * first real package whose client/ directory has same-directory
+   * siblings -- every other package only had `../`-escaping siblings,
+   * fixed separately by widening clientRoot to the package's src/). A
+   * redirect fixes both shapes at once: `import()` follows a redirect and
+   * re-bases module resolution to the FINAL url, standard browser
+   * behavior, so every relative import then resolves correctly with zero
+   * content rewriting -- preserving the graph's stable `client.js` URL as
+   * what callers request, while the real nested path is what the browser
+   * actually loads and resolves siblings against.
    * @param pathname - decoded request pathname (still carrying the `/plugins/` prefix).
-   * @returns the absolute file path, or undefined when no registered id prefixes it.
+   * @returns `{kind: 'file', path}`, `{kind: 'redirect', url}`, or undefined when no registered id prefixes it.
    */
   resolveBundlePath(pathname) {
     const prefix = '/plugins/'
@@ -610,19 +627,19 @@ export class ClientModuleRegistry extends Service {
     }
     if (best === undefined) return undefined
     const relPath = rest.slice(best.id.length + 1)
-    // Entry alias: the graph's own URL names the entry file `client.js`
-    // regardless of its real on-disk basename (e.g. `index.js`), so that
-    // fixed name resolves straight to the known entry path (and its
-    // `.map` companion) rather than a literal same-named sibling file.
-    if (relPath === 'client.js') return best.record.meta.clientPath
-    if (relPath === 'client.js.map') return `${best.record.meta.clientPath}.map`
     const clientRoot = best.record.meta.clientRoot
+    const clientPath = best.record.meta.clientPath
+    if (relPath === 'client.js' || relPath === 'client.js.map') {
+      const entryRelPath = relative(clientRoot, clientPath).split(sep).join('/')
+      const suffix = relPath === 'client.js.map' ? '.map' : ''
+      return { kind: 'redirect', url: `${prefix}${best.id}/${entryRelPath}${suffix}` }
+    }
     const target = resolve(normalize(join(clientRoot, ...relPath.split('/'))))
     // Traversal rejection, same shape as frontend-static's: the target must
     // stay under clientRoot (never equal to it — that's a directory, not a
     // servable file).
     if (!target.startsWith(clientRoot + sep)) return undefined
-    return target
+    return { kind: 'file', path: target }
   }
 
   /**
@@ -679,12 +696,22 @@ export class ClientModuleRegistry extends Service {
     }
     /* v8 ignore next -- `?? '/'` arm: node:http always sets url on server requests. */
     const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname)
-    const path = this.resolveBundlePath(pathname)
-    if (path === undefined) {
+    const resolved = this.resolveBundlePath(pathname)
+    if (resolved === undefined) {
       res.writeHead(404)
       res.end()
       return
     }
+    if (resolved.kind === 'redirect') {
+      // Preserve the caller's own query string (the `?rev=` cache-buster) on
+      // the redirect target -- the graph's URL and the real file's URL name
+      // the same content, so they share one cache-busting identity.
+      const query = new URL(req.url ?? '/', 'http://x').search
+      res.writeHead(301, { location: `${resolved.url}${query}` })
+      res.end()
+      return
+    }
+    const path = resolved.path
     try {
       const body = await readFile(path)
       res.writeHead(200, {
