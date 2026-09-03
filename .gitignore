@@ -55,4 +55,5 @@ worktrees/
 .gm/.embed-generation.*
 .gm/.gm-continue-count
 .gm/residual-check-fired
+.gm/scan-deps-stamp.json
 .agentplug-kv/
