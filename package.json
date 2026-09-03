@@ -33,14 +33,12 @@
     "dsh": "node apps/cli/src/bin.js",
     "demo:code-mode": "node scripts/demo-code-mode.mjs",
     "demo:cordis": "node scripts/demo-cordis.mjs",
-    "demo:acp": "node packages/examples/acp-demo/src/bin.js --config examples/acp-agent/cordis.yml",
-    "postinstall": "node scripts/install-lefthook.mjs"
+    "demo:acp": "node packages/examples/acp-demo/src/bin.js --config examples/acp-agent/cordis.yml"
   },
   "devDependencies": {
     "@agentclientprotocol/sdk": "1.4.0",
     "@freddie/freddie-tool-session-query": "workspace:^",
     "js-yaml": "^5.4.1",
-    "lefthook": "^2.1.12",
     "publint": "^0.3.24",
     "spdx-expression-parse": "^5.0.0",
     "typescript": "^6.0.3"

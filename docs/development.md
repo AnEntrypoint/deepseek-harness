@@ -8,7 +8,6 @@ The setup tutorial takes a new contributor from prerequisites to a checked check
 
 - Node.js supports 22.19+ and 24+. CI covers 22.19, 24, and 26; see the [Node engine floor Agent Note](../.agents/notes/implemented/process/2026-07-06-node-engine-floor.md).
 - Corepack-enabled pnpm. The repo pins `pnpm@11.7.0` in `package.json`; run `corepack enable` if `pnpm --version` does not resolve through Corepack.
-- Git 2.26 or newer; hook setup enables Git's worktree-specific configuration extension.
 - Optional: a DeepSeek API key for the Web, headless, and ACP automation demos and real-API e2e tests.
 
 ### First-time setup
@@ -18,16 +17,6 @@ Install dependencies from the repo root:
 ```sh
 pnpm install
 ```
-
-The install also configures worktree-local Lefthook hooks through `scripts/install-lefthook.mjs`. The [worktree-local hooks Agent Note](../.agents/notes/implemented/process/2026-07-27-worktree-local-lefthook.md) owns the hook-path safety contract.
-
-If either integration is missing because dependencies were restored from cache or `postinstall` was skipped, install them manually:
-
-```sh
-node scripts/install-lefthook.mjs
-```
-
-If the wrapper rejects existing Git configuration or reports a stale lock, follow its diagnostic and the linked Agent Note rather than editing worktree metadata speculatively. After moving a checkout, rerun the wrapper to regenerate the owned path.
 
 Setup is complete after `pnpm install`. There is no build or typecheck step to run — `pnpm dsh web` boots directly from source.
 
@@ -52,9 +41,7 @@ DEEPSEEK_BASE_URL=https://... # optional
 
 ### Git integrations
 
-lefthook is configured in `lefthook.yml` as a fast local checkpoint. `pre-commit` runs one job: `git diff --cached --check`, which fails on staged whitespace errors. There is no `pre-push` hook.
-
-Contributors run the [checks relevant to the changed behavior](../AGENTS.md#verify-before-pushing) once; CI, where present, owns exhaustive coverage.
+No local git hooks are installed. Contributors run the [checks relevant to the changed behavior](../AGENTS.md#verify-before-pushing) once; CI, where present, owns exhaustive coverage.
 
 ### Daily commands
 
