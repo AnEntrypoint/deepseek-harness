@@ -35,7 +35,14 @@ overrides:
   # own (e2b, @modelcontextprotocol/sdk, express-rate-limit, glob/minimatch).
   brace-expansion: '>=5.0.7'
   protobufjs: '>=7.6.5'
-  fast-uri: '>=3.1.4'
+  # v4.x forked from v3.1.2 (before v3.1.6's own security fix landed) and
+  # never merged it forward -- the >=3.1.4 floor here was too low to
+  # exclude the real v4.x vulnerable range GitHub flagged (host confusion
+  # via skipped IDN canonicalization; SSRF via hostname percent-decoding).
+  # v4.1.4 is the latest v4.x release and ships its own separate security
+  # fixes (GHSA-qw65-cvwx-89v3, GHSA-58mr-gqgx-xq4g) on top.
+  fast-uri: '>=4.1.4'
+  qs: '>=6.16.0'
   undici: '>=7.29.0'
   ip-address: '>=10.3.1'
   '@hono/node-server': '>=1.19.15'
