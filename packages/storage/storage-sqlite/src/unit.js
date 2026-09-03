@@ -80,6 +80,61 @@ class SqliteKvUnit {
     })
   }
 
+  /**
+   * Store one 384-dim embedding (`bert`'s fixed output width, matching gm's
+   * own embedder) against a key. Callers compute the embedding themselves
+   * (e.g. via `ctx.gm.embed(text)`) — this unit stores vectors, it never
+   * calls out to an embedding service itself.
+   * @param table - table name the vector logically belongs to.
+   * @param key - vector's key, unique within `(unit, table)`.
+   * @param embedding - a 384-length array of floats.
+   */
+  async putVector(table, key, embedding) {
+    this.assertOpen()
+    this.assertTable(table)
+    if (!Array.isArray(embedding) || embedding.length !== 384) {
+      throw new Error(`putVector: embedding must be a 384-length array (got ${Array.isArray(embedding) ? embedding.length : typeof embedding})`)
+    }
+    await this.client.execute({
+      sql: 'INSERT INTO storage_vectors (unit_name, table_name, key, embedding) VALUES (?, ?, ?, vector32(?)) ON CONFLICT (unit_name, table_name, key) DO UPDATE SET embedding = excluded.embedding',
+      args: [this.descriptor.name, table, key, JSON.stringify(embedding)],
+    })
+  }
+
+  /**
+   * Find the `limit` closest stored vectors to `embedding` by cosine distance.
+   * @param table - table name to search within.
+   * @param embedding - a 384-length array of floats, the query vector.
+   * @param limit - maximum results (default 10).
+   * @returns `{key, distance}` rows ordered nearest-first.
+   */
+  async searchVectors(table, embedding, limit = 10) {
+    this.assertOpen()
+    this.assertTable(table)
+    if (!Array.isArray(embedding) || embedding.length !== 384) {
+      throw new Error(`searchVectors: embedding must be a 384-length array (got ${Array.isArray(embedding) ? embedding.length : typeof embedding})`)
+    }
+    const { rows } = await this.client.execute({
+      sql: 'SELECT key, vector_distance_cos(embedding, vector32(?)) AS distance FROM storage_vectors WHERE unit_name = ? AND table_name = ? ORDER BY distance ASC LIMIT ?',
+      args: [JSON.stringify(embedding), this.descriptor.name, table, limit],
+    })
+    return rows.map(([key, distance]) => ({ key, distance }))
+  }
+
+  /**
+   * Delete one stored vector.
+   * @param table - table name the vector belongs to.
+   * @param key - vector's key.
+   */
+  async deleteVector(table, key) {
+    this.assertOpen()
+    this.assertTable(table)
+    await this.client.execute({
+      sql: 'DELETE FROM storage_vectors WHERE unit_name = ? AND table_name = ? AND key = ?',
+      args: [this.descriptor.name, table, key],
+    })
+  }
+
   async close() {
     if (this.closed) return
     this.closed = true

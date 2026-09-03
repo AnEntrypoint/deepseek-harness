@@ -59,6 +59,40 @@ export class Gm extends Service {
       ...timeoutMs === undefined ? {} : { timeoutMs },
     })
   }
+
+  /**
+   * Embed one string via the shared daemon's `bert` plugin (BAAI/bge-small-en-v1.5,
+   * 384-dim) — routed through the daemon, matching freddie's own corrected
+   * design (`src/learn/gm-learn-backend.js`), not an in-process bert.wasm
+   * instance. The `bert` spool verb's real body shape is `{verb: 'embed', text}`
+   * (not `{op: 'embed', ...}` — that field name silently falls through to the
+   * plugin's default `capabilities` response instead of erroring, so this is
+   * live-verified, not guessed).
+   * @param text - text to embed.
+   * @returns a 384-length array of floats.
+   * @throws when the daemon reports a non-ok response.
+   */
+  async embed(text) {
+    const result = await this.call('bert', { verb: 'embed', text })
+    if (result.ok !== true) {
+      throw new Error(`gm-client: embed failed: ${result.error ?? 'unknown error'}`)
+    }
+    return result.embedding
+  }
+
+  /**
+   * Embed several strings in one dispatch via the shared daemon's `bert` plugin.
+   * @param texts - texts to embed, in order.
+   * @returns an array of 384-length float arrays, same order as `texts`.
+   * @throws when the daemon reports a non-ok response.
+   */
+  async embedBatch(texts) {
+    const result = await this.call('bert', { verb: 'embed_batch', texts })
+    if (result.ok !== true) {
+      throw new Error(`gm-client: embed_batch failed: ${result.error ?? 'unknown error'}`)
+    }
+    return result.embeddings
+  }
 }
 
 export default Gm
