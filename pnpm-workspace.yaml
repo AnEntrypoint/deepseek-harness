@@ -58,6 +58,9 @@ allowBuilds:
   node-addon-require-builtin: false
   # JSONL durability calls MoveFileExW with write-through publication on Windows.
   koffi: true
+  # Postinstall downloads plugkit.wasm (~12MB) from AnEntrypoint/plugkit-bin GitHub
+  # Releases -- the same WASM libsql runtime freddie depends on, no native compile.
+  libsql-plugkit-client@https://codeload.github.com/AnEntrypoint/libsql-plugkit-client/tar.gz/cba645b472043e04747d6200be1d745583130548: true
 
 minimumReleaseAgeExclude:
   - node-addon-native-custom-loader@0.1.4

@@ -126,7 +126,7 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
       const offset = normalized.cursor === undefined
         ? 0
         : decodeCursor(normalized.cursor, this._instance, 'sessions', fingerprint, generation)
-      const rows = this._querySessions(normalized, offset, persistenceBinding)
+      const rows = await this._querySessions(normalized, offset, persistenceBinding)
       return page(rows, normalized.limit, row => this._sessionHit(row), cursorOffset => encodeCursor({
         version: 1,
         instance: this._instance,
@@ -146,12 +146,12 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
       await this._ensureReady(signal)
       const persistenceBinding = await this._reconcile(signal)
       assertNotAborted(signal)
-      const target = this._targetObservation(normalized.sessionId, persistenceBinding)
+      const target = await this._targetObservation(normalized.sessionId, persistenceBinding)
       const fingerprint = requestFingerprint(normalized)
       const offset = normalized.cursor === undefined
         ? 0
         : decodeCursor(normalized.cursor, this._instance, 'events', fingerprint, target.generation)
-      const rows = this._queryEvents(normalized, offset, persistenceBinding)
+      const rows = await this._queryEvents(normalized, offset, persistenceBinding)
       return {
         session: target.header,
         ...page(rows, normalized.limit, row => this._eventHit(row), cursorOffset => encodeCursor({
@@ -175,7 +175,7 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
   /**
    * Refuse full-text calls under `openAt: 'never'` before any request
    * normalization or SQLite work, so a disabled deployment never imports
-   * node:sqlite, opens the index, or observes sources.
+   * the SQLite client, opens the index, or observes sources.
    */
   _assertSearchEnabled() {
     if (this.config.openAt !== 'never') return
@@ -201,9 +201,9 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
 
   async _open() {
     this._db = await openSearchDatabase(this.config.path, this.config.journalMode)
-    const state = this._db.prepare(
+    const state = await this._db.get(
       'SELECT global_generation FROM search_state WHERE singleton = 1',
-    ).get()
+    )
     this._globalGeneration = state.global_generation
     this._localGeneration = state.global_generation
   }
@@ -249,12 +249,12 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
   async _reconcile(signal) {
     assertNotAborted(signal)
     const db = this._requireDb()
-    const persistedRows = db.prepare(
+    const persistedRows = await db.all(
       'SELECT id, revision, generation FROM persisted_sessions',
-    ).all()
-    const liveRows = db.prepare(
+    )
+    const liveRows = await db.all(
       'SELECT id, fingerprint, persisted, generation FROM temp.live_sessions',
-    ).all()
+    )
     const persistedById = new Map(persistedRows.map(row => [row.id, row]))
     const liveById = new Map(liveRows.map(row => [row.id, row]))
     const observation = await this._observeStable(persistedById, signal)
@@ -278,7 +278,7 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
       || liveChanges.length > 0
       || liveDeletes.length > 0
 
-    let nextMainGeneration = this._mainGeneration()
+    let nextMainGeneration = await this._mainGeneration()
     let nextLocalGeneration = this._localGeneration
     if (persistentChanges.length > 0 || persistentDeletes.length > 0) nextMainGeneration += 1
     const liveReplacements = liveChanges.map((entry) => {
@@ -293,28 +293,28 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
     if (hasWrites) {
       let began = false
       try {
-        db.exec('BEGIN IMMEDIATE')
+        await db.exec('BEGIN IMMEDIATE')
         began = true
-        for (const row of persistentDeletes) this._deleteSession('persisted', row.id)
+        for (const row of persistentDeletes) await this._deleteSession('persisted', row.id)
         for (const entry of persistentChanges) {
           /* v8 ignore next -- observation loads every entry whose revision differs */
           if (entry.loaded === undefined) throw new Error(`missing loaded revision for session "${entry.header.id}"`)
-          this._replacePersistedSession(entry.loaded, entry.revision, nextMainGeneration)
+          await this._replacePersistedSession(entry.loaded, entry.revision, nextMainGeneration)
         }
         if (persistentChanges.length > 0 || persistentDeletes.length > 0) {
-          db.prepare('UPDATE search_state SET global_generation = ? WHERE singleton = 1').run(nextMainGeneration)
+          await db.run('UPDATE search_state SET global_generation = ? WHERE singleton = 1', nextMainGeneration)
         }
-        for (const row of liveDeletes) this._deleteSession('live', row.id)
+        for (const row of liveDeletes) await this._deleteSession('live', row.id)
         for (const { entry, generation, persisted } of liveReplacements) {
-          this._replaceLiveSession(entry, generation, persisted)
+          await this._replaceLiveSession(entry, generation, persisted)
         }
-        db.exec('COMMIT')
+        await db.exec('COMMIT')
       } catch (error) {
         /* v8 ignore next -- a BEGIN failure has no transaction to roll back; the common wrapper still reports it. */
         if (began) {
           /* v8 ignore next 5 -- ROLLBACK failure requires a SQLite double fault; the original failure remains actionable. */
           try {
-            db.exec('ROLLBACK')
+            await db.exec('ROLLBACK')
           } catch {
             // The original SQLite failure remains the actionable cause.
           }
@@ -398,43 +398,44 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
     )
   }
 
-  _mainGeneration() {
-    const row = this._requireDb().prepare(
+  async _mainGeneration() {
+    const row = await this._requireDb().get(
       'SELECT global_generation FROM search_state WHERE singleton = 1',
-    ).get()
+    )
     return row.global_generation
   }
 
-  _deleteSession(source, id) {
+  async _deleteSession(source, id) {
     const db = this._requireDb()
     if (source === 'persisted') {
-      db.prepare('DELETE FROM persisted_docs WHERE session_id = ?').run(id)
-      db.prepare('DELETE FROM persisted_sessions WHERE id = ?').run(id)
+      await db.run('DELETE FROM persisted_docs WHERE session_id = ?', id)
+      await db.run('DELETE FROM persisted_sessions WHERE id = ?', id)
     } else {
-      db.prepare('DELETE FROM temp.live_docs WHERE session_id = ?').run(id)
-      db.prepare('DELETE FROM temp.live_sessions WHERE id = ?').run(id)
+      await db.run('DELETE FROM temp.live_docs WHERE session_id = ?', id)
+      await db.run('DELETE FROM temp.live_sessions WHERE id = ?', id)
     }
   }
 
-  _replacePersistedSession(entry, revision, generation) {
-    this._deleteSession('persisted', entry.header.id)
+  async _replacePersistedSession(entry, revision, generation) {
+    await this._deleteSession('persisted', entry.header.id)
     const db = this._requireDb()
-    db.prepare(`
+    await db.run(`
       INSERT INTO persisted_sessions
         (id, version, created_at, cwd, parent_session, seed_length, delegation_depth, agent_preset, revision, generation)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `,
       ...headerBindings(entry.header),
       revision,
       generation,
     )
-    const insert = db.prepare(`
+    const insert = `
       INSERT INTO persisted_docs (text, session_id, seq, type, time, surface, codepoint_length)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `)
+    `
     for (const document of entry.documents) {
       const text = sanitizeFtsText(document.text)
-      insert.run(
+      await db.run(
+        insert,
         text,
         document.sessionId,
         document.seq,
@@ -446,26 +447,27 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
     }
   }
 
-  _replaceLiveSession(entry, generation, persisted) {
-    this._deleteSession('live', entry.header.id)
+  async _replaceLiveSession(entry, generation, persisted) {
+    await this._deleteSession('live', entry.header.id)
     const db = this._requireDb()
-    db.prepare(`
+    await db.run(`
       INSERT INTO temp.live_sessions
         (id, version, created_at, cwd, parent_session, seed_length, delegation_depth, agent_preset, fingerprint, persisted, generation)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `,
       ...headerBindings(entry.header),
       entry.fingerprint,
       persisted ? 1 : 0,
       generation,
     )
-    const insert = db.prepare(`
+    const insert = `
       INSERT INTO temp.live_docs (text, session_id, seq, type, time, surface, codepoint_length)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `)
+    `
     for (const document of entry.documents) {
       const text = sanitizeFtsText(document.text)
-      insert.run(
+      await db.run(
+        insert,
         text,
         document.sessionId,
         document.seq,
@@ -477,7 +479,7 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
     }
   }
 
-  _querySessions(request, offset, persistenceBinding) {
+  async _querySessions(request, offset, persistenceBinding) {
     const selected = selectedDocumentsSql()
     const sessionWhere = buildSessionWhere(request.sessionFilters)
     const eventWhere = buildEventWhere(request.eventFilters)
@@ -493,7 +495,7 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
     assertPortableBindingCount(bindings.length)
     // The browser fixture mirrors these rank keys in
     // `packages/client/connection/src/client/fixture.js`; update both together.
-    return this._requireDb().prepare(`
+    return this._requireDb().all(`
       ${selected.sql},
       filtered AS (
         SELECT * FROM matched ${where.length === 0 ? '' : `WHERE ${where}`}
@@ -509,10 +511,10 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
       WHERE event_rank = 1
       ORDER BY match_count DESC, document_length ASC, time DESC, session_id ASC, seq DESC
       LIMIT ? OFFSET ?
-    `).all(...bindings)
+    `, ...bindings)
   }
 
-  _queryEvents(request, offset, persistenceBinding) {
+  async _queryEvents(request, offset, persistenceBinding) {
     const selected = selectedDocumentsSql()
     const eventWhere = buildEventWhere(request.filters)
     assertFts5OuterPredicateCount(1 + eventWhere.predicateCount)
@@ -525,33 +527,35 @@ export class SqliteSessionQueryEngine extends SessionQueryEngine {
       offset,
     ]
     assertPortableBindingCount(bindings.length)
-    return this._requireDb().prepare(`
+    return this._requireDb().all(`
       ${selected.sql}
       SELECT * FROM matched
       WHERE ${where}
       ORDER BY match_count DESC, document_length ASC, time DESC, seq DESC
       LIMIT ? OFFSET ?
-    `).all(...bindings)
+    `, ...bindings)
   }
 
-  _targetObservation(sessionId, persistenceBinding) {
+  async _targetObservation(sessionId, persistenceBinding) {
     const db = this._requireDb()
-    const live = db.prepare(
+    const live = await db.get(
       `SELECT
         id AS session_id, version, created_at, cwd, parent_session, seed_length, delegation_depth, agent_preset, generation
       FROM temp.live_sessions
       WHERE id = ?`,
-    ).get(sessionId)
+      sessionId,
+    )
     if (live !== undefined) {
       return { header: rowHeader(live), generation: `live:${live.generation}` }
     }
     if (persistenceBinding.service !== undefined) {
-      const persisted = db.prepare(
+      const persisted = await db.get(
         `SELECT
           id AS session_id, version, created_at, cwd, parent_session, seed_length, delegation_depth, agent_preset, generation
         FROM persisted_sessions
         WHERE id = ?`,
-      ).get(sessionId)
+        sessionId,
+      )
       if (persisted !== undefined) {
         return {
           header: rowHeader(persisted),

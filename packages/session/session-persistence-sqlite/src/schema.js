@@ -5,8 +5,6 @@
 
 import { randomUUID } from 'node:crypto'
 import { isAbsolute } from 'node:path'
-import { performance } from 'node:perf_hooks'
-import { setTimeout as delay } from 'node:timers/promises'
 import { SessionId } from '@freddie/freddie-session'
 import { sql } from './sql.js'
 
@@ -16,57 +14,44 @@ export const SCHEMA_VERSION = 17
 export const SESSION_PERSISTENCE_SQLITE_APPLICATION_ID = 0x44534850
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
-const JOURNAL_BUSY_RETRY_INTERVAL_MS = 10
 
 /**
  * Open and validate a SQLite session database.
- * @param Database - lazily imported Node SQLite constructor.
+ * @param createClient - libsql-plugkit-client's createClient function.
  * @param path - SQLite path, including `:memory:`.
- * @param journalMode - validated journal pragma.
- * @param busyTimeoutMs - validated maximum wait for a competing SQLite lock.
- * @returns the configured database handle.
+ * @returns the configured database client.
  * @throws when connection settings, schema ownership, or SQLite setup cannot be validated.
  */
-export async function openDatabase(Database, path, journalMode, busyTimeoutMs) {
-  const deadline = performance.now() + busyTimeoutMs
-  const db = new Database(path, { timeout: busyTimeoutMs })
+export async function openDatabase(createClient, path) {
+  const client = createClient({ url: path === ':memory:' ? ':memory:' : `file:${path}` })
   try {
-    configureConnectionSecurity(db, path)
-    configureDatabase(Database, db, path)
-    await selectJournalMode(db, path, journalMode, deadline)
-    configureDurability(db, path)
-    return db
+    await configureConnectionSecurity(client, path)
+    await configureDatabase(createClient, client, path)
+    return client
   } catch (error) {
-    db.close()
+    client.close()
     throw error
   }
 }
 
-function configureConnectionSecurity(db, path) {
-  db.exec(sql('trusted-schema-off'))
-  const trustedSchema = integerField(db.prepare(sql('select-trusted-schema')).get(), 'trusted_schema')
+async function configureConnectionSecurity(client, path) {
+  await client.execute(sql('trusted-schema-off'))
+  const trustedSchema = integerField(await scalarRow(client, 'select-trusted-schema'), 'trusted_schema')
   /* v8 ignore next 3 -- supported SQLite versions return the fixed setting. */
   if (trustedSchema !== 0) {
     throw new Error(`session database at "${path}" retained trusted_schema=${trustedSchema}, expected 0`)
   }
-  db.exec(sql('mmap-off'))
-  if (path === ':memory:') return
-  const mmapSize = integerField(db.prepare(sql('select-mmap-size')).get(), 'mmap_size')
-  /* v8 ignore next 3 -- supported file-backed SQLite connections return the fixed setting. */
-  if (mmapSize !== 0) {
-    throw new Error(`session database at "${path}" retained mmap_size=${mmapSize}, expected 0`)
-  }
 }
 
-function configureDatabase(Database, db, path) {
-  db.exec(sql('foreign-keys-on'))
+async function configureDatabase(createClient, client, path) {
+  await client.execute(sql('foreign-keys-on'))
   let began = false
   try {
-    db.exec(sql('begin-immediate'))
+    await client.execute(sql('begin-immediate'))
     began = true
-    const onDisk = integerField(db.prepare(sql('select-user-version')).get(), 'user_version')
-    const applicationId = integerField(db.prepare(sql('select-application-id')).get(), 'application_id')
-    const userObjectCount = integerField(db.prepare(sql('select-user-object-count')).get(), 'count')
+    const onDisk = integerField(await scalarRow(client, 'select-user-version'), 'user_version')
+    const applicationId = integerField(await scalarRow(client, 'select-application-id'), 'application_id')
+    const userObjectCount = integerField(await scalarRow(client, 'select-user-object-count'), 'count')
     if (onDisk === 0 && (applicationId !== 0 || userObjectCount > 0)) {
       throw new Error(`session database at "${path}" has an unversioned schema or application identity`)
     }
@@ -80,16 +65,16 @@ function configureDatabase(Database, db, path) {
         `session database at "${path}" has application id ${applicationId}, expected ${SESSION_PERSISTENCE_SQLITE_APPLICATION_ID}`,
       )
     }
-    if (onDisk === 0) initializeDatabase(db)
-    validateRequiredSchema(Database, db, path)
-    db.exec(sql('commit'))
+    if (onDisk === 0) await initializeDatabase(client)
+    await validateRequiredSchema(createClient, client, path)
+    await client.execute(sql('commit'))
     began = false
   } catch (error) {
     /* v8 ignore else -- a failed begin leaves no transaction to roll back. */
     if (began) {
       /* v8 ignore next 5 -- retain the original ownership failure if rollback fails too. */
       try {
-        db.exec(sql('rollback'))
+        await client.execute(sql('rollback'))
       } catch {
         // The original database-ownership failure remains actionable.
       }
@@ -98,76 +83,48 @@ function configureDatabase(Database, db, path) {
   }
 }
 
-async function selectJournalMode(db, path, journalMode, deadline) {
-  let result
-  while (true) {
-    try {
-      result = db.prepare(sql(journalResource(journalMode))).get()
-      break
-    } catch (error) {
-      const remainingMs = Math.max(0, Math.ceil(deadline - performance.now()))
-      if (!isSqliteBusy(error) || remainingMs === 0) throw error
-      await delay(Math.min(JOURNAL_BUSY_RETRY_INTERVAL_MS, remainingMs))
-      if (performance.now() >= deadline) throw error
-    }
-  }
-  const selected = stringField(result, 'journal_mode').toLowerCase()
-  const expected = path === ':memory:' ? 'memory' : journalMode
-  /* v8 ignore next 3 -- SQLite returns the selected mode from these fixed, valid pragmas. */
-  if (selected !== expected) {
-    throw new Error(`session database at "${path}" selected journal mode ${selected}, expected ${expected}`)
-  }
+async function initializeDatabase(client) {
+  await execMulti(client, sql('schema'))
+  await client.execute({ sql: sql('insert-persistence-state'), args: [randomUUID()] })
+  await client.execute(sql('set-application-id'))
+  await client.execute(sql('set-user-version-17'))
 }
 
-function configureDurability(db, path) {
-  db.exec(sql('synchronous-full'))
-  const synchronous = integerField(db.prepare(sql('select-synchronous')).get(), 'synchronous')
-  /* v8 ignore next 3 -- supported SQLite versions return the fixed setting. */
-  if (synchronous !== 2) {
-    throw new Error(`session database at "${path}" retained synchronous=${synchronous}, expected FULL (2)`)
+/**
+ * Execute a fixed, package-owned SQL resource containing multiple
+ * `;`-terminated statements. libsql-plugkit-client's execute() runs only the
+ * first statement in a multi-statement string (live-verified this session),
+ * unlike Node SQLite's db.exec(); this closed statement splitter covers only
+ * `schema.sql`, which contains no semicolons inside string literals or
+ * identifiers.
+ * @param client - open libsql-plugkit-client connection.
+ * @param script - `;`-separated SQL statements.
+ */
+async function execMulti(client, script) {
+  for (const statement of script.split(';').map(part => part.trim()).filter(part => part.length > 0)) {
+    await client.execute(statement)
   }
-}
-
-function isSqliteBusy(error) {
-  return typeof error === 'object'
-    && error !== null
-    && Reflect.get(error, 'errcode') === 5
-}
-
-function journalResource(mode) {
-  switch (mode) {
-    case 'wal': return 'journal-mode-wal'
-    case 'delete': return 'journal-mode-delete'
-    case 'truncate': return 'journal-mode-truncate'
-    case 'persist': return 'journal-mode-persist'
-  }
-}
-
-function initializeDatabase(db) {
-  db.exec(sql('schema'))
-  db.prepare(sql('insert-persistence-state')).run(randomUUID())
-  db.exec(sql('set-application-id'))
-  db.exec(sql('set-user-version-17'))
 }
 
 let canonicalSchema
 
-function expectedSchema(Database) {
+async function expectedSchema(createClient) {
   if (canonicalSchema !== undefined) return canonicalSchema
-  const reference = new Database(':memory:')
+  const reference = createClient({ url: ':memory:' })
   try {
-    reference.exec(sql('foreign-keys-on'))
-    reference.exec(sql('schema'))
-    canonicalSchema = schemaObjects(reference)
+    await reference.execute(sql('foreign-keys-on'))
+    await execMulti(reference, sql('schema'))
+    canonicalSchema = await schemaObjects(reference)
     return canonicalSchema
   } finally {
     reference.close()
   }
 }
 
-function schemaObjects(db) {
-  return db.prepare(sql('select-schema-objects')).all().map((value) => {
-    const row = record(value, 'schema object')
+async function schemaObjects(client) {
+  const { rows } = await client.execute(sql('select-schema-objects'))
+  return rows.map((value) => {
+    const row = record(rowObject(value, ['type', 'name', 'tbl_name', 'sql']), 'schema object')
     return {
       type: stringField(row, 'type'),
       name: stringField(row, 'name'),
@@ -181,28 +138,30 @@ function normalizeSql(value) {
   return value.replaceAll(/\s+/gu, ' ').trim()
 }
 
-function validateRequiredSchema(Database, db, path) {
-  if (JSON.stringify(schemaObjects(db)) !== JSON.stringify(expectedSchema(Database))) {
+async function validateRequiredSchema(createClient, client, path) {
+  const actual = await schemaObjects(client)
+  const canonical = await expectedSchema(createClient)
+  if (JSON.stringify(actual) !== JSON.stringify(canonical)) {
     throw new Error(`session database at "${path}" does not contain the required schema objects`)
   }
 }
 
 /**
  * Recheck schema ownership inside the caller's mutation transaction.
- * @param Database - constructor used to validate the canonical schema.
- * @param db - open owned database with an active immediate transaction.
+ * @param createClient - libsql-plugkit-client's createClient function, used to validate the canonical schema.
+ * @param client - open owned database client with an active immediate transaction.
  * @param path - database location used in ownership diagnostics.
  * @throws when another writer changed the application identity, schema, or version.
  */
-export function validateSchemaForMutation(Database, db, path) {
-  const version = integerField(db.prepare(sql('select-user-version')).get(), 'user_version')
-  const applicationId = integerField(db.prepare(sql('select-application-id')).get(), 'application_id')
+export async function validateSchemaForMutation(createClient, client, path) {
+  const version = integerField(await scalarRow(client, 'select-user-version'), 'user_version')
+  const applicationId = integerField(await scalarRow(client, 'select-application-id'), 'application_id')
   if (applicationId !== SESSION_PERSISTENCE_SQLITE_APPLICATION_ID) {
     throw new Error(
       `session database application id changed before mutation (expected ${SESSION_PERSISTENCE_SQLITE_APPLICATION_ID}, got ${applicationId})`,
     )
   }
-  validateRequiredSchema(Database, db, path)
+  await validateRequiredSchema(createClient, client, path)
   if (version !== SCHEMA_VERSION) {
     throw new Error(`session database schema changed before mutation (expected ${SCHEMA_VERSION}, got ${version})`)
   }
@@ -210,11 +169,11 @@ export function validateSchemaForMutation(Database, db, path) {
 
 /**
  * Decode and validate one durable session row.
- * @param value - value returned by SQLite.
+ * @param value - row array returned by libsql-plugkit-client, with named columns attached.
  * @returns a validated session row.
  */
 export function decodeSessionRow(value) {
-  const row = record(value, 'stored session metadata')
+  const row = record(rowObject(value, SESSION_COLUMNS), 'stored session metadata')
   const id = nonemptyStringField(row, 'id')
   const version = safeIntegerField(row, 'version')
   const cwd = nullableStringField(row, 'cwd')
@@ -239,13 +198,20 @@ export function decodeSessionRow(value) {
   }
 }
 
+const SESSION_COLUMNS = [
+  'id', 'version', 'created_at', 'cwd', 'parent_session', 'seed_length',
+  'origin', 'delegation_depth', 'agent_preset', 'incarnation', 'revision',
+]
+
+const EVENT_COLUMNS = ['seq', 'type', 'time', 'data', 'source_event_seqs', 'surface_op', 'ignorable']
+
 /**
  * Decode and validate one durable event row before JSON interpretation.
- * @param value - value returned by SQLite.
+ * @param value - row array returned by libsql-plugkit-client, with named columns attached.
  * @returns a validated physical event row.
  */
 export function decodeEventRow(value) {
-  const row = record(value, 'stored event')
+  const row = record(rowObject(value, EVENT_COLUMNS), 'stored event')
   const ignorable = nullableSafeIntegerField(row, 'ignorable')
   if (ignorable !== null && ignorable !== 0 && ignorable !== 1) {
     throw new Error('stored event ignorable must be 0, 1, or null')
@@ -263,11 +229,12 @@ export function decodeEventRow(value) {
 
 /**
  * Validate the singleton identity read from durable storage.
- * @param value - value returned by SQLite.
+ * @param value - row array returned by libsql-plugkit-client.
  * @returns the UUID store identity.
  */
 export function decodeStoreIdentity(value) {
-  const identity = nonemptyStringField(value, 'store_id')
+  const row = rowObject(value, ['store_id'])
+  const identity = nonemptyStringField(row, 'store_id')
   if (!UUID.test(identity)) throw new Error('stored store_id must be a UUID')
   return identity
 }
@@ -289,6 +256,42 @@ export function rowToMeta(row) {
     ...row.delegation_depth === null ? {} : { delegationDepth: row.delegation_depth },
     ...row.agent_preset === null ? {} : { agentPreset: row.agent_preset },
   }
+}
+
+/**
+ * Fetch a single scalar-column row from a bare SQL resource and decode a blob
+ * marker back into a Buffer where present.
+ * @param client - open libsql-plugkit-client connection.
+ * @param resource - closed SQL resource name selecting exactly one row.
+ * @returns the row as a plain object keyed by column name, or undefined.
+ */
+async function scalarRow(client, resource) {
+  const { rows, columns } = await client.execute(sql(resource))
+  if (rows.length === 0) return undefined
+  return rowObject(rows[0], columns)
+}
+
+/**
+ * Attach column names to a libsql-plugkit-client row array, decoding any
+ * `{"$blob": base64}` marker into a Node Buffer.
+ * @param value - the row as returned by execute() (array, indexable by column name too).
+ * @param columns - ordered column names for this row shape.
+ * @returns a plain object keyed by column name.
+ */
+function rowObject(value, columns) {
+  if (value === undefined) return undefined
+  const out = {}
+  for (let index = 0; index < columns.length; index += 1) {
+    out[columns[index]] = decodeBlobMarker(value[columns[index]] !== undefined ? value[columns[index]] : value[index])
+  }
+  return out
+}
+
+function decodeBlobMarker(field) {
+  if (field !== null && typeof field === 'object' && '$blob' in field) {
+    return Buffer.from(field.$blob, 'base64')
+  }
+  return field
 }
 
 function record(value, label) {

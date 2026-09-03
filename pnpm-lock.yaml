@@ -4239,6 +4239,16 @@ importers:
         specifier: workspace:^
         version: link:../../core/tools
 
+  packages/gm/gm-client:
+    dependencies:
+      '@freddie/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@freddie/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+
   packages/goal/command-goal:
     devDependencies:
       '@freddie/cordis':
@@ -5546,6 +5556,9 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
+      libsql-plugkit-client:
+        specifier: github:AnEntrypoint/libsql-plugkit-client
+        version: https://codeload.github.com/AnEntrypoint/libsql-plugkit-client/tar.gz/cba645b472043e04747d6200be1d745583130548
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -5702,6 +5715,9 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
+      libsql-plugkit-client:
+        specifier: github:AnEntrypoint/libsql-plugkit-client
+        version: https://codeload.github.com/AnEntrypoint/libsql-plugkit-client/tar.gz/cba645b472043e04747d6200be1d745583130548
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -6572,6 +6588,25 @@ importers:
       '@freddie/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
+    devDependencies:
+      '@freddie/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@freddie/freddie-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@freddie/freddie-storage':
+        specifier: workspace:^
+        version: link:../storage
+
+  packages/storage/storage-sqlite:
+    dependencies:
+      '@freddie/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      libsql-plugkit-client:
+        specifier: github:AnEntrypoint/libsql-plugkit-client
+        version: https://codeload.github.com/AnEntrypoint/libsql-plugkit-client/tar.gz/cba645b472043e04747d6200be1d745583130548
     devDependencies:
       '@freddie/cordis':
         specifier: workspace:^
@@ -8716,6 +8751,11 @@ packages:
     resolution: {integrity: sha512-2uOexfsrrRhCiTUWdGyDySxVHHhOFJ8MQejs27dM3hugrQB48/z1ZVlaNoxpZ1SnzQ1GaDIbO5rAvicwyiknYQ==}
     hasBin: true
 
+  libsql-plugkit-client@https://codeload.github.com/AnEntrypoint/libsql-plugkit-client/tar.gz/cba645b472043e04747d6200be1d745583130548:
+    resolution: {gitHosted: true, integrity: sha512-HzsOqRUveNaf+EGss5+1LFt/x4r198PzUA7syCbGVpeop1zvlitL+SbyamUSZF0lIPlYGuLqfEbIgRm/2dnsWQ==, tarball: https://codeload.github.com/AnEntrypoint/libsql-plugkit-client/tar.gz/cba645b472043e04747d6200be1d745583130548}
+    version: 0.0.15
+    engines: {node: '>=20.0.0'}
+
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
 
@@ -10224,6 +10264,8 @@ snapshots:
       lefthook-openbsd-x64: 2.1.12
       lefthook-windows-arm64: 2.1.12
       lefthook-windows-x64: 2.1.12
+
+  libsql-plugkit-client@https://codeload.github.com/AnEntrypoint/libsql-plugkit-client/tar.gz/cba645b472043e04747d6200be1d745583130548: {}
 
   longest-streak@3.1.0: {}
 

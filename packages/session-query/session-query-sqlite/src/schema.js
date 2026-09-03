@@ -45,12 +45,12 @@ export async function openSearchDatabase(path, journalMode) {
     await mkdir(dirname(actual), { recursive: true, mode: 0o700 })
     await createDatabaseFile(actual)
   }
-  const { DatabaseSync } = await import('node:sqlite')
-  const db = new DatabaseSync(actual)
+  const { createClient } = await import('libsql-plugkit-client')
+  const db = wrapClient(createClient({ url: actual === ':memory:' ? ':memory:' : `file:${actual}` }))
   try {
-    const { application_id: applicationId } = db.prepare('PRAGMA application_id').get()
-    const { user_version: version } = db.prepare('PRAGMA user_version').get()
-    const userTables = listUserTables(db)
+    const applicationId = await db.scalar('PRAGMA application_id')
+    const version = await db.scalar('PRAGMA user_version')
+    const userTables = await listUserTables(db)
     if (applicationId !== 0 && applicationId !== SESSION_QUERY_SQLITE_APPLICATION_ID) {
       throw new Error(`session-search database at "${actual}" belongs to another application`)
     }
@@ -59,13 +59,15 @@ export async function openSearchDatabase(path, journalMode) {
     }
     if (applicationId === SESSION_QUERY_SQLITE_APPLICATION_ID) {
       assertDerivedUserTables(actual, userTables)
-      if (version !== SESSION_QUERY_SQLITE_SCHEMA_VERSION) resetDerivedSchema(db, userTables)
+      if (version !== SESSION_QUERY_SQLITE_SCHEMA_VERSION) await resetDerivedSchema(db, userTables)
     }
     // Apply mutating pragmas only after refusing foreign or canonical files.
     // journalMode is a validated closed union, not caller-controlled SQL.
-    db.exec(`PRAGMA journal_mode = ${journalMode.toUpperCase()}`)
-    ensurePersistentSchema(db)
-    ensureTemporarySchema(db)
+    // libsql's wasm32-wasi VFS has no shared memory, so WAL is silently
+    // declined and the mode stays 'delete'; the request remains best-effort.
+    await db.exec(`PRAGMA journal_mode = ${journalMode.toUpperCase()}`)
+    await ensurePersistentSchema(db)
+    await ensureTemporarySchema(db)
     return db
   } catch (error) {
     db.close()
@@ -73,10 +75,92 @@ export async function openSearchDatabase(path, journalMode) {
   }
 }
 
-function listUserTables(db) {
-  const rows = db.prepare(
+/**
+ * Adapt the async libsql client to the statement shapes this backend uses.
+ * Result rows are arrays carrying column names as own properties, so callers
+ * keep reading `row.column`; absent rows surface as `undefined`, matching the
+ * synchronous handle this replaced.
+ */
+function wrapClient(client) {
+  const execute = (sql, params) => {
+    if (params === undefined || params.length === 0) return client.execute(sql)
+    const { sql: bound, args } = inlineNullBindings(sql, params)
+    return args.length === 0 ? client.execute(bound) : client.execute({ sql: bound, args })
+  }
+  return {
+    client,
+    async exec(sql) {
+      await execute(sql, [])
+    },
+    async run(sql, ...params) {
+      await execute(sql, params)
+    },
+    async all(sql, ...params) {
+      const { rows } = await execute(sql, params)
+      return rows
+    },
+    async get(sql, ...params) {
+      const { rows } = await execute(sql, params)
+      return rows[0]
+    },
+    async scalar(sql, ...params) {
+      const { rows } = await execute(sql, params)
+      return rows[0]?.[0]
+    },
+    close() {
+      client.close()
+    },
+  }
+}
+
+/**
+ * Replace `null` bindings with literal `NULL` in the statement text.
+ *
+ * The wasm client marshals bound parameters through JSON and reads a JSON
+ * `null` back as the four-character string "null", which silently corrupts
+ * TEXT columns and violates STRICT INTEGER columns outright. Positional
+ * placeholders are rewritten in order, so the surviving arguments keep their
+ * original positions; only literal `NULL` — never caller data — is inlined.
+ */
+function inlineNullBindings(sql, params) {
+  if (!params.includes(null) && !params.includes(undefined)) return { sql, args: params }
+  const args = []
+  let index = 0
+  let quote
+  let out = ''
+  for (let position = 0; position < sql.length; position += 1) {
+    const character = sql[position]
+    if (quote !== undefined) {
+      if (character === quote) quote = undefined
+      out += character
+      continue
+    }
+    if (character === "'" || character === '"') {
+      quote = character
+      out += character
+      continue
+    }
+    if (character !== '?') {
+      out += character
+      continue
+    }
+    const value = params[index]
+    index += 1
+    if (value === null || value === undefined) out += 'NULL'
+    else {
+      out += '?'
+      args.push(value)
+    }
+  }
+  /* v8 ignore next -- a placeholder/argument mismatch is a caller defect, not a runtime path */
+  if (index !== params.length) throw new Error('session-search statement placeholder count does not match its bindings')
+  return { sql: out, args }
+}
+
+async function listUserTables(db) {
+  const rows = await db.all(
     "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT GLOB 'sqlite_*' ORDER BY name",
-  ).all()
+  )
   return rows.map(row => row.name)
 }
 
@@ -89,23 +173,23 @@ function assertDerivedUserTables(path, userTables) {
   }
 }
 
-function resetDerivedSchema(db, userTables) {
+async function resetDerivedSchema(db, userTables) {
   for (const name of userTables) {
-    db.exec(`DROP TABLE IF EXISTS ${quoteIdentifier(name)}`)
+    await db.exec(`DROP TABLE IF EXISTS ${quoteIdentifier(name)}`)
   }
-  db.exec('PRAGMA user_version = 0')
+  await db.exec('PRAGMA user_version = 0')
 }
 
-function ensurePersistentSchema(db) {
-  db.exec(`PRAGMA application_id = ${SESSION_QUERY_SQLITE_APPLICATION_ID}`)
-  db.exec(`
+async function ensurePersistentSchema(db) {
+  await db.exec(`PRAGMA application_id = ${SESSION_QUERY_SQLITE_APPLICATION_ID}`)
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS search_state (
       singleton         INTEGER PRIMARY KEY CHECK (singleton = 1),
       global_generation INTEGER NOT NULL
     ) STRICT
   `)
-  db.exec('INSERT OR IGNORE INTO search_state (singleton, global_generation) VALUES (1, 0)')
-  db.exec(`
+  await db.exec('INSERT OR IGNORE INTO search_state (singleton, global_generation) VALUES (1, 0)')
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS persisted_sessions (
       id             TEXT PRIMARY KEY,
       version        INTEGER NOT NULL,
@@ -119,7 +203,7 @@ function ensurePersistentSchema(db) {
       generation     INTEGER NOT NULL
     ) STRICT
   `)
-  db.exec(`
+  await db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS persisted_docs USING fts5(
       text,
       session_id UNINDEXED,
@@ -131,11 +215,11 @@ function ensurePersistentSchema(db) {
       tokenize = 'unicode61'
     )
   `)
-  db.exec(`PRAGMA user_version = ${SESSION_QUERY_SQLITE_SCHEMA_VERSION}`)
+  await db.exec(`PRAGMA user_version = ${SESSION_QUERY_SQLITE_SCHEMA_VERSION}`)
 }
 
-function ensureTemporarySchema(db) {
-  db.exec(`
+async function ensureTemporarySchema(db) {
+  await db.exec(`
     CREATE TEMP TABLE IF NOT EXISTS live_sessions (
       id             TEXT PRIMARY KEY,
       version        INTEGER NOT NULL,
@@ -150,7 +234,7 @@ function ensureTemporarySchema(db) {
       generation     INTEGER NOT NULL
     ) STRICT
   `)
-  db.exec(`
+  await db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS temp.live_docs USING fts5(
       text,
       session_id UNINDEXED,

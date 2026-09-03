@@ -35,7 +35,8 @@
     "@freddie/cordis": "workspace:^"
   },
   "dependencies": {
-    "@freddie/schemastery": "workspace:^"
+    "@freddie/schemastery": "workspace:^",
+    "libsql-plugkit-client": "github:AnEntrypoint/libsql-plugkit-client"
   },
   "devDependencies": {
     "@freddie/cordis-plugin-include": "workspace:^",

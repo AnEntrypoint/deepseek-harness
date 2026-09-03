@@ -15,7 +15,7 @@ CREATE TABLE sessions (
   agent_preset     TEXT,
   incarnation      TEXT NOT NULL,
   revision         INTEGER NOT NULL
-) STRICT;
+);
 
 CREATE TABLE events (
   session_id        TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
@@ -27,4 +27,4 @@ CREATE TABLE events (
   surface_op        TEXT,
   ignorable         INTEGER CHECK (ignorable IS NULL OR ignorable IN (0, 1)),
   PRIMARY KEY (session_id, seq)
-) STRICT;
+);

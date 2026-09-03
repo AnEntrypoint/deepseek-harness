@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto'
 import { statSync } from 'node:fs'
 import { lstat, mkdir, open } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
+import { createClient } from 'libsql-plugkit-client'
 import { SessionPersistenceRevision } from '@freddie/freddie-session-persistence'
 import {
   MAX_PACKED_ROW_MEMBERS,
@@ -32,7 +33,6 @@ import { sql } from './sql.js'
 export class SqliteStore {
   name = 'session-persistence-sqlite'
   db
-  databaseConstructor
   storeIdentity
   databasePath
   opened = false
@@ -44,7 +44,7 @@ export class SqliteStore {
   }
 
   /**
-   * Validate filesystem ownership without importing or opening Node SQLite.
+   * Validate filesystem ownership without importing or opening the client.
    * @returns settlement of the store's one path-validation operation.
    */
   validatePath() {
@@ -77,22 +77,15 @@ export class SqliteStore {
       await createDatabaseFile(this.databasePath)
       await validateDatabaseFile(this.databasePath)
     }
-    const { DatabaseSync } = await loadNodeSqlite()
-    this.databaseConstructor = DatabaseSync
-    this.db = await openDatabase(
-      DatabaseSync,
-      this.databasePath,
-      this.options.journalMode,
-      this.options.busyTimeoutMs,
-    )
+    this.db = await openDatabase(createClient, this.databasePath)
     try {
-      const row = this.db.prepare(sql('select-store-id')).get()
-      if (row === undefined) {
+      const { rows, columns } = await this.db.execute(sql('select-store-id'))
+      if (rows.length === 0) {
         throw new Error(`session database at "${this.databasePath}" has no valid store identity`)
       }
       let storeId
       try {
-        storeId = decodeStoreIdentity(row)
+        storeId = decodeStoreIdentity(namedRow(rows[0], columns))
       } catch (error) {
         throw new Error(`session database at "${this.databasePath}" has no valid store identity`, { cause: error })
       }
@@ -111,10 +104,10 @@ export class SqliteStore {
 
   async loadStored(id, signal) {
     await this.observe(signal)
-    const snapshot = this.readTransaction(() => {
-      const row = this.rowFor(id)
+    const snapshot = await this.readTransaction(async () => {
+      const row = await this.rowFor(id)
       if (row === undefined) return undefined
-      const eventRows = this.db.prepare(sql('select-events')).all(id).map(decodeEventRow)
+      const eventRows = await this.selectEvents(id)
       return { row, eventRows }
     })
     signal?.throwIfAborted()
@@ -130,17 +123,17 @@ export class SqliteStore {
 
   async readStoredRevision(id, signal) {
     await this.observe(signal)
-    const row = this.rowFor(id)
+    const row = await this.rowFor(id)
     signal?.throwIfAborted()
     return row === undefined ? undefined : sqliteRevision(this.storeIdentity, row)
   }
 
   async loadStoredFrom(id, fromSeq, signal) {
     await this.observe(signal)
-    const snapshot = this.readTransaction(() => {
-      const row = this.rowFor(id)
+    const snapshot = await this.readTransaction(async () => {
+      const row = await this.rowFor(id)
       if (row === undefined) return undefined
-      return { row, ...this.physicalSpanFrom(id, fromSeq) }
+      return { row, ...await this.physicalSpanFrom(id, fromSeq) }
     })
     signal?.throwIfAborted()
     if (snapshot === undefined) return undefined
@@ -151,43 +144,41 @@ export class SqliteStore {
   async appendBatch(meta, events, isMaterialized) {
     await this.open()
     if (events.length === 0) return
-    this.db.exec(sql('begin-immediate'))
+    await this.db.execute(sql('begin-immediate'))
     try {
-      validateSchemaForMutation(this.databaseConstructor, this.db, this.databasePath)
-      const tailRows = this.tailRows(meta.id)
+      await validateSchemaForMutation(createClient, this.db, this.databasePath)
+      const tailRows = await this.tailRows(meta.id)
       const currentLast = this.logicalLastEvent(meta.id, tailRows)
       const expected = currentLast === undefined ? 0 : currentLast.seq + 1
       const first = events[0]
       if (first.seq !== expected) {
         throw new Error(`session ${meta.id} append starts at seq ${first.seq}, stored next seq is ${expected}`)
       }
-      if (!isMaterialized) this.writeRow(meta)
+      if (!isMaterialized) await this.writeRow(meta)
 
-      const insert = this.insertStatement()
-      for (const record of packChunkRuns(events)) this.insertRecord(insert, meta.id, bindRecord(record))
-      this.incrementRevision(meta.id)
-      this.db.exec(sql('commit'))
+      for (const record of packChunkRuns(events)) await this.insertRecord(meta.id, bindRecord(record))
+      await this.incrementRevision(meta.id)
+      await this.db.execute(sql('commit'))
     } catch (error) {
-      this.rollback(error, 'append')
+      await this.rollback(error, 'append')
     }
   }
 
   async commitRepair(meta, tornMarker, closers) {
     await this.open()
     if (tornMarker === undefined && closers.length === 0) return
-    this.db.exec(sql('begin-immediate'))
+    await this.db.execute(sql('begin-immediate'))
     try {
-      validateSchemaForMutation(this.databaseConstructor, this.db, this.databasePath)
-      const row = this.rowFor(meta.id)
+      await validateSchemaForMutation(createClient, this.db, this.databasePath)
+      const row = await this.rowFor(meta.id)
       if (row === undefined) throw new Error(`session ${meta.id} metadata row is missing`)
-      const currentRows = this.db.prepare(sql('select-events')).all(meta.id).map(decodeEventRow)
+      const currentRows = await this.selectEvents(meta.id)
       const current = scanRows(currentRows)
       if (tornMarker !== undefined) {
         if (current.tornFrom !== tornMarker) {
           throw new Error(`session ${meta.id} repair is stale: physical tail no longer starts at seq ${tornMarker}`)
         }
-        this.db.prepare(sql('delete-events-from'))
-          .run(meta.id, tornMarker)
+        await this.db.execute({ sql: sql('delete-events-from'), args: [meta.id, tornMarker] })
       } else if (current.tornFrom !== undefined) {
         throw new Error(`session ${meta.id} repair omitted current torn tail at seq ${current.tornFrom}`)
       }
@@ -198,19 +189,18 @@ export class SqliteStore {
         if (closers[0]?.seq !== expected) {
           throw new Error(`session ${meta.id} repair is stale: closer starts at seq ${closers[0]?.seq}, stored next seq is ${expected}`)
         }
-        const insert = this.insertStatement()
-        for (const closer of closers) this.insertRecord(insert, meta.id, bindRecord(closer))
+        for (const closer of closers) await this.insertRecord(meta.id, bindRecord(closer))
       }
-      this.incrementRevision(meta.id)
-      this.db.exec(sql('commit'))
+      await this.incrementRevision(meta.id)
+      await this.db.execute(sql('commit'))
     } catch (error) {
-      this.rollback(error, 'repair')
+      await this.rollback(error, 'repair')
     }
   }
 
   async list(signal) {
     await this.observe(signal)
-    const rows = this.sessionRows()
+    const rows = await this.sessionRows()
     signal?.throwIfAborted()
     return rows.map(rowToMeta)
   }
@@ -222,7 +212,7 @@ export class SqliteStore {
    */
   async listSnapshots(signal) {
     await this.observe(signal)
-    const rows = this.sessionRows()
+    const rows = await this.sessionRows()
     signal?.throwIfAborted()
     return rows.map(row => ({
       header: rowToMeta(row),
@@ -241,9 +231,9 @@ export class SqliteStore {
     this.db.close()
   }
 
-  rowFor(id) {
-    const value = this.db.prepare(sql('select-session')).get(id)
-    return value === undefined ? undefined : decodeSessionRow(value)
+  async rowFor(id) {
+    const { rows, columns } = await this.db.execute({ sql: sql('select-session'), args: [id] })
+    return rows.length === 0 ? undefined : decodeSessionRow(namedRow(rows[0], columns))
   }
 
   async observe(signal) {
@@ -252,50 +242,58 @@ export class SqliteStore {
     signal?.throwIfAborted()
   }
 
-  readTransaction(read) {
-    this.db.exec(sql('begin'))
+  async readTransaction(read) {
+    await this.db.execute(sql('begin'))
     try {
-      const value = read()
-      this.db.exec(sql('commit'))
+      const value = await read()
+      await this.db.execute(sql('commit'))
       return value
     } catch (error) {
-      this.rollback(error, 'read')
+      await this.rollback(error, 'read')
     }
   }
 
-  sessionRows() {
-    return this.db.prepare(sql('select-sessions')).all().map(decodeSessionRow)
+  async sessionRows() {
+    const { rows, columns } = await this.db.execute(sql('select-sessions'))
+    return rows.map(row => decodeSessionRow(namedRow(row, columns)))
   }
 
-  rollback(error, operation) {
+  async rollback(error, operation) {
     try {
-      this.db.exec(sql('rollback'))
+      await this.db.execute(sql('rollback'))
     } catch (rollbackError) {
-      /* v8 ignore next -- requires SQLite to fail both an operation and its immediate rollback. */
+      /* v8 ignore next -- requires the backend to fail both an operation and its immediate rollback. */
       throw new AggregateError([error, rollbackError], `${this.name} ${operation} failed and rollback also failed`)
     }
     throw error
   }
 
-  incrementRevision(id) {
-    const updated = this.db.prepare(sql('update-session-revision'))
-      .run(id)
+  async incrementRevision(id) {
+    const result = await this.db.execute({ sql: sql('update-session-revision'), args: [id] })
     /* v8 ignore next -- materialized writes follow coordinator create(); other writes upsert in this transaction. */
-    if (Number(updated.changes) !== 1) throw new Error(`session ${id} metadata row is missing`)
+    if (Number(result.rowsAffected) !== 1) throw new Error(`session ${id} metadata row is missing`)
   }
 
-  tailRows(id) {
-    const tail = this.db.prepare(sql('select-tail-events')).all(id, 2).map(decodeEventRow).reverse()
+  async selectEvents(id) {
+    const { rows, columns } = await this.db.execute({ sql: sql('select-events'), args: [id] })
+    return rows.map(row => decodeEventRow(namedRow(row, columns)))
+  }
+
+  async tailRows(id) {
+    const { rows, columns } = await this.db.execute({ sql: sql('select-tail-events'), args: [id, 2] })
+    const tail = rows.map(row => decodeEventRow(namedRow(row, columns))).reverse()
     if (tail.length === 0) return []
-    return this.physicalSpanFrom(id, tail[0].seq).eventRows
+    return (await this.physicalSpanFrom(id, tail[0].seq)).eventRows
   }
 
   /** Select the bounded physical span that may represent `fromSeq`. */
-  physicalSpanFrom(id, fromSeq) {
+  async physicalSpanFrom(id, fromSeq) {
     const packedFloor = Math.max(0, fromSeq - MAX_PACKED_ROW_MEMBERS + 1)
-    const packedPredecessors = this.db.prepare(sql('select-packed-predecessors'))
-      .all(id, packedFloor, fromSeq)
-      .map(decodeEventRow)
+    const predecessorResult = await this.db.execute({
+      sql: sql('select-packed-predecessors'),
+      args: [id, packedFloor, fromSeq],
+    })
+    const packedPredecessors = predecessorResult.rows.map(row => decodeEventRow(namedRow(row, predecessorResult.columns)))
     let base = fromSeq
     for (const predecessor of packedPredecessors) {
       try {
@@ -306,7 +304,8 @@ export class SqliteStore {
         base = Math.min(base, predecessor.seq)
       }
     }
-    const eventRows = this.db.prepare(sql('select-events-from')).all(id, base).map(decodeEventRow)
+    const eventsResult = await this.db.execute({ sql: sql('select-events-from'), args: [id, base] })
+    const eventRows = eventsResult.rows.map(row => decodeEventRow(namedRow(row, eventsResult.columns)))
     return { base, eventRows }
   }
 
@@ -317,25 +316,21 @@ export class SqliteStore {
     return preserved.at(-1)
   }
 
-  insertStatement() {
-    return this.db.prepare(sql('insert-event'))
-  }
-
-  insertRecord(insert, id, record) {
-    insert.run(
+  async insertRecord(id, record) {
+    await this.db.execute(bindNullable(sql('insert-event'), [
       id,
       record.seq,
       record.type,
       record.time,
-      record.data,
-      record.sourceEventSeqs,
+      bindBlobIfNeeded(record.data),
+      record.sourceEventSeqs === null ? null : bindBlobIfNeeded(record.sourceEventSeqs),
       record.surfaceOp,
       record.ignorable,
-    )
+    ]))
   }
 
-  writeRow(meta) {
-    this.db.prepare(sql('upsert-session')).run(
+  async writeRow(meta) {
+    await this.db.execute(bindNullable(sql('upsert-session'), [
       meta.id,
       meta.version,
       meta.createdAt,
@@ -346,8 +341,55 @@ export class SqliteStore {
       meta.delegationDepth ?? null,
       meta.agentPreset ?? null,
       randomUUID(),
-    )
+    ]))
   }
+}
+
+/** Bind a Buffer/Uint8Array payload as libsql-plugkit-client's real blob marker; pass strings through unchanged. */
+function bindBlobIfNeeded(value) {
+  if (value instanceof Uint8Array) return { $blob: Buffer.from(value).toString('base64') }
+  return value
+}
+
+/**
+ * libsql-plugkit-client binds a JS `null` positional param as the literal
+ * TEXT string "null" rather than SQL NULL (live-verified this session: a
+ * bound `null` reads back as `typeof(a) = 'text'`, value `"null"`; only a
+ * `NULL` literal written directly into the SQL text produces a true SQL
+ * NULL). This rewrites the statement's positional `?` placeholders,
+ * in order, replacing each one whose argument is `null` with an inline
+ * `NULL` literal and dropping that argument from the bound list, leaving
+ * the remaining `?`s to bind the remaining (non-null) arguments in order.
+ * @param sqlText - a statement using only positional `?` placeholders.
+ * @param args - ordered argument values, one per `?`, `null` for SQL NULL.
+ * @returns an `{ sql, args }` statement safe to pass to execute().
+ */
+function bindNullable(sqlText, args) {
+  let index = 0
+  let rewritten = ''
+  const bound = []
+  for (const char of sqlText) {
+    if (char === '?') {
+      const value = args[index]
+      index += 1
+      if (value === null || value === undefined) {
+        rewritten += 'NULL'
+      } else {
+        rewritten += '?'
+        bound.push(value)
+      }
+    } else {
+      rewritten += char
+    }
+  }
+  return { sql: rewritten, args: bound }
+}
+
+/** Attach column names to a libsql-plugkit-client row array (already indexable by name, kept explicit for schema.js decoders). */
+function namedRow(row, columns) {
+  const out = {}
+  for (let index = 0; index < columns.length; index += 1) out[columns[index]] = row[index]
+  return out
 }
 
 function sqliteRevision(storeIdentity, row) {
@@ -399,39 +441,4 @@ async function validateDatabaseFileIfPresent(path) {
   } catch (error) {
     if (error.code !== 'ENOENT') throw error
   }
-}
-
-let nodeSqlite
-
-/** Load Node SQLite once so concurrent stores share one warning-filter lifetime. */
-function loadNodeSqlite() {
-  nodeSqlite ??= importNodeSqlite()
-  return nodeSqlite
-}
-
-/** Import Node 22's SQLite dependency without its process-wide experimental warning. */
-async function importNodeSqlite() {
-  const emitWarning = Reflect.get(process, 'emitWarning')
-  /* v8 ignore start -- Node 22 alone emits this warning; primary coverage runs on Node 24. */
-  const filteredEmitWarning = (warning, ...args) => {
-    const message = warning instanceof Error ? warning.message : warning
-    const first = args[0]
-    const type = warning instanceof Error
-      ? warning.name
-      : typeof first === 'string'
-        ? first
-        : typeof first === 'object' && first !== null && 'type' in first
-          ? first.type
-          : undefined
-    if (message === 'SQLite is an experimental feature and might change at any time'
-      && type === 'ExperimentalWarning') return
-    Reflect.apply(emitWarning, process, [warning, ...args])
-  }
-  Reflect.set(process, 'emitWarning', filteredEmitWarning)
-  try {
-    return await import('node:sqlite')
-  } finally {
-    Reflect.set(process, 'emitWarning', emitWarning)
-  }
-  /* v8 ignore stop */
 }
