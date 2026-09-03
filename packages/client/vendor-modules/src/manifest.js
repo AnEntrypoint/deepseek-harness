@@ -3,6 +3,10 @@
 // dependency version bump or a new bare specifier enters workspace source.
 export const vendorPackages = [
   {
+    "name": "zod",
+    "version": "4.4.3"
+  },
+  {
     "name": "webjsx",
     "version": "0.0.73"
   },
@@ -349,6 +353,7 @@ export const vendorPackages = [
 ]
 
 export const importMapExact = {
+  "zod": "/vendor/zod@4.4.3/index.js",
   "webjsx": "/vendor/webjsx@0.0.73/dist/index.js",
   "webjsx/jsx-runtime": "/vendor/webjsx@0.0.73/dist/jsx-runtime.js",
   "clsx": "/vendor/clsx@2.1.1/dist/clsx.mjs",

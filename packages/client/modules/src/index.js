@@ -418,8 +418,26 @@ export class ClientModuleRegistry extends Service {
    * whatever `<pkg>`'s `exports` map actually publishes for that subpath is
    * what a real `import` of the same specifier would receive, so there is no
    * separate allow-list to keep in sync with each package's own `exports`.
+   *
+   * A package's `exports` map may publish a subpath (e.g. `./api`) that
+   * resolves to a file NOT at that same path on disk (e.g. `src/api/index.js`,
+   * via `exports["./api"].default`) -- serving THAT file's content directly
+   * at the requested `/workspace/<pkg>/api` URL breaks any of its own
+   * relative imports (`./rpc.js` etc.), the same way the `/plugins/`
+   * `client.js` alias did: import()'s relative-URL resolution runs against
+   * the FETCHED url (`.../pkg/api`, package root), not the file's real
+   * location (`.../pkg/src/api/`), so `./rpc.js` 404s at `.../pkg/rpc.js`
+   * (witnessed live: `@freddie/freddie-host-apiproxy/api`, whose
+   * `src/api/index.js` re-exports `./rpc.js`/`./rpc.schema.js`/
+   * `./session-search.js`). The real specifier form -- `<pkg>/<real-relative-
+   * path>` -- is what the served URL must be for those imports to resolve;
+   * detected by resolving the package name to its root and computing the
+   * resolved file's own path relative to it. A mismatch means a redirect;
+   * a match (the common case: `./client` resolving to `src/client/index.js`
+   * requested as `.../client` still mismatches, but `./src/api/rpc.js`
+   * requested directly does not) serves content straight away.
    * @param specifier - the request path with the `/workspace/` prefix removed.
-   * @returns the absolute file path.
+   * @returns `{kind: 'file', path}` or `{kind: 'redirect', specifier}`.
    * @throws when the specifier does not resolve, or resolves to a file kind this route does not serve.
    */
   resolveWorkspaceSpecifier(specifier) {
@@ -427,7 +445,23 @@ export class ClientModuleRegistry extends Service {
     if (!path.endsWith('.js') && !path.endsWith('.js.map') && !path.endsWith('.css')) {
       throw new Error(`client-modules: /workspace resolved "${specifier}" to a non-servable file kind`)
     }
-    return path
+    // Scoped (@scope/name) vs unscoped (name) package-name prefix of the
+    // specifier -- the same split every real bare-specifier resolver uses.
+    const firstSlash = specifier.indexOf('/')
+    const pkgName = specifier.startsWith('@') && firstSlash !== -1
+      ? specifier.slice(0, specifier.indexOf('/', firstSlash + 1) === -1 ? specifier.length : specifier.indexOf('/', firstSlash + 1))
+      : (firstSlash === -1 ? specifier : specifier.slice(0, firstSlash))
+    let pkgPath
+    try {
+      pkgPath = this.resolvePkgJson(pkgName)
+    } catch {
+      return { kind: 'file', path }
+    }
+    const pkgRoot = dirname(pkgPath)
+    const realRel = relative(pkgRoot, path).split(sep).join('/')
+    const realSpecifier = `${pkgName}/${realRel}`
+    if (realSpecifier === specifier) return { kind: 'file', path }
+    return { kind: 'redirect', specifier: realSpecifier }
   }
 
   /**
@@ -667,14 +701,21 @@ export class ClientModuleRegistry extends Service {
       return
     }
     const specifier = pathname.slice(prefix.length)
-    let path
+    let resolved
     try {
-      path = this.resolveWorkspaceSpecifier(specifier)
+      resolved = this.resolveWorkspaceSpecifier(specifier)
     } catch {
       res.writeHead(404)
       res.end()
       return
     }
+    if (resolved.kind === 'redirect') {
+      const query = new URL(req.url ?? '/', 'http://x').search
+      res.writeHead(301, { location: `${prefix}${resolved.specifier}${query}` })
+      res.end()
+      return
+    }
+    const path = resolved.path
     try {
       const body = await readFile(path)
       res.writeHead(200, {
