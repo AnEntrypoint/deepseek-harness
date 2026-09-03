@@ -24,6 +24,7 @@ tmp/
 .vscode/
 .DS_Store
 .idea
+*.stackdump
 mise.toml
 dist-exe/
 .artifacts/
