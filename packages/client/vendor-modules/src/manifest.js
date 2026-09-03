@@ -83,6 +83,10 @@ export const vendorPackages = [
     "version": "2.0.2"
   },
   {
+    "name": "@freddie/freddie-client-web",
+    "version": "0.1.1-rc.2"
+  },
+  {
     "name": "@shikijs/core",
     "version": "4.3.1"
   },
@@ -235,6 +239,18 @@ export const vendorPackages = [
     "version": "1.0.2"
   },
   {
+    "name": "@freddie/freddie-client-modules",
+    "version": "0.1.1-rc.2"
+  },
+  {
+    "name": "@freddie/freddie-client-ui-slots",
+    "version": "0.1.1-rc.2"
+  },
+  {
+    "name": "@freddie/freddie-client-ui-primitives",
+    "version": "0.1.1-rc.2"
+  },
+  {
     "name": "oniguruma-to-es",
     "version": "4.3.6"
   },
@@ -384,6 +400,7 @@ export const importMapExact = {
   "micromark-util-sanitize-uri": "/vendor/micromark-util-sanitize-uri@2.0.1/index.js",
   "micromark-util-symbol": "/vendor/micromark-util-symbol@2.0.1/lib/default.js",
   "micromark-util-types": "/vendor/micromark-util-types@2.0.2/index.js",
+  "@freddie/freddie-client-web": "/vendor/@freddie/freddie-client-web@0.1.1-rc.2/src/index.js",
   "@shikijs/core": "/vendor/@shikijs/core@4.3.1/dist/index.mjs",
   "@shikijs/engine-javascript": "/vendor/@shikijs/engine-javascript@4.3.1/dist/index.mjs",
   "micromark-util-combine-extensions": "/vendor/micromark-util-combine-extensions@2.0.1/index.js",
@@ -422,6 +439,9 @@ export const importMapExact = {
   "micromark-util-html-tag-name": "/vendor/micromark-util-html-tag-name@2.0.1/index.js",
   "@freddie/cordis": "/vendor/@freddie/cordis@4.0.1/src/index.js",
   "@freddie/cordis-plugin-loader": "/vendor/@freddie/cordis-plugin-loader@1.0.2/src/index.js",
+  "@freddie/freddie-client-modules/client": "/vendor/@freddie/freddie-client-modules@0.1.1-rc.2/src/client/index.js",
+  "@freddie/freddie-client-ui-slots": "/vendor/@freddie/freddie-client-ui-slots@0.1.1-rc.2/src/index.js",
+  "@freddie/freddie-client-ui-primitives": "/vendor/@freddie/freddie-client-ui-primitives@0.1.1-rc.2/src/index.js",
   "oniguruma-to-es": "/vendor/oniguruma-to-es@4.3.6/dist/esm/index.js",
   "character-entities": "/vendor/character-entities@2.0.2/index.js",
   "@freddie/cosmokit": "/vendor/@freddie/cosmokit@1.8.2/src/index.js",
