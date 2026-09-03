@@ -6,7 +6,7 @@
 
 import { createElement as h } from 'webjsx'
 import {
-  FishLogo, IconChevronDownOutline14, IconFolderClose16, IconFolderOpen16,
+  IconChevronDownOutline14, IconFolderClose16, IconFolderOpen16,
 } from '@freddie/freddie-client-ui-primitives'
 import { workspaceTitleOf } from '@freddie/freddie-client-runtime/client'
 import css from './HeroShell.css.js'
@@ -58,25 +58,16 @@ export function WorkspaceChip({ buttonRef, label, menuOpen = false, onClick, t }
 /** Hero chrome props. The workspace row rides the InputBar accessory hole, not here. */
 
 /**
- * Render the hero chrome (headline only; no glow, no composer, no workspace
- * row — the glow is the owner's {@link HeroGlow}).
+ * Render the hero chrome (no headline/logo/preview badge -- freddie is
+ * already named in the sidebar; no glow, no composer, no workspace row —
+ * the glow is the owner's {@link HeroGlow}).
  * @param props - see {@link HeroShellProps}.
  * @returns the centered hero element tree.
  */
-export function HeroShell({ t, renderSlot, children }) {
+export function HeroShell({ children }) {
   return (
     h('div', { class: css.root ?? '' },
       h('div', { class: css.stack ?? '' },
-        h('div', { class: css.headline ?? '' },
-          // figma 34:10412: fish 34×25 leading the headline, gap 10.
-          h('span', { class: css.fishHitbox ?? '' },
-            renderSlot('conversation.hero.brand.mark', { size: 34, className: css.fish }, {
-              fallback: h(FishLogo, { size: 34, className: css.fish }),
-            }),
-          ),
-          h('span', { class: css.headlineText ?? '' }, t('hero.headline')),
-          h('span', { class: css.previewBadge ?? '' }, t('hero.preview')),
-        ),
         h('div', { class: css.body ?? '' },
           // The resident composer (ConversationRoot's root-owned scrollport;
           // the workspace row rides the stack above the card) is CSS-centered

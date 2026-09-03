@@ -215,7 +215,7 @@ export class DshConversationRoot extends HTMLElement {
     const composerBar = h(
       'div',
       { class: clsx(css.composerStack, hero && css.composerHero) },
-      hero && HeroShell({ t, renderSlot }),
+      hero && HeroShell({}),
       hero && heroWorkspaceRow,
       zone !== undefined && renderSlot('conversation.input.dock', zone),
       inputBar,

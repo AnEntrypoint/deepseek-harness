@@ -8,9 +8,9 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import clsx from 'clsx'
 import {
-  HoverCard, IconArchiveOutline20, IconBranchOutline16, IconEditOutline16,
+  IconArchiveOutline20, IconBranchOutline16, IconEditOutline16,
   IconEllipsisOutline16, IconFolderClose16, IconFolderOpen16, IconPlusOutline16,
-  IconTrashOutline16, IconTriangleRightFill14, Menu, StateDot,
+  IconTrashOutline16, IconTriangleRightFill14, StateDot, renderHoverCard, renderMenu,
 } from '@freddie/freddie-client-ui-primitives'
 import { abbreviateHomePath } from '@freddie/freddie-client-runtime/client'
 import { relativeTime } from '../tree.js'
@@ -73,6 +73,8 @@ function rowHalf(e) {
 export class DshProjectRowItem extends HTMLElement {
   #props = null
   #menuOpen = false
+  #hoverCard = null
+  #menu = null
 
   setProps(props) {
     this.#props = props
@@ -123,8 +125,12 @@ export class DshProjectRowItem extends HTMLElement {
           h('span', {class: css.title ?? ''}, label),
         ),
         h('span', {class: css.rowActions ?? ''},
+          // Reuse the same dsh-menu instance across renders (see the
+          // #hoverCard comment below for why: this row re-renders every
+          // tick, and a fresh document.createElement('dsh-menu') per render
+          // would leak the same way a fresh HoverCard did).
           actions !== undefined && (
-            h(Menu, {
+            this.#menu = renderMenu(this.#menu, {
               open: menuOpen,
               onClose: () => { this.#menuOpen = false; this.#render() },
               items: workspaceMenuItems,
@@ -164,24 +170,35 @@ export class DshProjectRowItem extends HTMLElement {
       )
     )
     // The ungrouped bucket has no backing Workspace: no card to show.
-    const vdom = row.createdAt === undefined
-      ? ownRow
-      : (
-        h(HoverCard, {
-          anchor: ownRow,
-          content: h(WorkspaceHoverContent, {
-            label: row.label,
-            cwd: row.cwd === undefined ? undefined : abbreviateHomePath(row.cwd, home),
-            createdAt: row.createdAt,
-            t,
-          }),
-          disabled: menuOpen,
-          copyText: row.cwd,
-          copyLabel: t('copy'),
-          copiedLabel: t('hover.copied'),
-        })
-      )
-    applyDiff(this, vdom)
+    if (row.createdAt === undefined) {
+      this.#hoverCard?.remove()
+      this.#hoverCard = null
+      applyDiff(this, ownRow)
+      return
+    }
+    // Reuse the same dsh-hover-card instance across renders (setProps updates
+    // it in place) instead of creating a fresh one every #render() call --
+    // this row re-renders every tick (the live relative-time clock), and a
+    // fresh document.createElement('dsh-hover-card') each time meant a real,
+    // open (mid-hover) card got swapped out from under the pointer before its
+    // own timers/cleanup could run, leaking a detached portal card in
+    // document.body that nothing ever removed (witnessed live: stuck,
+    // stacking "Idle" cards that survived pointerleave, click-away, and even
+    // a hard reload).
+    this.#hoverCard = renderHoverCard(this.#hoverCard, {
+      anchor: ownRow,
+      content: h(WorkspaceHoverContent, {
+        label: row.label,
+        cwd: row.cwd === undefined ? undefined : abbreviateHomePath(row.cwd, home),
+        createdAt: row.createdAt,
+        t,
+      }),
+      disabled: menuOpen,
+      copyText: row.cwd,
+      copyLabel: t('copy'),
+      copiedLabel: t('hover.copied'),
+    })
+    applyDiff(this, this.#hoverCard)
   }
 }
 
@@ -328,6 +345,8 @@ export function SearchResultItem({ result, currentId, onOpen, t }) {
 export class DshSessionNodeItem extends HTMLElement {
   #props = null
   #menuOpen = false
+  #hoverCard = null
+  #menu = null
 
   setProps(props) {
     this.#props = props
@@ -411,7 +430,9 @@ export class DshSessionNodeItem extends HTMLElement {
         !row.blank && h('span', {class: css.time ?? ''}, timeLabel(row.updatedAt, now, t)),
         !row.blank && (
           h('span', {class: css.rowActions ?? ''},
-            h(Menu, {
+            // Reuse the same dsh-menu instance across renders -- see the
+            // #hoverCard comment below for why.
+            this.#menu = renderMenu(this.#menu, {
               open: menuOpen,
               onClose: () => { this.#menuOpen = false; this.#render() },
               items: sessionMenuItems,
@@ -439,17 +460,21 @@ export class DshSessionNodeItem extends HTMLElement {
         ),
       )
     )
-    const vdom = (
-      h(HoverCard, {
-        anchor: ownRow,
-        content: h(SessionHoverContent, {node, now, t}),
-        disabled: menuOpen || drag?.active === true,
-        copyText: row.blank ? undefined : row.title,
-        copyLabel: t('copy'),
-        copiedLabel: t('hover.copied'),
-      })
-    )
-    applyDiff(this, vdom)
+    // Reuse the same dsh-hover-card instance across renders -- see
+    // DshProjectRowItem's identical comment above for why: this row
+    // re-renders every tick (the live relative-time clock), and a fresh
+    // document.createElement('dsh-hover-card') on every render leaked a
+    // detached, permanently-open portal card whenever the swap landed
+    // mid-hover.
+    this.#hoverCard = renderHoverCard(this.#hoverCard, {
+      anchor: ownRow,
+      content: h(SessionHoverContent, {node, now, t}),
+      disabled: menuOpen || drag?.active === true,
+      copyText: row.blank ? undefined : row.title,
+      copyLabel: t('copy'),
+      copiedLabel: t('hover.copied'),
+    })
+    applyDiff(this, this.#hoverCard)
   }
 }
 

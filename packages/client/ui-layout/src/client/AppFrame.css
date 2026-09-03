@@ -1,3 +1,18 @@
+/* dsh-app-frame (the custom-element tag hosting .dsh-appFrame__frame below,
+   and dsh-root-outlet/dsh-entry-host above it in the real ancestor chain)
+   has no CSS of its own, so the browser's `display: inline` tag default
+   applies -- an inline box ignores `height: 100%`, breaking every descendant
+   height chain that depends on it (witnessed live: the conversation
+   transcript's own scroll body never clipped/scrolled because this tag sat
+   between the 100%-height document root and .dsh-appFrame__frame's own
+   `height: 100%`, silently truncating the percentage chain to `auto`).
+   `display: contents` makes the tag transparent to layout; its one real
+   child box below participates in the ancestor's height/flex/grid directly. */
+dsh-app-frame,
+dsh-root-outlet {
+  display: contents;
+}
+
 .dsh-appFrame__frame {
   position: relative; /* anchors the drag handles, which straddle column borders */
   display: grid;
@@ -34,6 +49,40 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* dsh-slot-outlet mounts here as centerCol's direct flex child, but the tag
+   itself has no CSS (only `display: block`, the browser default) -- an
+   ordinary block box with no explicit height doesn't participate in a flex
+   layout as a sizeable item, so it grows to fit its content instead of
+   filling+clipping centerCol's bounded height, breaking the conversation
+   transcript's own scroll clipping one level further down (same class of
+   bug as dsh-app-frame/dsh-root-outlet above; `display: contents` isn't
+   the fix here specifically because centerCol is a flex container and needs
+   a real flex item to size against, not a transparent pass-through). */
+.dsh-appFrame__centerCol > dsh-slot-outlet {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Two unclassed plain <div> wrappers sit between dsh-entry-host and
+   dsh-slot-outlet (scoped-slots.js's own render/injection wrapping -- they
+   carry no class to select by, and no layout purpose of their own). Same
+   fix as dsh-app-frame/dsh-root-outlet above: an ordinary `display: block`
+   box with no explicit height doesn't propagate a bounded height to its
+   `height: 100%` descendants, so the chain breaks here again, one level
+   lower than dsh-entry-host's own `display: contents` fix reaches.
+   `display: contents` is correct here too (these divs sit ABOVE
+   dsh-slot-outlet, which is the real flex item further down needing a real
+   box to size against -- these two are pure pass-throughs). Scoped to
+   centerCol's own descendant divs (not a global `dsh-entry-host > div`
+   rule) since other dsh-entry-host mount points elsewhere may have
+   legitimately block-level wrapper content this must not touch. */
+.dsh-appFrame__centerCol > dsh-slot-outlet > div > div,
+.dsh-appFrame__centerCol > dsh-slot-outlet > div > div > div {
+  display: contents;
 }
 
 .dsh-appFrame__detailsCol {

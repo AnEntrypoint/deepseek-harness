@@ -3,6 +3,22 @@
    this fills its cell. Figma: Header 39:27730 (83px two-row), tabs 13px with
    a 2px active bar. */
 
+/* dsh-conversation-root and dsh-entry-host (a generic slot-outlet wrapper
+   this element mounts under) are custom-element tags with no CSS of their
+   own, so the browser's `display: inline` default applies to the tag itself
+   -- an inline box ignores `height: 100%` entirely and cannot host a flex
+   child, breaking the ENTIRE height chain down to .dsh-conversationRoot__scrollBody's
+   `overflow-y: auto` below: with no bounded height anywhere above it, the
+   scroll body simply grows to fit its content (scrollHeight === clientHeight,
+   0 overflow), so the conversation transcript is never scrollable. `display:
+   contents` makes both wrapper tags transparent to layout -- their real
+   child box (.dsh-conversationRoot__root) participates directly in the
+   ancestor flex chain as if the wrapper tags were not there at all. */
+dsh-conversation-root,
+dsh-entry-host {
+  display: contents;
+}
+
 .dsh-conversationRoot__root {
   display: flex;
   flex-direction: column;
