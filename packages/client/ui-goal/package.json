@@ -71,8 +71,6 @@
     "@freddie/freddie-typert-protocol": "workspace:^"
   },
   "files": [
-    "src/index.js",
-    "src/invariant.js",
-    "src/client/index.js"
+    "src/**/*.js"
   ]
 }

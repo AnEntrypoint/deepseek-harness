@@ -23,9 +23,7 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "src/index.js",
-    "src/invariant.js",
-    "src/server.js"
+    "src/**/*.js"
   ],
   "license": "MIT",
   "dependencies": {

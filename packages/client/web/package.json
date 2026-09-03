@@ -38,8 +38,7 @@
     "@freddie/cordis": "workspace:^"
   },
   "files": [
-    "src/index.js",
-    "src/invariant.js",
+    "src/**/*.js",
     "src/**/*.css"
   ]
 }

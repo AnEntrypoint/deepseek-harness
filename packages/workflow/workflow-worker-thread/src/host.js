@@ -35,15 +35,14 @@ export function workerSpawnEnv(
 }
 
 /**
- * Resolve the built worker bundle: CommonJS because pkg's VFS Worker hook
- * (the standalone-executable packaging path) compiles the worker in that
- * format. `execArgv` and the ambient environment are cleared — the worker
- * only sees the platform temp path.
+ * Resolve the worker entry: `src/worker.js`, loadable directly (buildless,
+ * no compiled sibling). `execArgv` and the ambient environment are cleared —
+ * the worker only sees the platform temp path.
  * @param init - the run payload, passed as `workerData`.
  * @returns the entry path and the Worker options to spawn it with.
  */
 function resolveWorkerSpawn(init) {
-  return { entry: fileURLToPath(new URL('./worker.cjs', import.meta.url)), options: { workerData: init, env: workerSpawnEnv(), execArgv: [] } }
+  return { entry: fileURLToPath(new URL('./worker.js', import.meta.url)), options: { workerData: init, env: workerSpawnEnv(), execArgv: [] } }
 }
 
 /**

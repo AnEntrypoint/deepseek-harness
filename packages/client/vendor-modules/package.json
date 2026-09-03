@@ -21,7 +21,7 @@
   },
   "files": [
     "src/*.js",
-    "vendor/**/*"
+    "vendor/**/*.js"
   ],
   "license": "MIT",
   "scripts": {

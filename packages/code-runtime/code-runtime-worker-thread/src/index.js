@@ -47,18 +47,8 @@ const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/
  */
 const STRIP_WRAP = { prefix: 'async function __dsh_program__() {\n', suffix: '\n}' }
 
-/**
- * The worker entry path. Source runs unbuilt (`src/worker.js`, loadable
- * directly). The built package ships it as a sibling CommonJS bundle
- * (`lib/worker.cjs`, its own tsdown entry) because pkg's VFS Worker hook
- * compiles string-path entries as CommonJS.
- * The URL *pathname*'s extension says which world this module is in —
- * pathname, because dev-time module runners (vitest) may suffix
- * `import.meta.url` with a query string; relative resolution drops it. Worker
- * receives a filesystem string so pkg's VFS Worker hook can resolve it.
- */
-/* v8 ignore next -- the './worker.cjs' arm is the built-lib world, unreachable unbuilt by construction; the built-lib e2e pins it. */
-const WORKER_PATH = fileURLToPath(new URL(new URL(import.meta.url).pathname.endsWith('.js') ? './worker.js' : './worker.cjs', import.meta.url))
+/** The worker entry path: `src/worker.js`, loadable directly (buildless, no compiled sibling). */
+const WORKER_PATH = fileURLToPath(new URL('./worker.js', import.meta.url))
 
 /** Render an unknown thrown value as a message, `Error` or not. */
 function messageOf(error) {
