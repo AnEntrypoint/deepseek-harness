@@ -5,7 +5,7 @@ description: Use before pushing, force-pushing, marking ready for review, or cla
 
 # FREDDIE Pre-Push Checks
 
-Use this skill to run relevant local evidence once before a `freddie` push. The sole ordering exception is `gh stack sync`, which may publish a cascading rebase before the rewritten layers can be validated; validate them immediately afterward and do not merge until the evidence passes. Git hooks are intentionally narrow: pre-commit fixes staged lint, checks staged whitespace, and guards vendored-source metadata; pre-push runs only the incremental repository typecheck. CI owns exhaustive coverage and the platform matrix.
+Use this skill to run relevant local evidence once before a `freddie` push. The sole ordering exception is `gh stack sync`, which may publish a cascading rebase before the rewritten layers can be validated; validate them immediately afterward and do not merge until the evidence passes. Git hooks are intentionally narrow: `pre-commit` runs one check, staged whitespace (`git diff --cached --check`); there is no `pre-push` hook. The workspace has no automated test suite and no build step; verification is live execution against the real running system.
 
 ## Inspect the outgoing change
 
@@ -26,42 +26,17 @@ The command never guesses or fetches a base. Supply the ref verified from curren
 
 ## Select relevant evidence
 
-There is no universal local baseline beyond the hooks. Every behavior change needs the narrowest available test or purpose-built check that would fail for its regression; add broader checks only for surfaces the diff actually reaches.
+There is no automated test suite and no universal local baseline beyond the whitespace hook. Every behavior change is verified live — boot the real composition or app, drive the actual change, and read the real output — same turn as the work. A diff's own claim about itself is not evidence.
 
-- **Package or script behavior:** run the owning Vitest file or focused test name. Add adjacent package tests when a shared contract changes; leave repository-wide coverage to CI unless the change is genuinely cross-cutting or the user requests it.
-- **Documentation, Agent Notes, catalogs, or doc-linked comments:** run `pnpm run doc-sync`; run full lint when the documentation workflow requires it.
-- **Model-, editor-, CLI-, or terminal-visible output:** run the focused keyless snapshot or real runnable-example scenario that owns the output.
-- **Package manifests, public exports, build configuration, worker/bin entries, or built runtime paths:** run `pnpm run build`, the relevant hygiene checks, and the owning built-artifact smoke.
-- **Real provider or agent behavior:** run the relevant `pnpm run test:e2e` target when credentials are available; never print secrets.
+- **Model-, editor-, CLI-, or terminal-visible output:** boot the real example or app that owns the output and drive it.
+- **Package manifests, public exports, or the published file set:** run `pnpm run publint`, which validates each package's real relative imports against its own `package.json` `files` array.
+- **Real provider or agent behavior:** run the relevant demo (`pnpm run demo:cordis`, `pnpm run demo:acp`, `pnpm dsh --profile headless "..."`) when credentials are available; never print secrets.
 
-Do not manually repeat a passing check merely because commit or push follows. In particular, do not run typecheck immediately before pushing solely to duplicate the pre-push hook.
-
-### Focus unit coverage on the affected source
-
-Test selection and coverage selection are separate. A Vitest file filter chooses which tests run, while the repository configuration otherwise measures every `packages/*/*/src/**/*.ts` file. When unit coverage is relevant, name both the owning tests and the source files or package whose coverage those tests must prove:
-
-```sh
-pnpm exec vitest run packages/<group>/<package>/tests/<behavior>.spec.ts \
-  --coverage \
-  --coverage.include='packages/<group>/<package>/src/**/*.ts'
-```
-
-Use an exact source file when the behavior is truly confined to one module. Repeat `--coverage.include` for multiple affected files or packages, and pass every owning test file needed to exercise that scope. The configured per-file 100% thresholds still apply inside the selected source scope.
-
-When the owning tests are unclear, use Vitest's dependency graph to discover a candidate set, then inspect the selected tests before treating the run as evidence:
-
-```sh
-pnpm exec vitest related packages/<group>/<package>/src/<changed>.ts \
-  --run \
-  --coverage \
-  --coverage.include='packages/<group>/<package>/src/<changed>.ts'
-```
-
-`vitest related` cannot discover behavior reached only through configuration, dynamic loading, subprocesses, workers, built artifacts, or external providers; select those owning tests explicitly. Do not use `--passWithNoTests`, lower coverage thresholds, or narrow `--coverage.include` merely to hide an uncovered affected file. If a selected package scope fails because one focused test does not cover it, add its other relevant owning tests or narrow the source scope only when the excluded modules cannot be affected by the change.
+Do not manually repeat a passing check merely because commit or push follows.
 
 ## Full local rehearsal
 
-Run the complete local approximation only when the user explicitly requests it, while diagnosing a CI failure, or when the change spans the repository so broadly that no narrower set is credible. Use the current workflow and package scripts as the inventory; do not recreate the removed `check:pre-push` aggregate.
+There is no aggregate "run everything" command. Select checks from the current `package.json` script inventory that match the changed surface; do not invent a broader check that doesn't exist.
 
 ## Protect history-rewriting pushes
 
@@ -97,7 +72,7 @@ For ordinary and standalone rebase pushes:
 
 1. Run the selected relevant checks once.
 2. Commit normally and inspect any files changed by the pre-commit fixer before continuing.
-3. Push normally, or use the exact lease for an authorized rewritten branch, so the incremental typecheck hook runs.
+3. Push normally, or use the exact lease for an authorized rewritten branch.
 4. Verify the remote ref matches local `HEAD`.
 
 ```sh

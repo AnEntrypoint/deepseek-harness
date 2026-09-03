@@ -50,9 +50,7 @@ linux-x64 and linux-arm64, kernel with Landlock enabled (5.13+; ABI level determ
 ```sh
 corepack enable
 pnpm install
-pnpm build:ts        # entry packages → lib/
 pnpm build:native    # this Linux architecture's binaries (apt-get install musl-tools)
-pnpm test
 ```
 
-Binaries are git-ignored and built natively per architecture — locally for your own machine, by CI's per-arch runners as the builders of record. Release flow: [docs/release.md](docs/release.md).
+The entry package (`packages/entry/`) is plain JavaScript, run directly with no build step. Binaries are git-ignored and built natively per architecture — locally for your own machine, by CI's per-arch runners as the builders of record. Release flow: [docs/release.md](docs/release.md).

@@ -46,7 +46,6 @@ packages/    @freddie/freddie-<pkg> workspaces at packages/<group>/<pkg>/
   experimental/ private prototypes excluded from official releases
   support/     dev/test infrastructure
   util/        zero-dependency utilities
-python/      Python SDK and bundled runtime (see python/README.md)
 native/      @freddie/node-addon-landlock-run source of record (see native/README.md)
 examples/    Runnable cordis.yml leaves over packages/examples bundles (see examples/AGENTS.md)
 .agents/     Agent workflows and Agent Notes (`notes/`)
@@ -60,26 +59,24 @@ Package groups: [packages/README.md](packages/README.md).
 
 ```sh
 pnpm install            # pnpm workspaces, node ^22.19 || >=24
-pnpm run clean           # remove build outputs and safe residue from deleted packages
-pnpm run build           # scripts/build.js: full workspace build
-pnpm run build:lib:host  # tsdown host-face bundles
-pnpm run build:lib:client  # tsdown client-face bundles
-pnpm run knip            # unused-export/dependency check
-pnpm run publint         # package.json publish-shape lint
+pnpm run publint         # package.json publish-shape lint (validates files/exports against real imports)
+pnpm run gen-third-party-notices  # regenerate THIRD_PARTY_NOTICES.md
 pnpm dsh --profile headless "task"  # run one task from source (needs DEEPSEEK_API_KEY)
 pnpm run demo:cordis    # the agent modifies its own runtime (needs key)
 pnpm run demo:acp       # ACP automation server (needs DEEPSEEK_API_KEY)
 ```
 
+The workspace is buildless: there is no `build`, `clean`, or `typecheck` script. Packages ship plain `src/**/*.js` and are consumed directly under Node with no compile step.
+
 ### Host sandbox failures
 
-When required `gh`, `pnpm`, or build/generator commands fail because the agent sandbox blocks credentials, network, IPC, file watching, or nested `sandbox-exec`, retry unchanged with the narrowest host escalation before diagnosing authentication or project failure. Require sandbox evidence; never bypass a genuine build failure or the product sandbox under test.
+When required `gh`, `pnpm`, or generator commands fail because the agent sandbox blocks credentials, network, IPC, file watching, or nested `sandbox-exec`, retry unchanged with the narrowest host escalation before diagnosing authentication or project failure. Require sandbox evidence; never bypass a genuine failure or the product sandbox under test.
 
 ### Verify before pushing
 
 This repo has no automated test suite: verification is exhaustive manual execution against the real running system, same turn as the work — run the actual code path against real state and read the real output, re-derived from the request's own words each time. A diff's own claim about itself is not evidence.
 
-- Match evidence to the surface: a live build (`pnpm run build:lib:host`/`build:lib:client`) for published-path changes, a live boot (`pnpm dsh`, or the relevant app entry point) for behavior changes, `knip`/`publint` for dependency/package-shape drift.
+- Match evidence to the surface: a live boot (`pnpm dsh`, or the relevant app entry point) for behavior changes, `pnpm run publint` for package-shape/publish-surface drift.
 - Never default to re-running every check for every change — run what the change actually touches.
 
 ## Secrets / .env
@@ -104,8 +101,6 @@ Real-API demos read `DEEPSEEK_API_KEY`, optional `DEEPSEEK_BASE_URL`, and root `
 - **Misconfiguration fails loud** at load when self-contained, otherwise at the earliest resolvable point; never silently skip a missing referent.
 - **Opaque cross-boundary ids are branded** (`Branded<B>` from `dsh-brand`), never bare `string`.
 - **Trust TypeScript at typed same-process boundaries.** Do not add runtime validation, fallback behavior, or hostile-input tests solely for values the static interface requires; validate at parser/config, queued, model/tool JSON, durable/file, worker, process, and wire boundaries.
-- **Source plane vs artifact plane, never mixed.** Static gates and tests resolve workspace imports through tsconfig `paths` to `src` and pass on a clean tree; gates consuming built `lib/` declare that dependency ([layout](docs/development.md#typescript-project-layout)).
-- **Keep compiler faces explicit.** Each package uses one aggregate except `api/remotes`; repo-wide programs seed a face config, never the root solution ([layout](docs/development.md#typescript-project-layout)).
 - **An empty `catch` names what it swallows** and why nothing else can reach it; keep the `try` to one statement.
 - Do not comment on facts obvious from code.
 - **Prefer symmetry for parallel values**; unexplained asymmetry usually signals a missed extraction.
@@ -122,9 +117,9 @@ Real-API demos read `DEEPSEEK_API_KEY`, optional `DEEPSEEK_BASE_URL`, and root `
 
 Read [docs/defensive-patterns.md](docs/defensive-patterns.md) before lifecycle, concurrency, subprocess, or teardown work.
 
-## Type safety and documentation
+## Documentation
 
-Everything compiles under `strict: true` with `noImplicitAny`; every remaining `any` explains why narrowing is infeasible. Every module and export has concise JSDoc for its non-obvious contract; function-like exports include `@param`/`@returns`, as enforced by `verify-export-jsdoc`. Heritage-declared members, plugin-protocol slots, and constructors keep their docs at the declaring Service Definition, protocol, or class.
+Every module and export has concise JSDoc for its non-obvious contract. Heritage-declared members, plugin-protocol slots, and constructors keep their docs at the declaring Service Definition, protocol, or class.
 
 Comments and docs state complete contracts and context, not reasoning transcripts. Use direct, concrete terms. Do not use metaphors. Before writing `contract`, `boundary`, or `shape`, ask whether a more exact term names the subject: write `response fields`, `JSON validation`, or `ESM exports` instead of `response shape`, `validation boundary`, or `module shape`. Keep `contract` for preconditions, postconditions, invariants, compatibility promises, and other obligations that callers, callees, implementers, providers, producers, or consumers rely on. Keep a literal process, wire, security, transaction, or lifecycle boundary. Do not narrate control flow or tests, preserve review history, or restate code. Keep behavior, failure, timing, ownership, and safe-use facts; link the rationale. Use [freddie-prose-standard](.agents/skills/freddie-prose-standard/SKILL.md) for decisions. Wire mechanically checkable invariants into an executed top-level gate and prove each changed acceptance path rejects an invalid case. Use narrow, justified exceptions instead of disabling a rule globally.
 
@@ -136,4 +131,4 @@ Docs accompany every code change: update affected README and JSDoc contracts tog
 
 ## Vendoring policy
 
-`vendor/` packages are pinned source copies (manifest with upstream SHAs in [vendor/README.md](vendor/README.md)). Update via the sync procedure there; re-apply or retire the logged local modifications; rerun `pnpm run test && pnpm run build`.
+`vendor/` packages are pinned source copies (manifest with upstream SHAs in [vendor/README.md](vendor/README.md)). Update via the sync procedure there; re-apply or retire the logged local modifications; verify live per the [verification policy](#verify-before-pushing) above.

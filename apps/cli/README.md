@@ -42,4 +42,4 @@ The [CLI behavior reference](reference/README.md) owns exact layer precedence, f
 
 ## Development
 
-Production runs require built package and frontend artifacts. From the repository root, run `pnpm run build` separately, then use `pnpm dsh <args...>` to run the TypeScript entry and forward every argument; the [source-execution reference](reference/README.md#source-execution) owns the module-resolution contract.
+The workspace is buildless: from the repository root, `pnpm dsh <args...>` runs `apps/cli/src/bin.js` directly under Node and forwards every argument — no build step is required, in a fresh checkout or otherwise; the [source-execution reference](reference/README.md#source-execution) owns the module-resolution contract.

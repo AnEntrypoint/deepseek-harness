@@ -28,11 +28,10 @@ To run from a repository checkout:
 git clone https://github.com/lanmower/freddie.git
 cd freddie
 pnpm install
-pnpm run build
 pnpm dsh web
 ```
 
-`pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
+The workspace is buildless: packages ship plain `src/**/*.js` and run directly under Node, with no compile step.
 
 ## Community and support
 

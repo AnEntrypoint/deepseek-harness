@@ -90,29 +90,11 @@ The `api-remotes` assembly and the `ctx.remote` contract are React-independent; 
 
 The API Gateway package owns the Host dispatcher and Client Remote endpoint as peer entries, but the two builds never enter the same `ts.Program`. The Host entry does not import the Client Cordis `Context` merge, and the Client entry does not import the Host Gateway service.
 
-## Strict generation pipeline
+## Generation model
 
-The root build runs `build:lib:host`, `build:lib:client`, and `build:web` in order. The Host lib phase first runs `tsc -b tsconfig.host.json`, then `tsdown --env.FREDDIE_BUILD_FACE host`; the normal Host Project Reference graph compiles the Typert generator, which runs during this tsdown pass with the Host aggregate as its only `ts.Program` seed. The Client lib phase then runs `tsc -b tsconfig.client.json` and `tsdown --env.FREDDIE_BUILD_FACE client`, consuming the newly generated Remote Client declarations and runtime contributions without starting Typert again.
+The workspace is buildless: there is no TypeScript compiler pass and no separate codegen step. `@Remote`/`@RemoteScope` decorator initializers record the method name and invocation mode directly at module load, in the plain `.js` source; `TypertRemoteService` or `bindTypertRemote()` supplies the explicit service binding. This is the only mode the Gateway runs in — see "SRC development fallback" below for the exact dispatch mechanics, which apply universally rather than as a fallback from a stricter generation pass.
 
-Both tsdown passes receive the complete workspace and bundle only JavaScript emitted to `lib/types` by the corresponding tsc phase. The root config does not scan Client artifacts, classify package names, or pass a maintained filter to tsdown; package-local configs return entries for the current phase based on `FREDDIE_BUILD_FACE`. An ordinary Client plugin produces both its Node loader entry and browser bundle during the Client phase.
-
-`api-remotes` is the only package with split TypeScript faces. Its Host project owns the Agent/Session lookup policy, while its Client project depends on `/remote` declarations generated for business packages during Host tsdown; root aggregates and direct consumers must reference `api/remotes/tsconfig.host.json` or `api/remotes/tsconfig.client.json` respectively. The package's `clientBundle(..., { hostPhase: true })` produces its Host entry during Host tsdown and leaves only the browser entry for Client tsdown. Every other package remains registered in one aggregate.
-
-Each contributing business package writes generated files to its own `lib/` directory, not to its source directory:
-
-| File | Consumer | Contents |
-|---|---|---|
-| `typert.host.js` | Host Loader | Runtime reflection for the Host face, strict invocation descriptors, and schema registration values |
-| `typert.host.d.ts` | Host type system | Generated declarations for the Host face |
-| `typert.remote-client.js` | `api-remotes` | A mountable `TypertRemoteContribution` containing strict descriptors and runtime codecs |
-| `typert.remote-client.d.ts` | Client type system | Declaration merges for `TypertRemoteNamespaceMap` and `TypertRemoteScopeMap`, plus Client-safe type references |
-| `typert.remote-client.d.ts.map` | Editor | Maps generated method properties back to Remote method declarations in the Host package |
-
-Business packages expose the Host Loader entry through `./typert` and the Host-for-Client entry through `./remote`. The generator also validates these package exports and published-file lists; it generates artifacts only for explicit contribution packages that provide the corresponding entry.
-
-Parameter names in Remote Client declarations come from wire fields, while parameter and return types reference Client-safe types exported by the original business package. The declaration map resolves the generated property behind `ctx.remote.goals.create` back to the Host source method marked with `@Remote`, so editors that support declaration maps can navigate from a Client call to the real implementation instead of stopping at the generated `.d.ts`.
-
-Strict analysis requires a Remote to be a public, non-static instance method with a concrete implementation. The method cannot be generic; parameters must be required, named simple identifiers and cannot use destructuring, default values, rest parameters, or optional parameters. Typert generates strict schemas for ordinary JSON-representable types; complex objects such as workspace classes must have a unique `TypertLookupMap` declaration. Lookup and Context packages are responsible for both static declaration merges and runtime provider registration; if either side is missing, the build fails or the first call that needs the provider fails.
+Business packages expose the Host Loader entry through `./typert`, which `@freddie/freddie-typert-loader` imports for every Loader-managed plugin (see [typert-loader](../packages/typert/loader/README.md)). A malformed export fails that package's own activation; failures in one package do not block others from registering.
 
 ## Runtime invocation
 
@@ -128,30 +110,17 @@ Unloading a Client contribution removes its descriptors and concrete methods tog
 
 ## SRC development fallback
 
-When the Host starts from source through `node --import tsx/esm`, it does not execute the Typert compiler plugin. Standard decorator initializers still record the method name and invocation mode in a module-private `WeakMap`, while `TypertRemoteService` or `bindTypertRemote()` supplies the explicit service binding; the Gateway can therefore construct a weaker temporary descriptor without starting a `ts.Program`.
+The Host always starts from source (`pnpm dsh web` runs `apps/cli/src/bin.js` directly under Node — no compiler plugin runs). Standard decorator initializers record the method name and invocation mode in a module-private `WeakMap` at import time, while `TypertRemoteService` or `bindTypertRemote()` supplies the explicit service binding; the Gateway constructs its descriptor from this at runtime.
 
-The SRC fallback parses simple parameter names from the live function. When a parameter name matches the `parameter` of a registered lookup, such as `agent` or `session`, it uses the lookup's `agentId` or `sessionId` wire field and resolves the object on the Host; other parameters are checked only for cycle-free, JSON-safe data with no special prototype. `@RemoteScope` directly uses the wire field of a registered Host Context provider. SRC does not read TypeScript types, generate Zod schemas, infer optional parameters, or support destructuring, default values, rest parameters, or duplicate parameter names.
-
-SRC solves only dispatch for a Host process running from source. The Client does not discover decorators from the running Host, and the Client Remote refuses to mount SRC descriptors that lack strict codecs; its types, codecs, and Remote registration values always come from the most recently generated `lib/typert.remote-client.*` artifacts.
+Simple parameter names are parsed from the live function. When a parameter name matches the `parameter` of a registered lookup, such as `agent` or `session`, it uses the lookup's `agentId` or `sessionId` wire field and resolves the object on the Host; other parameters are checked only for cycle-free, JSON-safe data with no special prototype. `@RemoteScope` directly uses the wire field of a registered Host Context provider. This mechanism does not read TypeScript types, generate schemas from types, infer optional parameters, or support destructuring, default values, rest parameters, or duplicate parameter names — the Remote signature discipline in the "Generation model" section above exists because of this.
 
 ## Development mode
 
-Web development prepares current Host, Client, and Web artifacts with `pnpm run build`, then runs the source Host and the Client plugin watcher in separate terminals:
-
 ```sh
 pnpm dsh web
-pnpm run dev:web
 ```
 
-`dsh` starts the Host source through tsx, so the Host can use the SRC fallback; `dev:web` watches only Client plugins with a `dsh.client` declaration and rewrites their `lib/client.js`. It does not analyze Host decorators or generate Remote Client DTS.
-
-Changing only a Remote method's implementation body without changing its contract does not require regenerating the Typert files. After adding or removing a decorator or changing an export name, namespace, parameter, return value, lookup, Context, or cancellation signature, rerun the ordered lib build so the Host generates the strict contract before the Client compiles and bundles the new contribution:
-
-```sh
-pnpm run build:lib
-```
-
-The running Client watcher consumes these generated files when it rebundles. If `pnpm run build:lib:host` has already refreshed the Host contract, `pnpm run build:lib:client` can complete the Client side; a clean worktree cannot skip the Host phase. Recompiling only the frontend source cannot infer new types from Host decorators. `pnpm run typecheck` runs the Host lib phase before Client tsc, and CI and release builds use the same order.
+Both Host and Client packages ship plain `.js` under `src/`, run directly with no build or watch step. Changing a Remote method's implementation, its decorator, or its signature takes effect on the next process restart — there is no separate contract-generation phase to rerun.
 
 ## Boundaries
 
