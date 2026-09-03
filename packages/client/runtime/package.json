@@ -36,7 +36,8 @@
       "immediately": true,
       "external": [
         "@freddie/freddie-session/surface",
-        "@freddie/freddie-host-apiproxy/api"
+        "@freddie/freddie-host-apiproxy/api",
+        "@freddie/freddie-llm/message"
       ]
     }
   },

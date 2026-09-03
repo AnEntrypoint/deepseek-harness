@@ -35,6 +35,7 @@
         "@freddie/freddie-host-apiproxy/api/rpc.schema",
         "@freddie/freddie-host-apiproxy/client",
         "@freddie/freddie-llm/brand",
+        "@freddie/freddie-llm/message",
         "@freddie/freddie-session/surface"
       ]
     }

@@ -9,7 +9,7 @@
  * differently downstream rather than being cleanly rejected here -- an accepted tradeoff.
  */
 
-const passthrough = { parse: (x) => x }
+const passthrough = { parse: (x) => x, safeParse: (x) => ({ success: true, data: x }) }
 
 /** One redacted secret slot. */
 export const settingsSecretViewSchema = passthrough

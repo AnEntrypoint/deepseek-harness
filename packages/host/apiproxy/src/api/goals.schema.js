@@ -14,7 +14,7 @@
  * those concurrent edits.
  */
 
-const passthrough = () => ({ parse: value => value })
+const passthrough = () => ({ parse: value => value, safeParse: value => ({ success: true, data: value }) })
 
 /** GoalRef shape marker (no-op). */
 export const goalRefSchema = passthrough()

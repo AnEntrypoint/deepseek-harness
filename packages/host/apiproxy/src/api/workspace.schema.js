@@ -13,7 +13,7 @@
 
 export { workspaceIdSchema } from './sessions.schema.js'
 
-const passthrough = () => ({ parse: value => value })
+const passthrough = () => ({ parse: value => value, safeParse: value => ({ success: true, data: value }) })
 
 /** WorkspaceView row of every workspace.* response. */
 export const workspaceViewSchema = passthrough()

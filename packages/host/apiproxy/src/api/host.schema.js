@@ -12,7 +12,7 @@
  */
 
 /** Pass-through shim: always reports success and returns the input unchanged. */
-const passthrough = () => ({ safeParse: data => ({ success: true, data }) })
+const passthrough = () => ({ safeParse: data => ({ success: true, data }), parse: data => data })
 
 /** host.describe request payload (empty object literal). */
 export const hostDescribeRequestSchema = passthrough()

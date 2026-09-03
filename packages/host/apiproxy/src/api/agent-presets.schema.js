@@ -11,7 +11,7 @@
  */
 
 /** Pass-through "schema": returns the value unchanged, no validation. */
-const passthrough = () => ({ parse: (x) => x })
+const passthrough = () => ({ parse: (x) => x, safeParse: (x) => ({ success: true, data: x }) })
 
 /** AgentPresetEntry row of agentPreset.list. */
 export const agentPresetEntrySchema = passthrough()
