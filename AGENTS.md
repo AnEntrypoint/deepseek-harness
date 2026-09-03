@@ -41,7 +41,7 @@ packages/    @freddie/freddie-<pkg> workspaces at packages/<group>/<pkg>/
   acp/         automation-only Agent Client Protocol server
   interaction/ approval/interaction capabilities, permission, commands, ask-user
   boot/        shared app-bin glue
-  sdk/         JSON-RPC protocol, server, and TypeScript client
+  sdk/         JSON-RPC protocol, server, and client
   examples/    demo bundles (agent-spine + CLI/ACP/JSON-RPC bins)
   experimental/ private prototypes excluded from official releases
   support/     dev/test infrastructure
