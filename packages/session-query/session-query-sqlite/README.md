@@ -26,7 +26,7 @@ The database is disposable but reset is guarded: every recognized schema version
 |---|---:|---|
 | `path` | required | Dedicated derived-index SQLite path; `:memory:` is supported. Missing filesystem paths are created owner-only on POSIX filesystems. |
 | `openAt` | `startup` | `startup` opens before service activation completes; `first-search` defers the SQLite module and handle until search; `never` disables full-text search (typed `SESSION_QUERY_SEARCH_DISABLED` failures) while inherited reads stay available. |
-| `journalMode` | `wal` | `wal`, `delete`, `truncate`, or `persist`. |
+| `journalMode` | `wal` | `wal`, `delete`, `truncate`, or `persist` — accepted for backward compatibility; the [libsql-plugkit-client](https://github.com/AnEntrypoint/libsql-plugkit-client) WASI VFS has no shared-memory support, so `wal` requests are honored best-effort and silently fall back to `delete`/`memory` (live-verified). |
 | `defaultLimit` | `20` | Page size when a request omits `limit`; at most `Number.MAX_SAFE_INTEGER - 1`. |
 | `maxLimit` | `100` | Largest accepted request page size; at most `Number.MAX_SAFE_INTEGER - 1`. |
 | `snippetChars` | `240` | Maximum snippet length in Unicode code points. |
@@ -37,7 +37,7 @@ The database is disposable but reset is guarded: every recognized schema version
 
 The index uses FTS5 `unicode61`. The trade-off is token/phrase recall rather than arbitrary substring recall: `AI` does not match the token `BRAID`. Use `ctx.sessionQuery.filterEvents()` with a `text` clause when a literal whitespace-flexible substring scan is required. NUL is rejected in queries; reserved highlight markers and NUL in documents are normalized before indexing so presentation markers cannot collide with source text.
 
-Abort signals stop queued work and flow unchanged through snapshot listing and non-mutating inspection. Once source work starts, the serialized state machine awaits that backend promise itself—even when a backend ignores cancellation—then checks the signal before starting any further listing, inspection, reconciliation, or query work. The caller therefore observes cancellation only after started backend work is quiescent, and a later search cannot enter the serializer while that cleanup is pending. Node's synchronous `DatabaseSync` API cannot interrupt a metadata or MATCH statement already executing on the JavaScript thread; signals are checked immediately before and after those non-preemptible calls.
+Abort signals stop queued work and flow unchanged through snapshot listing and non-mutating inspection. Once source work starts, the serialized state machine awaits that backend promise itself—even when a backend ignores cancellation—then checks the signal before starting any further listing, inspection, reconciliation, or query work. The caller therefore observes cancellation only after started backend work is quiescent, and a later search cannot enter the serializer while that cleanup is pending. Every SQLite call is async (`await`ed against the libsql client) but a single in-flight MATCH statement still cannot be interrupted mid-call; signals are checked immediately before and after those calls.
 
 ## Model Experience
 
@@ -50,6 +50,6 @@ None; this package neither assembles nor sends a provider request.
 ## Known Limitations and Deferred Work
 
 - **No caller authorization** — this is a trusted context-wide service; a model tool or UI must enforce its own access policy.
-- **Synchronous query execution** — `DatabaseSync` blocks the JavaScript thread during MATCH execution and cannot interrupt a statement already running.
+- **No WAL** — the libsql-plugkit-client WASI VFS has no shared-memory support; concurrent multi-process writers are not this backend's story.
 - **Token recall, not arbitrary substrings** — the `unicode61` tokenizer does not match substrings inside a larger token; use `filterEvents()` for literal scans.
 - **Single-owner derived index** — one service in one process must own each index path; external writers and multi-process sharing are unsupported.
