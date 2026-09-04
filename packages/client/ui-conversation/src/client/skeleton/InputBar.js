@@ -15,7 +15,7 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import clsx from 'clsx'
 import {
-  IconPlusOutline16, IconWarningOutline16, mountToast, Tooltip,
+  IconPlusOutline16, IconWarningOutline16, mountToast, renderTooltip,
 } from '@freddie/freddie-client-ui-primitives'
 import { deriveDecorations } from '../input/decorations.js'
 import { attachmentErrorText, imageSizeText } from '../image-labels.js'
@@ -82,6 +82,7 @@ export class DshInputBar extends HTMLElement {
   #cardEl = null
   #scrollEl = null
   #mirrorEl = null
+  #tooltips = new Map()
   #safari = false
   #safariNativeShrink = false
   // IME guard: composition Enter picks a candidate, it must not send. The
@@ -688,6 +689,18 @@ export class DshInputBar extends HTMLElement {
     if (el !== null) props.toggleCommandMenu?.(this.#selectionOf(el))
   }
 
+  // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+  // function-component branch in createElement), Tooltip.js's bare one-shot
+  // factory -- document.createElement('dsh-tooltip') fresh every call. This
+  // element re-renders on every keystroke, so a bare h(Tooltip, ...) call
+  // recreated its dsh-tooltip element (dropping its in-flight #showTimer
+  // hover-delay) on every #render(). `key` is a stable per-call-site label.
+  #tooltip(key, props) {
+    const el = renderTooltip(this.#tooltips.get(key) ?? null, props)
+    this.#tooltips.set(key, el)
+    return el
+  }
+
   #render() {
     const props = this.#props
     if (props === null) return
@@ -1001,7 +1014,7 @@ export class DshInputBar extends HTMLElement {
           h(
             'div',
             { class: css.tools ?? '' },
-            h(Tooltip, {
+            this.#tooltip('commands', {
               label: t('input.commands'),
               side: 'top',
               delayMs: 500,
@@ -1034,7 +1047,7 @@ export class DshInputBar extends HTMLElement {
             rightItems,
             renderSlot('conversation.input.model', { locked: modelSeatLocked }),
             ContextMeter({ useProjection, t }),
-            interruptible && h(Tooltip, {
+            interruptible && this.#tooltip('stop', {
               label: t('input.stop'),
               side: 'top',
               delayMs: 500,
@@ -1052,7 +1065,7 @@ export class DshInputBar extends HTMLElement {
                   h('rect', { x: '3', y: '3', width: '10', height: '10', rx: '3', fill: 'currentColor' })),
               ),
             }),
-            h(Tooltip, {
+            this.#tooltip('primary', {
               label: primaryLabel,
               side: 'top',
               delayMs: 500,

@@ -7,10 +7,24 @@
 // session snapshot — no data of its own.
 
 import { createElement as h } from 'webjsx'
-import { CodeBlock } from '@freddie/freddie-client-ui-primitives'
+import { renderCodeBlock } from '@freddie/freddie-client-ui-primitives'
 import { shallowEqual } from '@freddie/freddie-client-runtime/client'
 import { findToolCall } from '../chat/tool-node-reader.js'
 import css from './DetailsPanel.css.js'
+
+// CodeBlock's own one-shot factory recreates its dsh-code-block element
+// (dropping its copy-feedback state) on every call; DetailsPanel is a plain
+// function re-invoked on every store change while a call is selected. Only
+// one call is ever selected at a time, so a size-1 cache (keyed by callId,
+// evicted on selection change) is enough -- no per-session unbounded growth.
+let cachedArgsCallId = null
+let cachedArgsEl = null
+function cachedArgsBlock(callId, props) {
+  const el = renderCodeBlock(cachedArgsCallId === callId ? cachedArgsEl : null, props)
+  cachedArgsCallId = callId
+  cachedArgsEl = el
+  return el
+}
 
 /** Material of a settled result node (native call or run_code sub-dispatch). */
 function settledMaterial(node, callId) {
@@ -86,7 +100,7 @@ export function DetailsPanel(
               'section',
               { class: css.section ?? '' },
               h('div', { class: css.sectionLabel ?? '' }, t('details.input')),
-              h(CodeBlock, { code: pretty(material.argsRaw), lang: 'json', copyLabel: t('copy'), copiedLabel: t('copied') }),
+              cachedArgsBlock(callId, { code: pretty(material.argsRaw), lang: 'json', copyLabel: t('copy'), copiedLabel: t('copied') }),
             ),
             h(
               'section',

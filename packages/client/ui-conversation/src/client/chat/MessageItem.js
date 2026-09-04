@@ -8,12 +8,48 @@
 // functions plus one custom element for ModelRetryItem's timer state.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { JsonBlock, MessageText, StateDot } from '@freddie/freddie-client-ui-primitives'
+import { MessageText, renderJsonBlock, StateDot } from '@freddie/freddie-client-ui-primitives'
 import { ReferenceIcon } from '../reference/ReferenceIcon.js'
 import { CompactionItem } from './CompactionItem.js'
 import { ContextInjectionRow } from './ContextInjectionRow.js'
-import { MessageIconActions } from './MessageIconActions.js'
+import { renderMessageIconActions } from './MessageIconActions.js'
 import css from './MessageItem.css.js'
+
+// MessageIconActions' own one-shot factory (`MessageIconActions(props)`)
+// creates a fresh `dsh-message-icon-actions` DOM element on every call --
+// correct for a genuinely first render, but UserMessageNodeView/
+// PendingSteeringBubble are plain functions webjsx re-invokes on every
+// parent re-render (this file's own doc comment: "Converted from React
+// function components... to plain webjsx functions"), so every call
+// destroyed and recreated the element, losing its in-flight copy-success
+// timer and calendar-day subscription (webjsx's applyDiff routes a raw
+// Node through `parent.replaceChild`, never a props-only update -- see
+// applyDiff.js's own `newVNode instanceof Node` branch). `node` (the
+// keyed chat-node object from ChatNodeSeat's useSession selector) is a
+// stable reference across re-renders for the SAME message, so it is a
+// correct cache key for the element this call would otherwise discard.
+const cachedIconActions = new WeakMap()
+function cachedMessageIconActions(identity, props) {
+  const el = renderMessageIconActions(cachedIconActions.get(identity) ?? null, props)
+  cachedIconActions.set(identity, el)
+  return el
+}
+
+// Same bug, same fix shape as cachedMessageIconActions above: JsonBlock's own
+// one-shot factory recreates its dsh-json-block element (dropping its #open
+// toggle state) on every call, and UserStyleBubble/UnknownNodeView are plain
+// functions re-invoked on every parent re-render.
+const cachedJsonBlocks = new WeakMap()
+function cachedJsonBlockAt(identity, index, props) {
+  let perIdentity = cachedJsonBlocks.get(identity)
+  if (perIdentity === undefined) {
+    perIdentity = new Map()
+    cachedJsonBlocks.set(identity, perIdentity)
+  }
+  const el = renderJsonBlock(perIdentity.get(index) ?? null, props)
+  perIdentity.set(index, el)
+  return el
+}
 
 function contentParts(content) {
   const texts = []
@@ -245,7 +281,7 @@ function projectUserText(text, sessionLabels) {
 
 /** Right-aligned bubble shared by user and steering rows. */
 function UserStyleBubble({
-  content, renderMessageImages, actions, pending = false, referenceLabels = [], t,
+  identity, content, renderMessageImages, actions, pending = false, referenceLabels = [], t,
 }) {
   const { text, images, rest } = contentParts(content)
   const truncated = (total) => t('json.truncated', { total })
@@ -261,7 +297,7 @@ function UserStyleBubble({
         'div',
         { class: css.bubble ?? '' },
         projectUserText(text, referenceLabels),
-        rest.map((block, i) => h(JsonBlock, { key: i, label: t('message.extraBlock'), payload: block, truncatedLabel: truncated })),
+        rest.map((block, i) => cachedJsonBlockAt(identity, i, { label: t('message.extraBlock'), payload: block, truncatedLabel: truncated })),
       ),
       referenceLabels.length > 0 && (
         h('div', { class: css.referenceSummary ?? '' },
@@ -278,14 +314,15 @@ function UserStyleBubble({
  * @param props - Pending message content and conversation translator.
  * @returns the pending steering bubble.
  */
-export function PendingSteeringBubble({ content, renderMessageImages, t }) {
+export function PendingSteeringBubble({ identity, content, renderMessageImages, t }) {
   return h(UserStyleBubble, {
+    identity,
     content,
     renderMessageImages,
     pending: true,
     t,
     actions: text => (
-      h(MessageIconActions, {
+      cachedMessageIconActions(identity, {
         text,
         clock: 'start',
         className: css.actions,
@@ -301,12 +338,13 @@ export function UserMessageNodeView({
 }) {
   const data = node.data
   return h(UserStyleBubble, {
+    identity: node,
     content: data.content,
     renderMessageImages,
     ...data.referenceLabels === undefined ? {} : { referenceLabels: data.referenceLabels },
     t,
     actions: text => (
-      h(MessageIconActions, {
+      cachedMessageIconActions(node, {
         text,
         time: data.time,
         clock: 'start',
@@ -356,7 +394,7 @@ export function UnknownNodeView({ node, t }) {
   return h(
     'div',
     { class: css.contextRow ?? '' },
-    h(JsonBlock, {
+    cachedJsonBlockAt(node, 0, {
       label: t('message.unknownSurface', { type: data.type }),
       payload: data.data,
       truncatedLabel: total => t('json.truncated', { total }),

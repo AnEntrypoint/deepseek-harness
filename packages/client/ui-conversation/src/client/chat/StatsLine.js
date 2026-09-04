@@ -10,7 +10,7 @@
 // tags — the group list uses a plain array instead.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Tooltip } from '@freddie/freddie-client-ui-primitives'
+import { renderTooltip } from '@freddie/freddie-client-ui-primitives'
 import { formatTokensPerSecond } from './message-chrome.js'
 import { assistantStepReading } from './turn-metrics.js'
 import css from './StatsLine.css.js'
@@ -189,7 +189,9 @@ export class DshStatsLine extends HTMLElement {
   #props = DEFAULT_PROPS
   #truncated = false
   #resizeObserver = null
+  #resizeRoot = null
   #unsubscribe = null
+  #tooltipEl = null
 
   setProps(props) {
     this.#props = props
@@ -220,10 +222,19 @@ export class DshStatsLine extends HTMLElement {
   #unbindResize() {
     this.#resizeObserver?.disconnect()
     this.#resizeObserver = null
+    this.#resizeRoot = null
   }
 
   #bindResize(root) {
+    // applyDiff preserves this node's identity across renders whenever the
+    // stats-root structure itself is unchanged (only its text content
+    // changes) -- re-disconnecting and re-observing the SAME element on
+    // every #render() call churns a fresh ResizeObserver needlessly, and
+    // this element re-renders on every session/store change (its own doc
+    // comment above), not only when its size could plausibly have changed.
+    if (this.#resizeObserver !== null && this.#resizeRoot === root) return
     this.#unbindResize()
+    this.#resizeRoot = root
     const measure = () => {
       const next = root.scrollWidth > root.clientWidth
       if (next === this.#truncated) return
@@ -290,17 +301,25 @@ export class DshStatsLine extends HTMLElement {
 
     // The row elides with ellipsis when overlong; a delayed hover tooltip carries
     // the full line, enabled only while content is actually clipped.
-    const vdom = (
-      h(Tooltip, { label: line, side: 'top', delayMs: 500, disabled: !this.#truncated },
+    // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+    // function-component branch), Tooltip.js's bare one-shot factory --
+    // document.createElement('dsh-tooltip') fresh every call. This element
+    // re-renders on every session/store change (this file's own doc comment
+    // above #bindResize), so a bare h(Tooltip, ...) call recreated the
+    // dsh-tooltip element (dropping its in-flight #showTimer hover-delay) on
+    // every #render(). renderTooltip(cached, props) reuses the same element.
+    this.#tooltipEl = renderTooltip(this.#tooltipEl, {
+      label: line, side: 'top', delayMs: 500, disabled: !this.#truncated,
+      children: [
         h('div', { 'data-stats-root': '', class: css.root ?? '' },
           groups.map((group, i) => [
             i > 0 && [h('span', { class: css.sep ?? '', 'aria-hidden': true }, '|'), ' '],
             h('span', null, group),
           ]),
         ),
-      )
-    )
-    applyDiff(this, vdom)
+      ],
+    })
+    applyDiff(this, this.#tooltipEl)
     const root = this.querySelector('[data-stats-root]')
     if (root !== null) this.#bindResize(root)
   }

@@ -28,7 +28,7 @@ import clsx from 'clsx'
 import {
   Button, IconCloseFill14, IconPersonalizationOutline16,
   IconProjectAddOutline16, IconSearchOutline16, renderMenu,
-  renderModal, Tooltip,
+  renderModal, renderTooltip,
 } from '@freddie/freddie-client-ui-primitives'
 import { deriveFlat, deriveGroups, deriveSearchResults, UNGROUPED_KEY } from './tree.js'
 import {
@@ -187,6 +187,7 @@ export class DshViewOptionsMenu extends HTMLElement {
   #props = null
   #open = false
   #menu = null
+  #tooltipEl = null
 
   setProps(props) {
     this.#props = props
@@ -227,16 +228,19 @@ export class DshViewOptionsMenu extends HTMLElement {
       // be cut off at the header's bounds.
       portal: true,
       anchor: (
-        h(Tooltip, {label: t('viewOptions.label'), side: 'bottom', delayMs: 500},
-          h('button', {
-            type: 'button',
-            class: clsx(css.iconButton, css.wide),
-            'aria-label': t('viewOptions.label'),
-            onclick: () => { this.#open = !this.#open; this.#render() },
-          },
-            h(IconPersonalizationOutline16),
-          ),
-        )
+        this.#tooltipEl = renderTooltip(this.#tooltipEl, {
+          label: t('viewOptions.label'), side: 'bottom', delayMs: 500,
+          children: [
+            h('button', {
+              type: 'button',
+              class: clsx(css.iconButton, css.wide),
+              'aria-label': t('viewOptions.label'),
+              onclick: () => { this.#open = !this.#open; this.#render() },
+            },
+              h(IconPersonalizationOutline16),
+            ),
+          ],
+        })
       ),
     })
   }
@@ -872,6 +876,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
   #wsPlusEl = null
   #composing = false
   #wsPickFlow = null
+  #tooltips = new Map()
 
   // Rail search = expand + land in the search box.
   #searchOnExpand = false
@@ -1133,6 +1138,16 @@ export class DshWorkspaceBrowser extends HTMLElement {
     })
   }
 
+  // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+  // function-component branch), Tooltip.js's bare one-shot factory --
+  // recreating the dsh-tooltip element (dropping its in-flight #showTimer
+  // hover-delay) on every #render(). `key` is a stable per-call-site label.
+  #tooltip(key, props, ...children) {
+    const el = renderTooltip(this.#tooltips.get(key) ?? null, { ...props, children })
+    this.#tooltips.set(key, el)
+    return el
+  }
+
   #render() {
     const props = this.#props
     if (props === null) return
@@ -1275,7 +1290,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
                   this.#searchInput?.focus()
                 },
               },
-                h(Tooltip, {label: t('search'), side: 'bottom', delayMs: 500, disabled: searchExpanded},
+                this.#tooltip('wideSearch', {label: t('search'), side: 'bottom', delayMs: 500, disabled: searchExpanded},
                   h('button', {
                     type: 'button',
                     class: css.searchButton ?? '',
@@ -1336,7 +1351,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
                 picking affordance has nothing to offer here: the region hides the
                 button rather than leaving a dead one in the header. */
             directoryFlowAvailable && (
-              h(Tooltip, {label: t('workspace.add'), side: 'bottom', delayMs: 500},
+              this.#tooltip('workspaceAdd', {label: t('workspace.add'), side: 'bottom', delayMs: 500},
                 h('button', {
                   ref: (el) => { this.#wsPlusEl = el },
                   type: 'button',
@@ -1376,7 +1391,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
 
         /* The collapsed rail keeps search as its own 36px control. */
         !wide && h('div', {class: css.search ?? ''},
-          h(Tooltip, {label: t('search')},
+          this.#tooltip('railSearch', {label: t('search')},
             h('button', {
               type: 'button',
               class: css.searchButton ?? '',

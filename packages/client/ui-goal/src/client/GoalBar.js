@@ -16,7 +16,7 @@
 import { applyDiff, createElement as h } from 'webjsx'
 import {
   IconCheckOutline16, IconCloseOutline16, IconEditOutline16, IconGoalOutline16,
-  IconPauseOutline16, IconPlayOutline16, IconTrashOutline16, Tooltip,
+  IconPauseOutline16, IconPlayOutline16, IconTrashOutline16, renderTooltip,
 } from '@freddie/freddie-client-ui-primitives'
 import css from './GoalBar.css.js'
 
@@ -45,6 +45,22 @@ export class DshGoalBar extends HTMLElement {
   #pendingFlag = false
   #actionError = null
   #clearedGoalId = null
+  #tooltips = new Map()
+
+  // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's function-
+  // component branch in createElement), which is Tooltip.js's bare one-shot
+  // factory -- document.createElement('dsh-tooltip') fresh every call. This
+  // element re-renders on every goal/session snapshot change (its own doc
+  // comment above), so every h(Tooltip, ...) call site was recreating its
+  // dsh-tooltip element (dropping its in-flight #showTimer hover-delay) on
+  // every #render(). `key` is a stable per-call-site label -- there is no
+  // natural object identity per tooltip here, unlike MessageIconActions'
+  // node-keyed cache.
+  #tooltip(key, props, ...children) {
+    const el = renderTooltip(this.#tooltips.get(key) ?? null, { ...props, children })
+    this.#tooltips.set(key, el)
+    return el
+  }
 
   setProps(props) {
     const prevGoalId = this.#props.goal?.id
@@ -122,7 +138,7 @@ export class DshGoalBar extends HTMLElement {
             }),
             this.#actionError !== null && h('span', {class: css.error ?? '', role: 'alert'}, this.#actionError),
             h('div', {class: css.actions ?? ''},
-              h(Tooltip, {label: t('action.save'), side: 'bottom', delayMs: 500},
+              this.#tooltip('save', {label: t('action.save'), side: 'bottom', delayMs: 500},
                 h('button', {
                   type: 'button',
                   class: css.iconBtn ?? '',
@@ -133,7 +149,7 @@ export class DshGoalBar extends HTMLElement {
                   h(IconCheckOutline16, {size: 14}),
                 ),
               ),
-              h(Tooltip, {label: t('action.cancel'), side: 'bottom', delayMs: 500},
+              this.#tooltip('cancel', {label: t('action.cancel'), side: 'bottom', delayMs: 500},
                 h('button', {
                   type: 'button',
                   class: css.iconBtn ?? '',
@@ -162,20 +178,20 @@ export class DshGoalBar extends HTMLElement {
           this.#actionError !== null && h('span', {class: css.error ?? '', role: 'alert'}, this.#actionError),
           h('div', {class: css.actions ?? ''},
             goal.phase === 'active' && (
-              h(Tooltip, {label: t('action.pause'), side: 'bottom', delayMs: 500},
+              this.#tooltip('pause', {label: t('action.pause'), side: 'bottom', delayMs: 500},
                 h('button', {type: 'button', class: css.iconBtn ?? '', disabled: this.#pending, onclick: () => { void this.#runAction(onPause) }, 'aria-label': t('action.pause')},
                   h(IconPauseOutline16, {size: 14}),
                 ),
               )
             ),
             goal.phase === 'paused' && (
-              h(Tooltip, {label: t('action.resume'), side: 'bottom', delayMs: 500},
+              this.#tooltip('resume', {label: t('action.resume'), side: 'bottom', delayMs: 500},
                 h('button', {type: 'button', class: css.iconBtn ?? '', disabled: this.#pending, onclick: () => { void this.#runAction(onResume) }, 'aria-label': t('action.resume')},
                   h(IconPlayOutline16, {size: 14}),
                 ),
               )
             ),
-            h(Tooltip, {label: t('action.edit'), side: 'bottom', delayMs: 500},
+            this.#tooltip('edit', {label: t('action.edit'), side: 'bottom', delayMs: 500},
               h('button', {
                 type: 'button',
                 class: css.iconBtn ?? '',
@@ -186,7 +202,7 @@ export class DshGoalBar extends HTMLElement {
                 h(IconEditOutline16, {size: 14}),
               ),
             ),
-            h(Tooltip, {label: t('action.clear'), side: 'bottom', delayMs: 500},
+            this.#tooltip('clear', {label: t('action.clear'), side: 'bottom', delayMs: 500},
               h('button', {type: 'button', class: css.iconBtn ?? '', disabled: this.#pending, onclick: () => { void this.#handleClear(goal.id) }, 'aria-label': t('action.clear')},
                 h(IconTrashOutline16, {size: 14}),
               ),

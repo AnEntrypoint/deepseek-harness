@@ -18,6 +18,7 @@ export function AssistantNodeView({
   const mentions = owner === undefined ? undefined : fileMentions(owner)
   return (
     h(AssistantMarkdown, {
+      identity: node,
       blocks: data.blocks,
       streaming: data.status === 'running',
       interrupted: data.status === 'interrupted',

@@ -20,7 +20,8 @@
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
 import {
-  CodeBlock, DiffBlock, DisclosureRow, IconInspectOutline12, ReadBlock, SearchBlock, StateDot, TerminalBlock, WebBlock,
+  DisclosureRow, IconInspectOutline12, renderCodeBlock, renderDiffBlock, renderMarkdownText,
+  renderReadBlock, renderSearchBlock, renderTerminalBlock, StateDot, WebBlock,
 } from '@freddie/freddie-client-ui-primitives'
 import { CHAT_DIFF_MAX_LINES } from '../models/diff-card-model.js'
 import { CHAT_READ_MAX_LINES } from '../models/read-card-model.js'
@@ -61,6 +62,19 @@ function stateStatus(state, t) {
 export class DshToolRow extends HTMLElement {
   #props = null
   #expanded = false
+  // TerminalBlock/DiffBlock/ReadBlock/SearchBlock/CodeBlock's (and WebBlock's
+  // inner MarkdownText, see WebBlock.js) own one-shot factories recreate
+  // their DOM element (dropping copy-feedback/expanded-state/settled-render
+  // memoization) on every call; this row re-renders on every running-tool
+  // state change while the call streams. Cached per-instance since a call
+  // carries at most one card kind at a time (this.#render()'s own doc
+  // comment), so at most one of these is ever non-null.
+  #terminalEl = null
+  #diffEl = null
+  #readEl = null
+  #searchEl = null
+  #webAnswerEl = null
+  #codeEl = null
 
   setProps(props) {
     this.#props = props
@@ -170,22 +184,22 @@ export class DshToolRow extends HTMLElement {
           h('div', {class: css.bodyWrap ?? ''},
             terminalBody !== null
               ? (
-                h(TerminalBlock, {
+                (this.#terminalEl = renderTerminalBlock(this.#terminalEl, {
                   ...terminalBody.card,
                   maxLines: Infinity,
                   labels: terminalBlockLabels(t),
                   className: css.terminalBody,
-                })
+                }))
               )
               : diffBody !== null
-                ? h(DiffBlock, {...diffBody.card, maxLines: CHAT_DIFF_MAX_LINES, className: css.diffBody})
+                ? (this.#diffEl = renderDiffBlock(this.#diffEl, {...diffBody.card, maxLines: CHAT_DIFF_MAX_LINES, className: css.diffBody}))
                 : readBody !== null
-                  ? h(ReadBlock, {...readBody, maxLines: CHAT_READ_MAX_LINES, className: css.readBody})
+                  ? (this.#readEl = renderReadBlock(this.#readEl, {...readBody, maxLines: CHAT_READ_MAX_LINES, className: css.readBody}))
                   : searchBody !== null
                     ? [
-                      h(SearchBlock, {
+                      (this.#searchEl = renderSearchBlock(this.#searchEl, {
                         ...searchBody.card, maxLines: CHAT_SEARCH_MAX_LINES, className: css.searchBody,
-                      }),
+                      })),
                       /* A capped search's recovery locator lives only in the result
                           text; show it below the card so the dropped rows survive. */
                       searchBody.recovery !== undefined
@@ -193,11 +207,15 @@ export class DshToolRow extends HTMLElement {
                         : null,
                     ]
                     : webBody !== null
-                      ? h(WebBlock, {...webBody, className: css.webBody})
+                      ? h(WebBlock, {
+                        ...webBody,
+                        className: css.webBody,
+                        markdownText: props => (this.#webAnswerEl = renderMarkdownText(this.#webAnswerEl, props)),
+                      })
                       : [
                         variant === 'code' && body !== null ? (
                           h('div', {class: css.bodyScroll ?? ''},
-                            h(CodeBlock, {code: body, lang: 'typescript', copyLabel: t('copy'), copiedLabel: t('copied'), className: css.codeBody})
+                            (this.#codeEl = renderCodeBlock(this.#codeEl, {code: body, lang: 'typescript', copyLabel: t('copy'), copiedLabel: t('copied'), className: css.codeBody}))
                           )
                         ) : null,
                         (cardBody !== null || outputText !== null) ? (

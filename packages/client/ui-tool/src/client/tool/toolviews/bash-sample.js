@@ -16,7 +16,7 @@
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
 import {
-  IconApiOutline14, IconChevronDownOutline14, IconInspectOutline12, StateDot, TerminalBlock,
+  IconApiOutline14, IconChevronDownOutline14, IconInspectOutline12, renderTerminalBlock, StateDot,
 } from '@freddie/freddie-client-ui-primitives'
 import { terminalBlockLabels, terminalCardModel, terminalFailed } from '../models/terminal-card-model.js'
 import { toolRowModel } from '../models/tool-call-model.js'
@@ -54,6 +54,10 @@ function stateStatus(state, t) {
 export class DshBashRow extends HTMLElement {
   #props = null
   #expanded = false
+  // TerminalBlock's own one-shot factory recreates its dsh-terminal-block
+  // element (dropping its copy-feedback state) on every call; this row
+  // re-renders on every running-tool state change while the call streams.
+  #terminalEl = null
 
   setProps(props) {
     this.#props = props
@@ -139,12 +143,12 @@ export class DshBashRow extends HTMLElement {
           h('div', {class: css.bodyWrap ?? ''},
             terminal !== null
               ? (
-                h(TerminalBlock, {
+                (this.#terminalEl = renderTerminalBlock(this.#terminalEl, {
                   ...terminal.card,
                   maxLines: Infinity,
                   labels: terminalBlockLabels(t),
                   className: css.terminal,
-                })
+                }))
               )
               : (
                 h('div', {class: css.ioCard ?? ''},

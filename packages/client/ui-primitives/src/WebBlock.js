@@ -24,6 +24,17 @@ import clsx from 'clsx'
 import { MarkdownText } from './markdown/MarkdownText.js'
 import css from './WebBlock.css.js'
 
+// MarkdownText's own one-shot factory recreates its dsh-markdown-text
+// element (dropping its settled-render memoization) on every call; WebBlock/
+// WebSearchBlock are plain functions with no owning instance. `markdownText`
+// is an optional caching render function threaded in by the caller (see
+// ToolDetails.js); a caller with no stable identity to key on may omit it,
+// falling back to the bare one-shot factory (correct for a genuine one-off
+// render, e.g. a details pane about to be replaced).
+function renderAnswer(answer, markdownText) {
+  return markdownText === undefined ? h(MarkdownText, { text: answer }) : markdownText({ text: answer })
+}
+
 /**
  * The URL to link to, or undefined when the URL must render as plain text. Only
  * http(s) becomes a navigable external anchor, so a `javascript:`/`data:`/`file:`
@@ -109,7 +120,7 @@ function SourceItem({ source, ordinal }) {
  * @param props - see {@link WebSearchBlockProps}.
  * @returns the search card element.
  */
-function WebSearchBlock({ answer, sources, truncated, className }) {
+function WebSearchBlock({ answer, sources, truncated, className, markdownText }) {
   // A provider may legitimately return no answer and no sources; the chat WebRow
   // does not show the raw result content, so without this the user would see an
   // empty card. Mirror the backend's `No results found.` render text.
@@ -118,7 +129,7 @@ function WebSearchBlock({ answer, sources, truncated, className }) {
     'div',
     { class: clsx(css.block, className), 'data-web': 'search' },
     answer !== undefined && answer !== '' && (
-      h('div', { class: css.answer ?? '' }, h(MarkdownText, { text: answer }))
+      h('div', { class: css.answer ?? '' }, renderAnswer(answer, markdownText))
     ),
     empty ? (
       h('div', { class: css.empty ?? '' }, 'No results found.')

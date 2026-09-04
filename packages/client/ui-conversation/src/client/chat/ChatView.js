@@ -505,6 +505,7 @@ export class DshChatView extends HTMLElement {
           })(),
           pendingSteering.map(item => h(PendingSteeringBubble, {
             key: item.id,
+            identity: item,
             content: item.content,
             renderMessageImages,
             t,

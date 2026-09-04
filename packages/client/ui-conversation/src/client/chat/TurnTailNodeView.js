@@ -1,7 +1,21 @@
 import { createElement as h } from 'webjsx'
-import { MessageIconActions } from './MessageIconActions.js'
+import { renderMessageIconActions } from './MessageIconActions.js'
 import { assistantText } from './turn-assistant.js'
 import css from './TurnTailNodeView.css.js'
+
+// Same fix as MessageItem.js's cachedMessageIconActions: TurnTailNodeView is
+// a plain function re-invoked by ChatNodeSeat on every re-render of this
+// turn (including on every streamed assistant chunk while the turn is
+// still open), and MessageIconActions' own one-shot factory would recreate
+// its DOM element -- and reset its copy-success timer / calendar-day
+// subscription -- on each call. `node` is the stable keyed chat-node
+// object for this turn tail across those re-renders.
+const cachedIconActions = new WeakMap()
+function cachedMessageIconActions(identity, props) {
+  const el = renderMessageIconActions(cachedIconActions.get(identity) ?? null, props)
+  cachedIconActions.set(identity, el)
+  return el
+}
 
 /** Turn-local actions and feature tail over the Location index, independent of Assistant placement. */
 export function TurnTailNodeView({
@@ -30,7 +44,7 @@ export function TurnTailNodeView({
   return (
     h('div', { class: css.root ?? '', 'data-turn-tail': data.turn, 'data-time-hover-root': true },
       tail,
-      h(MessageIconActions, {
+      cachedMessageIconActions(node, {
         text: assistantText(closing.blocks),
         time: closing.time,
         runMs,

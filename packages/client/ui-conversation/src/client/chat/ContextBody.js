@@ -5,7 +5,6 @@
 // even when this UI version has never seen its producer.
 
 import { createElement as h } from 'webjsx'
-import { JsonBlock } from '@freddie/freddie-client-ui-primitives'
 import css from './ContextBody.css.js'
 
 /** Model-facing text stays bounded at the disclosure, not at the producer. */
@@ -104,10 +103,9 @@ function SourceFields({ source, formRendered, t }) {
  * @param props - The unrecognized blocks and the locale seat.
  * @returns One generic JSON block per unknown entry.
  */
-function UnknownBlocks({ blocks, t }) {
+function UnknownBlocks({ blocks, t, jsonBlock }) {
   return blocks.map((block, index) => (
-    h(JsonBlock, {
-      key: index,
+    jsonBlock(`unknown-${index}`, {
       label: t('message.unknownBlock'),
       payload: block,
       truncatedLabel: total => t('json.truncated', { total }),
@@ -122,14 +120,13 @@ function UnknownBlocks({ blocks, t }) {
  * @param props - Durable content and the locale seat.
  * @returns The content blocks as the model received them.
  */
-function ModelFacingContent({ content, t }) {
+function ModelFacingContent({ content, t, jsonBlock }) {
   return contentRuns(content).flatMap((run, index) => ('text' in run
     ? run.text !== ''
       ? [h('pre', { key: index, class: css.text ?? '', 'data-context-text': '' }, boundedText(run.text, t))]
       : []
     : [
-      h(JsonBlock, {
-        key: index,
+      jsonBlock(`run-${index}`, {
         label: t('message.unknownBlock'),
         payload: run.block,
         truncatedLabel: total => t('json.truncated', { total }),
@@ -144,11 +141,11 @@ function ModelFacingContent({ content, t }) {
  * @param props - Durable content, its source, and the locale seat.
  * @returns The opaque context body.
  */
-export function OpaqueBody({ content, source, t }) {
+export function OpaqueBody({ content, source, t, jsonBlock }) {
   const fields = SourceFields({ source, formRendered: false, t })
   return fields === null
-    ? ModelFacingContent({ content, t })
-    : [...ModelFacingContent({ content, t }), fields]
+    ? ModelFacingContent({ content, t, jsonBlock })
+    : [...ModelFacingContent({ content, t, jsonBlock }), fields]
 }
 
 /** One reconciled instruction file, as the durable source records it. */
@@ -208,9 +205,9 @@ function instructionAction(action, baseline) {
  * @returns The instructions context body, or the opaque body when the change
  * list is unreadable.
  */
-export function InstructionsBody({ content, source, t }) {
+export function InstructionsBody({ content, source, t, jsonBlock }) {
   const changes = instructionChanges(source)
-  if (changes === null) return OpaqueBody({ content, source, t })
+  if (changes === null) return OpaqueBody({ content, source, t, jsonBlock })
   const baseline = asRecord(source)?.['baseline'] === true
   return [
     h('ul', { class: css.files ?? '', 'data-context-files': '' },
@@ -223,7 +220,7 @@ export function InstructionsBody({ content, source, t }) {
         )
       )),
     ),
-    ...ModelFacingContent({ content, t }),
+    ...ModelFacingContent({ content, t, jsonBlock }),
   ]
 }
 
@@ -263,9 +260,9 @@ function catalogEntries(source) {
  * @returns The catalog context body, or the opaque body when the entry list is
  * unreadable.
  */
-export function CatalogBody({ content, source, t }) {
+export function CatalogBody({ content, source, t, jsonBlock }) {
   const entries = catalogEntries(source)
-  if (entries === null) return OpaqueBody({ content, source, t })
+  if (entries === null) return OpaqueBody({ content, source, t, jsonBlock })
   const update = asRecord(source)?.['update'] === true
   // Entry count is unbounded (a provider may publish any number of skills), and
   // the scrollport bounds height, not node count — so the list bounds itself.
@@ -292,7 +289,7 @@ export function CatalogBody({ content, source, t }) {
       : []),
     // The block union is merge-extensible: a catalog message carrying an
     // unknown block still shows it rather than dropping model-visible content.
-    ...UnknownBlocks({ blocks: rest, t }),
+    ...UnknownBlocks({ blocks: rest, t, jsonBlock }),
   ]
 }
 
@@ -331,10 +328,10 @@ function snapshotSections(source) {
  * @param props - Durable content, its source, and the locale seat.
  * @returns The snapshot context body, or the opaque body when unreadable.
  */
-export function SnapshotBody({ content, source, t }) {
+export function SnapshotBody({ content, source, t, jsonBlock }) {
   const sections = snapshotSections(source)
   /* v8 ignore next -- contextBody reads the sections before choosing this body. */
-  if (sections === null) return OpaqueBody({ content, source, t })
+  if (sections === null) return OpaqueBody({ content, source, t, jsonBlock })
   return [
     h('p', { class: css.catalogNotice ?? '', 'data-context-snapshot-supersedes': '' },
       t('message.context.snapshot.supersedes'),
@@ -358,8 +355,8 @@ export function SnapshotBody({ content, source, t }) {
  * @param props - Durable content, its source, and the locale seat.
  * @returns The notice context body.
  */
-export function NoticeBody({ content, t }) {
-  return ModelFacingContent({ content, t })
+export function NoticeBody({ content, t, jsonBlock }) {
+  return ModelFacingContent({ content, t, jsonBlock })
 }
 
 /**
@@ -370,15 +367,15 @@ export function NoticeBody({ content, t }) {
  * @param props - Durable content, its source, and the locale seat.
  * @returns The relay context body.
  */
-export function RelayBody({ content, source, t }) {
+export function RelayBody({ content, source, t, jsonBlock }) {
   const sender = relaySender(source)
   /* v8 ignore next -- contextBody resolves the sender before choosing this body. */
-  if (sender === null) return OpaqueBody({ content, source, t })
+  if (sender === null) return OpaqueBody({ content, source, t, jsonBlock })
   return [
     h('p', { class: css.relaySender ?? '', 'data-context-relay-sender': '' },
       t('message.context.relay.from', { session: sender }),
     ),
-    ...ModelFacingContent({ content, t }),
+    ...ModelFacingContent({ content, t, jsonBlock }),
   ]
 }
 
@@ -424,9 +421,9 @@ function recalledSessions(source) {
  * @param props - Durable content, its source, and the locale seat.
  * @returns The recall context body, or the opaque body when unreadable.
  */
-export function RecallBody({ content, source, t }) {
+export function RecallBody({ content, source, t, jsonBlock }) {
   const sessions = recalledSessions(source)
-  if (sessions === null) return OpaqueBody({ content, source, t })
+  if (sessions === null) return OpaqueBody({ content, source, t, jsonBlock })
   return [
     h('ul', { class: css.recalls ?? '', 'data-context-recalls': '' },
       sessions.map((session, index) => (
@@ -444,7 +441,7 @@ export function RecallBody({ content, source, t }) {
         )
       )),
     ),
-    ...ModelFacingContent({ content, t }),
+    ...ModelFacingContent({ content, t, jsonBlock }),
   ]
 }
 

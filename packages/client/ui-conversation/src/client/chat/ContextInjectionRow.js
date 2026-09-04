@@ -3,7 +3,7 @@
 // applyDiff(this, vdom) call.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { DisclosureRow, IconBrowseOutline16 } from '@freddie/freddie-client-ui-primitives'
+import { DisclosureRow, IconBrowseOutline16, renderJsonBlock } from '@freddie/freddie-client-ui-primitives'
 import { ReferenceIcon } from '../reference/ReferenceIcon.js'
 import { contextBody } from './ContextBody.js'
 import css from './ContextInjectionRow.css.js'
@@ -30,6 +30,7 @@ const DEFAULT_PROPS = {
 export class DshContextInjectionRow extends HTMLElement {
   #props = DEFAULT_PROPS
   #open = false
+  #jsonBlocks = new Map()
 
   setProps(props) {
     this.#props = props
@@ -45,11 +46,22 @@ export class DshContextInjectionRow extends HTMLElement {
     this.#render()
   }
 
+  // JsonBlock's own one-shot factory recreates its dsh-json-block element
+  // (dropping its #open toggle state) on every call; ContextBody's helpers
+  // are plain functions re-invoked on every #render(). `key` is a stable
+  // per-slot label (see ContextBody.js's own `unknown-${index}`/`run-${index}`
+  // keys) unique within one contextBody() call.
+  #jsonBlock = (key, props) => {
+    const el = renderJsonBlock(this.#jsonBlocks.get(key) ?? null, props)
+    this.#jsonBlocks.set(key, el)
+    return el
+  }
+
   #render() {
     const { content, source, provenance, form, t } = this.#props
     // Resolved rather than declared: a form whose fields are unreadable renders
     // the opaque body, and the marker must say what the row actually shows.
-    const { rendered, summary, body } = contextBody(form, { content, source, t })
+    const { rendered, summary, body } = contextBody(form, { content, source, t, jsonBlock: this.#jsonBlock })
 
     const vdom = (
       h(DisclosureRow,

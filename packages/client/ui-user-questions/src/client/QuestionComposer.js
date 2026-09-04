@@ -7,7 +7,7 @@ import clsx from 'clsx'
 import {
   Button, IconCheckOutline14, IconChevronDownOutline14, IconChevronLeftOutline14,
   IconChevronRightOutline14, IconChevronUpOutline14, IconCloseOutline16,
-  IconEditOutline16, MarkdownText,
+  IconEditOutline16, renderMarkdownText,
 } from '@freddie/freddie-client-ui-primitives'
 import { PendingQuestion, planReviewOf } from './contract/slots.js'
 import { DshPlanReviewPanel } from './PlanReviewPanel.js'
@@ -149,6 +149,7 @@ export class DshQuestionFlow extends HTMLElement {
   #error = null
   #minimized = false
   #focusedQuestions = new Set()
+  #detailEls = new Map()
 
   setProps(props) {
     const pendingChanged = this.#props === null || this.#props.pending !== props.pending
@@ -279,6 +280,16 @@ export class DshQuestionFlow extends HTMLElement {
     this.#submitDrafts(nextDrafts)
   }
 
+  // MarkdownText's own one-shot factory recreates its dsh-markdown-text
+  // element (dropping its settled-render memoization) on every call; this
+  // flow re-renders on every option toggle/draft edit for the current
+  // question. Keyed by question index within this flow.
+  #renderDetail(index, text) {
+    const el = renderMarkdownText(this.#detailEls.get(index) ?? null, { text })
+    this.#detailEls.set(index, el)
+    return el
+  }
+
   #render() {
     const props = this.#props
     if (props === null) return
@@ -387,7 +398,7 @@ export class DshQuestionFlow extends HTMLElement {
 
           !minimized && [
             h('div', {class: css.body ?? '', 'data-question-scroll': ''},
-              question.detail !== undefined && h('div', {class: css.detail ?? ''}, h(MarkdownText, {text: question.detail})),
+              question.detail !== undefined && h('div', {class: css.detail ?? ''}, this.#renderDetail(index, question.detail)),
               h('div', {class: css.options ?? '', role: question.multiSelect === true ? 'group' : 'radiogroup'},
                 optionButtons,
 

@@ -1,7 +1,7 @@
 /** Chrome-Network-style overview timeline for focusing the trajectory ledger. */
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Tooltip } from '@freddie/freddie-client-ui-primitives'
+import { renderTooltip } from '@freddie/freddie-client-ui-primitives'
 import {
   deriveTrajectoryTimeline,
   formatTimelineOffset,
@@ -148,9 +148,10 @@ function EarlierHistoryBoundary({
   loading,
   onHover,
   onLoad,
+  tooltip,
 }) {
   return (
-    h(Tooltip, {
+    tooltip('earlierHistory', {
       label: loading ? 'Loading earlier history…' : 'Click to load earlier history',
       side: 'right',
       delayMs: TIMELINE_TOOLTIP_DELAY_MS,
@@ -200,6 +201,20 @@ export class DshTrajectoryTimeline extends HTMLElement {
   #panning = false
   #viewport = null
   #animateViewport = false
+  #tooltips = new Map()
+
+  // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+  // function-component branch), Tooltip.js's bare one-shot factory --
+  // recreating the dsh-tooltip element (dropping its in-flight #showTimer
+  // hover-delay) on every #render(), which fires on every drag/hover/pan
+  // frame. `key` is per-call-site for the earlier-history boundary, or
+  // span.index for the per-span tooltips in the spans .map(). A stale key
+  // from a since-removed span is harmless: it just sits unused in the Map.
+  #tooltip(key, props, ...children) {
+    const el = renderTooltip(this.#tooltips.get(key) ?? null, { ...props, children })
+    this.#tooltips.set(key, el)
+    return el
+  }
 
   setProps(props) {
     this.#props = props
@@ -357,6 +372,7 @@ export class DshTrajectoryTimeline extends HTMLElement {
                   loading: this.#loadingEarlier,
                   onHover: () => { this.#hover = null; this.#render() },
                   onLoad: loadEarlier,
+                  tooltip: this.#tooltip.bind(this),
                 })
                 : null,
             ),
@@ -609,6 +625,7 @@ export class DshTrajectoryTimeline extends HTMLElement {
                 loading: this.#loadingEarlier,
                 onHover: () => { this.#hover = null; this.#render() },
                 onLoad: loadEarlier,
+                tooltip: this.#tooltip.bind(this),
               })
               : null,
             hover !== null && hover.recordIndex === null && draft === null
@@ -686,8 +703,7 @@ export class DshTrajectoryTimeline extends HTMLElement {
                     ? null
                     : ttftMs / (ttftMs + decodingMs)
                   return (
-                    h(Tooltip, {
-                      key: span.index,
+                    this.#tooltip(span.index, {
                       label: () => timelineTooltipLabel(span.kind, detail),
                       side: 'bottom',
                       delayMs: TIMELINE_TOOLTIP_DELAY_MS,

@@ -20,7 +20,7 @@
 
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
-  createAnchoredPosition, IconDislikeOutline16, IconLikeOutline16, Tooltip,
+  createAnchoredPosition, IconDislikeOutline16, IconLikeOutline16, renderTooltip,
 } from '@freddie/freddie-client-ui-primitives'
 import css from './MessageFeedbackActions.css.js'
 
@@ -59,6 +59,8 @@ export class DshMessageFeedbackActions extends HTMLElement {
   #portalEl = null
   #pointerHandler = null
   #keyHandler = null
+  #likeTooltipEl = null
+  #dislikeTooltipEl = null
 
   /** Set/replace props and re-render; call after creating or updating the element. */
   setProps(props) {
@@ -312,8 +314,13 @@ export class DshMessageFeedbackActions extends HTMLElement {
       this.#portalEl = null
     }
 
-    const vdom = h(Fragment, null,
-      h(Tooltip, { label: likeLabel, side: 'bottom' },
+    // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+    // function-component branch), Tooltip.js's bare one-shot factory --
+    // recreating the dsh-tooltip element (dropping its in-flight #showTimer
+    // hover-delay) on every #render(). renderTooltip(cached, props) reuses it.
+    this.#likeTooltipEl = renderTooltip(this.#likeTooltipEl, {
+      label: likeLabel, side: 'bottom',
+      children: [
         h('button',
           {
             type: 'button',
@@ -328,8 +335,11 @@ export class DshMessageFeedbackActions extends HTMLElement {
           },
           h(IconLikeOutline16, null),
         ),
-      ),
-      h(Tooltip, { label: dislikeLabel, side: 'bottom' },
+      ],
+    })
+    this.#dislikeTooltipEl = renderTooltip(this.#dislikeTooltipEl, {
+      label: dislikeLabel, side: 'bottom',
+      children: [
         h('button',
           {
             type: 'button',
@@ -344,7 +354,11 @@ export class DshMessageFeedbackActions extends HTMLElement {
           },
           h(IconDislikeOutline16, null),
         ),
-      ),
+      ],
+    })
+    const vdom = h(Fragment, null,
+      this.#likeTooltipEl,
+      this.#dislikeTooltipEl,
       rating !== undefined && h('button',
         {
           type: 'button',

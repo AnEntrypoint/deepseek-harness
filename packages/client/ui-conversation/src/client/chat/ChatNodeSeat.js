@@ -1,6 +1,17 @@
 import { createElement as h } from 'webjsx'
-import { JsonBlock } from '@freddie/freddie-client-ui-primitives'
+import { renderJsonBlock } from '@freddie/freddie-client-ui-primitives'
 import css from './ChatView.css.js'
+
+// JsonBlock's own one-shot factory recreates its dsh-json-block element
+// (dropping its #open toggle state) on every call; ChatNodeSeat is a plain
+// function re-invoked on every session change. `node` is stable across
+// re-renders of the same seat.
+const cachedFallback = new WeakMap()
+function cachedFallbackJsonBlock(identity, props) {
+  const el = renderJsonBlock(cachedFallback.get(identity) ?? null, props)
+  cachedFallback.set(identity, el)
+  return el
+}
 
 /** Subscribe and dispatch one stable Context key without observing sibling Nodes. */
 export function ChatNodeSeat({
@@ -37,7 +48,7 @@ export function ChatNodeSeat({
         entryKey: routedNode.kind,
         hookContext: nodeKey,
         fallback: (
-          h(JsonBlock, {
+          cachedFallbackJsonBlock(routedNode, {
             label: t('message.unknownSurface', { type: routedNode.kind }),
             payload: routedNode.data,
             truncatedLabel: total => t('json.truncated', { total }),

@@ -18,7 +18,7 @@
 // applyDiff(this, vdom) call instead of implicit re-render on setState.
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button, IconEditOutline16, MarkdownText } from '@freddie/freddie-client-ui-primitives'
+import { Button, IconEditOutline16, renderMarkdownText } from '@freddie/freddie-client-ui-primitives'
 import css from './PlanReviewPanel.css.js'
 
 /**
@@ -44,6 +44,7 @@ export class DshPlanReviewPanel extends HTMLElement {
   #props = null
   #busy = false
   #error = null
+  #planEl = null
 
   /** Set/replace props and re-render; call after creating or updating the element. */
   setProps(props) {
@@ -85,7 +86,7 @@ export class DshPlanReviewPanel extends HTMLElement {
             t('plan.header'),
           ),
           h('div', {class: css.body ?? '', 'data-plan-review-scroll': ''},
-            h(MarkdownText, {text: review.plan}),
+            (this.#planEl = renderMarkdownText(this.#planEl, {text: review.plan})),
           ),
           h('div', {class: css.footer ?? ''},
             h('div', {class: css.feedback ?? '', role: 'status'}, error),

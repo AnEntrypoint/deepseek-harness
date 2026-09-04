@@ -15,7 +15,7 @@ import {
   IconApiOutline14,
   IconChevronDownOutline14,
   IconChevronRightOutline14,
-  MarkdownText,
+  renderMarkdownText,
 } from '@freddie/freddie-client-ui-primitives'
 import css from './MessageItem.css.js'
 
@@ -28,6 +28,7 @@ const DEFAULT_PROPS = {
 export class DshCompactionItem extends HTMLElement {
   #props = DEFAULT_PROPS
   #expanded = false
+  #summaryEl = null
 
   setProps(props) {
     this.#props = props
@@ -81,7 +82,9 @@ export class DshCompactionItem extends HTMLElement {
           h('span', { class: css.compactionSummary ?? '' }, summary),
         ),
         open && node.summary !== null
-          && h('div', { class: css.compactionBody ?? '' }, h(MarkdownText, { text: node.summary })),
+          && h('div', { class: css.compactionBody ?? '' },
+            (this.#summaryEl = renderMarkdownText(this.#summaryEl, { text: node.summary })),
+          ),
       )
     )
     applyDiff(this, vdom)

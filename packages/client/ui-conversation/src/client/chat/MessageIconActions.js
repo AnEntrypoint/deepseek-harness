@@ -9,7 +9,7 @@
 
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import {
-  IconBranchOutline16, IconCheckOutline16, IconCopyOutline16, Tooltip, writeClipboard,
+  IconBranchOutline16, IconCheckOutline16, IconCopyOutline16, renderTooltip, writeClipboard,
 } from '@freddie/freddie-client-ui-primitives'
 import { formatLatencySeconds, formatMessageClock, formatRunDuration, formatTokensPerSecond } from './message-chrome.js'
 import { createCalendarDay } from './use-calendar-day.js'
@@ -32,6 +32,8 @@ export class DshMessageIconActions extends HTMLElement {
   #copyTimer = null
   #copyEpoch = 0
   #day = createCalendarDay(() => { this.#render() })
+  #copyTooltipEl = null
+  #branchTooltipEl = null
 
   setProps(props) {
     this.#props = props
@@ -106,32 +108,48 @@ export class DshMessageIconActions extends HTMLElement {
         ),
       )
     )
+    // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+    // function-component branch), Tooltip.js's bare one-shot factory --
+    // recreating the dsh-tooltip element (dropping its in-flight #showTimer
+    // hover-delay) on every #render(), which this element itself does on
+    // every copy/branch/clock state change. renderTooltip(cached, props)
+    // reuses the same element instead.
+    this.#copyTooltipEl = renderTooltip(this.#copyTooltipEl, {
+      label: copied ? t('copied') : t('copy'), side: 'bottom',
+      children: [
+        h('button', { type: 'button', class: css.action ?? '', 'aria-label': copied ? t('copied') : t('copy'), onclick: this.#onCopy },
+          copied ? h(IconCheckOutline16, null) : h(IconCopyOutline16, null),
+        ),
+      ],
+    })
+    if (onBranch !== undefined) {
+      this.#branchTooltipEl = renderTooltip(this.#branchTooltipEl, {
+        label: branchUnavailable ? t('message.branchUnavailable') : t('message.branch'), side: 'bottom',
+        children: [
+          // Native disabled buttons do not deliver the hover/focus events Tooltip needs.
+          h('button',
+            {
+              type: 'button',
+              class: css.action ?? '',
+              'aria-label': t('message.branch'),
+              'aria-disabled': branchUnavailable || undefined,
+              'aria-describedby': branchUnavailable ? this.#reasonId : undefined,
+              'data-unavailable': branchUnavailable || undefined,
+              onclick: branchUnavailable ? null : onBranch,
+            },
+            h(IconBranchOutline16, null),
+          ),
+        ],
+      })
+    } else {
+      this.#branchTooltipEl = null
+    }
     const vdom = (
       h('div', { class: className === undefined ? css.actions ?? '' : `${css.actions ?? ''} ${className}` },
         clock === 'start' ? clockEl : null,
-        h(Tooltip, { label: copied ? t('copied') : t('copy'), side: 'bottom' },
-          h('button', { type: 'button', class: css.action ?? '', 'aria-label': copied ? t('copied') : t('copy'), onclick: this.#onCopy },
-            copied ? h(IconCheckOutline16, null) : h(IconCopyOutline16, null),
-          ),
-        ),
+        this.#copyTooltipEl,
         extraActions,
-        onBranch !== undefined && (
-          h(Tooltip, { label: branchUnavailable ? t('message.branchUnavailable') : t('message.branch'), side: 'bottom' },
-            // Native disabled buttons do not deliver the hover/focus events Tooltip needs.
-            h('button',
-              {
-                type: 'button',
-                class: css.action ?? '',
-                'aria-label': t('message.branch'),
-                'aria-disabled': branchUnavailable || undefined,
-                'aria-describedby': branchUnavailable ? this.#reasonId : undefined,
-                'data-unavailable': branchUnavailable || undefined,
-                onclick: branchUnavailable ? null : onBranch,
-              },
-              h(IconBranchOutline16, null),
-            ),
-          )
-        ),
+        onBranch !== undefined && this.#branchTooltipEl,
         onBranch !== undefined && branchUnavailable && (
           h('span', { id: this.#reasonId, class: css.visuallyHidden ?? '' }, t('message.branchUnavailable'))
         ),

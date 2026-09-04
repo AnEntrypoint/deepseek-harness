@@ -22,7 +22,7 @@
 import { applyDiff, createElement as h, Fragment } from 'webjsx'
 import clsx from 'clsx'
 import {
-  FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip,
+  FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, renderTooltip,
 } from '@freddie/freddie-client-ui-primitives'
 import css from './SidebarRoot.css.js'
 
@@ -66,6 +66,7 @@ export class DshSidebarRoot extends HTMLElement {
   // && wide): the sliding column then clips it instead of reflowing it. The
   // rail layout (.collapsed styles) only applies once the fade settles.
   #lastWideWidth = 0
+  #tooltips = new Map()
 
   // Rail-in only crossfades a live collapse: a refresh straight into the
   // collapsed state renders the rail statically (no delay-hidden icons).
@@ -192,6 +193,16 @@ export class DshSidebarRoot extends HTMLElement {
     this.#armLinger()
   }
 
+  // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+  // function-component branch), Tooltip.js's bare one-shot factory --
+  // recreating the dsh-tooltip element (dropping its in-flight #showTimer
+  // hover-delay) on every #render(). renderTooltip(cached, props) reuses it.
+  #tooltip(key, props) {
+    const el = renderTooltip(this.#tooltips.get(key) ?? null, props)
+    this.#tooltips.set(key, el)
+    return el
+  }
+
   #render() {
     const props = this.#props
     if (props === null) return
@@ -237,7 +248,7 @@ export class DshSidebarRoot extends HTMLElement {
           ),
           // Rail resting state is the whale mark; hovering swaps in the panel
           // icon (the expand affordance, figma sidebar-hover flow).
-          h(Tooltip, {label: collapsed ? t('toggle.open') : t('toggle.collapse'), delayMs: 500},
+          this.#tooltip('toggle', {label: collapsed ? t('toggle.open') : t('toggle.collapse'), delayMs: 500, children: [
             h('button', {
               type: 'button',
               class: clsx(css.iconButton, css.toggle),
@@ -252,11 +263,11 @@ export class DshSidebarRoot extends HTMLElement {
               // Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes.
               h(IconPanelLeftOutline16, {className: css.panelIcon, size: wide ? 16 : 18}),
             ),
-          ),
+          ]}),
         ),
 
         // Expanded, the button carries its own label — tooltip only on the rail.
-        h(Tooltip, {label: t('session.new.label'), delayMs: 500, disabled: wide},
+        this.#tooltip('newSession', {label: t('session.new.label'), delayMs: 500, disabled: wide, children: [
           h('button', {
             type: 'button',
             class: css.newSession ?? '',
@@ -266,7 +277,7 @@ export class DshSidebarRoot extends HTMLElement {
             h(IconNewChatOutline16, {size: wide ? 14 : 18}),
             wide && h('span', {class: clsx(css.newSessionLabel, css.wide)}, t('session.new')),
           ),
-        ),
+        ]}),
 
         // The browsing region fills the column between the controls and the
         // foot in both states; its rail icon column rides the same slot.

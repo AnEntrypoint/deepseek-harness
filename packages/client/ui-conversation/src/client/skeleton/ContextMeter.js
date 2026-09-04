@@ -11,7 +11,7 @@
  * explicit applyDiff(this, vdom) call (Toast.tsx's pattern). */
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Tooltip } from '@freddie/freddie-client-ui-primitives'
+import { renderTooltip } from '@freddie/freddie-client-ui-primitives'
 import { contextOccupancy, formatTokens } from '../chat/StatsLine.js'
 import css from './ContextMeter.css.js'
 
@@ -38,6 +38,7 @@ export class DshContextMeter extends HTMLElement {
   #open = false
   #outsideHandler = null
   #keyHandler = null
+  #tooltipEl = null
 
   setProps(props) {
     this.#props = props
@@ -121,34 +122,42 @@ export class DshContextMeter extends HTMLElement {
       : ROWS.map(row => ({ key: row.key, color: row.color, width: percent * breakdown[row.key] / breakdownTotal }))
     const segments = parts.filter(part => part.width > 0)
 
-    const vdom = (
-      h('span', { class: css.root ?? '' },
-        h(Tooltip, { label: t('context.aria', { percent: reading }), side: 'top', delayMs: 200, disabled: open },
-          h('button',
-            {
-              type: 'button',
-              class: css.trigger ?? '',
-              'aria-label': t('context.aria', { percent: reading }),
-              'aria-haspopup': 'dialog',
-              'aria-expanded': open,
-              onclick: () => { this.#setOpen(!open) },
-            },
-            h('svg', { viewBox: '0 0 14 14', width: '14', height: '14', 'aria-hidden': true },
-              h('circle', { key: 'track', class: css.track ?? '', cx: '7', cy: '7', r: String(RADIUS) }),
-              h('circle',
-                {
-                  key: 'fill',
-                  class: css.fill ?? '',
-                  cx: '7',
-                  cy: '7',
-                  r: String(RADIUS),
-                  'stroke-dasharray': `${CIRCUMFERENCE * percent / 100} ${CIRCUMFERENCE}`,
-                  transform: 'rotate(-90 7 7)',
-                },
-              ),
+    // h(Tooltip, {...}) calls Tooltip(props) synchronously (webjsx's
+    // function-component branch), Tooltip.js's bare one-shot factory --
+    // recreating the dsh-tooltip element (dropping its in-flight #showTimer
+    // hover-delay) on every #render(). renderTooltip(cached, props) reuses it.
+    this.#tooltipEl = renderTooltip(this.#tooltipEl, {
+      label: t('context.aria', { percent: reading }), side: 'top', delayMs: 200, disabled: open,
+      children: [
+        h('button',
+          {
+            type: 'button',
+            class: css.trigger ?? '',
+            'aria-label': t('context.aria', { percent: reading }),
+            'aria-haspopup': 'dialog',
+            'aria-expanded': open,
+            onclick: () => { this.#setOpen(!open) },
+          },
+          h('svg', { viewBox: '0 0 14 14', width: '14', height: '14', 'aria-hidden': true },
+            h('circle', { key: 'track', class: css.track ?? '', cx: '7', cy: '7', r: String(RADIUS) }),
+            h('circle',
+              {
+                key: 'fill',
+                class: css.fill ?? '',
+                cx: '7',
+                cy: '7',
+                r: String(RADIUS),
+                'stroke-dasharray': `${CIRCUMFERENCE * percent / 100} ${CIRCUMFERENCE}`,
+                transform: 'rotate(-90 7 7)',
+              },
             ),
           ),
         ),
+      ],
+    })
+    const vdom = (
+      h('span', { class: css.root ?? '' },
+        this.#tooltipEl,
         open && (
           h('div', { class: css.panel ?? '', role: 'dialog', 'aria-label': t('context.used') },
             h('div', { class: css.header ?? '' },

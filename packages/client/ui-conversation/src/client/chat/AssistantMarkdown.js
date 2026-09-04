@@ -10,17 +10,43 @@
 // turn's transcript tail. Think / tool-head-only nodes stay chrome-free.
 
 import { createElement as h } from 'webjsx'
-import { JsonBlock, MarkdownText } from '@freddie/freddie-client-ui-primitives'
-import { ReasoningRow } from './ReasoningRow.js'
+import { renderJsonBlock, renderMarkdownText } from '@freddie/freddie-client-ui-primitives'
+import { renderReasoningRow } from './ReasoningRow.js'
 import css from './AssistantMarkdown.css.js'
+
+// h(MarkdownText, {...})/h(JsonBlock, {...}) call their bare one-shot
+// factories synchronously (webjsx's function-component branch in
+// createElement), creating a fresh dsh-markdown-text/dsh-json-block element
+// on every call. This function re-runs on every streamed chunk while a turn
+// is open (its own doc comment below), so a bare call destroyed
+// MarkdownText's incremental StreamingRenderer (#stream) and settled-render
+// memoization (#lastProps/#lastChildren) every single token, forcing a full
+// markdown re-parse from scratch on every character instead of an
+// incremental one -- and reset JsonBlock's open/closed toggle state.
+// `identity` (the stable keyed chat-node object, threaded in by
+// AssistantNodeView) plus the block's own index is the cache key: stable
+// across re-renders of the same node, distinct per block position.
+const cachedBlocks = new WeakMap()
+function cachedBlockEl(identity, index, render, props) {
+  let perNode = cachedBlocks.get(identity)
+  if (perNode === undefined) {
+    perNode = new Map()
+    cachedBlocks.set(identity, perNode)
+  }
+  const el = render(perNode.get(index) ?? null, props)
+  perNode.set(index, el)
+  return el
+}
 
 /**
  * Renders one assistant node's ordered blocks (see file header). Stateless:
  * no per-instance state, so this stays a plain function component (not a
- * custom element) per the ui-primitives conversion pattern.
+ * custom element) per the ui-primitives conversion pattern -- MarkdownText/
+ * JsonBlock element identity is cached externally (see cachedBlockEl above)
+ * since this function has no instance of its own to hold the cache.
  */
 export function AssistantMarkdown({
-  blocks, streaming, interrupted, renderMessageImages, mentions, t,
+  identity, blocks, streaming, interrupted, renderMessageImages, mentions, t,
 }) {
   // Stable per locale revision (t identity changes on switch): a fresh object
   // per render would rebuild MarkdownText's component table every chunk.
@@ -40,8 +66,7 @@ export function AssistantMarkdown({
     switch (block.kind) {
       case 'text':
         rendered.push(
-          h(MarkdownText, {
-            key: i,
+          cachedBlockEl(identity, i, renderMarkdownText, {
             text: block.text,
             streaming,
             codeLabels,
@@ -50,7 +75,9 @@ export function AssistantMarkdown({
         )
         break
       case 'reasoning':
-        rendered.push(h(ReasoningRow, { key: i, text: block.text, running: streaming && i === last, t }))
+        rendered.push(
+          cachedBlockEl(identity, i, renderReasoningRow, { text: block.text, running: streaming && i === last, t }),
+        )
         break
       case 'image': {
         // Consecutive image blocks share one gallery so several images tile
@@ -83,8 +110,7 @@ export function AssistantMarkdown({
         break
       default:
         rendered.push(
-          h(JsonBlock, {
-            key: i,
+          cachedBlockEl(identity, i, renderJsonBlock, {
             label: t('message.unknownBlock'),
             payload: block.block,
             truncatedLabel: total => t('json.truncated', { total }),
