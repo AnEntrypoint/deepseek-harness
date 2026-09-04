@@ -1,1 +1,5 @@
-[]
+- session_id: perfopt-1788500921
+  id: consolidate-master-to-main
+  subject: 'Consolidate stray master branch into main per project invariant (CLAUDE.md: if main is called master, rename it; zero branches otherwise)'
+  witness: git branch -a shows only main and remotes/origin/main; git status --short is empty; git log --oneline -3 shows e9fd7f8b, fcd1d38b, 8a961280 -- real history intact and pushed.
+  status: completed
