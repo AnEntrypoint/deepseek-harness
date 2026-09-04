@@ -9,3 +9,8 @@
   witness: packages/host/webserver/src/index.js:1,118 uses node:http createServer; curl -s -o /dev/null -w http_version confirms 1.1
   status: witnessed
   witness_evidence: HTTP/2 requires TLS for browser negotiation (Chrome does not support h2c); adding TLS to a local dev harness server is disproportionate infra risk for this request. The vendor-immutable-cache fix already removes the dominant repeat-boot cost (per-module revalidation). Remaining HTTP/1.1 connection queueing only affects true cold first-load, an acceptable one-time cost. Investigated and rejected.
+- status: witnessed
+  SESSION_ID: dbg2
+  id: checkpoint-not-a-crash
+  text: Inherited JSONL checkpoint PRD (tailidx) is a cold-open optimization, not a remaining harness crash. Live decompress+scan of this session log (703337 bytes, 668 frames, 2000 events) took 64.8ms.
+  witness_evidence: 'Live decompress+scan of session-3b6f93cf jsonl.zstd: 703337 bytes, 668 frames, 2000 events, 64.8ms. Not a remaining harness failure. Checkpoint sidecar is a separate performance feature, not a crash.'

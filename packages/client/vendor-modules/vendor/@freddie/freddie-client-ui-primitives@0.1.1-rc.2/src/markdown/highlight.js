@@ -237,12 +237,21 @@ function ensureGrammar(resolved) {
 
 // Engine + grammar construction costs a long task (~120-175ms); building it
 // during the first finalized fence's render would jank exactly when a stream
-// completes. Warm the singleton in a deferred task at module load (= plugin
-// boot) instead; the lazy path above stays as the correctness fallback for a
-// fence that renders before the timer fires. `unref` (Node-only) keeps a
-// non-browser import from pinning the event loop.
-const warmupTimer = setTimeout(() => { highlighter() }, 0)
-warmupTimer.unref?.()
+// completes. `setTimeout(fn, 0)` still fires as soon as the current
+// macrotask queue drains, which can land the whole block mid-keystroke or
+// mid-scroll on a busy boot -- `requestIdleCallback` defers it to a real
+// browser idle slot instead, so the one-time cost never contends with
+// active input. The lazy path above stays as the correctness fallback for a
+// fence that renders (or a keystroke that lands) before idle time arrives,
+// and for the non-browser (Node-only) `unref`'d setTimeout fallback where
+// `requestIdleCallback` does not exist.
+const scheduleWarmup = typeof requestIdleCallback === 'function'
+  ? requestIdleCallback
+  : (fn) => {
+    const timer = setTimeout(fn, 0)
+    timer.unref?.()
+  }
+scheduleWarmup(() => { highlighter() })
 
 /**
  * Highlight `code` into shiki's HTML (a single `<pre class="shiki">` tree)

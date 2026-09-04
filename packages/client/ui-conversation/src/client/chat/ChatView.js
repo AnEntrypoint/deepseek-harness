@@ -19,7 +19,7 @@
 // driven from connectedCallback/disconnectedCallback (Toast.tsx's pattern).
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button, IconChevronDownOutline14, Modal } from '@freddie/freddie-client-ui-primitives'
+import { Button, IconChevronDownOutline14, renderModal } from '@freddie/freddie-client-ui-primitives'
 import { PendingSteeringBubble } from './MessageItem.js'
 import { ChatNodeSeat } from './ChatNodeSeat.js'
 import { formatRunDuration } from './message-chrome.js'
@@ -159,17 +159,11 @@ if (typeof customElements !== 'undefined' && customElements.get('dsh-turn-status
   customElements.define('dsh-turn-status', DshTurnStatus)
 }
 
-function TurnStatus({ startTime, t }) {
-  const el = document.createElement('dsh-turn-status')
-  el.setProps(startTime, t)
-  return el
-}
-
 /** In-page Host open-path refusal: the wire reason plus a retry of the same path. */
-function FileOpenErrorDialog({
+function fileOpenErrorModalProps({
   path, message, busy, onClose, onRetry, t,
 }) {
-  return h(Modal, {
+  return {
     open: true,
     onClose,
     closeLabel: t('close'),
@@ -179,7 +173,7 @@ function FileOpenErrorDialog({
       h(Button, { variant: 'outline', class: css.modalAction ?? '', onclick: onClose }, t('cancel')),
       h(Button, { variant: 'primary', class: css.modalAction ?? '', disabled: busy, onclick: onRetry }, t('retry')),
     ],
-  })
+  }
 }
 
 /**
@@ -207,6 +201,8 @@ export class DshChatView extends HTMLElement {
   #scrollHandler = null
   #resizeObserver = null
   #boundScrollport = null
+  #turnStatus = null
+  #fileOpenModal = null
 
   setProps(props) {
     this.#props = props
@@ -226,6 +222,8 @@ export class DshChatView extends HTMLElement {
     this.#unbindScroll()
     this.#resizeObserver?.disconnect()
     this.#resizeObserver = null
+    this.#fileOpenModal?.remove()
+    this.#fileOpenModal = null
   }
 
   #toBottom(el) {
@@ -500,7 +498,11 @@ export class DshChatView extends HTMLElement {
           // double-render the same wait.
           // Turn-level loading signal: rides the whole running turn (first-token
           // wait, tool execution, streaming) so it never flickers per step.
-          running && TurnStatus({ startTime: runningTurnStart, t }),
+          running && (() => {
+            const el = this.#turnStatus ??= document.createElement('dsh-turn-status')
+            el.setProps(runningTurnStart, t)
+            return el
+          })(),
           pendingSteering.map(item => h(PendingSteeringBubble, {
             key: item.id,
             content: item.content,
@@ -528,9 +530,13 @@ export class DshChatView extends HTMLElement {
           )
         ),
       ),
-      this.#fileOpenError !== null && FileOpenErrorDialog({
-        path: this.#fileOpenError.path,
-        message: this.#fileOpenError.message,
+    )
+    applyDiff(this, vdom)
+    const fileOpenError = this.#fileOpenError
+    if (fileOpenError !== null) {
+      this.#fileOpenModal = renderModal(this.#fileOpenModal, fileOpenErrorModalProps({
+        path: fileOpenError.path,
+        message: fileOpenError.message,
         busy: this.#fileOpenBusy,
         onClose: () => { this.#closeFileOpenError() },
         onRetry: () => {
@@ -538,9 +544,11 @@ export class DshChatView extends HTMLElement {
           if (error !== null) this.#requestOpenFile(error.path)
         },
         t,
-      }),
-    )
-    applyDiff(this, vdom)
+      }))
+    } else if (this.#fileOpenModal !== null) {
+      this.#fileOpenModal.remove()
+      this.#fileOpenModal = null
+    }
   }
 }
 

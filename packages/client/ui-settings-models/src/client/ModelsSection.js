@@ -20,7 +20,7 @@
  */
 
 import { applyDiff, createElement as h } from 'webjsx'
-import { Button, IconPlusOutline16, Modal } from '@freddie/freddie-client-ui-primitives'
+import { Button, IconPlusOutline16, renderModal } from '@freddie/freddie-client-ui-primitives'
 import { deriveKeyRef, messageOf, providerUsable } from './store.js'
 import { ProviderEditor } from './ProviderEditor.js'
 import styles from './ModelsSection.css.js'
@@ -144,6 +144,7 @@ export class DshModelsSectionLoaded extends HTMLElement {
   #deleteFailure = undefined
   #savedTarget = undefined
   #dismissedSetup = new Set()
+  #deleteModal = null
 
   setProps(injected) {
     this.#injected = injected
@@ -152,6 +153,11 @@ export class DshModelsSectionLoaded extends HTMLElement {
 
   connectedCallback() {
     this.#render()
+  }
+
+  disconnectedCallback() {
+    this.#deleteModal?.remove()
+    this.#deleteModal = null
   }
 
   #announceSaved(target) {
@@ -223,6 +229,14 @@ export class DshModelsSectionLoaded extends HTMLElement {
           onclick: () => { void controller.load() },
         }, t('retry')),
       ))
+      if (this.#deleteModal !== null) {
+        this.#deleteModal = renderModal(this.#deleteModal, {
+          open: false,
+          onClose: () => { this.#closeDelete() },
+          title: '',
+          closeLabel: t('close'),
+        })
+      }
       return
     }
 
@@ -405,40 +419,39 @@ export class DshModelsSectionLoaded extends HTMLElement {
             ),
           ),
       ),
-      h(Modal, {
-        open: this.#deleteTarget !== undefined,
-        onClose: () => { this.#closeDelete() },
-        title: this.#deleteTarget === undefined ? '' : providerCopy(t('deleteTitle'), this.#deleteTarget),
-        closeLabel: t('close'),
-        description: this.#deleteTarget === undefined
-          ? ''
-          : providerCopy(
-            this.#deleteTarget.credentialRef === undefined
-              ? t('deleteDescription')
-              : t('deleteDescriptionWithCredential'),
-            this.#deleteTarget,
-          ),
-        className: styles['deleteDialog'],
-        footer: [
-          h(Button, {
-            variant: 'outline', autoFocus: true, disabled: this.#deleting, onclick: () => { this.#closeDelete() },
-          }, t('cancel')),
-          h(Button, {
-            variant: 'outline',
-            class: styles['deleteConfirm'],
-            disabled: this.#deleting,
-            onclick: () => { this.#confirmDelete() },
-          },
-          this.#deleteTarget === undefined
-            ? ''
-            : providerCopy(this.#deleting ? t('deleting') : t('deleteConfirm'), this.#deleteTarget),
-          ),
-        ],
-      },
-      this.#deleteFailure === undefined ? null : h('p', { class: styles['error'] ?? '' }, this.#deleteFailure),
-      ),
     )
     applyDiff(this, vdom)
+    this.#deleteModal = renderModal(this.#deleteModal, {
+      open: this.#deleteTarget !== undefined,
+      onClose: () => { this.#closeDelete() },
+      title: this.#deleteTarget === undefined ? '' : providerCopy(t('deleteTitle'), this.#deleteTarget),
+      closeLabel: t('close'),
+      description: this.#deleteTarget === undefined
+        ? ''
+        : providerCopy(
+          this.#deleteTarget.credentialRef === undefined
+            ? t('deleteDescription')
+            : t('deleteDescriptionWithCredential'),
+          this.#deleteTarget,
+        ),
+      className: styles['deleteDialog'],
+      footer: [
+        h(Button, {
+          variant: 'outline', autoFocus: true, disabled: this.#deleting, onclick: () => { this.#closeDelete() },
+        }, t('cancel')),
+        h(Button, {
+          variant: 'outline',
+          class: styles['deleteConfirm'],
+          disabled: this.#deleting,
+          onclick: () => { this.#confirmDelete() },
+        },
+        this.#deleteTarget === undefined
+          ? ''
+          : providerCopy(this.#deleting ? t('deleting') : t('deleteConfirm'), this.#deleteTarget),
+        ),
+      ],
+      children: this.#deleteFailure === undefined ? null : h('p', { class: styles['error'] ?? '' }, this.#deleteFailure),
+    })
   }
 }
 

@@ -1,1 +1,40 @@
-[]
+- session_id: tailidx-1788503243
+  id: checkpoint-format-design
+  subject: Define the JSONL checkpoint sidecar record shape (seq, byteOffset, turnOpen) and the write cadence (every ~200 events + every turn/start and turn/end boundary)
+  witness: packages/core/session/src/repair.js:25-73 interruptedTurnClosers resets openTurn/openStep/pendingCalls at every turn/start and turn/end -- confirmed only current-turn-forward events are ever needed; live session 3b6f93cf has 4047 events across only 4 turns (~1000 events/turn), so a pure per-turn checkpoint alone still means large re-scans -- periodic (every ~200 events) checkpoints bound the worst case.
+  status: pending
+- session_id: tailidx-1788503243
+  id: checkpoint-write-path
+  subject: Write checkpoint sidecar lines from PersistenceCoordinator.appendCore's existing per-session-serialized chokepoint (packages/session/session-persistence/src/coordinator.js:533) so no new write-ordering hazard is introduced
+  witness: coordinator.js:533-561 appendCore is the single converge point for every append route (public service, live write-behind, HMR seed/suffix adoption) and already tracks state.cursor per session -- the natural, already-serialized place to detect a turn boundary crossing or a 200-event threshold and record a checkpoint
+  status: pending
+- session_id: tailidx-1788503243
+  id: jsonl-backend-checkpoint-storage
+  subject: Implement checkpoint sidecar file writing and reading in packages/session/session-persistence-jsonl (append alongside session.jsonl.zstd; read the last checkpoint at/before tail on cold loadStored)
+  witness: packages/session/session-persistence-jsonl/src/index.js:164-171 loadStored/readPrefix is the cold-read call site to modify; packages/session/session-persistence-jsonl/src/format.js:237-343 SessionLogScanner is the forward-only scanner whose starting byte offset needs to become seekable
+  status: pending
+- session_id: tailidx-1788503243
+  id: backward-compat-no-checkpoint
+  subject: Cold reads of existing session logs with no checkpoint sidecar fall back to today's full-scan behavior -- zero migration required, additive-only change
+  witness: 'design constraint from user-approved scope: any format/write-path change needs backward compatibility with existing session files already on disk'
+  status: pending
+- session_id: tailidx-1788503243
+  id: verify-tail-index-live
+  subject: 'Live-verify the checkpoint-backed cold read against this session''s own real log: measure cold-open time before and after, and confirm interruptedTurnClosers still produces correct closers when reading from a checkpoint offset'
+  witness: 'C:/Users/user/.dsh/sessions/--C-dev-deepseek-harness--/session-3b6f93cf-3bf4-47dd-871f-a796203dd732/session.jsonl.zstd is real, live ground truth already inspected via a decompress+scan script: frame count 635, 1895 records, 4047 events, 4 turns, 2.3MB uncompressed'
+  status: pending
+- subject: Cache ChatView file-open Modal via renderModal; h(Modal) body-mounts a new dsh-modal on every ChatView render while an error is showing
+  witness: ChatView.js now calls renderModal(this.#fileOpenModal) after applyDiff; disconnectedCallback removes it. Live plugin serve of ChatView.js contains renderModal and no h(Modal. node --check clean.
+  SESSION_ID: dbg2
+  id: file-open-modal-identity
+  status: completed
+- subject: Cache ModelsSection delete Modal via renderModal; h(Modal) body-mounts a new dsh-modal on every Loaded re-render while the confirm dialog is open
+  witness: 'ModelsSection.js caches #deleteModal via renderModal with open bound to #deleteTarget; disconnectedCallback and error-status path close it. Live plugin serve contains renderModal and no h(Modal. node --check clean.'
+  SESSION_ID: dbg2
+  id: models-delete-modal-identity
+  status: completed
+- subject: Cache DshTurnStatus across ChatView renders; TurnStatus() document.createElement every render while running remounts the clock
+  witness: 'DshChatView stores #turnStatus and reuses the same dsh-turn-status while running. Live ChatView.js contains this.#turnStatus ??= document.createElement(''dsh-turn-status''). node --check clean.'
+  SESSION_ID: dbg2
+  id: chatview-turnstatus-identity
+  status: completed
