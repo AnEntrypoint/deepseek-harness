@@ -202,6 +202,35 @@ export class DshQuestionFlow extends HTMLElement {
     this.#render()
   }
 
+  // WAI-ARIA radio/checkbox group pattern: ArrowUp/ArrowDown/ArrowLeft/
+  // ArrowRight move focus among the group's options (wrapping at the ends).
+  // For a single-select group (role="radio") the native convention also
+  // moves selection with focus -- but #choose's own auto-advance-to-next-
+  // question behavior on selection must NOT fire here, since arrow keys are
+  // navigating within one question's options, not answering and moving on;
+  // this sets the draft directly rather than reusing #choose.
+  #onOptionKeyDown(event, question) {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp'
+      && event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+    const group = event.currentTarget.closest('[role="radiogroup"], [role="group"]')
+    if (group === null) return
+    const items = [...group.querySelectorAll('[role="radio"], [role="checkbox"]')]
+      .filter(item => !item.disabled)
+    if (items.length === 0) return
+    event.preventDefault()
+    const delta = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1
+    const current = items.indexOf(event.currentTarget)
+    const next = current === -1
+      ? (delta > 0 ? 0 : items.length - 1)
+      : (current + delta + items.length) % items.length
+    items[next].focus()
+    if (question.multiSelect !== true) {
+      const label = items[next].getAttribute('data-option-label')
+      this.#updateDraft(draft => ({ selected: label === null ? draft.selected : [label], custom: '', skipped: false }))
+      this.#render()
+    }
+  }
+
   #answered(item) {
     return item.selected.length > 0 || item.custom.trim() !== ''
   }
@@ -335,12 +364,17 @@ export class DshQuestionFlow extends HTMLElement {
             role: question.multiSelect === true ? 'checkbox' : 'radio',
             'aria-checked': String(selected),
             'aria-label': display.label,
+            'data-option-label': option.label,
             disabled: busy !== null,
             onclick: () => { this.#choose(option.label, question, questions.length) },
             onkeydown: (event) => {
-              if (event.key !== 'Enter' || !drafts.every(item => this.#completed(item))) return
-              event.preventDefault()
-              this.#submitDrafts(drafts)
+              if (event.key === 'Enter') {
+                if (!drafts.every(item => this.#completed(item))) return
+                event.preventDefault()
+                this.#submitDrafts(drafts)
+                return
+              }
+              this.#onOptionKeyDown(event, question)
             },
           },
           question.multiSelect === true
