@@ -10,10 +10,22 @@
  */
 
 import { createElement as h } from 'webjsx'
-import { Modal } from '@freddie/freddie-client-ui-primitives'
+import { renderModal } from '@freddie/freddie-client-ui-primitives'
 import css from './OnboardingModal.css.js'
 
 const ignoreImplicitDismiss = () => {}
+
+// Modal's own one-shot factory (Modal(props), the bare h(Modal,...) call
+// this file used to make) creates and appends a NEW dsh-modal element to
+// document.body on every call, with nothing removing the previous one --
+// this function re-runs on every re-render of the onboarding step (the
+// doc comment above: "each time the step calls this function"), which is
+// driven by the step's own store subscription, not a one-shot mount. That
+// leaked a growing stack of duplicate modal masks/dialogs into the DOM.
+// Onboarding shows at most one modal at a time, so a module-level
+// singleton is the right cache shape (same as DetailsPanel.js's
+// size-1 cachedArgsBlock, not a per-identity WeakMap).
+let cachedModalEl = null
 
 /**
  * Render a blocking onboarding dialog and keep the application root inert
@@ -33,18 +45,18 @@ export function OnboardingModal({
     if (el !== null && focusTitle) el.focus()
   }
 
-  return h(
-    Modal,
-    {
-      open: true,
-      title,
-      onClose: ignoreImplicitDismiss,
-      headless: true,
-      className: css.dialog,
-    },
-    h('div', { class: css.content ?? '' },
-      h('h2', { ref: bindTitle, class: css.title ?? '', tabindex: focusTitle ? -1 : undefined }, title),
-      h('div', { class: css.body ?? '' }, children),
-    ),
-  )
+  cachedModalEl = renderModal(cachedModalEl, {
+    open: true,
+    title,
+    onClose: ignoreImplicitDismiss,
+    headless: true,
+    className: css.dialog,
+    children: [
+      h('div', { class: css.content ?? '' },
+        h('h2', { ref: bindTitle, class: css.title ?? '', tabindex: focusTitle ? -1 : undefined }, title),
+        h('div', { class: css.body ?? '' }, children),
+      ),
+    ],
+  })
+  return cachedModalEl
 }
