@@ -61,8 +61,8 @@ export function apply(ctx) {
     if (options.host === '0.0.0.0') {
       program.error('error: --host 0.0.0.0 is intentionally not supported yet for safety: it would expose remote code execution to the network; use 127.0.0.1 instead')
     }
-    if (options.port !== undefined && !/^\d+$/.test(options.port)) {
-      program.error(`error: --port must be a number, got ${JSON.stringify(options.port)}`)
+    if (options.port !== undefined && (!/^\d+$/.test(options.port) || Number(options.port) > 65535)) {
+      program.error(`error: --port must be a number from 0 to 65535, got ${JSON.stringify(options.port)}`)
     }
     ctx.provide(WEB_STARTUP_SERVICE, {
       openBrowser: options.open,
