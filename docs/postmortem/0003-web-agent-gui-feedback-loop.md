@@ -2,6 +2,22 @@
 
 Status: resolved
 
+> **2026-09-04 addendum:** `apps/web`'s own `package.json` now describes it as
+> "buildless shell over the @freddie/freddie-client-web library, served
+> directly by apps/cli's dsh web with no build step" — it carries no `vite`
+> dependency and no dev/build script at all. The specific failure mode this
+> postmortem investigates (an agent launching bare standalone Vite on
+> `apps/web`, getting an HTTP 200 white page missing `window.__DSH_BOOT__`)
+> is structurally unreachable today, not merely guarded against: there is no
+> Vite dev-server path left to accidentally take. `window.__DSH_BOOT__`
+> itself remains the real, live boot-manifest mechanism (confirmed still
+> referenced in `packages/client/web/src/boot.js` and others), so the
+> underlying architecture this postmortem describes acceptance around is
+> otherwise still current — only the vulnerable standalone-Vite entry point
+> has since been removed by the buildless-shell rearchitecture, a stronger
+> fix than the config-level rejection this postmortem's own "Guardrails
+> added" section describes. Left unchanged below as the historical record.
+
 ## Executive summary
 
 A Web agent changed the GUI source but did not know which URL and process hosted its session. It delegated acceptance to the user, then treated a bare Vite HTTP 200 as success despite a missing `window.__DSH_BOOT__` white screen, and finally validated a replacement `dsh web` server on another port while the original page had already picked up rebuilt artifacts. The fix makes the current URL and runtime mode model-visible and shell-queryable, rejects standalone Vite before listen, and verifies production refresh and development HMR against external state.
