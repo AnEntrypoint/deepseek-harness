@@ -46,6 +46,7 @@ export class DshSettingsRoot extends HTMLElement {
   #lastOnboardingActive = undefined
   #escapeHandler = null
   #closeButtonFocused = false
+  #returnFocusTo = null
 
   /** Set/replace props and re-render; the owning renderer calls this on every update. */
   setProps(props) {
@@ -76,7 +77,8 @@ export class DshSettingsRoot extends HTMLElement {
   #bindEscape() {
     if (this.#escapeHandler !== null) return
     this.#escapeHandler = (e) => {
-      if (e.key === 'Escape') this.#close()
+      if (e.key === 'Escape') { this.#close(); return }
+      if (e.key === 'Tab') this.#trapTab(e)
     }
     document.addEventListener('keydown', this.#escapeHandler)
   }
@@ -85,6 +87,30 @@ export class DshSettingsRoot extends HTMLElement {
     if (this.#escapeHandler === null) return
     document.removeEventListener('keydown', this.#escapeHandler)
     this.#escapeHandler = null
+  }
+
+  // aria-modal="true" declares this panel traps focus; without this, Tab
+  // silently escaped to the page behind the mask (same fix class as
+  // Modal.js's #trapTab).
+  #trapTab(e) {
+    const dialog = this.querySelector('[role="dialog"]')
+    if (dialog === null) return
+    const focusable = [...dialog.querySelectorAll(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), '
+      + 'select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )]
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey) {
+      if (document.activeElement === first || !dialog.contains(document.activeElement)) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else if (document.activeElement === last || !dialog.contains(document.activeElement)) {
+      e.preventDefault()
+      first.focus()
+    }
   }
 
   #renderPanel(rows, renderSlot) {
@@ -178,11 +204,16 @@ export class DshSettingsRoot extends HTMLElement {
       this.#bindEscape()
       if (!this.#closeButtonFocused) {
         this.#closeButtonFocused = true
+        this.#returnFocusTo = document.activeElement instanceof HTMLElement ? document.activeElement : null
         this.querySelector('[data-close-button]')?.focus()
       }
     } else {
       this.#unbindEscape()
-      this.#closeButtonFocused = false
+      if (this.#closeButtonFocused) {
+        this.#closeButtonFocused = false
+        this.#returnFocusTo?.focus()
+        this.#returnFocusTo = null
+      }
     }
   }
 }
