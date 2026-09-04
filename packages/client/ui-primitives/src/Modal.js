@@ -19,8 +19,13 @@ import css from './Modal.css.js'
  * owner inside a transformed or filtered ancestor cannot trap the fixed
  * overlay in that ancestor's box.
  */
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), '
+  + 'select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 export class DshModal extends HTMLElement {
   #props = { open: false, onClose: () => {}, title: '' }
+  #wasOpen = false
+  #returnFocusTo = null
 
   /** Set/replace props and re-render; call after creating or updating the element. */
   setProps(props) {
@@ -39,7 +44,49 @@ export class DshModal extends HTMLElement {
 
   #onKeyDown = (e) => {
     if (!this.#props.open) return
-    if (e.key === 'Escape') this.#props.onClose()
+    if (e.key === 'Escape') { this.#props.onClose(); return }
+    if (e.key === 'Tab') this.#trapTab(e)
+  }
+
+  // aria-modal="true" declares this dialog traps focus; without this, Tab
+  // silently escapes to the page behind the mask. Queried live rather than
+  // cached, since the dialog's focusable set can change across renders
+  // (a footer button appearing, a field becoming enabled).
+  #trapTab(e) {
+    const dialog = this.querySelector('[role="dialog"]')
+    if (dialog === null) return
+    const focusable = [...dialog.querySelectorAll(FOCUSABLE_SELECTOR)]
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey) {
+      if (document.activeElement === first || !dialog.contains(document.activeElement)) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else if (document.activeElement === last || !dialog.contains(document.activeElement)) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+
+  // Initial focus on open (the WAI-ARIA dialog pattern's own recommendation:
+  // the first focusable element, or the dialog itself as a fallback), and
+  // focus restoration to whatever had it before the dialog opened -- both
+  // one-shot transitions, not a per-render effect, so they never fight a
+  // user's own subsequent focus change while the dialog stays open.
+  #syncFocus(open) {
+    if (open === this.#wasOpen) return
+    this.#wasOpen = open
+    if (open) {
+      this.#returnFocusTo = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      const dialog = this.querySelector('[role="dialog"]')
+      const target = dialog?.querySelector(FOCUSABLE_SELECTOR) ?? dialog
+      target?.focus()
+    } else {
+      this.#returnFocusTo?.focus()
+      this.#returnFocusTo = null
+    }
   }
 
   #render() {
@@ -50,6 +97,7 @@ export class DshModal extends HTMLElement {
 
     if (!open) {
       applyDiff(this, h('span', { style: 'display:none' }))
+      this.#syncFocus(false)
       return
     }
 
@@ -95,6 +143,7 @@ export class DshModal extends HTMLElement {
       ),
     )
     applyDiff(this, vdom)
+    this.#syncFocus(true)
   }
 }
 
