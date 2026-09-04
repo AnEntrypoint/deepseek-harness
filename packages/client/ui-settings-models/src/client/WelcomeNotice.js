@@ -12,7 +12,7 @@
 
 import { createElement as h } from 'webjsx'
 import { Button } from '@freddie/freddie-client-ui-primitives'
-import { OnboardingModal } from './OnboardingModal.js'
+import { closeOnboardingModal, OnboardingModal } from './OnboardingModal.js'
 import css from './WelcomeNotice.css.js'
 
 /** Per-store guard so a repeated finished snapshot calls `complete()` once. */
@@ -36,6 +36,7 @@ export function WelcomeNotice(props) {
   if (state.status === 'idle') void controller.load()
   if (state.acknowledged) {
     finish()
+    closeOnboardingModal()
     return null
   }
   if (state.status === 'idle' || state.status === 'loading') return null

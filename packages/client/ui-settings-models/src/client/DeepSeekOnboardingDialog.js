@@ -13,7 +13,7 @@
 import { createElement as h } from 'webjsx'
 import { onboardingReadiness } from './store.js'
 import { ProviderEditor } from './ProviderEditor.js'
-import { OnboardingModal } from './OnboardingModal.js'
+import { closeOnboardingModal, OnboardingModal } from './OnboardingModal.js'
 import styles from './DeepSeekOnboardingDialog.css.js'
 
 /** Per-controller guard so a repeated terminal readiness calls `complete()` once. */
@@ -55,6 +55,7 @@ export function DeepSeekOnboardingDialog(props) {
     case 'adapter-absent':
     case 'provider-ready':
     case 'unavailable':
+      closeOnboardingModal()
       return null
     case 'credential-missing':
       break
@@ -68,8 +69,11 @@ export function DeepSeekOnboardingDialog(props) {
     && candidate.entry.settingsNs === 'llm-deepseek'
     && candidate.entry.settingsPath.length === 0)
   const namespace = state.namespaces.get('llm-deepseek')
-  /* v8 ignore next 2 -- credential-missing is derived only from this exact joined row. */
-  if (row === undefined || namespace === undefined) return null
+  /* v8 ignore next 3 -- credential-missing is derived only from this exact joined row. */
+  if (row === undefined || namespace === undefined) {
+    closeOnboardingModal()
+    return null
+  }
 
   const finishCredential = (changed) => {
     if (!changed) {

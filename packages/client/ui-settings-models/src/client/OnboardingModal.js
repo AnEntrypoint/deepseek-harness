@@ -60,3 +60,21 @@ export function OnboardingModal({
   })
   return cachedModalEl
 }
+
+/**
+ * Release the resources OnboardingModal claimed: un-inert the application
+ * root and remove the cached dsh-modal element. Neither is reachable from
+ * inside OnboardingModal itself -- it is a plain function with no unmount
+ * signal of its own, called every render while a step is active and simply
+ * not called once that step stops rendering it. The onboarding host renders
+ * at most one step at a time (SettingsRoot's own onboardingSteps.find, not
+ * .filter), so each step's own null-returning branch owns calling this the
+ * moment it stops needing the shared modal -- idempotent, so calling it from
+ * a branch that never actually showed the modal is harmless.
+ */
+export function closeOnboardingModal() {
+  const appRoot = document.getElementById('root')
+  if (appRoot !== null) appRoot.inert = false
+  cachedModalEl?.remove()
+  cachedModalEl = null
+}
