@@ -34,7 +34,6 @@ export class DshCodeBlock extends HTMLElement {
 
   setProps(props) {
     this.#props = props
-    this.#copied = false
     this.#render()
   }
 
