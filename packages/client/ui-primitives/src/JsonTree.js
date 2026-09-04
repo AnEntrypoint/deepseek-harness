@@ -219,6 +219,14 @@ function renderJsonTreeNode(args) {
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault()
       moveFocus(event.currentTarget, event.key === 'ArrowUp' ? -1 : 1)
+      return
+    }
+    // role="button" implies the same Enter/Space activation a native
+    // <button> auto-synthesizes on keydown -- this is a <span>, so nothing
+    // does that here without an explicit handler.
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      toggle()
     }
   }
 
