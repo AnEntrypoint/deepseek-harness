@@ -14,7 +14,7 @@ index 62aeba89262af16790778d9723b6a670a3ced7c7..f8758f5597571d4418289efc8dbe2064
                  keyedMap = new Map();
                  for (let j = 0; j < oldVNodes.length; j++) {
                      const matchingVNode = oldVNodes[j];
-+                    if (matchingVNode instanceof Node)
++                    if (matchingVNode instanceof Node || !isVElement(matchingVNode))
 +                        continue;
                      const key = matchingVNode.props.key;
                      if (key !== undefined) {

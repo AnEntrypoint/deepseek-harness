@@ -338,8 +338,10 @@ importMapExact['node:module'] = '/vendor/node-module-stub.js'
 // Assert the webjsx patch signature survived the copy.
 const webjsxVersion = packageVersions.get('webjsx')
 const applyDiffCopy = join(versionDirFor('webjsx', webjsxVersion), 'dist', 'applyDiff.js')
-if (!existsSync(applyDiffCopy) || !readFileSync(applyDiffCopy, 'utf8').includes('instanceof Node')) {
-  throw new Error('generate-vendor: copied webjsx applyDiff.js is missing the patch signature (instanceof Node) — the vendored copy may be unpatched')
+const applyDiffSource = existsSync(applyDiffCopy) ? readFileSync(applyDiffCopy, 'utf8') : ''
+if (!applyDiffSource.includes('instanceof Node') || !applyDiffSource.includes('!isVElement(matchingVNode)')) {
+  console.error('generate-vendor: copied webjsx applyDiff.js is missing the keyedMap primitive guard (!isVElement(matchingVNode)) — the vendored copy may be unpatched')
+  process.exit(1)
 }
 
 mkdirSync(dirname(manifestFile), { recursive: true })

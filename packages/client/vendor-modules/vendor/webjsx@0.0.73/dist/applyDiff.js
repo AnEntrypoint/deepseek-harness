@@ -40,7 +40,7 @@ function diffChildren(parent, newVNodes) {
                 keyedMap = new Map();
                 for (let j = 0; j < oldVNodes.length; j++) {
                     const matchingVNode = oldVNodes[j];
-                    if (matchingVNode instanceof Node)
+                    if (matchingVNode instanceof Node || !isVElement(matchingVNode))
                         continue;
                     const key = matchingVNode.props.key;
                     if (key !== undefined) {

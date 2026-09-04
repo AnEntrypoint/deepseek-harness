@@ -258,6 +258,7 @@ export function WorkspacePickFlow(props) {
  */
 export class DshWorkspacePicker extends HTMLElement {
   #props = null
+  #pickFlow = null
 
   setProps(props) {
     this.#props = props
@@ -274,27 +275,21 @@ export class DshWorkspacePicker extends HTMLElement {
     const {
       open, anchorRef, useWorkspaces, selectedId, onPick, onClose, createWorkspace, useDirectoryFlow, renderSlot, t,
     } = props
-    const vdom = (
-      h(DshWorkspacePickFlowElement, {
-        t,
-        open,
-        anchorRef,
-        useWorkspaces,
-        createWorkspace,
-        useDirectoryFlow,
-        renderDirectoryFlow: owner => renderSlot('conversation.hero.workspace.directoryFlow', owner),
-        selectedId,
-        onPick,
-        onClose,
-      })
-    )
-    applyDiff(this, vdom)
+    // Cached across renders so the flow's auto-open latch survives onClose.
+    this.#pickFlow = renderWorkspacePickFlow(this.#pickFlow, {
+      t,
+      open,
+      anchorRef,
+      useWorkspaces,
+      createWorkspace,
+      useDirectoryFlow,
+      renderDirectoryFlow: owner => renderSlot('conversation.hero.workspace.directoryFlow', owner),
+      selectedId,
+      onPick,
+      onClose,
+    })
+    applyDiff(this, [this.#pickFlow])
   }
-}
-
-/** JSX-callable alias so `#render()` above can use the tag as a plain component call. */
-function DshWorkspacePickFlowElement(props) {
-  return renderWorkspacePickFlow(null, props)
 }
 
 if (typeof customElements !== 'undefined' && customElements.get('dsh-workspace-picker') === undefined) {

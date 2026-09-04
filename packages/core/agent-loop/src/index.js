@@ -9,7 +9,7 @@ import { Service } from '@freddie/cordis'
 import { randomUUID } from 'node:crypto'
 import z from '@freddie/schemastery'
 import { emitAgentEvent } from '@freddie/freddie-agent'
-import { errorChain } from '@freddie/freddie-llm'
+import { boundContextSummary, createUserMessage, errorChain } from '@freddie/freddie-llm'
 import { installSettingsSection, settingsNamespace } from '@freddie/freddie-settings'
 import { SessionId, SessionPreparation } from '@freddie/freddie-session'
 import { ReactLoopAgent } from './agent.js'
@@ -194,6 +194,35 @@ function validateConfiguredAgents(agents) {
     }
     exactIdentities.set(exactIdentity, id)
   }
+}
+
+/**
+ * Resume a cold session whose last `turn/end` is `{ kind: 'interrupted' }`.
+ * Persistence repair (`interruptedTurnClosers`) synthesizes that closer for
+ * a turn that never finished; a live user cancel records `{ kind: 'aborted' }`
+ * instead and must not be overridden. `resumeWith` calls this after
+ * publication so the next driver turn starts without a further human prompt.
+ * @param agent - a freshly published ReactLoopAgent.
+ */
+function continueIfInterrupted(agent) {
+  const lastTurnEnd = agent.session.events.findLast(event => event.type === 'turn/end')
+  if (lastTurnEnd?.data.reason.kind !== 'interrupted') return
+  agent.followup(createUserMessage({
+    content: [{
+      type: 'text',
+      text: 'This session was interrupted mid-turn (the server restarted or the process ended '
+        + 'before the turn finished). Continue the work from where it left off: re-read the '
+        + 'last few messages and tool results above to see what was in progress, and pick up '
+        + 'exactly there -- do not restart the whole task from scratch unless the log shows '
+        + 'nothing was actually done yet.',
+    }],
+    source: {
+      kind: 'plugin',
+      plugin: 'agent-loop',
+      form: 'notice',
+      summary: boundContextSummary('session interrupted; continuing'),
+    },
+  }))
 }
 
 /** Concrete agent factory and driver service. */
@@ -596,7 +625,7 @@ export class AgentLoop extends Service {
         }
         ownerCtx.fiber.assertActive()
         if (!this.ownership.isActive()) throw new Error('agent loop is not active')
-        return await this.setupAndPublish(
+        const handle = await this.setupAndPublish(
           ownerCtx,
           id,
           preparation,
@@ -605,6 +634,8 @@ export class AgentLoop extends Service {
           options.signal,
           'resume',
         )
+        continueIfInterrupted(handle.agent)
+        return handle
       } finally {
         preparation?.[Symbol.dispose]()
       }

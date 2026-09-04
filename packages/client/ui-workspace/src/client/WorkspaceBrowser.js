@@ -49,7 +49,7 @@ function SessionNodeItem(props) {
   return el
 }
 import { FLAT_SESSION_ORDER_KEY } from './stores.js'
-import { WorkspacePickFlow } from './WorkspacePicker.js'
+import { renderWorkspacePickFlow } from './WorkspacePicker.js'
 import css from './WorkspaceBrowser.css.js'
 
 /**
@@ -871,6 +871,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
   #wsPickerOpen = false
   #wsPlusEl = null
   #composing = false
+  #wsPickFlow = null
 
   // Rail search = expand + land in the search box.
   #searchOnExpand = false
@@ -1351,8 +1352,10 @@ export class DshWorkspaceBrowser extends HTMLElement {
               )
             ),
           ),
-          /* Add flow + its error dialog (same package — direct composition). */
-          h(WorkspacePickFlow, {
+          /* Add flow + its error dialog. Cached across renders so the
+             auto-open latch on the custom element survives onClose's
+             synchronous re-render. */
+          (this.#wsPickFlow = renderWorkspacePickFlow(this.#wsPickFlow, {
             t,
             open: wsPickerOpen,
             anchorRef: { current: this.#wsPlusEl },
@@ -1368,7 +1371,7 @@ export class DshWorkspaceBrowser extends HTMLElement {
               startSession(workspaceId)
             },
             onClose: () => { this.#wsPickerOpen = false; this.#render() },
-          }),
+          })),
         ),
 
         /* The collapsed rail keeps search as its own 36px control. */

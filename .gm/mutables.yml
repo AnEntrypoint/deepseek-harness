@@ -3,3 +3,9 @@
   id: mut-1788448131127
   status: witnessed
   witness_evidence: 'curl POST http://localhost:4800/v1/chat/completions model=xai-oauth/grok-4-fast returned real response id=f6164ba3-f9ff-9b60-81b0-f275406b77d4, model=grok-4.3, content=''Hi there friend'', usage.total_tokens=606. Sampler backoff (failCount=12) cleared naturally at nextCheckIn=0 after ~4min wait; no restart or code change needed. Server PID 9128 was already running (uptime confirmed via /metrics: acptoapi_uptime_seconds=5389 at first check).'
+- session_id: perfopt-1788500921
+  id: http1-vs-http2-boot-concurrency
+  subject: Server runs plain node:http (HTTP/1.1), so Chrome's 6-connections-per-origin cap serializes the ~217-module cold boot into queued waves
+  witness: packages/host/webserver/src/index.js:1,118 uses node:http createServer; curl -s -o /dev/null -w http_version confirms 1.1
+  status: witnessed
+  witness_evidence: HTTP/2 requires TLS for browser negotiation (Chrome does not support h2c); adding TLS to a local dev harness server is disproportionate infra risk for this request. The vendor-immutable-cache fix already removes the dominant repeat-boot cost (per-module revalidation). Remaining HTTP/1.1 connection queueing only affects true cold first-load, an acceptable one-time cost. Investigated and rejected.
