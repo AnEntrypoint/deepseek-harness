@@ -931,14 +931,36 @@ export class DshWorkspaceBrowser extends HTMLElement {
 
   connectedCallback() {
     if (this.#renderedOnce) this.#render()
+    this.addEventListener('keydown', this.#onTreeKeyDown)
   }
 
   disconnectedCallback() {
+    this.removeEventListener('keydown', this.#onTreeKeyDown)
     this.#unbindOutsideClick()
     if (this.#expandFocusTimer !== null) { window.clearTimeout(this.#expandFocusTimer); this.#expandFocusTimer = null }
     if (this.#searchDebounceTimer !== null) { window.clearTimeout(this.#searchDebounceTimer); this.#searchDebounceTimer = null }
     this.#searchAbort?.abort()
     this.#searchAbort = null
+  }
+
+  // WAI-ARIA tree pattern: ArrowDown/ArrowUp move focus among treeitems
+  // (wrapping at the ends), matching role="tree"'s implied keyboard contract
+  // -- same fix class as Menu.js. Queries the live DOM rather than tracking a
+  // parallel focus-index field, since it must work uniformly across this
+  // component's 3 render paths (grouped tree, flat list, search results),
+  // each producing role="treeitem" buttons with a different DOM shape.
+  #onTreeKeyDown = (event) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    if (!(event.target instanceof Element) || event.target.getAttribute('role') !== 'treeitem') return
+    event.preventDefault()
+    const items = [...this.querySelectorAll('[role="treeitem"]:not(:disabled)')]
+    if (items.length === 0) return
+    const current = items.indexOf(event.target)
+    const delta = event.key === 'ArrowDown' ? 1 : -1
+    const next = current === -1
+      ? (delta > 0 ? 0 : items.length - 1)
+      : (current + delta + items.length) % items.length
+    items[next].focus()
   }
 
   #unbindOutsideClick() {
