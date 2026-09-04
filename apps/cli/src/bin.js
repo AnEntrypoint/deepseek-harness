@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { loadLayeredEnv } from '@freddie/freddie-app-boot'
 import { parseDshArgs } from './args.js'
+import { reexecWithExposeInternals } from './expose-internals.js'
 
 // Both the source tree (apps/cli/src) and the bundled bin (apps/cli/lib) sit
 // one directory under apps/cli, so the checked-in manifest resolves with the
@@ -25,6 +26,16 @@ function readVersion() {
 }
 
 const invocation = parseDshArgs(process.argv.slice(2), readVersion())
+
+// The `web` profile's host-side HMR service (cordis-plugin-hmr) requires
+// Node's internal module loader, which requires --expose-internals at the
+// ORIGINAL process launch -- it cannot be set at runtime. Re-exec once, only
+// for the one profile that needs it, before anything else in this process
+// touches the loader. reexecWithExposeInternals never returns when it
+// re-spawns: the parent exits with the child's exact exit code.
+if (invocation.mode === 'profile' && invocation.profile === 'web') {
+  await reexecWithExposeInternals()
+}
 
 switch (invocation.mode) {
   case 'profile': {

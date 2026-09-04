@@ -114,9 +114,22 @@ export class DshProducedFiles extends HTMLElement {
       if (row === null) return
       this.#measure()
       if (typeof ResizeObserver === 'undefined') return
+      // Observe the row and the chip probes only -- `remainderProbe` (the
+      // `#moreProbeEl`) resizes SOLELY because #measure() writes its own
+      // textContent into it on the same synchronous pass that reads chip
+      // widths (line 98 above); observing it too fed that write back into
+      // another #measure() call, a self-triggering resize loop the browser's
+      // own "ResizeObserver loop limit exceeded" guard eventually cuts off,
+      // but only after real, repeated layout-thrashing cost -- measured live
+      // as part of a 29-second input-delay stall with 18 of these elements
+      // mounted at once. #measure() already reads the remainder probe's
+      // fresh width synchronously right after writing it, so no observer is
+      // needed for it: only the row (a genuine external resize signal) and
+      // the chip probes (whose width changes only from font/content
+      // changes we do not control) need one.
       const observer = new ResizeObserver(() => { this.#measure() })
       observer.observe(row)
-      for (const probe of [...this.#chipProbeEls, this.#moreProbeEl]) {
+      for (const probe of this.#chipProbeEls) {
         if (probe !== null) observer.observe(probe)
       }
       this.#observer = observer

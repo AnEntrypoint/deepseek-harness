@@ -14,3 +14,8 @@
   id: checkpoint-not-a-crash
   text: Inherited JSONL checkpoint PRD (tailidx) is a cold-open optimization, not a remaining harness crash. Live decompress+scan of this session log (703337 bytes, 668 frames, 2000 events) took 64.8ms.
   witness_evidence: 'Live decompress+scan of session-3b6f93cf jsonl.zstd: 703337 bytes, 668 frames, 2000 events, 64.8ms. Not a remaining harness failure. Checkpoint sidecar is a separate performance feature, not a crash.'
+- session_id: livereload-1788506649
+  id: prd-resolve-checkpoint-format-design-stuck
+  subject: prd-resolve for id checkpoint-format-design repeatedly fails with error 'missing PRD item id' and identical request_fingerprint bafabc0a155df2bc despite valid, distinct JSON bodies across 4+ attempts (including one after an instruction re-sync) -- looks like a daemon-side caching/dedup bug unrelated to the actual request content
+  witness: 4 separate prd-resolve dispatches to .gm/exec-spool/in/prd-resolve/, each with valid id:checkpoint-format-design present and distinct witness_evidence text, all returned request_fingerprint:bafabc0a155df2bc and error:'missing PRD item id' -- the fingerprint identity across genuinely different payloads indicates the daemon is not hashing the actual dispatch content for this verb/id pair
+  status: unknown

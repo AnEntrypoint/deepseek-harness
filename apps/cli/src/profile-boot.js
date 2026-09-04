@@ -11,9 +11,9 @@
  * @module @freddie/freddie/profile-boot
  */
 
-import { writeFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { existsSync, readdirSync, writeFileSync } from 'node:fs'
+import { join, relative, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   boot,
   composeEntries,
@@ -32,6 +32,43 @@ const FiberState = { PENDING: 0, LOADING: 1, ACTIVE: 2, FAILED: 3, DISPOSED: 4, 
 
 /** Shipped agent-preset root: beside this app's own config, in both source and built layouts. */
 const SHIPPED_PRESET_ROOT = fileURLToPath(new URL('../config/agent-presets/', import.meta.url))
+
+// The monorepo checkout's own root, two hops up from apps/cli -- present only
+// when this app is running from source inside the workspace (an installed
+// `dsh` package has no `packages/` sibling two levels up). cordis-plugin-hmr's
+// own `root`/`base` config resolves relative to the PROFILE directory
+// (~/.dsh/profiles/<name>/), which shares no files with a dev checkout's
+// packages/ tree at all -- pointing it there instead is what makes host-side
+// HMR watch source edits a developer actually makes, rather than a directory
+// nothing ever writes to.
+const WORKSPACE_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+const WORKSPACE_PACKAGES_DIR = join(WORKSPACE_ROOT, 'packages')
+
+/**
+ * Every `src/` directory under `root`, skipping `node_modules` entirely.
+ * Watching this explicit list instead of the whole tree is not an
+ * optimization, it is what makes host HMR viable at all here: this
+ * checkout's `packages/` alone nests 224+ separate `node_modules` trees, and
+ * chokidar (measured directly, isolated from the rest of the app) needed
+ * over 30 seconds -- still not ready -- to walk `packages/`+`apps/` with only
+ * an `ignored: ['**\/node_modules', ...]` glob to skip them, versus ~1.1s
+ * watching the 221 real `src/` directories this returns directly. A glob
+ * ignore still has to `readdir` into a directory to test its children
+ * against the pattern in the general case; an explicit root list never
+ * visits `node_modules` in the first place.
+ * @param root - directory to search.
+ * @returns absolute paths of every `src` directory found, node_modules excluded.
+ */
+function findSrcDirs(root) {
+  const dirs = []
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name === 'node_modules') continue
+    const full = join(root, entry.name)
+    if (entry.name === 'src') { dirs.push(full); continue }
+    dirs.push(...findSrcDirs(full))
+  }
+  return dirs
+}
 
 import { FREDDIE_LAUNCH_ENVIRONMENT_KEY } from '@freddie/freddie-launch-environment'
 import { provideCmdline } from '@freddie/freddie-cmdline'
@@ -147,6 +184,33 @@ function composeProfile(name, patchFiles) {
   }
   const telemetryPatch = resolveTelemetryPatch(process.env.FREDDIE_TELEMETRY_DISABLED, rows.has(TELEMETRY_ROW_ID))
   if (telemetryPatch !== undefined) composedOverlays.push(telemetryPatch)
+  // Point the shared `hmr` row (when present and not disabled) at the actual
+  // workspace source instead of its config-relative default: see
+  // WORKSPACE_ROOT's own doc comment for why the default watches nothing a
+  // developer edits.
+  const hmrRow = rows.get('hmr')
+  if (hmrRow !== undefined && hmrRow.disabled !== true && existsSync(WORKSPACE_PACKAGES_DIR)) {
+    const srcDirs = [
+      ...findSrcDirs(WORKSPACE_PACKAGES_DIR),
+      ...findSrcDirs(join(WORKSPACE_ROOT, 'apps')),
+    ].map(dir => relative(WORKSPACE_ROOT, dir).split('\\').join('/'))
+    composedOverlays.push({
+      id: 'hmr',
+      config: {
+        ...(hmrRow.config ?? {}),
+        // `base` resolves as `new URL(config.base, ctx.baseUrl)` inside the
+        // hmr plugin -- a bare filesystem path there throws
+        // ERR_INVALID_URL_SCHEME (only a URL or a same-scheme relative
+        // reference is valid), so this must be the file:// form, not the raw
+        // path WORKSPACE_ROOT holds.
+        base: pathToFileURL(WORKSPACE_ROOT).href,
+        // Explicit src/ roots, not the whole packages/+apps/ tree: see
+        // findSrcDirs' own doc comment for the measured 30s+ hang a glob
+        // ignore over this checkout's 224+ nested node_modules produces.
+        root: srcDirs,
+      },
+    })
+  }
   return { profile, bundlePatches, homePatches, overlays: composedOverlays, rows }
 }
 
