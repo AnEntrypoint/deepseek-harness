@@ -40,6 +40,12 @@ export class DshModal extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('keydown', this.#onKeyDown)
+    // A caller that removes this element directly while it was open (rather
+    // than setProps({open: false}) first, e.g. a shared-singleton cache
+    // torn down on completion) would otherwise skip #syncFocus(false)
+    // entirely, since it only runs from #render()'s own !open branch --
+    // silently dropping the focus-restoration this class exists to provide.
+    this.#syncFocus(false)
   }
 
   #onKeyDown = (e) => {
