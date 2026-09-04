@@ -164,7 +164,7 @@ export class DshReadBlock extends HTMLElement {
           'div',
           { class: css.action ?? '' },
           windowed && (
-            h('span', { class: css.count ?? '' }, `显示 ${lines.length} / ${totalLines} 行`)
+            h('span', { class: css.count ?? '' }, `showing ${lines.length} / ${totalLines} lines`)
           ),
           h('span', { class: css.lang ?? '' }, lang ?? ''),
           /* Hide copy on an empty window, matching TerminalBlock's empty-output
@@ -175,7 +175,7 @@ export class DshReadBlock extends HTMLElement {
             h(
               'button',
               { type: 'button', class: css.copyButton ?? '', onclick: () => this.#copyFeedback?.onCopy() },
-              copied ? '复制成功' : '复制',
+              copied ? 'Copied' : 'Copy',
             )
           ),
         ),
@@ -191,10 +191,10 @@ export class DshReadBlock extends HTMLElement {
               type: 'button',
               class: css.expand ?? '',
               'aria-expanded': this.#expanded,
-              'aria-label': this.#expanded ? '收起内容' : `展开其余 ${hidden} 行`,
+              'aria-label': this.#expanded ? 'Collapse content' : `Show ${hidden} more lines`,
               onclick: () => { this.#expanded = !this.#expanded; this.#render() },
             },
-            this.#expanded ? '收起' : `… 其余 ${hidden} 行`,
+            this.#expanded ? 'Collapse' : `… ${hidden} more lines`,
           )
         ),
         capped && rows(paired.slice(paired.length - tailLines)),

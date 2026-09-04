@@ -121,7 +121,7 @@ function WebSearchBlock({ answer, sources, truncated, className }) {
       h('div', { class: css.answer ?? '' }, h(MarkdownText, { text: answer }))
     ),
     empty ? (
-      h('div', { class: css.empty ?? '' }, '未找到结果')
+      h('div', { class: css.empty ?? '' }, 'No results found.')
     ) : (
       h(
         'ol',
@@ -129,7 +129,7 @@ function WebSearchBlock({ answer, sources, truncated, className }) {
         sources.map((source, index) => h(SourceItem, { key: index, source, ordinal: index + 1 })),
       )
     ),
-    truncated && h('div', { class: css.truncated ?? '' }, '来源列表已截断'),
+    truncated && h('div', { class: css.truncated ?? '' }, 'Source list truncated'),
   )
 }
 
@@ -147,7 +147,7 @@ function WebFetchBlock({ url, statusCode, truncated, className }) {
       'div',
       { class: css.fetchMeta ?? '' },
       h('span', { class: css.status ?? '' }, 'HTTP ', statusCode),
-      truncated && h('span', { class: css.truncated ?? '' }, '内容已截断'),
+      truncated && h('span', { class: css.truncated ?? '' }, 'Content truncated'),
     ),
   )
 }

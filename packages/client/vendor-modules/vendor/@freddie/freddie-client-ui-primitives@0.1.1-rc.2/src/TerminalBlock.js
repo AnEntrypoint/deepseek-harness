@@ -28,18 +28,18 @@ import css from './TerminalBlock.css.js'
 export const DEFAULT_TERMINAL_MAX_LINES = 16
 
 const DEFAULT_LABELS = {
-  signal: signal => `信号 ${signal}`,
-  exitCode: exitCode => `退出码 ${exitCode}`,
-  running: '运行中',
-  failed: '失败',
-  done: '已完成',
-  copy: '复制',
-  copied: '复制成功',
-  noOutput: '无输出',
-  collapseAria: '收起输出',
-  collapse: '收起',
-  expandAria: hidden => `展开其余 ${hidden} 行输出`,
-  expand: hidden => `… 其余 ${hidden} 行`,
+  signal: signal => `signal ${signal}`,
+  exitCode: exitCode => `exit ${exitCode}`,
+  running: 'Running',
+  failed: 'Failed',
+  done: 'Done',
+  copy: 'Copy',
+  copied: 'Copied',
+  noOutput: 'No output',
+  collapseAria: 'Collapse output',
+  collapse: 'Collapse',
+  expandAria: hidden => `Show ${hidden} more lines of output`,
+  expand: hidden => `… ${hidden} more lines`,
 }
 
 /**

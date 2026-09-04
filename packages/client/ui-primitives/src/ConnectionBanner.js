@@ -13,7 +13,7 @@ import css from './ConnectionBanner.css.js'
  * package is cordis-free, so copy arrives via props).
  * @returns the banner, or null when connected.
  */
-export function ConnectionBanner({ reconnecting, label = '连接已断开，正在重连…' }) {
+export function ConnectionBanner({ reconnecting, label = 'Connection lost, reconnecting…' }) {
   if (!reconnecting) return null
   return h('div', { class: css.banner ?? '' }, label)
 }

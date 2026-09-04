@@ -10,7 +10,7 @@ const MAX_CHARS = 20_000
 
 /** Default truncation footer; the owner passes a localized formatter. */
 function defaultTruncatedLabel(total) {
-  return `… 已截断，共 ${total} 字符`
+  return `… truncated, ${total} characters total`
 }
 
 function bodyText(payload, truncatedLabel) {

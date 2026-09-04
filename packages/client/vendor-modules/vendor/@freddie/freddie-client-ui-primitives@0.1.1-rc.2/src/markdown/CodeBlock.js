@@ -73,7 +73,7 @@ export class DshCodeBlock extends HTMLElement {
   }
 
   #render() {
-    const { lang, class: extraClass, copyLabel = '复制', copiedLabel = '复制成功' } = this.#props
+    const { lang, class: extraClass, copyLabel = 'Copy', copiedLabel = 'Copied' } = this.#props
     const trimmed = this.#trimmed()
     let html
     if (this.#highlightedCode === trimmed && this.#highlightedLang === lang) {

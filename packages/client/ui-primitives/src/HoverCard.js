@@ -138,7 +138,7 @@ export class DshHoverCard extends HTMLElement {
   }
 
   #render() {
-    const { anchor, content, openDelayMs = 500, disabled = false, copyText, copyLabel = '复制', copiedLabel = '复制成功' } = this.#props
+    const { anchor, content, openDelayMs = 500, disabled = false, copyText, copyLabel = 'Copy', copiedLabel = 'Copied' } = this.#props
     const copyable = copyText !== undefined
     const showCard = this.#open && this.#pos !== null
 

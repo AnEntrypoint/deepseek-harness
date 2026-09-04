@@ -41,10 +41,10 @@ function shownCount(props) {
 }
 
 function summaryText(props, shown, truncated, total) {
-  const count = truncated ? `显示 ${shown} / 共 ${total}` : `${shown}`
+  const count = truncated ? `showing ${shown} / ${total}` : `${shown}`
   return props.kind === 'paths'
-    ? `${count} 个路径`
-    : `${count} 处匹配 · ${props.files.length} 个文件`
+    ? `${count} paths`
+    : `${count} matches · ${props.files.length} files`
 }
 
 function toRows(props, collapsed) {
@@ -154,12 +154,12 @@ export class DshSearchBlock extends HTMLElement {
           h(
             'button',
             { type: 'button', class: css.copyButton ?? '', onclick: () => this.#copyFeedback?.onCopy() },
-            copied ? '复制成功' : '复制',
+            copied ? 'Copied' : 'Copy',
           )
         ),
       ),
       empty
-        ? h('div', { class: css.empty ?? '' }, '无结果')
+        ? h('div', { class: css.empty ?? '' }, 'No results')
         : (
           h(
             'div',
@@ -174,10 +174,10 @@ export class DshSearchBlock extends HTMLElement {
                   type: 'button',
                   class: css.expand ?? '',
                   'aria-expanded': this.#expanded,
-                  'aria-label': this.#expanded ? '收起结果' : `展开其余 ${hidden} 行结果`,
+                  'aria-label': this.#expanded ? 'Collapse results' : `Show ${hidden} more result lines`,
                   onclick: () => { this.#expanded = !this.#expanded; this.#render() },
                 },
-                this.#expanded ? '收起' : `… 其余 ${hidden} 行`,
+                this.#expanded ? 'Collapse' : `… ${hidden} more lines`,
               )
             ),
             tailHeader !== undefined && (

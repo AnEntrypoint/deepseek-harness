@@ -170,7 +170,7 @@ export class DshDiffBlock extends HTMLElement {
       h(
         'button',
         { type: 'button', class: css.copyButton ?? '', onclick: () => this.#copyFeedback?.onCopy() },
-        copied ? '复制成功' : '复制',
+        copied ? 'Copied' : 'Copy',
       ),
       h(
         'div',
@@ -185,10 +185,10 @@ export class DshDiffBlock extends HTMLElement {
               type: 'button',
               class: css.expand ?? '',
               'aria-expanded': this.#expanded,
-              'aria-label': this.#expanded ? '收起差异' : `展开其余 ${hidden} 行差异`,
+              'aria-label': this.#expanded ? 'Collapse diff' : `Show ${hidden} more lines of diff`,
               onclick: () => { this.#expanded = !this.#expanded; this.#render() },
             },
-            this.#expanded ? '收起' : `… 其余 ${hidden} 行`,
+            this.#expanded ? 'Collapse' : `… ${hidden} more lines`,
           )
         ),
         tail.map((row, index) => (
