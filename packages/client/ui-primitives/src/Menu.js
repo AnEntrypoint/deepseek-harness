@@ -148,12 +148,32 @@ export class DshMenu extends HTMLElement {
       this.#props.onClose()
     }
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') this.#props.onClose()
+      if (e.key === 'Escape') { this.#props.onClose(); return }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        this.#moveFocus(e.key === 'ArrowDown' ? 1 : -1)
+      }
     }
     this.#outsideHandler = onPointerDown
     this.#keyHandler = onKeyDown
     document.addEventListener('pointerdown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
+  }
+
+  // WAI-ARIA menu pattern: ArrowDown/ArrowUp move focus among menuitems
+  // (wrapping at the ends), matching role="menu"'s implied keyboard contract.
+  // Queries the live DOM rather than tracking a parallel focus-index field,
+  // since the rendered item set already reflects open/submenu state and Tab
+  // (real <button> elements) must keep working identically either way.
+  #moveFocus(delta) {
+    const root = this.#portalList ?? this
+    const items = [...root.querySelectorAll('[role="menuitem"]:not(:disabled)')]
+    if (items.length === 0) return
+    const current = items.indexOf(document.activeElement)
+    const next = current === -1
+      ? (delta > 0 ? 0 : items.length - 1)
+      : (current + delta + items.length) % items.length
+    items[next].focus()
   }
 
   #unbindOutsideClose() {
