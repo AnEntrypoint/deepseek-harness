@@ -62,7 +62,18 @@ export class DshModal extends HTMLElement {
     const dialog = this.querySelector('[role="dialog"]')
     if (dialog === null) return
     const focusable = [...dialog.querySelectorAll(FOCUSABLE_SELECTOR)]
-    if (focusable.length === 0) return
+    if (focusable.length === 0) {
+      // A transient all-disabled state (every footer action shares one
+      // busy flag) leaves nothing #syncFocus's own first-element target
+      // could have landed on either -- keep Tab from escaping the mask by
+      // redirecting into the dialog container itself, the same fallback
+      // #syncFocus already uses for initial focus.
+      if (!dialog.contains(document.activeElement)) {
+        e.preventDefault()
+        dialog.focus()
+      }
+      return
+    }
     const first = focusable[0]
     const last = focusable[focusable.length - 1]
     if (e.shiftKey) {
@@ -118,6 +129,11 @@ export class DshModal extends HTMLElement {
           role: 'dialog',
           'aria-modal': 'true',
           'aria-label': title,
+          // Programmatically focusable (not in the Tab order) so #syncFocus
+          // and #trapTab's own fallback -- there being no focusable child at
+          // all -- can actually land focus somewhere inside the dialog
+          // instead of .focus() silently no-op'ing on a plain <div>.
+          tabindex: '-1',
         },
         headless
           ? children
