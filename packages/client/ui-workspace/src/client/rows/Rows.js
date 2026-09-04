@@ -102,8 +102,14 @@ export class DshProjectRowItem extends HTMLElement {
       h('div', {
         class: clsx(css.projectRow, menuOpen && css.menuOpen),
         role: 'treeitem',
+        tabIndex: '0',
         'aria-expanded': String(row.expanded),
         onclick: onToggle,
+        onkeydown: (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return
+          e.preventDefault()
+          onToggle()
+        },
         draggable: drag !== undefined,
         ondragstart: drag === undefined
           ? null
@@ -386,8 +392,14 @@ export class DshSessionNodeItem extends HTMLElement {
           drag?.marker === 'before' && css.dropBefore, drag?.marker === 'after' && css.dropAfter,
         ),
         role: 'treeitem',
+        tabIndex: '0',
         'aria-selected': String(selected),
         onclick: () => { onOpen(node.id) },
+        onkeydown: (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return
+          e.preventDefault()
+          onOpen(node.id)
+        },
         draggable: drag !== undefined,
         ondragstart: drag === undefined
           ? null
