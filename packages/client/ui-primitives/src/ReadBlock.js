@@ -57,6 +57,15 @@ export class DshReadBlock extends HTMLElement {
   #unsubscribeGrammar = null
   #lastLines = null
   #lastRaw = ''
+  // Highlighting memo: highlightLines re-scans the whole window with a
+  // TextMate grammar, the expensive step here, and #render() re-runs on every
+  // copy-feedback tick and every unrelated grammar-loaded notification, not
+  // only when `raw`/`lang` actually changed -- without this guard a read card
+  // re-tokenized its full (often hundreds-of-lines) window on each of those,
+  // measured as the dominant per-frame cost in a live profile.
+  #highlightedRaw
+  #highlightedLang
+  #highlightedLines
 
   setProps(props) {
     this.#props = props
@@ -103,7 +112,15 @@ export class DshReadBlock extends HTMLElement {
     // Per-line highlighted runs aligned 1:1 with `lines`; undefined for an
     // unknown/absent (or not-yet-loaded) language, when every line renders as
     // bare text.
-    const highlighted = highlightLines(raw, lang)
+    let highlighted
+    if (this.#highlightedRaw === raw && this.#highlightedLang === lang) {
+      highlighted = this.#highlightedLines
+    } else {
+      highlighted = highlightLines(raw, lang)
+      this.#highlightedRaw = raw
+      this.#highlightedLang = lang
+      this.#highlightedLines = highlighted
+    }
     const copied = this.#copyFeedback?.copied ?? false
 
     const hidden = lines.length - maxLines

@@ -21,6 +21,16 @@ export class DshCodeBlock extends HTMLElement {
   #props = { code: '' }
   #copied = false
   #unsubscribe = null
+  // Highlighting memo: re-tokenizing is the expensive step (a TextMate regex
+  // scan over the whole code string), and a caller streaming a growing tool
+  // call's args re-renders this element on every chunk with a fresh props
+  // object -- without this guard, every keystroke of streamed text re-ran the
+  // full grammar scan from byte 0, compounding into seconds of main-thread
+  // time over a long stream. `lang` is included because it changes which
+  // grammar the same code text would tokenize against.
+  #highlightedCode
+  #highlightedLang
+  #highlightedHtml
 
   setProps(props) {
     this.#props = props
@@ -65,7 +75,15 @@ export class DshCodeBlock extends HTMLElement {
   #render() {
     const { lang, class: extraClass, copyLabel = '复制', copiedLabel = '复制成功' } = this.#props
     const trimmed = this.#trimmed()
-    const html = highlightToHtml(trimmed, lang)
+    let html
+    if (this.#highlightedCode === trimmed && this.#highlightedLang === lang) {
+      html = this.#highlightedHtml
+    } else {
+      html = highlightToHtml(trimmed, lang)
+      this.#highlightedCode = trimmed
+      this.#highlightedLang = lang
+      this.#highlightedHtml = html
+    }
 
     const body = html === undefined
       ? (
