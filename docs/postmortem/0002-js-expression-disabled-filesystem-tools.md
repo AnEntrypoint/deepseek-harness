@@ -2,6 +2,24 @@
 
 Status: resolved
 
+> **2026-09-04 addendum:** the vendored `@freddie/cordis-plugin-loader` now
+> interpolates `!!js` expressions in `disabled` too (`Entry.disabledOf`,
+> `packages/client/vendor-modules/vendor/@freddie/cordis-plugin-loader@1.0.2/src/config/entry.js:88-91`)
+> — a framework-level fix distinct from this postmortem's own overlay
+> workaround. `disabled: !!js ...` is safe to use directly again as of this
+> vendored version; the win32/non-win32 bash-vs-cordis selectors in
+> `apps/cli/config/agent-presets/*/agent.cordis.yml` and
+> `packages/bundle/base/cordis.patch.yml` rely on exactly this and are
+> confirmed correctly evaluated, not silently truthy. The narrative below
+> (Root cause, Guardrails, Lessons) describes the bug as it stood at the time
+> and is left unchanged as the historical record; it is no longer an accurate
+> description of current framework behavior for the `disabled` field
+> specifically. The `verify-cordis-config` guardrail this postmortem
+> describes was not found anywhere in the current tree (searched exhaustively)
+> — either never landed or removed since; given the underlying framework risk
+> it guarded against no longer exists, re-adding it is a judgment call for
+> whoever next touches this area, not an urgent gap.
+
 ## Executive summary
 
 The ACP example attempted to enable filesystem plugins conditionally with `disabled: !!js ...`, but Cordis evaluates JavaScript expressions only inside plugin `config`. The raw expression object was truthy, so the filesystem stack was always disabled. Snapshot refresh then accepted `UNKNOWN_TOOL` results as new expected outputs. The fix uses an explicit filesystem overlay and adds static-config and snapshot-result guards.
