@@ -1,5 +1,4 @@
 CLAUDE.local.md
-.env
 node_modules/
 lib/
 *.tsbuildinfo
@@ -23,7 +22,6 @@ tmp/
 .claude/commands/
 .claude/launch.json
 .claude/settings.json
-.vscode/
 .DS_Store
 .idea
 *.stackdump
@@ -59,3 +57,4 @@ worktrees/
 .gm/residual-check-fired
 .gm/scan-deps-stamp.json
 .agentplug-kv/
+config.bat
