@@ -1,4 +1,8 @@
 import { ConsoleExporter as Base } from './shared.js'
+import { createRequire } from 'module';
+
+var require = createRequire(import.meta.url);
+var module = { exports: {} };
 
 /** Re-export shared console exporter config and base implementation. */
 export * from './shared.js'
@@ -13,4 +17,4 @@ export class ConsoleExporter extends Base {
   }
 }
 
-export default ConsoleExporter
+export default ConsoleExporter;
